@@ -2,7 +2,7 @@
     "name": "carlospez/clase",
     "autoload": {
         "psr-4": {
-            "Carlospez\\Clase\\": "src/"
+            "App\\": "src/"
         }
     },
     "authors": [

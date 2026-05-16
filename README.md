@@ -289,4 +289,3 @@ Este proyecto es propietario. Todos los derechos reservados.
 
 **Ultima actualizacion**: Mayo 2026
 **Estado**: En desarrollo (Prototipo UI)
-# EIS_Zona_Web_Lara

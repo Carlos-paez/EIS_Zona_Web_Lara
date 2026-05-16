@@ -9,8 +9,9 @@
      el contenido específico de cada página.
      ============================================================ -->
 <html lang="es">
+
 <head>
-    <meta charset="UTF-8">                           <!-- Codificación UTF-8 para caracteres especiales -->
+    <meta charset="UTF-8"> <!-- Codificación UTF-8 para caracteres especiales -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Diseño responsive -->
     <title><?php echo $pageTitle; ?> - EIS System</title> <!-- Título dinámico de la pestaña -->
     <!-- Google Material Icons (fuente de iconos) -->
@@ -20,8 +21,10 @@
     <!-- Estilos personalizados de la aplicación -->
     <link rel="stylesheet" href="Public/css/styles.css">
     <!-- jQuery 3.7.1 (dependencia de Materialize JS y lógica de la app) -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 </head>
+
 <body>
 
     <!-- ========== BARRA LATERAL (SIDENAV) ========== -->
@@ -29,23 +32,38 @@
         <li>
             <!-- Encabezado del sidebar con el logo y nombre del sistema -->
             <div class="user-view">
-                <div class="background indigo darken-4"></div>                               <!-- Fondo de color -->
+                <div class="background indigo darken-4"></div> <!-- Fondo de color -->
                 <span class="white-text name" style="font-size:1.5rem;font-weight:700;">⚡ EIS System</span>
                 <span class="white-text email">Sistema de Gestión Integral</span>
             </div>
         </li>
         <!-- Cada ítem del menú: enlace a ?pagina=[sección]; se marca como 'active' si coincide con $pagina actual -->
-        <li><a href="?pagina=dashboard" class="sidenav-link<?php echo $pagina === 'dashboard' ? ' active' : ''; ?>"><i class="material-icons left">dashboard</i>Dashboard</a></li>
-        <li><a href="?pagina=inventario" class="sidenav-link<?php echo $pagina === 'inventario' ? ' active' : ''; ?>"><i class="material-icons left">inventory_2</i>Inventario</a></li>
-        <li><a href="?pagina=ventas" class="sidenav-link<?php echo $pagina === 'ventas' ? ' active' : ''; ?>"><i class="material-icons left">shopping_cart</i>Ventas (POS)</a></li>
-        <li><a href="?pagina=proveedores" class="sidenav-link<?php echo $pagina === 'proveedores' ? ' active' : ''; ?>"><i class="material-icons left">request_quote</i>Solicitudes</a></li>
-        <li><a href="?pagina=ciberControl" class="sidenav-link<?php echo $pagina === 'ciberControl' ? ' active' : ''; ?>"><i class="material-icons left">computer</i>Cyber</a></li>
-        <li><a href="?pagina=reportes" class="sidenav-link<?php echo $pagina === 'reportes' ? ' active' : ''; ?>"><i class="material-icons left">bar_chart</i>Reportes</a></li>
-        <li><a href="?pagina=activos" class="sidenav-link<?php echo $pagina === 'activos' ? ' active' : ''; ?>"><i class="material-icons left">build</i>Activos</a></li>
-        <li><div class="divider"></div></li>                          <!-- Separador visual -->
-        <li><a href="?pagina=login" class="sidenav-link"><i class="material-icons left">logout</i>Cerrar Sesión</a></li> <!-- Cierra sesión (redirige al login) -->
+        <li><a href="?pagina=dashboard" class="sidenav-link<?php echo $pagina === 'dashboard' ? ' active' : ''; ?>"><i
+                    class="material-icons left">dashboard</i>Dashboard</a></li>
+        <li><a href="?pagina=inventario" class="sidenav-link<?php echo $pagina === 'inventario' ? ' active' : ''; ?>"><i
+                    class="material-icons left">inventory_2</i>Inventario</a></li>
+        <li><a href="?pagina=ventas" class="sidenav-link<?php echo $pagina === 'ventas' ? ' active' : ''; ?>"><i
+                    class="material-icons left">shopping_cart</i>Ventas (POS)</a></li>
+        <li><a href="?pagina=proveedores"
+                class="sidenav-link<?php echo $pagina === 'proveedores' ? ' active' : ''; ?>"><i
+                    class="material-icons left">request_quote</i>Solicitudes</a></li>
+        <li><a href="?pagina=ciberControl"
+                class="sidenav-link<?php echo $pagina === 'ciberControl' ? ' active' : ''; ?>"><i
+                    class="material-icons left">computer</i>Cyber</a></li>
+        <li><a href="?pagina=reportes" class="sidenav-link<?php echo $pagina === 'reportes' ? ' active' : ''; ?>"><i
+                    class="material-icons left">bar_chart</i>Reportes</a></li>
+        <li><a href="?pagina=activos" class="sidenav-link<?php echo $pagina === 'activos' ? ' active' : ''; ?>"><i
+                    class="material-icons left">build</i>Activos</a></li>
+        <li><a href="?pagina=asesorias" class="sidenav-link<?php echo $pagina === 'asesorias' ? ' active' : ''; ?>"><i
+                    class="material-icons left">gavel</i>Asesoría Legal</a></li>
+        <li>
+            <div class="divider"></div>
+        </li> <!-- Separador visual -->
         <!-- Alternar tema oscuro/claro (manejado por JS en app.js) -->
-        <li><a class="sidenav-link" id="themeToggle" style="cursor:pointer;"><i class="material-icons left" id="themeIcon">dark_mode</i><span id="themeLabel">Modo Oscuro</span></a></li>
+        <li><a class="sidenav-link" id="themeToggle" style="cursor:pointer;"><i class="material-icons left"
+                    id="themeIcon">dark_mode</i><span id="themeLabel">Modo Oscuro</span></a></li>
+        <li><a href="?pagina=login" class="sidenav-link"><i class="material-icons left">logout</i>Cerrar Sesión</a></li>
+        <!-- Cierra sesión (redirige al login) -->
     </ul>
 
     <!-- ========== BARRA DE NAVEGACIÓN SUPERIOR ========== -->
@@ -55,25 +73,33 @@
                 <!-- Botón hamburguesa para mostrar/ocultar sidebar en pantallas pequeñas -->
                 <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>
                 <!-- Título de la página (oculto en tablets/desktop) -->
-                <span class="brand-logo hide-on-med-and-down" style="font-size:1.25rem;padding-left:1rem;"><?php echo $pageTitle; ?></span>
+                <span class="brand-logo hide-on-med-and-down"
+                    style="font-size:1.25rem;padding-left:1rem;"><?php echo $pageTitle; ?></span>
                 <!-- Título centrado en móviles -->
-                <span class="brand-logo hide-on-large-only" style="font-size:1.1rem;left:50%;transform:translateX(-50%);"><?php echo $pageTitle; ?></span>
+                <span class="brand-logo hide-on-large-only"
+                    style="font-size:1.1rem;left:50%;transform:translateX(-50%);"><?php echo $pageTitle; ?></span>
                 <ul id="nav-mobile" class="right">
                     <!-- Reloj digital actualizado por JS -->
-                    <li><span id="clock" class="white-text" style="font-size:0.85rem;padding-right:1rem;opacity:0.85;"><i class="material-icons left" style="font-size:1rem;">schedule</i>Cargando...</span></li>
+                    <li><span id="clock" class="white-text"
+                            style="font-size:0.85rem;padding-right:1rem;opacity:0.85;"><i class="material-icons left"
+                                style="font-size:1rem;">schedule</i>Cargando...</span></li>
                     <!-- Header extra opcional (ej: chips de estado en ciberControl) -->
                     <?php if (!empty($headerExtra)): ?>
-                        <li><?php echo $headerExtra; ?></li>
+                    <li><?php echo $headerExtra; ?></li>
                     <?php endif; ?>
                     <!-- Campana de notificaciones con badge (contador) -->
                     <li>
-                        <a class="tooltipped" data-position="bottom" data-tooltip="Notificaciones" id="notifBell" style="cursor:pointer;position:relative;">
+                        <a class="tooltipped" data-position="bottom" data-tooltip="Notificaciones" id="notifBell"
+                            style="cursor:pointer;position:relative;">
                             <i class="material-icons">notifications</i>
-                            <span id="notifBadge" class="new badge red" style="position:absolute;top:0;right:0;min-width:18px;height:18px;line-height:18px;font-size:0.65rem;padding:0 5px;border-radius:50%;">3</span>
+                            <span id="notifBadge" class="new badge red"
+                                style="position:absolute;top:0;right:0;min-width:18px;height:18px;line-height:18px;font-size:0.65rem;padding:0 5px;border-radius:50%;">3</span>
                         </a>
                     </li>
                     <!-- Badge con el nombre del usuario (hardcodeado como Admin) -->
-                    <li><span class="badge indigo lighten-2 white-text" style="margin-right:1rem;font-size:0.8rem;padding:0.25rem 0.75rem;"><i class="material-icons left" style="font-size:0.9rem;">person</i>Admin</span></li>
+                    <li><span class="badge indigo lighten-2 white-text"
+                            style="margin-right:1rem;font-size:0.8rem;padding:0.25rem 0.75rem;"><i
+                                class="material-icons left" style="font-size:0.9rem;">person</i>Admin</span></li>
                 </ul>
             </div>
         </nav>
@@ -82,17 +108,21 @@
     <!-- ========== CONTENIDO PRINCIPAL ========== -->
     <main>
         <div class="container" style="padding-top:1.5rem;padding-bottom:2rem;max-width:1400px;width:95%;">
-            <?php require $contentView; ?> <!-- Aquí se inyecta la vista específica de cada página -->
+            <?php require $contentView; ?>
+            <!-- Aquí se inyecta la vista específica de cada página -->
         </div>
     </main>
 
     <!-- Botón flotante "Volver arriba" (visible al hacer scroll hacia abajo) -->
-    <div id="backToTop" class="btn-floating indigo" style="position:fixed;bottom:2rem;right:2rem;z-index:999;display:none;">
+    <div id="backToTop" class="btn-floating indigo"
+        style="position:fixed;bottom:2rem;right:2rem;z-index:999;display:none;">
         <i class="material-icons">keyboard_arrow_up</i>
     </div>
 
     <!-- Scripts globales -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script> <!-- JS de Materialize -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <!-- JS de Materialize -->
     <script src="Public/js/app.js"></script> <!-- Lógica personalizada de la aplicación -->
 </body>
+
 </html>

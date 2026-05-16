@@ -1,12 +1,4 @@
 <?php
-// ============================================================
-// SISTEMA DE ENRUTADO Y AUTENTICACIÓN
-// Este archivo funciona como el controlador frontal que:
-//   1. Interpreta el parámetro 'pagina' de la URL
-//   2. Valida la autenticación del usuario
-//   3. Carga la vista correspondiente con o sin el layout maestro
-// ============================================================
-
 session_start(); // Inicia o reanuda la sesión del usuario (debe ser lo primero)
 
 // --- 1. DETERMINAR LA PÁGINA SOLICITADA ---
@@ -24,6 +16,7 @@ if (!preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)) {
 
 // --- 3. CONTROL DE ACCESO (AUTENTICACIÓN) ---
 $public_pages = ['login', 'login_validate']; // Páginas públicas que no requieren autenticación
+
 if (!isset($_SESSION['logged_in']) && !in_array($pagina, $public_pages)) {
     // Si el usuario NO ha iniciado sesión y la página NO es pública:
     header("Location: ?pagina=login"); // Redirige al login
@@ -50,11 +43,12 @@ if(is_file($rutaVista)){ // Verifica que el archivo de vista exista en el sistem
             'proveedores'  => 'Solicitudes a Proveedores',
             'reportes'     => 'Reportes y Estadísticas',
             'activos'      => 'Gestión de Activos',
+            'asesorias'    => 'Asesoría Legal',
         ];
 
         // 5b. Contenido HTML adicional para el encabezado de páginas específicas
         $extraHeaders = [
-            'ciberControl' => '<span class="chip green white-text" style="border-radius:4px;height:auto;padding:0.1rem 0.5rem;line-height:1.5;font-size:0.75rem;">7 Disponibles</span><span class="chip orange white-text" style="border-radius:4px;height:auto;padding:0.1rem 0.5rem;line-height:1.5;font-size:0.75rem;">3 Ocupadas</span>',
+            'ciberControl' => '<span class="chip green white-text" style="border-radius:4px;height:auto;padding:0.1rem 0.5rem;line-height:1.5;font-size:0.75rem;">5 Disponibles</span><span class="chip orange white-text" style="border-radius:4px;height:auto;padding:0.1rem 0.5rem;line-height:1.5;font-size:0.75rem;">4 Ocupadas</span>',
         ];
 
         $pageTitle = $titulos[$pagina] ?? 'EIS System'; // Título de la página (o valor por defecto)
