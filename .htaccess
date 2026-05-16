@@ -1,0 +1,15 @@
+# ============================================================
+# .htaccess RAIZ - Redirige todo al directorio src/
+# Si el servidor web apunta a la raiz del proyecto en vez de
+# a src/, este archivo redirige todo a src/ para que funcione
+# el enrutamiento limpio.
+# ============================================================
+RewriteEngine On
+
+# Si la URL no existe como archivo o directorio, redirige a src/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ src/$1 [L]
+
+# Si la URL es la raiz, redirige a src/
+RewriteRule ^$ src/ [L,R=301]

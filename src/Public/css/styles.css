@@ -386,34 +386,97 @@ header, main {
     background: rgba(102, 187, 106, 0.1);
 }
 
-/* ===== Cyber Station Redesign ===== */
+/* ===== Cyber Station Grid Layout ===== */
 .station-inner {
     display: flex;
     flex-direction: column;
+    height: 100%;
+}
+
+.station-header {
+    display: flex;
     align-items: center;
-    gap: 0.25rem;
+    justify-content: space-between;
+    padding-bottom: 0.6rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.station-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0;
+}
+
+.station-footer {
+    padding-top: 0.6rem;
+    margin-top: 0.5rem;
+    border-top: 1px solid var(--border-light);
+    text-align: center;
+}
+
+.station-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.station-card.disponible .station-badge { background: var(--success); }
+.station-card.ocupada .station-badge { background: var(--warning); }
+.station-card.mantenimiento .station-badge { background: var(--danger); }
+
+.station-header-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
 }
 
 .station-icon .material-icons {
-    font-size: 1.8rem;
-    margin-bottom: 0.25rem;
+    font-size: 2rem;
 }
 
 .station-card.disponible .station-icon .material-icons { color: var(--success); }
 .station-card.ocupada .station-icon .material-icons { color: var(--warning); }
 .station-card.mantenimiento .station-icon .material-icons { color: var(--danger); }
 
-.station-desc {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-top: 0.15rem;
-}
-
 .station-price {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: 700;
     color: var(--warning);
-    margin-top: 0.1rem;
+}
+
+.station-card.ocupada .station-footer {
+    border-top-color: rgba(251, 140, 0, 0.2);
+}
+
+.zone-divider {
+    width: 100%;
+    margin: 0.5rem 0 1rem;
+}
+
+.zone-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    padding: 0.5rem 0.75rem;
+    background: var(--surface-hover);
+    border-radius: var(--radius);
+    border-left: 3px solid var(--primary);
 }
 
 .filter-btn {
@@ -473,3 +536,52 @@ header, main {
 }
 
 .pos-add-btn .material-icons { font-size: 16px; }
+
+.legal-permitido {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border-radius: 4px;
+    padding: 0.2rem 0.6rem;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.legal-denegado {
+    background: #ffebee;
+    color: #c62828;
+    border-radius: 4px;
+    padding: 0.2rem 0.6rem;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+[data-theme="dark"] .legal-permitido {
+    background: #1b5e20;
+    color: #a5d6a7;
+}
+
+[data-theme="dark"] .legal-denegado {
+    background: #b71c1c;
+    color: #ffcdd2;
+}
+
+#documentValidationResult {
+    border-radius: var(--radius);
+    transition: all 0.3s ease;
+}
+
+#documentValidationResult.success {
+    border-left: 4px solid var(--success);
+}
+
+#documentValidationResult.error {
+    border-left: 4px solid var(--danger);
+}
+
+.mb-3 {
+    margin-bottom: 1.5rem;
+}
