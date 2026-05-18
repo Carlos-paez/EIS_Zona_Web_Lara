@@ -1,39 +1,47 @@
-# Sistema de Enrutamiento Procedural — Documentación Técnica
+# Sistema de Enrutamiento MVC — Documentación Técnica
 
-## Arquitectura Actual
+## Arquitectura Actual (MVC)
 
 ```
 src/
-├── index.php                    ← Punto de entrada (Front Controller)
+├── index.php                    ← Front Controller (autoloader + Router::dispatch)
 ├── .htaccess                    ← Reglas de reescritura (URLs query string)
 ├── app/
-│   ├── core/
-│   │   └── router.php           ← Enrutador procedural (68 líneas)
-│   ├── template/
-│   │   └── layout.php           ← Layout maestro (sidebar, header)
-│   ├── Views/                   ← Archivos de vista (HTML + PHP mínimo)
-│   │   ├── login.php
-│   │   ├── login_validate.php
-│   │   ├── dashboard.php
-│   │   ├── inventario.php
-│   │   ├── ventas.php
-│   │   ├── proveedores.php
-│   │   ├── reportes.php
-│   │   ├── ciberControl.php
-│   │   ├── activos.php
-│   │   ├── asesorias.php
-│   │   └── menu.php
-│   └── Models/
-│       ├── crud_users.php
-│       └── crud_asesorias.php
+│   ├── Core/
+│   │   ├── Router.php           ← Clase enrutadora con mapa de rutas (namespace App\Core)
+│   │   └── Controller.php       ← Clase base abstracta para todos los controladores
+│   ├── Controllers/             ← 10 controladores (uno por módulo)
+│   │   ├── LoginController.php
+│   │   ├── DashboardController.php
+│   │   ├── InventarioController.php
+│   │   ├── VentasController.php
+│   │   ├── ProveedoresController.php
+│   │   ├── ReportesController.php
+│   │   ├── ActivosController.php
+│   │   ├── CiberControlController.php
+│   │   ├── AsesoriasController.php
+│   │   └── MenuController.php
+│   ├── Models/
+│   │   ├── crud_users.php       # Funciones CRUD (procedural, incluidas manualmente)
+│   │   └── crud_asesorias.php
+│   └── Views/
+│       ├── auth/login.php
+│       ├── dashboard/index.php
+│       ├── inventario/index.php
+│       ├── ventas/index.php
+│       ├── proveedores/index.php
+│       ├── reportes/index.php
+│       ├── activos/index.php
+│       ├── ciber-control/index.php
+│       ├── asesorias/index.php
+│       ├── menu/index.php
+│       └── layouts/main.php
 ├── Config/
 │   └── database.php
 └── Public/
     ├── css/
     └── js/
 ```
-
-**NOTA**: Esta es la arquitectura actual (procedural). Existe documentación previa (`DOCUMENTACION_COMPLETA.md`) que describe una arquitectura MVC planificada con clases `Router`, `Request`, `Controller` y controladores con namespace, pero dichas clases **NO existen en el código actual**. Este documento describe el sistema real.
 
 ---
 
@@ -44,19 +52,19 @@ src/
     "name": "carlospez/clase",
     "autoload": {
         "psr-4": {
-            "App\\": "src/"
+            "App\\": "src/app/"
         }
     },
     "require": {}
 }
 ```
 
-| Línea | Explicación |
+| Clave | Explicación |
 |-------|-------------|
-| `"App\\": "src/"` | Mapea el namespace `App\` al directorio `src/`. Preparado para futura migración MVC. |
+| `"App\\": "src/app/"` | Mapea el namespace `App\` al directorio `src/app/`. Ej: `App\Core\Router` → `src/app/Core/Router.php`, `App\Controllers\LoginController` → `src/app/Controllers/LoginController.php` |
 | `require: {}` | Sin dependencias externas. Sistema 100% vanilla PHP. |
 
-Actualmente solo el autoloader de Composer está en `vendor/`. Las clases con namespace (`App\Core\Router`, `App\Controllers\*`) no existen en disco.
+El autoloader se genera con `composer dump-autoload` y se carga desde `index.php` mediante `require_once __DIR__.'/../vendor/autoload.php'`.
 
 ---
 
@@ -78,11 +86,11 @@ RewriteRule ^(.*)$ index.php [QSA,L]
 | `Options All -Indexes` | Bloquea el listado de directorios por seguridad. |
 | `RewriteEngine On` | Activa el módulo de reescritura de Apache. |
 | `RewriteRule ^$ index.php [L,QSA]` | La raíz `/` se redirige internamente a `index.php`. |
-| `RewriteCond %{REQUEST_FILENAME} !-f` | Solo aplica la regla si el archivo NO existe físicamente (permite servir CSS, JS, imágenes). |
+| `RewriteCond %{REQUEST_FILENAME} !-f` | Solo aplica si el archivo NO existe físicamente. |
 | `RewriteCond %{REQUEST_FILENAME} !-d` | Solo aplica si el directorio NO existe. |
 | `RewriteRule ^(.*)$ index.php [QSA,L]` | Cualquier otra ruta se envía a `index.php`. `QSA` preserva los query parameters. |
 
-**Actualmente** las URLs usan el formato `?pagina=nombre`. No hay URLs limpias implementadas.
+Actualmente las URLs usan el formato `?pagina=nombre`. No hay URLs limpias implementadas.
 
 ---
 
@@ -90,156 +98,267 @@ RewriteRule ^(.*)$ index.php [QSA,L]
 
 ```php
 <?php
-// Punto de entrada único de la aplicación (Front Controller).
-// Todas las solicitudes HTTP pasan por aquí gracias a las reglas de reescritura de Apache (.htaccess).
+require_once __DIR__.'/../vendor/autoload.php';
 
-    require_once __DIR__.'/app/core/router.php'; // Incluye el router, que maneja la lógica de navegación y autenticación
-?>
+use App\Core\Router;
+
+$router = new Router();
+$router->dispatch();
 ```
 
 | Línea | Explicación |
 |-------|-------------|
-| `require_once __DIR__.'/app/core/router.php'` | Incluye el archivo del enrutador procedural. Todo el flujo de la aplicación se delega a `router.php`. |
-
-A diferencia de un front controller MVC, aquí **no** hay:
-- `session_start()` (se hace en router.php)
-- Autoloader de Composer (no hay clases con namespace)
-- Definición de rutas (se manejan internamente en router.php)
+| `require_once __DIR__.'/../vendor/autoload.php'` | Carga el autoloader de Composer. Gracias al mapeo PSR-4, las clases en `src/app/` se cargan automáticamente al usarlas. |
+| `use App\Core\Router` | Importa la clase Router desde el namespace `App\Core`. |
+| `new Router()` | Crea una instancia del Router. El constructor define el mapa de rutas. |
+| `$router->dispatch()` | Ejecuta el método dispatch que inicia la sesión, lee `?pagina=`, verifica autenticación, encuentra la ruta e instancia el controlador correspondiente. |
 
 ---
 
-## 4. `src/app/core/router.php` — Enrutador Procedural (68 líneas)
+## 4. `src/app/Core/Router.php` — Clase Enrutadora
+
+### Mapa de rutas
+
+```php
+private array $routes = [
+    'login'         => ['controller' => 'LoginController',        'method' => 'index',    'public' => true],
+    'login_validate' => ['controller' => 'LoginController',       'method' => 'validate', 'public' => true],
+    'dashboard'     => ['controller' => 'DashboardController',    'method' => 'index'],
+    'inventario'    => ['controller' => 'InventarioController',   'method' => 'index'],
+    'ventas'        => ['controller' => 'VentasController',       'method' => 'index'],
+    'ciberControl'  => ['controller' => 'CiberControlController', 'method' => 'index'],
+    'proveedores'   => ['controller' => 'ProveedoresController',  'method' => 'index'],
+    'reportes'      => ['controller' => 'ReportesController',     'method' => 'index'],
+    'activos'       => ['controller' => 'ActivosController',      'method' => 'index'],
+    'asesorias'     => ['controller' => 'AsesoriasController',    'method' => 'index'],
+    'menu'          => ['controller' => 'MenuController',         'method' => 'index'],
+];
+```
+
+### Método `dispatch()`
+
+```php
+public function dispatch(): void
+{
+    session_start();
+    $pagina = $_GET["pagina"] ?? 'login';
+
+    if (!preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)) {
+        $pagina = 'login';
+    }
+
+    $route = $this->routes[$pagina] ?? null;
+
+    if (!$route) {
+        http_response_code(404);
+        echo "<h1>Error 404: Página no encontrada</h1>";
+        return;
+    }
+
+    if (empty($route['public']) && !isset($_SESSION['logged_in'])) {
+        header("Location: ?pagina=login");
+        exit;
+    }
+
+    $controllerClass = "App\\Controllers\\{$route['controller']}";
+    $method = $route['method'];
+
+    if (!class_exists($controllerClass)) {
+        throw new \Exception("Controller {$controllerClass} no encontrado");
+    }
+
+    $controller = new $controllerClass();
+    $controller->$method();
+}
+```
+
+| Paso | Explicación |
+|------|-------------|
+| `session_start()` | Inicia la sesión PHP. Debe llamarse antes de cualquier salida. |
+| `$pagina = $_GET["pagina"] ?? 'login'` | Lee el parámetro de la URL. Por defecto: login. |
+| `preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)` | Validación de seguridad: solo caracteres seguros. Previene path traversal. |
+| `$route = $this->routes[$pagina] ?? null` | Busca la ruta en el mapa. null si no existe. |
+| 404 si `$route` es null | Muestra error si la página no está registrada. |
+| `if (empty($route['public']) && !isset($_SESSION['logged_in']))` | Redirige al login si la ruta requiere autenticación y el usuario no ha iniciado sesión. |
+| `$controllerClass = "App\\Controllers\\{$route['controller']}"` | Construye el nombre completo de la clase (con namespace). |
+| `class_exists($controllerClass)` | Verifica que la clase exista (carga automática vía PSR-4). |
+| `$controller = new $controllerClass(); $controller->$method()` | Instancia el controlador y ejecuta el método. |
+
+---
+
+## 5. `src/app/Core/Controller.php` — Clase Base
+
+```php
+abstract class Controller
+{
+    protected array $pageTitles = [
+        'dashboard'    => 'Panel de Control',
+        'inventario'   => 'Gestión de Inventario',
+        'ventas'       => 'Punto de Venta (POS)',
+        'ciberControl' => 'Control de Cybercafé',
+        'proveedores'  => 'Solicitudes a Proveedores',
+        'reportes'     => 'Reportes y Estadísticas',
+        'activos'      => 'Gestión de Activos',
+        'asesorias'    => 'Asesoría Legal',
+    ];
+
+    protected array $extraHeaders = [
+        'ciberControl' => '<span class="chip green white-text">5 Disponibles</span><span class="chip orange white-text">4 Ocupadas</span>',
+    ];
+
+    protected string $currentPage;
+
+    public function __construct()
+    {
+        $this->currentPage = $_GET["pagina"] ?? 'dashboard';
+    }
+
+    protected function render(string $viewPath, array $data = []): void
+    {
+        $pageTitle = $this->pageTitles[$this->currentPage] ?? 'EIS System';
+        $headerExtra = $this->extraHeaders[$this->currentPage] ?? '';
+        $pagina = $this->currentPage;
+        extract($data);
+        $contentView = __DIR__ . '/../Views/' . $viewPath . '.php';
+        require __DIR__ . '/../Views/layouts/main.php';
+    }
+
+    protected function renderPublic(string $viewPath, array $data = []): void
+    {
+        extract($data);
+        require __DIR__ . '/../Views/' . $viewPath . '.php';
+    }
+}
+```
+
+### Métodos
+
+| Método | Descripción |
+|--------|-------------|
+| `render($viewPath, $data)` | Renderiza una vista dentro del layout principal. Establece `$pageTitle`, `$headerExtra`, `$pagina`, extrae `$data` como variables e incluye `layouts/main.php` que a su vez incluye la vista. |
+| `renderPublic($viewPath, $data)` | Renderiza una vista pública sin layout (login, páginas standalone). |
+
+### Variables disponibles en el layout
+
+| Variable | Origen | Propósito |
+|----------|--------|-----------|
+| `$pageTitle` | `$this->pageTitles[$this->currentPage]` | Título en `<title>` y barra de navegación |
+| `$headerExtra` | `$this->extraHeaders[$this->currentPage]` | HTML extra en el header (badges) |
+| `$pagina` | `$this->currentPage` | Nombre de página actual (para clase `active` en sidebar) |
+| `$contentView` | Ruta absoluta a la vista | Incluido dentro del layout |
+
+---
+
+## 6. Controladores
+
+Cada módulo tiene su propio controlador que extiende `Controller`:
+
+| Controlador | Método | Vista | Descripción |
+|-------------|--------|-------|-------------|
+| `LoginController` | `index()` | `auth/login.php` | Muestra formulario de login |
+| `LoginController` | `validate()` | — | Procesa credenciales (POST) |
+| `DashboardController` | `index()` | `dashboard/index.php` | Panel de control |
+| `InventarioController` | `index()` | `inventario/index.php` | Gestión de inventario |
+| `VentasController` | `index()` | `ventas/index.php` | Punto de venta POS |
+| `ProveedoresController` | `index()` | `proveedores/index.php` | Solicitudes a proveedores |
+| `ReportesController` | `index()` | `reportes/index.php` | Reportes y estadísticas |
+| `ActivosController` | `index()` | `activos/index.php` | Activos fijos |
+| `CiberControlController` | `index()` | `ciber-control/index.php` | Cybercafé (datos PHP) |
+| `AsesoriasController` | `index()` | `asesorias/index.php` | Asesoría legal |
+| `MenuController` | `index()` | `menu/index.php` | Menú principal |
+
+### Ejemplo: `CiberControlController`
+
+Este controlador **prepara datos en el servidor** y los pasa a la vista, a diferencia de otros que renderizan datos estáticos:
+
+```php
+class CiberControlController extends Controller
+{
+    public function index(): void
+    {
+        $zonas = [ /* array de zonas y estaciones */ ];
+        $countDisponibles = count(array_filter(..., fn($e) => $e['status'] === 'disponible'));
+        // ... más cálculos ...
+        $this->render('ciber-control/index', compact(
+            'zonas', 'countDisponibles', 'countOcupadas',
+            'countMantenimiento', 'totalEstaciones', 'statusLabels'
+        ));
+    }
+}
+```
+
+---
+
+## 7. Vistas
+
+Organizadas en subdirectorios por módulo:
+
+```
+Views/
+├── auth/login.php              # Pública, standalone (sin layout)
+├── dashboard/index.php         # Protegida, dentro del layout
+├── inventario/index.php
+├── ventas/index.php
+├── proveedores/index.php
+├── reportes/index.php
+├── activos/index.php
+├── ciber-control/index.php
+├── asesorias/index.php
+├── menu/index.php
+└── layouts/main.php            # Layout principal
+```
+
+### `layouts/main.php`
+Proporciona:
+- `<!DOCTYPE html>` y estructura HTML completa
+- Sidebar con Materialize Sidenav (9 módulos + theme toggle + cerrar sesión)
+- Header con nav, reloj, notificaciones, header extra
+- Contenedor `<main>` que incluye `$contentView`
+- Botón "volver arriba"
+- Materialize JS + `app.js`
+
+### Vistas standalone (sin layout)
+- `auth/login.php` — tiene su propio DOCTYPE, head, body. Usa `renderPublic()`.
+
+---
+
+## 8. Seguridad del Sistema
+
+| Aspecto | Implementación |
+|---------|----------------|
+| **Inyección de rutas** | Regex `preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)` en Router |
+| **Autenticación** | Verificación de `$_SESSION['logged_in']` en Router antes de llamar al controlador |
+| **404** | Ruta no encontrada en mapa → `http_response_code(404)` |
+| **CSRF** | Pendiente de implementar |
+| **SQL Injection** | Los modelos usan prepared statements con PDO |
+| **Path Traversal** | El router valida el parámetro `pagina` con regex estricto |
+
+---
+
+## 9. Cómo Agregar una Nueva Página
+
+### Paso 1: Crear el Controlador
+
+Crea `src/app/Controllers/MiPaginaController.php`:
 
 ```php
 <?php
-session_start();
+namespace App\Controllers;
 
-$pagina = "login";
+use App\Core\Controller;
 
-if(!empty($_GET["pagina"])){
-    $pagina = $_GET["pagina"];
-}
-
-if (!preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)) {
-    $pagina = "login";
-}
-
-$public_pages = ['login', 'login_validate'];
-if (!isset($_SESSION['logged_in']) && !in_array($pagina, $public_pages)) {
-    header("Location: ?pagina=login");
-    exit;
-}
-
-$rutaVista = __DIR__ . '/../Views/' . $pagina . '.php';
-
-if(is_file($rutaVista)){
-    if (in_array($pagina, $public_pages)) {
-        require $rutaVista;
-    } else {
-        $titulos = [
-            'dashboard'    => 'Panel de Control',
-            'inventario'   => 'Gestión de Inventario',
-            'ventas'       => 'Punto de Venta (POS)',
-            'ciberControl' => 'Control de Cybercafé',
-            'proveedores'  => 'Solicitudes a Proveedores',
-            'reportes'     => 'Reportes y Estadísticas',
-            'activos'      => 'Gestión de Activos',
-            'asesorias'    => 'Asesoría Legal',
-        ];
-        $extraHeaders = [
-            'ciberControl' => '<span class="chip green white-text" style="border-radius:4px;height:auto;padding:0.1rem 0.5rem;line-height:1.5;font-size:0.75rem;">5 Disponibles</span><span class="chip orange white-text" style="border-radius:4px;height:auto;padding:0.1rem 0.5rem;line-height:1.5;font-size:0.75rem;">4 Ocupadas</span>',
-        ];
-        $pageTitle = $titulos[$pagina] ?? 'EIS System';
-        $headerExtra = $extraHeaders[$pagina] ?? '';
-        $contentView = $rutaVista;
-        require __DIR__ . '/../template/layout.php';
+class MiPaginaController extends Controller
+{
+    public function index(): void
+    {
+        $this->render('mi-pagina/index');
     }
-} else {
-    http_response_code(404);
-    echo "<h1>Error 404: Página no encontrada</h1>";
-    echo "<p>La página <strong>{$pagina}</strong> no existe.</p>";
-    echo "<a href='?pagina=dashboard'>Volver al dashboard</a>";
 }
-?>
 ```
 
-| Línea | Explicación |
-|-------|-------------|
-| `session_start()` | Inicia la sesión PHP para manejar autenticación. Se llama **antes** que cualquier salida al navegador. |
-| `$pagina = "login"` | Valor por defecto: muestra el formulario de login si no se especifica otra página. |
-| `$_GET["pagina"]` | Obtiene el nombre de la página desde la URL: `?pagina=nombre`. |
-| `preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)` | **Validación de seguridad**: solo permite caracteres alfanuméricos, guiones y guiones bajos. Previene path traversal (ej: `?pagina=../../../etc/passwd`). |
-| `$public_pages = ['login', 'login_validate']` | Array whitelist de páginas que no requieren autenticación. |
-| `!isset($_SESSION['logged_in'])` | Verifica si el usuario NO ha iniciado sesión. |
-| `$rutaVista = __DIR__ . '/../Views/' . $pagina . '.php'` | Construye la ruta absoluta al archivo de vista. Ej: `/dashboard.php`. |
-| `is_file($rutaVista)` | Verifica que el archivo exista en el sistema de archivos antes de incluirlo. |
-| `$titulos = [...]` | Array asociativo que mapea cada nombre de página a su título mostrado en el `<title>` y `brand-logo`. Incluye 8 módulos. |
-| `$pageTitle = $titulos[$pagina] ?? 'EIS System'` | Operador null coalescing: si la página no está en el array, usa 'EIS System' como fallback. |
-| `$contentView = $rutaVista` | Variable que contiene la ruta de la vista a incluir dentro del layout. |
-| `require __DIR__ . '/../template/layout.php'` | Incluye el layout maestro, que a su vez hará `require $contentView`. |
-| `http_response_code(404)` | Establece código HTTP 404 si el archivo de vista no existe. |
+### Paso 2: Crear la Vista
 
-### Flujo de autenticación
-
-```
-Petición → router.php → ¿$pagina en $public_pages?
-  ├── Sí (login, login_validate) → carga directa sin layout
-  └── No → ¿$_SESSION['logged_in'] === true?
-       ├── Sí → carga layout.php + vista
-       └── No → header('Location: ?pagina=login') + exit
-```
-
-### Seguridad implementada
-
-1. **Validación regex del parámetro `pagina`**: Solo alfanumérico + guiones. Previene inclusión de archivos maliciosos.
-2. **Whitelist de páginas públicas**: Solo `login` y `login_validate` son accesibles sin autenticación.
-3. **Verificación de existencia de archivo**: `is_file()` antes de `require`. Si el archivo no existe, muestra 404.
-4. **Sin inclusión dinámica de rutas**: La ruta se construye concatenando un directorio base fijo con el nombre validado.
-
----
-
-## 5. `src/app/template/layout.php` — Layout Maestro (128 líneas)
-
-Fragmento relevante del sidebar:
-
-```php
-<li><a href="?pagina=dashboard" class="sidenav-link<?php echo $pagina === 'dashboard' ? ' active' : ''; ?>">
-    <i class="material-icons left">dashboard</i>Dashboard</a></li>
-<li><a href="?pagina=asesorias" class="sidenav-link<?php echo $pagina === 'asesorias' ? ' active' : ''; ?>">
-    <i class="material-icons left">gavel</i>Asesoría Legal</a></li>
-<li><a href="?pagina=login" class="sidenav-link"><i class="material-icons left">logout</i>Cerrar Sesión</a></li>
-```
-
-| Característica | Descripción |
-|----------------|-------------|
-| URLs | `?pagina=nombre` (formato query string) |
-| Assets | `Public/css/styles.css` (rutas relativas) |
-| Cierre sesión | `?pagina=login` (redirige al login, no destruye sesión explícitamente) |
-| Módulos | 8 + Theme toggle + Cerrar sesión |
-| Clase active | Se agrega dinámicamente comparando `$pagina` con cada ruta |
-
----
-
-## 6. Seguridad del Sistema
-
-| Aspecto | Cómo se maneja |
-|---------|----------------|
-| **Inyección de rutas** | Regex `preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)` antes de construir la ruta. |
-| **Autenticación** | Verificación de `$_SESSION['logged_in']` antes de cargar páginas protegidas. |
-| **Existencia de archivos** | `is_file()` antes de `require`. Las páginas inexistentes reciben 404. |
-| **CSRF** | Pendiente de implementar (token CSRF en formularios). |
-| **SQL Injection** | Los modelos usan prepared statements con PDO. |
-| **Path Traversal** | El router valida el parámetro `pagina` con regex y solo permite caracteres seguros. |
-
----
-
-## 7. Cómo Agregar una Nueva Página
-
-Para agregar una nueva página al sistema, sigue estos 3 pasos:
-
-### Paso 1: Crear la vista
-
-Crea `src/app/Views/mi-pagina.php` con el contenido HTML de la página (sin DOCTYPE, solo el contenido que irá dentro del layout):
+Crea `src/app/Views/mi-pagina/index.php` con el contenido HTML:
 
 ```html
 <div class="card">
@@ -248,105 +367,115 @@ Crea `src/app/Views/mi-pagina.php` con el contenido HTML de la página (sin DOCT
 </div>
 ```
 
-### Paso 2: Registrar el título
+### Paso 3: Registrar la Ruta
 
-En `src/app/core/router.php`, agrega la entrada en el array `$titulos`:
-
-```php
-$titulos = [
-    ...
-    'mi-pagina' => 'Título de mi página',
-];
-```
-
-También puedes agregar `$extraHeaders` si necesitas HTML extra en el header.
-
-### Paso 3: Agregar al menú
-
-En `src/app/template/layout.php`, agrega un enlace en el `<ul class="sidenav">`:
+En `src/app/Core/Router.php`, agrega la ruta en el constructor:
 
 ```php
-<li><a href="?pagina=mi-pagina" class="sidenav-link<?php echo $pagina === 'mi-pagina' ? ' active' : ''; ?>">
-    <i class="material-icons left">icon_name</i>Mi Página</a></li>
+'mi-pagina' => ['controller' => 'MiPaginaController', 'method' => 'index'],
 ```
 
-### Si la página no requiere autenticación
+### Paso 4: Agregar al título
 
-Agrega el nombre al array `$public_pages` en router.php:
+En `src/app/Core/Controller.php`, agrega el título en `$pageTitles`:
 
 ```php
-$public_pages = ['login', 'login_validate', 'mi-pagina-publica'];
+'mi-pagina' => 'Título de mi página',
+```
+
+### Paso 5: Agregar al menú
+
+En `src/app/Views/layouts/main.php`, agrega un enlace en el `<ul class="sidenav">`.
+
+### Si la página es pública
+
+Agrega `'public' => true` en la ruta y usa `$this->renderPublic()` en el controlador.
+
+---
+
+## 10. Mapa de Páginas
+
+| Parámetro | Controlador | Método | Vista | ¿Pública? |
+|-----------|-------------|--------|-------|-----------|
+| `login` | `LoginController` | `index()` | `auth/login.php` | Sí |
+| `login_validate` | `LoginController` | `validate()` | — (solo lógica) | Sí |
+| `dashboard` | `DashboardController` | `index()` | `dashboard/index.php` | No |
+| `inventario` | `InventarioController` | `index()` | `inventario/index.php` | No |
+| `ventas` | `VentasController` | `index()` | `ventas/index.php` | No |
+| `ciberControl` | `CiberControlController` | `index()` | `ciber-control/index.php` | No |
+| `proveedores` | `ProveedoresController` | `index()` | `proveedores/index.php` | No |
+| `reportes` | `ReportesController` | `index()` | `reportes/index.php` | No |
+| `activos` | `ActivosController` | `index()` | `activos/index.php` | No |
+| `asesorias` | `AsesoriasController` | `index()` | `asesorias/index.php` | No |
+| `menu` | `MenuController` | `index()` | `menu/index.php` | No |
+
+---
+
+## 11. Diferencia con la Arquitectura Anterior (Procedural)
+
+| Aspecto | Antes (Procedural) | Ahora (MVC) |
+|---------|-------------------|-------------|
+| **Enrutador** | `router.php` (68 líneas, procedural, sin clase) | `Core/Router.php` (clase con namespace, mapa de rutas) |
+| **Punto de entrada** | `require_once router.php` directo | `vendor/autoload.php` + `new Router()` + `->dispatch()` |
+| **Controladores** | No existían (lógica en vistas) | 10 clases en `Controllers/` con namespace |
+| **Layout** | `app/template/layout.php` | `Views/layouts/main.php` |
+| **Vistas** | `Views/dashboard.php` (plano) | `Views/dashboard/index.php` (subdirectorios) |
+| **Autoloader** | No usado | Composer PSR-4 (`vendor/autoload.php`) |
+| **Lógica de login** | `Views/login_validate.php` (vista) | `LoginController::validate()` (controlador) |
+| **Datos de Cyber** | En la vista (`ciberControl.php`) | En el controlador (`CiberControlController`) |
+| **Títulos** | En el router (`$titulos[]`) | En la clase base `Controller::$pageTitles` |
+| **composer.json** | `"App\\": "src/"` | `"App\\": "src/app/"` |
+
+---
+
+## 12. Flujo Completo de una Petición
+
+```
+Usuario: GET /eis_zona_web_lara/src/?pagina=dashboard
+
+1. Apache recibe la petición
+   └── src/.htaccess → RewriteRule ^(.*)$ index.php [QSA,L]
+
+2. index.php:
+   ├── require vendor/autoload.php (carga clases PSR-4)
+   ├── use App\Core\Router
+   ├── new Router() (define mapa de rutas)
+   └── $router->dispatch()
+
+3. Router::dispatch():
+   ├── session_start()
+   ├── $pagina = "dashboard"
+   ├── preg_match → OK
+   ├── $route = ['controller' => 'DashboardController', 'method' => 'index']
+   ├── ¿$_SESSION['logged_in']? → Sí (o redirige a login)
+   ├── class_exists("App\Controllers\DashboardController") → Sí
+   ├── $controller = new DashboardController()
+   └── $controller->index()
+
+4. DashboardController::index():
+   └── $this->render('dashboard/index')
+
+5. Controller::render('dashboard/index'):
+   ├── $pageTitle = 'Panel de Control'
+   ├── $contentView = __DIR__ . '/../Views/dashboard/index.php'
+   └── require __DIR__ . '/../Views/layouts/main.php'
+
+6. layouts/main.php:
+   ├── <html><head> con Materialize CSS + jQuery
+   ├── Sidebar con enlaces a módulos
+   ├── Header con reloj y notificaciones
+   ├── <main> → require $contentView (dashboard/index.php)
+   └── Scripts: Materialize JS + app.js
+
+7. app.js (cliente):
+   ├── Inicializa componentes Materialize
+   ├── Reloj digital, animación de contadores
+   └── Búsquedas, filtros, carrito, etc.
 ```
 
 ---
 
-## 8. Mapa de Páginas Actual
-
-| Parámetro | Archivo | Autenticación | Título |
-|-----------|---------|---------------|--------|
-| `login` | `login.php` | No | Login |
-| `login_validate` | `login_validate.php` | No | — |
-| `dashboard` | `dashboard.php` | Sí | Panel de Control |
-| `inventario` | `inventario.php` | Sí | Gestión de Inventario |
-| `ventas` | `ventas.php` | Sí | Punto de Venta (POS) |
-| `ciberControl` | `ciberControl.php` | Sí | Control de Cybercafé |
-| `proveedores` | `proveedores.php` | Sí | Solicitudes a Proveedores |
-| `reportes` | `reportes.php` | Sí | Reportes y Estadísticas |
-| `activos` | `activos.php` | Sí | Gestión de Activos |
-| `asesorias` | `asesorias.php` | Sí | Asesoría Legal |
-| `menu` | `menu.php` | Sí | — |
-
----
-
-## 9. Diferencia con la Arquitectura MVC Planificada
-
-| Aspecto | Actual (Procedural) | Planificado (MVC) |
-|---------|---------------------|-------------------|
-| **Enrutador** | `router.php` (68 líneas, procedural) | `Core/Router.php` (clase con namespace) |
-| **Controladores** | No existen (la lógica está en vistas) | `Controllers/*Controller.php` |
-| **Request** | Uso directo de `$_GET`, `$_POST` | `Core/Request.php` (clase encapsuladora) |
-| **Layout** | Variable `$contentView` + `require` | `Controller::renderWithLayout()` |
-| **URLs** | `?pagina=nombre` | `/nombre` (URLs limpias) |
-| **Middleware** | No existe (if directo en router) | Sistema de middleware con `auth` |
-| **Autoloader** | No usado (includes directos) | Composer PSR-4 (vendor/autoload.php) |
-| **Base URL** | No implementada | Constante `BASE_URL` calculada automáticamente |
-
----
-
-## 10. Resumen del Flujo de una Petición
-
-```
-Usuario escribe:  http://localhost/eis_zona_web_lara/src/?pagina=dashboard
-
-1. Apache recibe GET /src/?pagina=dashboard
-2. src/.htaccess: ¿Existe el archivo /src/? No → rewrite a index.php
-3. index.php: require_once router.php
-4. router.php:
-   a. session_start()
-   b. $pagina = "dashboard"
-   c. preg_match: validación de seguridad → OK
-   d. ¿$_SESSION['logged_in']? → Sí
-   e. $rutaVista = /../Views/dashboard.php
-   f. is_file() → Sí
-   g. $pageTitle = 'Panel de Control'
-   h. $contentView = $rutaVista
-   i. require layout.php
-5. layout.php:
-   a. <html><head> con Materialize + jQuery
-   b. Sidebar con enlaces a módulos
-   c. Header con reloj y notificaciones
-   d. <main> → require dashboard.php
-   e. Scripts: Materialize JS + app.js
-6. app.js (cliente):
-   a. Inicializa componentes Materialize
-   b. Actualiza reloj digital
-   c. Anima contadores de métricas
-7. Se envía HTML completo al navegador
-```
-
----
-
-## 11. Pruebas Realizadas
+## 13. Pruebas Realizadas
 
 | Prueba | Resultado |
 |--------|-----------|
@@ -355,12 +484,13 @@ Usuario escribe:  http://localhost/eis_zona_web_lara/src/?pagina=dashboard
 | Login con credenciales incorrectas → error | ✅ PASS |
 | Acceder a dashboard sin sesión → redirige a login | ✅ PASS |
 | Cargar inventario, ventas, etc. con sesión | ✅ PASS |
-| Parámetro `?pagina=inexistente` → 404 | ✅ PASS |
-| Parámetro malicioso `?pagina=../../../etc` → redirige a login | ✅ PASS |
+| `?pagina=inexistente` → 404 | ✅ PASS |
+| `?pagina=../../../etc` → redirige a login | ✅ PASS |
+| Autoloader PSR-4 carga Router y Controllers | ✅ PASS |
 | Tema oscuro/claro persiste en localStorage | ✅ PASS |
-| Carrito POS agrega/elimina productos | ✅ PASS |
+| Carrito POS agrega/quita productos | ✅ PASS |
 | Cyber toggle de estados | ✅ PASS |
 | Asesoría valida documentos permitidos/denegados | ✅ PASS |
 | Búsqueda en tablas filtra correctamente | ✅ PASS |
 | Paginación cambia de página visualmente | ✅ PASS |
-| Botón volver arriba funciona | ✅ PASS |
+| Todos los archivos PHP sin errores de sintaxis (27/27) | ✅ PASS |

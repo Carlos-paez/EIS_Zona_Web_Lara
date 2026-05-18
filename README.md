@@ -1,301 +1,357 @@
-# EIS_Zona_Web_Lara - Sistema de Gestión Empresarial
+# EIS_Zona_Web_Lara — Sistema de Gestión Empresarial
 
-## Descripcion
+## Descripción
 
-**EIS System** es una aplicacion web de gestion empresarial desarrollada en **PHP vanilla** con **Materialize CSS** y **jQuery**. El proyecto esta disenado para administrar multiples aspectos de un negocio que incluye: ventas (POS), inventario, proveedores, activos fijos, control de cybercafe y asesoria legal.
+**EIS System** es una aplicación web de gestión empresarial desarrollada en **PHP vanilla** con **Materialize CSS** y **jQuery**. Utiliza una arquitectura **MVC** (Modelo-Vista-Controlador) con enrutador basado en clases, namespaces PSR-4 y autoloading con Composer.
 
-**NOTA IMPORTANTE**: A pesar del nombre "eis_zona_web_lara", este proyecto **NO es Laravel**. Es una aplicacion PHP personalizada con enrutador procedural y diseno Material Design.
+El sistema administra múltiples aspectos de un negocio: ventas (POS), inventario, proveedores, activos fijos, control de cybercafé y asesoría legal.
 
 ---
 
 ## Estado Actual del Proyecto
 
 ### Implementado (Funcional)
-- **Sistema de Login** - Autenticacion con sesiones PHP (credenciales: admin / 1234)
-- **Sistema de Layout** - Template maestro con sidebar persistente, header y footer
-- **Enrutador Central** - Router.php maneja navegacion, autenticacion y layout
-- **Tema Oscuro/Claro** - Toggle con persistencia en localStorage via jQuery
-- **Reloj en Tiempo Real** - Clock actualizado via JavaScript
-- **Sistema de Notificaciones** - Toast notifications con Materialize
-- **Carrito de Compras (POS)** - Funcionalidad completa en JavaScript con modal
-- **Control de Estaciones Cyber** - Toggle de estados con animaciones jQuery
-- **Busqueda en Tablas** - Filtros con debounce en inventario, proveedores, activos y asesorias
-- **Filtro por Estado** - Select dinamico para filtrar registros
-- **Paginacion** - UI de paginacion con navegacion
-- **Animacion de Contadores** - Metricas con animacion progresiva
-- **Validacion de Asesoria Legal** - Validacion frontend de documentos permitidos
-- **Esquema de Base de Datos** - Completo con 19 tablas, 26 indices, vistas, funciones y procedimientos
-- **Modelos CRUD** - crud_users.php (8 funciones) y crud_asesorias.php (8 funciones) con PDO preparado
-- **Documentacion de BD** - Completa y detallada (3 archivos MD)
+- **Arquitectura MVC** — Namespaces PSR-4, clases `Core\Router`, `Core\Controller`, 10 controladores por módulo
+- **Sistema de Login** — Autenticación con sesiones PHP (credenciales: admin / 1234)
+- **Sistema de Layout** — Template maestro con sidebar persistente, header y footer
+- **Enrutador Central** — `Router.php` clase con mapa de rutas, dispatch a controladores y auth
+- **Tema Oscuro/Claro** — Toggle con persistencia en localStorage
+- **Reloj en Tiempo Real** — Clock actualizado vía JavaScript
+- **Sistema de Notificaciones** — Toast notifications con Materialize
+- **Carrito de Compras (POS)** — Funcionalidad completa en JavaScript con modal
+- **Control de Estaciones Cyber** — Toggle de estados con animaciones jQuery
+- **Búsqueda en Tablas** — Filtros con debounce en inventario, proveedores, activos y asesorías
+- **Filtro por Estado** — Select dinámico para filtrar registros
+- **Paginación** — UI de paginación con navegación
+- **Animación de Contadores** — Métricas con animación progresiva
+- **Validación de Asesoría Legal** — Validación frontend de documentos permitidos
+- **Esquema de Base de Datos** — Completo con 19 tablas, vistas, funciones y procedimientos
+- **Modelos CRUD** — `crud_users.php` (8 funciones) y `crud_asesorias.php` (8 funciones) con PDO preparado
 
-### Parcialmente Implementado (UI Estatica)
-- **Dashboard** - Metricas estaticas con animacion (deberian venir de consultas SQL)
-- **Inventario** - Interfaz con tabla, busqueda y filtros pero sin conexion a BD
-- **Ventas (POS)** - Carrito funciona pero no guarda en BD (solo simulacion)
-- **Cyber Control** - Cambios de estado temporales (no persisten en BD)
-- **Solicitudes** - Interfaz con tabla y filtros sin funcionalidad backend
-- **Activos** - Visualizacion estatica con busqueda
-- **Reportes** - Generador simulado con toasts
-- **Asesoria Legal** - Validacion frontend sin persistencia en BD
+### Parcialmente Implementado (UI Estática)
+- **Dashboard** — Métricas estáticas (deberían venir de consultas SQL)
+- **Inventario** — Interfaz con tabla, búsqueda y filtros pero sin conexión a BD
+- **Ventas (POS)** — Carrito funciona pero no guarda en BD (solo simulación)
+- **Cyber Control** — Cambios de estado temporales (no persisten en BD)
+- **Solicitudes** — Interfaz con tabla y filtros sin funcionalidad backend
+- **Activos** — Visualización estática con búsqueda
+- **Reportes** — Generador simulado con toasts
+- **Asesoría Legal** — Validación frontend sin persistencia en BD
 
 ### No Implementado
-- **Persistencia en BD** - Las vistas no se conectan a la base de datos
-- **CRUD via AJAX** - No hay operaciones create, update, delete reales via backend
-- **Controladores MVC** - Arquitectura actual es procedural (sin clases)
-- **Seguridad** - Credenciales hardcodeadas, sin CSRF, sin password hashing en login
+- **Persistencia en BD** — Las vistas no se conectan a la base de datos
+- **CRUD vía AJAX** — No hay operaciones create, update, delete reales vía backend
+- **Seguridad** — Credenciales hardcodeadas, sin CSRF, sin password hashing en login
 
 ---
 
-## Estructura del Proyecto
+## Estructura del Proyecto (MVC)
 
 ```
 eis_zona_web_lara/
 ├── src/
-│   ├── index.php                      # Punto de entrada (6 lineas)
+│   ├── index.php                      # Front Controller con autoloader + Router
 │   ├── .htaccess                      # Reglas de reescritura Apache
 │   ├── Config/
-│   │   └── database.php               # Configuracion BD (PDO + MySQL)
+│   │   └── database.php               # Configuración BD (PDO + MySQL)
 │   ├── app/
-│   │   ├── core/
-│   │   │   └── router.php             # Enrutador + layout (68 lineas)
+│   │   ├── Core/
+│   │   │   ├── Router.php             # Enrutador con dispatch a Controllers
+│   │   │   └── Controller.php         # Clase base abstracta (render, renderPublic)
+│   │   ├── Controllers/
+│   │   │   ├── LoginController.php    # index() + validate()
+│   │   │   ├── DashboardController.php
+│   │   │   ├── InventarioController.php
+│   │   │   ├── VentasController.php
+│   │   │   ├── ProveedoresController.php
+│   │   │   ├── ReportesController.php
+│   │   │   ├── ActivosController.php
+│   │   │   ├── CiberControlController.php  # Datos PHP movidos del view al controller
+│   │   │   ├── AsesoriasController.php
+│   │   │   └── MenuController.php
 │   │   ├── Models/
-│   │   │   ├── crud_users.php         # CRUD usuarios (54 lineas, 8 funciones)
-│   │   │   └── crud_asesorias.php     # CRUD asesorias (49 lineas, 8 funciones)
-│   │   ├── template/
-│   │   │   └── layout.php             # Layout maestro con Materialize + jQuery (128 lineas)
+│   │   │   ├── crud_users.php         # CRUD usuarios (8 funciones)
+│   │   │   └── crud_asesorias.php     # CRUD asesorías (8 funciones)
 │   │   └── Views/
-│   │       ├── login.php              # Login (123 lineas)
-│   │       ├── login_validate.php     # Validacion (30 lineas)
-│   │       ├── dashboard.php          # Panel principal (130 lineas)
-│   │       ├── inventario.php         # Gestion inventario (129 lineas)
-│   │       ├── ventas.php             # POS con carrito (130 lineas)
-│   │       ├── proveedores.php        # Solicitudes (115 lineas)
-│   │       ├── reportes.php           # Reportes (139 lineas)
-│   │       ├── activos.php            # Activos (207 lineas)
-│   │       ├── ciberControl.php       # Control cyber (133 lineas)
-│   │       ├── asesorias.php          # Asesoria legal (128 lineas)
-│   │       └── menu.php               # Menu alternativo (158 lineas)
+│   │       ├── auth/login.php         # Formulario de inicio de sesión
+│   │       ├── dashboard/index.php
+│   │       ├── inventario/index.php
+│   │       ├── ventas/index.php
+│   │       ├── proveedores/index.php
+│   │       ├── reportes/index.php
+│   │       ├── activos/index.php
+│   │       ├── ciber-control/index.php
+│   │       ├── asesorias/index.php
+│   │       ├── menu/index.php
+│   │       └── layouts/main.php       # Layout maestro (sidebar + header)
 │   ├── Database/
-│   │   ├── estructura.sql             # Esquema BD v2.0 (19 tablas, 526 lineas)
-│   │   └── datos_prueba.sql           # Datos prueba (229 lineas)
+│   │   ├── estructura.sql             # Esquema BD v2.0 (19 tablas)
+│   │   └── datos_prueba.sql           # Datos de prueba
 │   └── Public/
 │       ├── css/
-│       │   ├── styles.css             # Estilos personalizados (587 lineas)
-│       │   └── login.css              # Estilos login (65 lineas)
+│       │   ├── styles.css             # Estilos personalizados
+│       │   └── login.css              # Estilos login
 │       └── js/
-│           └── app.js                 # JS comun con jQuery (525 lineas)
+│           └── app.js                 # JS con jQuery
 ├── docs/
-│   ├── database-conceptual-design.md  # Diseno conceptual (581 lineas)
-│   ├── database-logical-design.md     # Diseno logico (448 lineas)
-│   ├── database-physical-design.md    # Diseno fisico (268 lineas)
-│   ├── routing-system.md              # Sistema de enrutamiento
-│   ├── diagrama-de-clases.md          # Diagrama de clases
-│   └── *.pdf                          # Versiones PDF
+│   ├── database-conceptual-design.md
+│   ├── database-logical-design.md
+│   ├── database-physical-design.md
+│   ├── routing-system.md
+│   └── diagrama-de-clases.md
 ├── vendor/                            # Autoloader de Composer
-├── composer.json                      # Configuracion Composer
-├── DOCUMENTACION.md                   # Documentacion tecnica (linea por linea)
-├── DOCUMENTACION_JQUERY.md            # Documentacion integracion jQuery
-├── DOCUMENTACION_COMPLETA.md          # Documentacion completa para NotebookLM
-└── README.md                          # Este archivo
+├── composer.json                      # PSR-4: "App\\": "src/app/"
+├── DOCUMENTACION.md
+├── DOCUMENTACION_JQUERY.md
+├── DOCUMENTACION_COMPLETA.md
+└── README.md
 ```
 
 ---
 
-## Tecnologias Utilizadas
+## Tecnologías Utilizadas
 
 ### Backend
-- **PHP 7.4+** - Lenguaje principal (sin frameworks)
-- **PDO (PHP Data Objects)** - Capa de abstraccion de BD con prepared statements
-- **MySQL 8.0+ / MariaDB 10.3+** - Sistema de gestion de BD
-- **Motor InnoDB** - Soporte para transacciones y claves foraneas
+- **PHP 7.4+** — Lenguaje principal con namespaces y POO
+- **PDO (PHP Data Objects)** — Capa de abstracción de BD con prepared statements
+- **MySQL 8.0+ / MariaDB 10.3+** — Sistema de gestión de BD
+- **Motor InnoDB** — Soporte para transacciones y claves foráneas
+- **Composer** — Autocargador de clases PSR-4
 
 ### Frontend
-- **Materialize CSS 1.0.0** - Framework de diseno Material Design (CDN)
-- **jQuery 3.7.1** - Manipulacion del DOM y eventos (CDN)
-- **HTML5** - Estructura semantica
-- **CSS3** - Variables CSS, Flexbox, Grid, Media Queries, tema oscuro/claro
-- **Google Fonts / Material Icons** - Tipografia e iconografia
-
-### Herramientas
-- **Composer** - Autocargador de clases (PSR-4)
-- **Git** - Control de versiones
+- **Materialize CSS 1.0.0** — Framework de diseño Material Design (CDN)
+- **jQuery 3.7.1** — Manipulación del DOM y eventos (CDN)
+- **HTML5** — Estructura semántica
+- **CSS3** — Variables CSS, Flexbox, Grid, Media Queries, tema oscuro/claro
+- **Google Fonts / Material Icons** — Tipografía e iconografía
 
 ---
 
-## Modulos del Sistema
+## Módulos del Sistema
 
-| Modulo | Descripcion | Estado | Archivo |
-|---------|-------------|--------|---------|
-| **Login** | Autenticacion de usuarios | Funcional | `login.php` |
-| **Dashboard** | Panel principal con metricas | UI Estatica | `dashboard.php` |
-| **Inventario** | Gestion de productos y stock | UI Estatica | `inventario.php` |
-| **Punto de Venta** | Sistema POS con carrito modal | Semi-funcional* | `ventas.php` |
-| **Cyber Control** | Control de estaciones | Interactivo* | `ciberControl.php` |
-| **Solicitudes** | Pedidos a proveedores | UI Estatica | `proveedores.php` |
-| **Reportes** | Generacion de estadisticas | Simulado | `reportes.php` |
-| **Activos** | Control de activos fijos | UI Estatica | `activos.php` |
-| **Asesoria Legal** | Validacion de documentos | Semi-funcional* | `asesorias.php` |
-| **Menu** | Menu de navegacion alternativo | Funcional | `menu.php` |
+| Módulo | Controlador | Vista | Estado |
+|--------|-------------|-------|--------|
+| **Login** | `LoginController` | `auth/login.php` | Funcional |
+| **Dashboard** | `DashboardController` | `dashboard/index.php` | UI Estática |
+| **Inventario** | `InventarioController` | `inventario/index.php` | UI Estática |
+| **Punto de Venta** | `VentasController` | `ventas/index.php` | Semi-funcional* |
+| **Cyber Control** | `CiberControlController` | `ciber-control/index.php` | Interactivo* |
+| **Solicitudes** | `ProveedoresController` | `proveedores/index.php` | UI Estática |
+| **Reportes** | `ReportesController` | `reportes/index.php` | Simulado |
+| **Activos** | `ActivosController` | `activos/index.php` | UI Estática |
+| **Asesoría Legal** | `AsesoriasController` | `asesorias/index.php` | Semi-funcional* |
+| **Menú** | `MenuController` | `menu/index.php` | Funcional |
 
 *Funcionalidad del lado del cliente (JavaScript/jQuery) pero sin persistencia en BD.
 
 ---
 
-## Instalacion y Configuracion
+## Instalación y Configuración
 
 ### Requisitos
 - PHP 7.4 o superior
 - MySQL 8.0 o superior / MariaDB 10.3+
 - Servidor web (Apache/Nginx/XAMPP/WAMP/Laragon)
+- Composer (para el autoloader)
 
 ### Pasos
 
 1. **Clonar el repositorio**
    ```bash
-   git clone https://gitlab.com/carlos.paezguerra/eis_zona_web_lara.git
+   git clone <url-del-repositorio>
    cd eis_zona_web_lara
    ```
 
-2. **Configurar la base de datos**
+2. **Instalar dependencias (autoloader)**
+   ```bash
+   composer install
+   ```
 
+3. **Configurar la base de datos**
+   
    Editar `src/Config/database.php`:
    ```php
    $host = "localhost";
    $db = "zwl";
    $user = "root";
-   $pass = "";  // Cambiar por tu contrasena
+   $pass = "";  // Cambiar por tu contraseña
    ```
 
-3. **Crear la base de datos**
+4. **Crear la base de datos**
    ```bash
    mysql -u root -p < src/Database/estructura.sql
    mysql -u root -p < src/Database/datos_prueba.sql
    ```
 
-4. **Configurar el servidor web**
+5. **Configurar el servidor web**
+   
+   Asegúrate de que el directorio raíz apunte a la carpeta `src/` o configura un host virtual.
 
-   Asegurate de que el directorio raiz apunte a la carpeta `src/` o configura un host virtual.
-
-5. **Acceder a la aplicacion**
+6. **Acceder a la aplicación**
    ```
    URL: http://localhost/eis_zona_web_lara/src/
    Usuario: admin
-   Contrasena: 1234
+   Contraseña: 1234
    ```
 
 ---
 
-## Documentacion Disponible
+## Arquitectura MVC
 
-### DOCUMENTACION.md
-Documentacion tecnica **linea por linea** de todo el codigo fuente:
-- Explicacion detallada de cada funcion y su proposito
-- Cada linea de codigo explicada
-- Flujo de ejecucion detallado
-- Parametros y valores de retorno
-- Conceptos de PHP, PDO, JavaScript, jQuery, y CSS explicados
+### Flujo de una petición
 
-### DOCUMENTACION_JQUERY.md
-Documentacion especifica de la integracion de **jQuery 3.7.1** y **Materialize CSS**:
-- Migracion de JS vanilla a jQuery
-- Layout maestro y refactorizacion de vistas
-- Archivo `app.js` explicado linea por linea
+```
+Navegador → src/.htaccess → src/index.php
+                                   │
+                          require vendor/autoload.php
+                                   │
+                          new Router()
+                                   │
+                          $router->dispatch()
+                                   │
+                    ┌──────────────┼──────────────┐
+                    ▼                             ▼
+               ¿Autenticado?               ¿Ruta existe?
+                    │                             │
+          ┌─────────┤                             ▼
+          ▼         ▼                        Error 404
+       No ──→ redirect login
+          Sí
+          │
+          ▼
+   Instanciar Controller::method()
+          │
+          ▼
+   Controller::render('vista', $data)
+          │
+     ┌────┴────┐
+     ▼         ▼
+  layout    Vista
+  main.php  específica
+     │
+     ▼
+   Respuesta HTML
+```
 
-### docs/database-*.md
-Documentacion completa de la base de datos (v2.0):
+### Enrutador (`Router.php`)
+- Mapa de rutas: `?pagina=xxx` → `[Controller, method]`
+- Control de autenticación (rutas públicas vs protegidas)
+- Instanciación automática del controlador vía PSR-4
+- Manejo de errores 404
+
+### Controladores
+- Extienden `Core\Controller`
+- `render($viewPath, $data)` — renderiza vista dentro del layout
+- `renderPublic($viewPath, $data)` — renderiza vista standalone (login)
+- `CiberControlController` prepara datos PHP en el servidor y los pasa a la vista
+
+### Vistas
+- Organizadas en subdirectorios por módulo (`dashboard/index.php`)
+- Solo contienen HTML y PHP de presentación (sin lógica de negocio)
+- `layouts/main.php` — layout principal con sidebar y navbar
+
+### Modelos
+- Funciones CRUD con consultas preparadas PDO
+- `crud_users.php` — autenticación con `password_hash`/`password_verify`
+- `crud_asesorias.php` — registro de asesorías con estados
+
+---
+
+## Documentación Disponible
+
+### `DOCUMENTACION.md`
+Documentación técnica **línea por línea** de todo el código fuente.
+
+### `DOCUMENTACION_JQUERY.md`
+Documentación específica de la integración de **jQuery 3.7.1** y **Materialize CSS**.
+
+### `DOCUMENTACION_COMPLETA.md`
+Documentación completa para NotebookLM.
+
+### `docs/database-*.md`
+Documentación completa de la base de datos (v2.0):
 - **Conceptual**: Diagramas ER, entidades, relaciones, reglas de negocio
-- **Logico**: Esquemas SQL, tipos de datos, indices, normalizacion
-- **Fisico**: Almacenamiento InnoDB, particionamiento, configuracion MySQL
+- **Lógico**: Esquemas SQL, tipos de datos, índices, normalización
+- **Físico**: Almacenamiento InnoDB, particionamiento, configuración MySQL
 
 ---
 
 ## Problemas Conocidos
 
-### Errores y Typos
-1. **`login.css`** - No hay variables `--border` y `--shadow` declaradas en login (usadas inline)
-2. **`.idea/laravel-idea.xml`** - Referencia incorrecta a Laravel
+### Seguridad
+1. **Credenciales Hardcodeadas** — Usuario y contraseña en `LoginController.php`
+2. **Sin CSRF Protection** — Formularios sin tokens de protección
+3. **Sin Password Hashing** — Contraseñas en texto plano en el login
+4. **Configuración de BD** — `echo "Conexión exitosa"` rompería respuestas JSON
 
-### Problemas de Seguridad
-1. **Credenciales Hardcodeadas** - Usuario y contrasena en codigo fuente
-2. **Sin CSRF Protection** - Formularios sin tokens de proteccion
-3. **Sin Password Hashing** - Contrasenas en texto plano en el login
-4. **Configuracion de BD** - `echo "Conexion exitosa"` romperia respuestas JSON
-
-### Problemas de Arquitectura
-1. **Sin Separacion de Capas** - Vistas contienen logica de negocio
-2. **Sin Modelos Usados** - Los modelos existen pero no se incluyen en vistas
-3. **Datos Estaticos** - Vistas no se conectan a la base de datos
-4. **Sin .env** - Configuracion no flexible
+### Arquitectura
+1. **Modelos No Usados** — Los modelos existen pero no se incluyen en los controladores
+2. **Datos Estáticos** — Vistas no se conectan a la base de datos
+3. **Sin .env** — Configuración no flexible
 
 ---
 
-## Proximos Pasos Recomendados
+## Próximos Pasos Recomendados
 
-### Fase 1: Conexion a Base de Datos
+### Fase 1: Conexión a Base de Datos
 - [ ] Conectar Dashboard con consultas SQL reales
 - [ ] Hacer que el carrito POS persista ventas en BD
-- [ ] Implementar CRUD de productos via AJAX
-- [ ] Persistir cambios de estado en cybercafe
+- [ ] Implementar CRUD de productos vía AJAX
+- [ ] Persistir cambios de estado en cybercafé
 
-### Fase 2: Migracion a MVC
-- [ ] Crear controladores con namespaces (App\Controllers)
-- [ ] Migrar router procedural a Router con clases
-- [ ] Implementar Request y Controller como clases base
-- [ ] Separar logica de negocio de las vistas
+### Fase 2: Mejoras MVC
+- [ ] Convertir models procedurales a clases con namespace
+- [ ] Implementar Request como clase encapsuladora
+- [ ] Agregar sistema de middleware (auth, CSRF)
+- [ ] Implementar URLs limpias (/nombre en lugar de ?pagina=nombre)
 
 ### Fase 3: Seguridad
-- [ ] Implementar password_hash() para contrasenas
+- [ ] Implementar `password_hash()` para contraseñas
 - [ ] Agregar CSRF tokens
 - [ ] Sanitizar entrada de datos
-- [ ] Usar sentencias preparadas (ya configurado PDO)
+- [ ] Usar prepared statements desde los controladores
 
 ### Fase 4: Funcionalidad
 - [ ] Persistencia de ventas en BD
-- [ ] Calculo real de tiempos en cybercafe
-- [ ] Generacion real de reportes (PDF/Excel)
-- [ ] Gestion completa de inventario
+- [ ] Cálculo real de tiempos en cybercafé
+- [ ] Generación real de reportes (PDF/Excel)
+- [ ] Gestión completa de inventario
 
 ---
 
-## Estadisticas del Proyecto
+## Estadísticas del Proyecto
 
-| Metrica | Valor |
-|----------|-------|
-| Total lineas de codigo | ~2,800 |
-| Lineas de documentacion | ~4,000 |
-| Archivos PHP | 15 |
+| Métrica | Valor |
+|---------|-------|
+| Total archivos PHP | 15 |
+| Clases con namespace | 12 (Router + Controller + 10 Controllers) |
+| Modelos funcionales | 2 (8 funciones c/u) |
+| Vistas | 11 |
 | Archivos CSS | 2 |
 | Archivos JS | 1 |
 | Archivos SQL | 2 |
 | Tablas en BD | 19 |
-| Vistas (Views) | 11 |
-| Modelos funcionales | 2 (8 funciones c/u) |
-| Modulos del sistema | 9 |
+| Módulos del sistema | 9 |
 
 ---
 
 ## Autor
 
-**Carlos Paez Guerra**
+**Carlos Páez Guerra**
 Email: carlospaezguerra@gmail.com
-
----
-
-## Licencia
-
-Este proyecto es propietario. Todos los derechos reservados.
 
 ---
 
 ## Historial de Versiones
 
-| Version | Fecha | Descripcion |
+| Versión | Fecha | Descripción |
 |---------|-------|-------------|
-| 1.2 | 2026 | Agregado modulo de Asesoria Legal, actualizacion de BD a v2.0 (19 tablas), nuevos modelos CRUD |
-| 1.1 | 2026 | Refactorizacion con Materialize CSS + jQuery + Layout maestro |
-| 1.0 | 2024 | Version inicial - UI Prototype |
+| 2.0 | 2026 | Migración completa a MVC con namespaces PSR-4, Router clase, 10 Controllers, autoloading Composer |
+| 1.2 | 2026 | Agregado módulo de Asesoría Legal, actualización de BD a v2.0 (19 tablas) |
+| 1.1 | 2026 | Refactorización con Materialize CSS + jQuery + Layout maestro |
+| 1.0 | 2024 | Versión inicial — UI Prototype procedural |
 
 ---
 
-**Ultima actualizacion**: Mayo 2026
-**Estado**: En desarrollo (Prototipo UI)
+**Última actualización**: Mayo 2026
+**Estado**: En desarrollo (Prototipo UI con arquitectura MVC)
