@@ -2,9 +2,9 @@
 
 ## Descripcion
 
-**EIS System** es una aplicacion web de gestion empresarial desarrollada en **PHP vanilla** con **Materialize CSS** y **jQuery**. El proyecto esta disenado para administrar multiples aspectos de un negocio que incluye: ventas (POS), inventario, proveedores, activos fijos y control de cybercafe.
+**EIS System** es una aplicacion web de gestion empresarial desarrollada en **PHP vanilla** con **Materialize CSS** y **jQuery**. El proyecto esta disenado para administrar multiples aspectos de un negocio que incluye: ventas (POS), inventario, proveedores, activos fijos, control de cybercafe y asesoria legal.
 
-**NOTA IMPORTANTE**: A pesar del nombre "eis_zona_web_lara", este proyecto **NO es Laravel**. Es una aplicacion PHP personalizada con arquitectura MVC basica y Material Design.
+**NOTA IMPORTANTE**: A pesar del nombre "eis_zona_web_lara", este proyecto **NO es Laravel**. Es una aplicacion PHP personalizada con enrutador procedural y diseno Material Design.
 
 ---
 
@@ -19,11 +19,13 @@
 - **Sistema de Notificaciones** - Toast notifications con Materialize
 - **Carrito de Compras (POS)** - Funcionalidad completa en JavaScript con modal
 - **Control de Estaciones Cyber** - Toggle de estados con animaciones jQuery
-- **Busqueda en Tablas** - Filtros con debounce en inventario, proveedores y activos
+- **Busqueda en Tablas** - Filtros con debounce en inventario, proveedores, activos y asesorias
 - **Filtro por Estado** - Select dinamico para filtrar registros
 - **Paginacion** - UI de paginacion con navegacion
 - **Animacion de Contadores** - Metricas con animacion progresiva
-- **Esquema de Base de Datos** - Completo con 10 tablas, 9 indices y relaciones
+- **Validacion de Asesoria Legal** - Validacion frontend de documentos permitidos
+- **Esquema de Base de Datos** - Completo con 19 tablas, 26 indices, vistas, funciones y procedimientos
+- **Modelos CRUD** - crud_users.php (8 funciones) y crud_asesorias.php (8 funciones) con PDO preparado
 - **Documentacion de BD** - Completa y detallada (3 archivos MD)
 
 ### Parcialmente Implementado (UI Estatica)
@@ -34,12 +36,13 @@
 - **Solicitudes** - Interfaz con tabla y filtros sin funcionalidad backend
 - **Activos** - Visualizacion estatica con busqueda
 - **Reportes** - Generador simulado con toasts
+- **Asesoria Legal** - Validacion frontend sin persistencia en BD
 
 ### No Implementado
-- **CRUD Operations** - No hay create, update, delete real
-- **Controladores** - Directorio `Controlers/` vacio (pendiente de implementar)
-- **Persistencia** - Las vistas no se conectan a la base de datos
-- **Seguridad** - Credenciales hardcodeadas, sin CSRF, sin password hashing
+- **Persistencia en BD** - Las vistas no se conectan a la base de datos
+- **CRUD via AJAX** - No hay operaciones create, update, delete reales via backend
+- **Controladores MVC** - Arquitectura actual es procedural (sin clases)
+- **Seguridad** - Credenciales hardcodeadas, sin CSRF, sin password hashing en login
 
 ---
 
@@ -48,46 +51,51 @@
 ```
 eis_zona_web_lara/
 ├── src/
-│   ├── index.php                      # Punto de entrada (3 lineas)
+│   ├── index.php                      # Punto de entrada (6 lineas)
+│   ├── .htaccess                      # Reglas de reescritura Apache
 │   ├── Config/
 │   │   └── database.php               # Configuracion BD (PDO + MySQL)
 │   ├── app/
 │   │   ├── core/
-│   │   │   └── router.php             # Enrutador + layout (50 lineas)
-│   │   ├── Controlers/                # VACIO (typo: deberia ser Controllers)
+│   │   │   └── router.php             # Enrutador + layout (68 lineas)
 │   │   ├── Models/
-│   │   │   └── crud_users.php         # CRUD usuarios (38 lineas, NO usado)
+│   │   │   ├── crud_users.php         # CRUD usuarios (54 lineas, 8 funciones)
+│   │   │   └── crud_asesorias.php     # CRUD asesorias (49 lineas, 8 funciones)
 │   │   ├── template/
-│   │   │   └── layout.php             # Layout maestro con Materialize + jQuery
+│   │   │   └── layout.php             # Layout maestro con Materialize + jQuery (128 lineas)
 │   │   └── Views/
-│   │       ├── login.php              # Login (86 lineas)
-│   │       ├── login_validate.php     # Validacion (19 lineas)
-│   │       ├── dashboard.php          # Panel principal (135 lineas)
-│   │       ├── inventario.php         # Gestion inventario (110 lineas)
-│   │       ├── ventas.php             # POS con carrito (110 lineas)
-│   │       ├── proveedores.php        # Solicitudes (98 lineas)
-│   │       ├── reportes.php           # Reportes (132 lineas)
-│   │       ├── activos.php            # Activos (185 lineas)
-│   │       ├── ciberControl.php       # Control cyber (158 lineas)
-│   │       └── menu.php               # Menu alternativo (133 lineas)
+│   │       ├── login.php              # Login (123 lineas)
+│   │       ├── login_validate.php     # Validacion (30 lineas)
+│   │       ├── dashboard.php          # Panel principal (130 lineas)
+│   │       ├── inventario.php         # Gestion inventario (129 lineas)
+│   │       ├── ventas.php             # POS con carrito (130 lineas)
+│   │       ├── proveedores.php        # Solicitudes (115 lineas)
+│   │       ├── reportes.php           # Reportes (139 lineas)
+│   │       ├── activos.php            # Activos (207 lineas)
+│   │       ├── ciberControl.php       # Control cyber (133 lineas)
+│   │       ├── asesorias.php          # Asesoria legal (128 lineas)
+│   │       └── menu.php               # Menu alternativo (158 lineas)
 │   ├── Database/
-│   │   ├── mian.sql                   # Esquema BD (138 lineas)
-│   │   └── seed.sql                   # Datos prueba (102 lineas)
+│   │   ├── estructura.sql             # Esquema BD v2.0 (19 tablas, 526 lineas)
+│   │   └── datos_prueba.sql           # Datos prueba (229 lineas)
 │   └── Public/
 │       ├── css/
-│       │   ├── styles.css             # Estilos personalizados (404 lineas)
-│       │   └── login.css              # Estilos login (58 lineas)
+│       │   ├── styles.css             # Estilos personalizados (587 lineas)
+│       │   └── login.css              # Estilos login (65 lineas)
 │       └── js/
-│           └── app.js                 # JS comun con jQuery (362 lineas)
+│           └── app.js                 # JS comun con jQuery (525 lineas)
 ├── docs/
-│   ├── database-conceptual-design.md  # Diseno conceptual (346 lineas)
-│   ├── database-logical-design.md     # Diseno logico (497 lineas)
-│   ├── database-physical-design.md    # Diseno fisico (189 lineas)
+│   ├── database-conceptual-design.md  # Diseno conceptual (581 lineas)
+│   ├── database-logical-design.md     # Diseno logico (448 lineas)
+│   ├── database-physical-design.md    # Diseno fisico (268 lineas)
+│   ├── routing-system.md              # Sistema de enrutamiento
+│   ├── diagrama-de-clases.md          # Diagrama de clases
 │   └── *.pdf                          # Versiones PDF
 ├── vendor/                            # Autoloader de Composer
 ├── composer.json                      # Configuracion Composer
 ├── DOCUMENTACION.md                   # Documentacion tecnica (linea por linea)
 ├── DOCUMENTACION_JQUERY.md            # Documentacion integracion jQuery
+├── DOCUMENTACION_COMPLETA.md          # Documentacion completa para NotebookLM
 └── README.md                          # Este archivo
 ```
 
@@ -98,7 +106,7 @@ eis_zona_web_lara/
 ### Backend
 - **PHP 7.4+** - Lenguaje principal (sin frameworks)
 - **PDO (PHP Data Objects)** - Capa de abstraccion de BD con prepared statements
-- **MySQL 5.7+ / 8.0+** - Sistema de gestion de BD
+- **MySQL 8.0+ / MariaDB 10.3+** - Sistema de gestion de BD
 - **Motor InnoDB** - Soporte para transacciones y claves foraneas
 
 ### Frontend
@@ -106,7 +114,6 @@ eis_zona_web_lara/
 - **jQuery 3.7.1** - Manipulacion del DOM y eventos (CDN)
 - **HTML5** - Estructura semantica
 - **CSS3** - Variables CSS, Flexbox, Grid, Media Queries, tema oscuro/claro
-- **JavaScript Vanilla** - Logica POS y algunas vistas especificas
 - **Google Fonts / Material Icons** - Tipografia e iconografia
 
 ### Herramientas
@@ -127,6 +134,8 @@ eis_zona_web_lara/
 | **Solicitudes** | Pedidos a proveedores | UI Estatica | `proveedores.php` |
 | **Reportes** | Generacion de estadisticas | Simulado | `reportes.php` |
 | **Activos** | Control de activos fijos | UI Estatica | `activos.php` |
+| **Asesoria Legal** | Validacion de documentos | Semi-funcional* | `asesorias.php` |
+| **Menu** | Menu de navegacion alternativo | Funcional | `menu.php` |
 
 *Funcionalidad del lado del cliente (JavaScript/jQuery) pero sin persistencia en BD.
 
@@ -136,8 +145,8 @@ eis_zona_web_lara/
 
 ### Requisitos
 - PHP 7.4 o superior
-- MySQL 5.7 o superior
-- Servidor web (Apache/Nginx/XAMPP/WAMP)
+- MySQL 8.0 o superior / MariaDB 10.3+
+- Servidor web (Apache/Nginx/XAMPP/WAMP/Laragon)
 
 ### Pasos
 
@@ -159,8 +168,8 @@ eis_zona_web_lara/
 
 3. **Crear la base de datos**
    ```bash
-   mysql -u root -p < src/Database/mian.sql
-   mysql -u root -p < src/Database/seed.sql
+   mysql -u root -p < src/Database/estructura.sql
+   mysql -u root -p < src/Database/datos_prueba.sql
    ```
 
 4. **Configurar el servidor web**
@@ -193,7 +202,7 @@ Documentacion especifica de la integracion de **jQuery 3.7.1** y **Materialize C
 - Archivo `app.js` explicado linea por linea
 
 ### docs/database-*.md
-Documentacion completa de la base de datos:
+Documentacion completa de la base de datos (v2.0):
 - **Conceptual**: Diagramas ER, entidades, relaciones, reglas de negocio
 - **Logico**: Esquemas SQL, tipos de datos, indices, normalizacion
 - **Fisico**: Almacenamiento InnoDB, particionamiento, configuracion MySQL
@@ -203,19 +212,18 @@ Documentacion completa de la base de datos:
 ## Problemas Conocidos
 
 ### Errores y Typos
-1. **`Controlers/`** - Deberia ser `Controllers/` (error de ortografia)
-2. **`mian.sql`** - Deberia ser `main.sql` (error de ortografia)
-3. **`.idea/laravel-idea.xml`** - Referencia incorrecta a Laravel
+1. **`login.css`** - No hay variables `--border` y `--shadow` declaradas en login (usadas inline)
+2. **`.idea/laravel-idea.xml`** - Referencia incorrecta a Laravel
 
 ### Problemas de Seguridad
 1. **Credenciales Hardcodeadas** - Usuario y contrasena en codigo fuente
 2. **Sin CSRF Protection** - Formularios sin tokens de proteccion
-3. **Sin Password Hashing** - Contrasenas en texto plano
+3. **Sin Password Hashing** - Contrasenas en texto plano en el login
 4. **Configuracion de BD** - `echo "Conexion exitosa"` romperia respuestas JSON
 
 ### Problemas de Arquitectura
 1. **Sin Separacion de Capas** - Vistas contienen logica de negocio
-2. **Sin Modelos Usados** - crud_users.php existe pero no se incluye
+2. **Sin Modelos Usados** - Los modelos existen pero no se incluyen en vistas
 3. **Datos Estaticos** - Vistas no se conectan a la base de datos
 4. **Sin .env** - Configuracion no flexible
 
@@ -223,17 +231,17 @@ Documentacion completa de la base de datos:
 
 ## Proximos Pasos Recomendados
 
-### Fase 1: Correccion de Errores
-- [ ] Renombrar `Controlers/` a `Controllers/`
-- [ ] Renombrar `mian.sql` a `main.sql`
-- [ ] Corregir configuracion de PHPStorm
-- [ ] Eliminar `echo "Conexion exitosa"` de database.php
+### Fase 1: Conexion a Base de Datos
+- [ ] Conectar Dashboard con consultas SQL reales
+- [ ] Hacer que el carrito POS persista ventas en BD
+- [ ] Implementar CRUD de productos via AJAX
+- [ ] Persistir cambios de estado en cybercafe
 
-### Fase 2: Implementacion de Backend
-- [ ] Crear controladores en `Controllers/`
-- [ ] Expandir modelos para todas las tablas
-- [ ] Conectar vistas con base de datos
-- [ ] Implementar CRUD completo
+### Fase 2: Migracion a MVC
+- [ ] Crear controladores con namespaces (App\Controllers)
+- [ ] Migrar router procedural a Router con clases
+- [ ] Implementar Request y Controller como clases base
+- [ ] Separar logica de negocio de las vistas
 
 ### Fase 3: Seguridad
 - [ ] Implementar password_hash() para contrasenas
@@ -253,15 +261,16 @@ Documentacion completa de la base de datos:
 
 | Metrica | Valor |
 |----------|-------|
-| Total lineas de codigo | ~2,200 |
-| Lineas de documentacion | ~2,200 |
-| Archivos PHP | 14 |
+| Total lineas de codigo | ~2,800 |
+| Lineas de documentacion | ~4,000 |
+| Archivos PHP | 15 |
 | Archivos CSS | 2 |
 | Archivos JS | 1 |
-| Tablas en BD | 10 |
-| Vistas (Views) | 10 |
-| Controladores | 0 (vacio) |
-| Modelos funcionales | 0 (1 no usado) |
+| Archivos SQL | 2 |
+| Tablas en BD | 19 |
+| Vistas (Views) | 11 |
+| Modelos funcionales | 2 (8 funciones c/u) |
+| Modulos del sistema | 9 |
 
 ---
 
@@ -282,6 +291,7 @@ Este proyecto es propietario. Todos los derechos reservados.
 
 | Version | Fecha | Descripcion |
 |---------|-------|-------------|
+| 1.2 | 2026 | Agregado modulo de Asesoria Legal, actualizacion de BD a v2.0 (19 tablas), nuevos modelos CRUD |
 | 1.1 | 2026 | Refactorizacion con Materialize CSS + jQuery + Layout maestro |
 | 1.0 | 2024 | Version inicial - UI Prototype |
 

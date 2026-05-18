@@ -15,9 +15,9 @@
 
 ## Descripcion General
 
-**EIS System** es una aplicacion web de gestion empresarial desarrollada en **PHP vanilla** con interfaz **Material Design** (Materialize CSS 1.0.0) y **jQuery 3.7.1**. El proyecto simula un sistema completo para administrar un negocio que incluye: cybercafe, ventas POS, inventario, proveedores, activos y reportes.
+**EIS System** es una aplicacion web de gestion empresarial desarrollada en **PHP vanilla** con interfaz **Material Design** (Materialize CSS 1.0.0) y **jQuery 3.7.1**. El proyecto simula un sistema completo para administrar un negocio que incluye: cybercafe, ventas POS, inventario, proveedores, activos, asesoria legal y reportes.
 
-**NOTA IMPORTANTE**: A pesar del nombre "eis_zona_web_lara", este proyecto **NO es Laravel**. Es PHP puro con arquitectura MVC basica.
+**NOTA IMPORTANTE**: A pesar del nombre "eis_zona_web_lara", este proyecto **NO es Laravel**. Es PHP puro con arquitectura procedural.
 
 ---
 
@@ -57,39 +57,44 @@
 
 | Archivo | Lineas | Proposito |
 |---------|---------|----------|
-| src/index.php | 3 | Punto de entrada |
-| src/Config/database.php | 25 | Configuracion BD |
-| src/app/core/router.php | 50 | Enrutamiento + layout |
-| src/app/Models/crud_users.php | 38 | Funciones CRUD (no usado) |
-| src/app/template/layout.php | 70 | Layout maestro Materialize |
-| src/app/Views/login.php | 86 | Pagina login |
-| src/app/Views/login_validate.php | 19 | Validacion login |
-| src/app/Views/dashboard.php | 135 | Panel principal |
-| src/app/Views/menu.php | 133 | Menu navegacion |
-| src/app/Views/inventario.php | 110 | Gestion inventario |
-| src/app/Views/ventas.php | 110 | Punto de venta |
-| src/app/Views/proveedores.php | 98 | Solicitudes |
-| src/app/Views/reportes.php | 132 | Reportes |
-| src/app/Views/activos.php | 185 | Activos fijos |
-| src/app/Views/ciberControl.php | 158 | Control cyber |
-| src/Public/css/styles.css | 404 | Estilos personalizados |
-| src/Public/css/login.css | 58 | Estilos login |
-| src/Public/js/app.js | 362 | JS comun con jQuery |
-| src/Database/mian.sql | 138 | Esquema BD |
-| src/Database/seed.sql | 102 | Datos prueba |
+| src/index.php | 6 | Punto de entrada |
+| src/Config/database.php | 27 | Configuracion BD |
+| src/app/core/router.php | 68 | Enrutamiento + layout |
+| src/app/Models/crud_users.php | 54 | CRUD usuarios (8 funciones) |
+| src/app/Models/crud_asesorias.php | 49 | CRUD asesorias (8 funciones) |
+| src/app/template/layout.php | 128 | Layout maestro Materialize |
+| src/app/Views/login.php | 123 | Pagina login |
+| src/app/Views/login_validate.php | 30 | Validacion login |
+| src/app/Views/dashboard.php | 130 | Panel principal |
+| src/app/Views/menu.php | 158 | Menu navegacion |
+| src/app/Views/inventario.php | 129 | Gestion inventario |
+| src/app/Views/ventas.php | 130 | Punto de venta |
+| src/app/Views/proveedores.php | 115 | Solicitudes |
+| src/app/Views/reportes.php | 139 | Reportes |
+| src/app/Views/activos.php | 207 | Activos fijos |
+| src/app/Views/ciberControl.php | 133 | Control cyber |
+| src/app/Views/asesorias.php | 128 | Asesoria legal |
+| src/Public/css/styles.css | 587 | Estilos personalizados |
+| src/Public/css/login.css | 65 | Estilos login |
+| src/Public/js/app.js | 525 | JS comun con jQuery |
+| src/Database/estructura.sql | 526 | Esquema BD v2.0 |
+| src/Database/datos_prueba.sql | 229 | Datos prueba |
 
-**Total lineas de codigo**: ~2,200 lineas (PHP + CSS + JS + SQL)
+**Total lineas de codigo**: ~2,800 lineas (PHP + CSS + JS + SQL)
 
 ---
 
 ## Explicacion Detallada por Archivo
 
-### 1. `src/index.php` (3 lineas)
+### 1. `src/index.php` (6 lineas)
 
 ```php
 <?php
+// Punto de entrada unico de la aplicacion (Front Controller).
+// Todas las solicitudes HTTP pasan por aqui gracias a las reglas de reescritura de Apache (.htaccess).
 
-    require_once __DIR__.'/app/core/router.php';
+    require_once __DIR__.'/app/core/router.php'; // Incluye el router, que maneja la logica de navegacion y autenticacion
+?>
 ```
 
 **Explicacion**:
@@ -99,7 +104,7 @@
 
 ---
 
-### 2. `src/app/core/router.php` (50 lineas) - EL CEREBRO DE LA APLICACION
+### 2. `src/app/core/router.php` (68 lineas) - EL CEREBRO DE LA APLICACION
 
 ```php
 <?php
@@ -135,6 +140,7 @@ if(is_file($rutaVista)){
             'proveedores'  => 'Solicitudes a Proveedores',
             'reportes'     => 'Reportes y Estadisticas',
             'activos'      => 'Gestion de Activos',
+            'asesorias'    => 'Asesoria Legal',
         ];
         $extraHeaders = [
             'ciberControl' => '<span class="chip green white-text">7 Disponibles</span><span class="chip orange white-text">3 Ocupadas</span>',
@@ -159,18 +165,19 @@ if(is_file($rutaVista)){
 |--------|---------|-------------|
 | 2 | `session_start()` | Inicia o reanuda una sesion PHP |
 | 4 | `$pagina = "login"` | Valor por defecto "login" |
-| 6 | `!empty($_GET["pagina"])` | Verifica que el parametro GET no este vacio |
-| 7 | `$pagina = $_GET["pagina"]` | Asigna el valor del query string |
-| 11 | `preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)` | Valida solo letras, numeros, guiones |
-| 15 | `$public_pages` | Array con paginas publicas (login, login_validate) |
-| 16 | `!isset($_SESSION['logged_in'])` | Verifica si NO esta autenticado |
-| 24-43 | **NOVEDAD**: Layout system | Si es pagina publica carga directa, si no, usa layout.php con titulos dinamicos |
+| 7-8 | `$_GET["pagina"]` | Toma el nombre de la pagina desde la URL |
+| 13 | `preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)` | Valida solo letras, numeros, guiones |
+| 18 | `$public_pages` | Array con paginas publicas (login, login_validate) |
+| 20 | `!isset($_SESSION['logged_in'])` | Verifica si NO esta autenticado |
+| 38 | `$titulos` | Array con titulos para cada pagina (incluye 'asesorias') |
+| 51 | `$extraHeaders` | HTML extra para el header (badges de cyber) |
+| 56 | `$contentView` | Ruta de la vista a incluir dentro del layout |
 
-**Cambio clave respecto a version anterior**: El router ahora distingue entre paginas publicas (carga directa) y autenticadas (usa layout.php). Define arrays `$titulos` y `$extraHeaders` para pasar datos al layout.
+La diferencia clave: si es pagina publica carga directa, si no usa layout.php con titulos dinamicos.
 
 ---
 
-### 3. `src/app/template/layout.php` (70 lineas) - LAYOUT MAESTRO
+### 3. `src/app/template/layout.php` (128 lineas) - LAYOUT MAESTRO
 
 ```html
 <!DOCTYPE html>
@@ -188,11 +195,7 @@ if(is_file($rutaVista)){
 
     <!-- Sidebar con Sidenav de Materialize -->
     <ul id="slide-out" class="sidenav sidenav-fixed">
-        <li><div class="user-view">
-            <div class="background indigo darken-4"></div>
-            <span class="white-text name">EIS System</span>
-            <span class="white-text email">Sistema de Gestion Integral</span>
-        </div></li>
+        <li><div class="user-view">...</div></li>
         <li><a href="?pagina=dashboard"><i class="material-icons left">dashboard</i>Dashboard</a></li>
         <li><a href="?pagina=inventario"><i class="material-icons left">inventory_2</i>Inventario</a></li>
         <li><a href="?pagina=ventas"><i class="material-icons left">shopping_cart</i>Ventas (POS)</a></li>
@@ -200,12 +203,13 @@ if(is_file($rutaVista)){
         <li><a href="?pagina=ciberControl"><i class="material-icons left">computer</i>Cyber</a></li>
         <li><a href="?pagina=reportes"><i class="material-icons left">bar_chart</i>Reportes</a></li>
         <li><a href="?pagina=activos"><i class="material-icons left">build</i>Activos</a></li>
+        <li><a href="?pagina=asesorias"><i class="material-icons left">gavel</i>Asesoria Legal</a></li>
         <li><div class="divider"></div></li>
-        <li><a href="?pagina=login"><i class="material-icons left">logout</i>Cerrar Sesion</a></li>
         <li><a id="themeToggle" style="cursor:pointer;">
             <i class="material-icons left" id="themeIcon">dark_mode</i>
             <span id="themeLabel">Modo Oscuro</span>
         </a></li>
+        <li><a href="?pagina=login"><i class="material-icons left">logout</i>Cerrar Sesion</a></li>
     </ul>
 
     <!-- Header con navegacion Materialize -->
@@ -251,7 +255,7 @@ if(is_file($rutaVista)){
 
 | Componente | Descripcion |
 |-----------|-------------|
-| `sidenav` | Sidebar fijo con Materialize Sidenav (14 items) |
+| `sidenav` | Sidebar fijo con Materialize Sidenav (15 items, incluye Asesoria Legal) |
 | `nav` | Barra superior con titulo dinamico, reloj, notificaciones |
 | `container` | Contenedor central donde se renderiza `$contentView` |
 | `backToTop` | Boton flotante para volver arriba (jQuery) |
@@ -268,7 +272,7 @@ if(is_file($rutaVista)){
 
 ---
 
-### 4. `src/Config/database.php` (25 lineas)
+### 4. `src/Config/database.php` (27 lineas)
 
 ```php
 <?php
@@ -302,29 +306,44 @@ if(is_file($rutaVista)){
 | `$host` | string | "localhost" - servidor MySQL local |
 | `$db` | string | "zwl" - Zona Web Lara |
 | `$user` | string | "root" - usuario MySQL default |
-| `$pass` | string | Vacia en desarrollo (XAMPP/WAMP) |
+| `$pass` | string | Vacia en desarrollo (XAMPP/WAMP/Laragon) |
 | `$charset` | string | "utf8mb4" - soporta emojis y acentos |
 | `$dns` | string | Data Source Name para PDO |
 | `$options` | array | ATTR_ERRMODE, FETCH_ASSOC, EMULATE_PREPARES |
 
-**NOTA**: La ruta cambio de `src/app/Config/database.php` a `src/Config/database.php`.
-
 ---
 
-### 5. `src/app/Models/crud_users.php` (38 lineas) - CRUD USUARIOS (NO usado)
+### 5. `src/app/Models/crud_users.php` (54 lineas) - CRUD USUARIOS
 
-Contiene 5 funciones CRUD para la tabla `usuarios`:
-- `crearUsuario($pdo, $nombre, $email)` - INSERT
-- `obtenerUsuarios($pdo)` - SELECT ALL
+Contiene 8 funciones CRUD para la tabla `usuarios` con autenticacion bcrypt:
+- `crearUsuario($pdo, $username, $password, $nombre, $email, $telefono, $rol_id)` - INSERT con password_hash bcrypt
+- `obtenerUsuarios($pdo)` - SELECT ALL con JOIN a roles
 - `obtenerUsuarioPorId($pdo, $id)` - SELECT ONE
-- `actualizarUsuario($pdo, $id, $nombre, $email)` - UPDATE
+- `obtenerUsuarioPorUsername($pdo, $username)` - SELECT por username (solo activos)
+- `autenticarUsuario($pdo, $username, $password)` - Autenticacion con password_verify + actualiza ultimo_acceso
+- `actualizarUsuario($pdo, $id, $nombre, $email, $telefono, $rol_id, $activo)` - UPDATE
+- `actualizarPassword($pdo, $id, $password)` - UPDATE password con bcrypt
 - `eliminarUsuario($pdo, $id)` - DELETE
 
-**NOTA**: El archivo se renombro de `crud.php` a `crud_users.php`. Sigue sin ser utilizado por ninguna vista.
+**NOTA**: El archivo contiene funciones preparadas pero no es utilizado por ninguna vista actual.
+
+### 5b. `src/app/Models/crud_asesorias.php` (49 lineas) - CRUD ASESORIAS
+
+Contiene 8 funciones CRUD para la tabla `asesorias`:
+- `crearAsesoria($pdo, $ciudadano, $cedula, $documento, $descripcion, $estado, $usuario_id)` - INSERT
+- `obtenerAsesorias($pdo)` - SELECT ALL con JOIN a usuarios
+- `obtenerAsesoriasPorEstado($pdo, $estado)` - SELECT filtrado por estado
+- `obtenerAsesoriaPorId($pdo, $id)` - SELECT ONE
+- `buscarAsesoriasPorCedula($pdo, $cedula)` - Busqueda por cedula (LIKE)
+- `actualizarAsesoria($pdo, $id, $ciudadano, $cedula, $documento, $descripcion, $estado)` - UPDATE con fecha_cierre automatica
+- `eliminarAsesoria($pdo, $id)` - DELETE
+- `contarAsesoriasPorEstado($pdo)` - Agregacion GROUP BY estado
+
+**NOTA**: El archivo contiene funciones preparadas pero no es utilizado por ninguna vista actual.
 
 ---
 
-### 6. `src/app/Views/login.php` (86 lineas)
+### 6. `src/app/Views/login.php` (123 lineas)
 
 Pagina de login con diseno Material Design. NO usa el layout (pagina publica).
 
@@ -332,88 +351,45 @@ Pagina de login con diseno Material Design. NO usa el layout (pagina publica).
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- Meta tags, Google Fonts, Font Awesome -->
+    <!-- Meta tags, Material Icons, Materialize CSS -->
     <link rel="stylesheet" href="Public/css/login.css">
 </head>
 <body>
-    <div class="form-container">
-        <!-- Logo con gradiente y emoji -->
-        <h1 class="title">EIS System</h1>
-        <p class="subtitle">Ingresa tus credenciales para continuar</p>
-
-        <!-- Mensaje de error (se muestra si ?error=1) -->
+    <div class="card login-card z-depth-4 white">
+        <!-- Logo EIS System con emoji ⚡ -->
+        <h4 class="card-title">EIS System</h4>
+        <!-- Mensaje de error si ?error=1 -->
         <?php if (isset($_GET['error'])): ?>
-            <div class="error-message">Credenciales incorrectas</div>
+            <div class="card-panel red lighten-4 red-text">Credenciales incorrectas</div>
         <?php endif; ?>
-
-        <!-- Formulario de login -->
+        <!-- Formulario POST a ?pagina=login_validate -->
         <form action="?pagina=login_validate" method="post">
-            <input type="text" name="username" placeholder="Usuario" required autofocus>
-            <input type="password" name="password" placeholder="Contrasena" required>
+            <input type="text" name="username" required autofocus>
+            <input type="password" name="password" required>
             <button type="submit">Iniciar Sesion</button>
         </form>
-
-        <!-- Redes sociales (no funcional) -->
-        <div class="social-icons">
-            <button onclick="alert('No disponible')">Google</button>
-            <button onclick="alert('No disponible')">GitHub</button>
-        </div>
+        <!-- Botones sociales (Google/GitHub) no funcionales -->
     </div>
-    <!-- jQuery para theme toggle -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" ...></script>
+    <!-- jQuery + Materialize JS + Theme toggle script -->
 </body>
 </html>
 ```
 
-**Elementos clave**:
-- `$_GET['error']` - Muestra mensaje si hay error de autenticacion
-- form action="?pagina=login_validate" - Envio POST al validador
-- jQuery incluido para el theme toggle en login
-
 ---
 
-### 7. `src/app/Views/login_validate.php` (19 lineas)
+### 7. `src/app/Views/login_validate.php` (30 lineas)
 
-```php
-<?php
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST["username"] ?? '';
-    $password = $_POST["password"] ?? '';
+Procesa la autenticacion con credenciales hardcodeadas (admin/1234).
 
-    $valid_username = "admin";
-    $valid_password = "1234";
-
-    if ($username === $valid_username && $password === $valid_password) {
-        $_SESSION['logged_in'] = true;
-        $_SESSION['username'] = $username;
-        header("Location: ?pagina=dashboard");
-        exit;
-    } else {
-        header("Location: ?pagina=login&error=1");
-        exit;
-    }
-}
-header("Location: ?pagina=login");
-exit;
-```
-
-**Variables superglobales**:
-
-| Variable | Descripcion |
-|----------|-------------|
-| `$_SERVER["REQUEST_METHOD"]` | Metodo HTTP: "GET", "POST" |
-| `$_POST["username"]` | Usuario enviado desde el formulario |
-| `$_POST["password"]` | Contrasena enviada desde el formulario |
-| `$_SESSION['logged_in']` | Flag de autenticacion |
-| `$_SESSION['username']` | Nombre de usuario en sesion |
+**NOVEDAD**: A diferencia de versiones anteriores, este archivo actualmente SI se usa para validar credenciales. No hay controlador separado.
 
 ---
 
 ### 8. Vistas Autenticadas (Contenido Solo)
 
-Todas las vistas autenticadas ahora son solo **fragmentos HTML** sin estructura completa de pagina. El layout maestro provee el HTML comun.
+Todas las vistas autenticadas son solo **fragmentos HTML** sin estructura completa de pagina. El layout maestro provee el HTML comun.
 
-#### 8.1 `dashboard.php` (135 lineas)
+#### 8.1 `dashboard.php` (130 lineas)
 
 ```html
 <!-- Welcome Banner -->
@@ -431,17 +407,13 @@ Todas las vistas autenticadas ahora son solo **fragmentos HTML** sin estructura 
             <div class="metric-value">$1,245.50</div>
         </div>
     </div>
-    <!-- ... mas metricas ... -->
+    <!-- Stock Critico, Sesiones Cyber, Solicitudes Pend. -->
 </div>
 
 <!-- Tablas: Horas Pico y Productos Sin Stock -->
 <div class="row">
-    <div class="col s12 l6">
-        <div class="card"><table>...</table></div>
-    </div>
-    <div class="col s12 l6">
-        <div class="card"><table>...</table></div>
-    </div>
+    <div class="col s12 l6"><div class="card"><table>...</table></div></div>
+    <div class="col s12 l6"><div class="card"><table>...</table></div></div>
 </div>
 
 <!-- Actividad Reciente -->
@@ -453,180 +425,60 @@ Todas las vistas autenticadas ahora son solo **fragmentos HTML** sin estructura 
 </div>
 ```
 
-**Datos estaticos** (deberian venir de BD):
-- Ventas Hoy: $1,245.50
-- Stock Critico: 4 productos
-- Sesiones Cyber: 7
-- Solicitudes Pendientes: 3
+#### 8.2 `ventas.php` (130 lineas) - PUNTO DE VENTA (POS)
 
-#### 8.2 `ventas.php` (110 lineas) - PUNTO DE VENTA (POS)
+Catalogo de 5 productos (Teclado Mecanico, Mouse USB, Auriculares, Monitor 24, Cable USB-C) con carrito modal. Toda la logica en app.js.
 
-```html
-<!-- Header con total carrito y boton -->
-<div class="row">
-    <div class="col s12 m7">
-        <span>Punto de Venta</span>
-    </div>
-    <div class="col s12 m5">
-        <div>Total: <span id="posMiniTotal">$0.00</span></div>
-        <button id="openCartBtn">Carrito <span id="cartCountBadge">0</span></button>
-    </div>
-</div>
-
-<!-- Catalogo de productos -->
-<div class="card">
-    <div class="card-content">
-        <input type="text" id="posSearch" placeholder="Buscar...">
-        <div id="posProducts" class="row">
-            <!-- Productos con data-name y data-price -->
-            <div class="col s6 m4 l3">
-                <div class="card-panel pos-product"
-                     data-name="Teclado Mecanico"
-                     data-price="45.00">
-                    <i class="material-icons">keyboard</i>
-                    <h6>Teclado Mecanico</h6>
-                    <span>$45.00</span>
-                </div>
-            </div>
-            <!-- ... mas productos ... -->
-        </div>
-    </div>
-</div>
-
-<!-- Modal del carrito (Materialize Modal) -->
-<div id="posCartModal" class="modal modal-fixed-footer">
-    <div class="modal-content">
-        <h4>Carrito de Compras</h4>
-        <div id="posCartItems">...</div>
-    </div>
-    <div class="modal-footer">
-        <span id="posTotal">$0.00</span>
-        <button id="vaciarCarrito">Vaciar</button>
-        <button id="procesarVenta">Procesar Venta</button>
-    </div>
-</div>
-```
-
-**Funcionalidad JavaScript (en app.js)**:
+**Funcionalidad JavaScript**:
 - `posCart` - Array de objetos `{name, price}`
-- `posAddItem` via evento click en `.pos-product` (data-name, data-price)
-- `actualizarPosUI()` - Actualiza mini-total y modal
-- `actualizarCarritoModal()` - Renderiza items del carrito
-- `procesarVenta` - Simula venta con EIS.toast()
+- Click en `.pos-product` (data-name, data-price) agrega al carrito
+- Modal del carrito con total, vaciar y procesar venta
+- `procesarVenta` simula venta con confirmacion y toast
 
-#### 8.3 `ciberControl.php` (158 lineas) - CONTROL DE CYBERCAFE
+#### 8.3 `ciberControl.php` (133 lineas) - CONTROL DE CYBERCAFE
 
-```html
-<!-- Contadores resumen -->
-<div class="row">
-    <div class="col s6 m3">
-        <div id="countDisponibles">5</div>
-        <div>Disponibles</div>
-    </div>
-    <!-- ... ocupadas, mantenimiento, total ... -->
-</div>
+10 estaciones organizadas en 3 zonas, con estados disponibles/ocupada/mantenimiento.
 
-<!-- Filtros -->
-<div class="card">
-    <a class="filter-btn active" data-filter="all">Todas</a>
-    <a class="filter-btn" data-filter="disponible">Disponibles</a>
-    <a class="filter-btn" data-filter="ocupada">Ocupadas</a>
-    <a class="filter-btn" data-filter="mantenimiento">Mantenimiento</a>
-</div>
+**NOVEDAD**: Los datos de estaciones se generan desde PHP con un array `$zonas` que define 3 zonas con estaciones especificas. Los contadores se calculan con PHP nativo (`array_filter`, `array_merge`).
 
-<!-- Grid de estaciones -->
-<div class="row" id="cyberGrid">
-    <div class="col s6 m4 l3 xl2">
-        <div class="station-card disponible" data-status="disponible">
-            <div class="station-icon"><i class="material-icons">check_circle</i></div>
-            <div class="station-number">#1</div>
-            <div class="station-status">Disponible</div>
-        </div>
-    </div>
-    <!-- ... 10 estaciones ... -->
-</div>
-```
+#### 8.4 `inventario.php` (129 lineas)
 
-**Funcionalidad jQuery (en app.js)**:
-- `actualizarCyberContadores()` - Actualiza contadores dinamicos
-- Toggle de estaciones con animaciones (`.animate()`)
-- Filtro visual con `.slideDown()` / `.hide()`
-- Toast notifications en cada accion
+Tabla con 3 productos de ejemplo, busqueda con debounce, filtro por estado, paginacion.
 
-#### 8.4 `inventario.php` (110 lineas)
+#### 8.5 `proveedores.php` (115 lineas)
 
-```html
-<!-- Barra de busqueda + filtro + boton nuevo -->
-<div class="card">
-    <div class="input-field">
-        <input type="text" id="searchProducto" placeholder="Buscar...">
-        <select id="filterEstado">
-            <option value="">Todos</option>
-            <option value="ok">Stock OK</option>
-            <option value="critico">Critico</option>
-            <option value="sin stock">Sin stock</option>
-        </select>
-    </div>
-    <button class="btn-nuevo" data-tipo="producto">Nuevo Producto</button>
-</div>
+Tabla de solicitudes con 3 ejemplos, busqueda y filtro por estado.
 
-<!-- Tabla de productos -->
-<div class="card">
-    <table class="responsive-table striped">
-        <thead>
-            <tr><th>ID</th><th>Producto</th><th>Precio</th><th>Stock</th><th>Minimo</th><th>Estado</th><th>Acciones</th></tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>#1042</td>
-                <td>Mouse Inalambrico</td>
-                <td>$12.50</td>
-                <td>5</td>
-                <td>10</td>
-                <td><span class="new badge red">Critico</span></td>
-                <td>
-                    <button class="btn-floating tooltipped" data-tooltip="Ver movimientos">
-                        <i class="material-icons">inventory</i>
-                    </button>
-                    <button class="btn-floating tooltipped" data-tooltip="Editar">
-                        <i class="material-icons">edit</i>
-                    </button>
-                </td>
-            </tr>
-            <!-- ... mas productos ... -->
-        </tbody>
-    </table>
-    <!-- Paginacion -->
-    <ul class="pagination">
-        <li class="disabled"><a><i class="material-icons">chevron_left</i></a></li>
-        <li class="active indigo"><a>1</a></li>
-        <li class="waves-effect"><a>2</a></li>
-        <li class="waves-effect"><a>3</a></li>
-        <li class="waves-effect"><a><i class="material-icons">chevron_right</i></a></li>
-    </ul>
-</div>
-```
+#### 8.6 `reportes.php` (139 lineas)
 
-**Funcionalidad jQuery**:
-- `filtrarTabla()` - Filtro por texto con debounce (300ms)
-- `filterEstado` - Filtro por estado via select
-- `result-count` - Muestra cuantos resultados visibles de total
-- `pagination` - Navegacion con toasts
+Formulario de generacion con selectores (tipo, fechas, formato), 4 metricas mensuales, listado de reportes recientes.
 
-#### 8.5 Otras Vistas
+#### 8.7 `activos.php` (207 lineas)
 
-| Vista | Lineas | Descripcion |
-|------|--------|-------------|
-| **proveedores.php** | 98 | Tabla de solicitudes con busqueda y filtro |
-| **reportes.php** | 132 | Formulario de generacion con selects y radios |
-| **activos.php** | 185 | Tarjetas de activos por categoria con busqueda |
-| **menu.php** | 133 | Menu alternativo estilo card-based |
+Activos agrupados por categoria (Equipos 3, Licencias 2, Herramientas 4) con resumen de totales.
+
+#### 8.8 `asesorias.php` (128 lineas) - ASESORIA LEGAL
+
+**NUEVO MODULO**. Formulario de registro con validacion de documentos permitidos:
+
+- Catalogo con 11 tipos de documentos permitidos (Consulta Laboral, Civil, Familiar, etc.)
+- Validacion en tiempo real: si el documento es permitido, boton "Validar y Registrar" (indigo); si no, "Derivar a Oficina Oficial" (rojo)
+- Historial de asesorias registradas en la sesion
+- Busqueda en el historial
+- Eliminacion de registros
+- Documentos no permitidos (juicios, demandas, apelaciones, etc.) requieren derivacion
+
+Toda la logica es frontend (en app.js), sin persistencia en BD.
+
+#### 8.9 `menu.php` (158 lineas)
+
+Pagina alternativa con diseño tipo tarjeta, estilo independiente, enlaces a modulos.
 
 ---
 
 ## JavaScript Central (app.js)
 
-**Archivo**: `src/Public/js/app.js` (362 lineas)
+**Archivo**: `src/Public/js/app.js` (525 lineas)
 
 ### Estructura General
 
@@ -635,58 +487,19 @@ var EIS = {};  // Namespace global
 
 $(function () {
     // 1. Inicializar componentes Materialize
-    $('.sidenav').sidenav();
-    $('select').formSelect();
-    $('.tooltipped').tooltip();
-    $('.modal').modal();
-    $('.dropdown-trigger').dropdown();
-    $('.tabs').tabs();
-    $('.collapsible').collapsible();
-    $('.materialboxed').materialbox();
-    $('.parallax').parallax();
-
-    // 2. Reloj en tiempo real
-    function actualizarReloj() {...}
-    setInterval(actualizarReloj, 1000);
-
-    // 3. Sistema de notificaciones (Toast)
-    EIS.toast = function (msg, color, icon) {...};
-
-    // 4. Tema oscuro/claro
-    function updateThemeUI(theme) {...}
-    var currentTheme = localStorage.getItem('theme') || 'light';
-    $('html').attr('data-theme', currentTheme);
-
-    // 5. Animacion de pagina
-    $('main').hide().fadeIn(400);
-
-    // 6. Animacion de contadores
-    function animarContadores() {...}
-
+    // 2. Reloj en tiempo real (setInterval cada 1s)
+    // 3. Sistema de notificaciones EIS.toast()
+    // 4. Tema oscuro/claro con localStorage
+    // 5. Animacion de transicion de pagina (fadeIn)
+    // 6. Animacion de contadores numericos
     // 7. Busqueda en tablas con debounce
-    function debounce(fn, delay) {...}
-    function filtrarTabla(input, table, colIndex) {...}
-
-    // 8. Sistema POS
-    var posCart = [];
-    var posTotal = 0;
-    // eventos click en .pos-product, .cart-item-remove, #openCartBtn, #procesarVenta
-
-    // 9. Cyber control
-    function actualizarCyberContadores() {...}
-    // eventos click en .station-card, .filter-btn
-
-    // 10. Reportes
-    // evento submit en #formReporte
-
-    // 11. Botones de accion
-    // eventos click en [data-confirm], .btn-nuevo, .pagination
-
-    // 12. Notificaciones demo
-    // evento click en #notifBell
-
-    // 13. Boton volver arriba
-    // evento scroll en window, click en #backToTop
+    // 8. Sistema POS (carrito de compras)
+    // 9. Control de estaciones cyber
+    // 10. Reportes (formulario simulado)
+    // 11. Botones de accion generales
+    // 12. Asesoria Legal (validacion de documentos)
+    // 13. Notificaciones demo (campana)
+    // 14. Boton volver arriba
 });
 ```
 
@@ -702,6 +515,19 @@ $(function () {
 | `filtrarTabla()` | Filtra filas de tabla por texto |
 | `actualizarPosUI()` | Actualiza interfaz del carrito POS |
 | `actualizarCyberContadores()` | Actualiza contadores de estaciones |
+| `documentoPermitido()` | Valida si tipo de documento es permitido en asesoria |
+| `actualizarHistorial()` | Renderiza tabla de historial de asesorias |
+| `mostrarValidacion()` | Muestra resultado de validacion de documento |
+
+### Novedades en app.js
+
+**Asesoria Legal** (lineas 338-499):
+- `allowedDocs` - Array con 11 tipos de documentos permitidos
+- `asesoriasRegistradas` - Array de objetos con datos de asesorias
+- Validacion en tiempo real al escribir el documento (evento input)
+- Boton de registro cambia de color segun el tipo de documento
+- Historial con capacidad de eliminacion
+- Busqueda en historial con debounce
 
 ---
 
@@ -712,95 +538,91 @@ $(function () {
 **Base de datos**: `zwl` (Zona Web Lara)
 **Motor**: InnoDB
 **Charset**: utf8mb4
+**Version**: 2.0
 
-### Tablas (10 total)
+### Tablas (19 total)
 
 | # | Tabla | Proposito |
 |---|-------|-----------|
-| 1 | `usuarios` | Usuarios del sistema |
-| 2 | `productos` | Catalogo de productos (campos: codigo, codigo_barras, nombre, marca, categoria, stock, precio, IVA, etc.) |
-| 3 | `ventas` | Registro de ventas |
-| 4 | `detalle_ventas` | Detalle de productos vendidos |
-| 5 | `proveedores` | Proveedores |
-| 6 | `solicitudes` | Pedidos a proveedores |
-| 7 | `activos` | Activos fijos |
-| 8 | `estaciones_cyber` | Estaciones de cybercafe |
-| 9 | `sesiones_cyber` | Sesiones de uso |
-| 10 | `movimientos_stock` | Historial de inventario |
+| 1 | `roles` | Catalogo de roles de usuario |
+| 2 | `categorias` | Catalogo de categorias de productos |
+| 3 | `marcas` | Catalogo de marcas de productos |
+| 4 | `tipos_activo` | Catalogo de tipos de activos |
+| 5 | `tarifas_cyber` | Tarifas de estaciones de cybercafe |
+| 6 | `tipos_pago` | Catalogo de metodos de pago |
+| 7 | `usuarios` | Usuarios del sistema (con bcrypt) |
+| 8 | `productos` | Catalogo de productos |
+| 9 | `proveedores` | Proveedores |
+| 10 | `producto_proveedor` | Relacion M:N productos-proveedores |
+| 11 | `ventas` | Registro de ventas |
+| 12 | `detalle_ventas` | Detalle de productos vendidos |
+| 13 | `solicitudes` | Pedidos a proveedores |
+| 14 | `detalle_solicitudes` | Detalle de productos solicitados |
+| 15 | `activos` | Activos fijos |
+| 16 | `estaciones_cyber` | Estaciones de cybercafe |
+| 17 | `sesiones_cyber` | Sesiones de uso |
+| 18 | `movimientos_stock` | Historial de inventario |
+| 19 | `asesorias` | Casos de asesoria legal |
 
-### Indices (9 total)
+### Indices (26 total)
 
-```sql
-CREATE INDEX idx_productos_categoria ON productos(categoria);
-CREATE INDEX idx_ventas_fecha ON ventas(fecha);
-CREATE INDEX idx_ventas_usuario ON ventas(usuario_id);
-CREATE INDEX idx_detalle_ventas_venta ON detalle_ventas(venta_id);
-CREATE INDEX idx_detalle_ventas_producto ON detalle_ventas(producto_id);
-CREATE INDEX idx_solicitudes_proveedor ON solicitudes(proveedor_id);
-CREATE INDEX idx_solicitudes_fecha ON solicitudes(fecha);
-CREATE INDEX idx_sesiones_estacion ON sesiones_cyber(estacion_id);
-CREATE INDEX idx_movimientos_producto ON movimientos_stock(producto_id);
-CREATE INDEX idx_movimientos_fecha ON movimientos_stock(fecha);
-```
+Indices en columnas clave: rol_id, codigo_barras, categoria_id, marca_id, ventas.fecha, ventas.usuario_id, proveedor_id, estacion_id, producto_id, etc.
+
+### Vistas (3)
+
+| Vista | Descripcion |
+|-------|-------------|
+| `v_productos_stock` | Productos con estado de stock calculado (OK, Critico, Sin stock) |
+| `v_ventas_diarias` | Agregacion de ventas diarias |
+| `v_sesiones_activas` | Sesiones de cyber activas con costo estimado |
+
+### Objetos de BD
+
+| Objeto | Tipo | Descripcion |
+|--------|------|-------------|
+| `fn_estado_stock` | FUNCTION | Calcula estado del stock |
+| `sp_registrar_movimiento_stock` | PROCEDURE | Registro transaccional de movimiento |
+| `sp_cerrar_sesion_cyber` | PROCEDURE | Cierre de sesion cyber |
+| `trg_actualizar_totales_venta` | TRIGGER | AFTER INSERT actualiza totales |
+| `trg_auditar_precio_producto` | TRIGGER | BEFORE UPDATE registra cambio de precio |
+| `ev_vencer_licencias` | EVENT | Diario: vence licencias expiradas |
 
 Para documentacion completa de la base de datos, consultar:
-- `docs/database-conceptual-design.md` (346 lineas)
-- `docs/database-logical-design.md` (497 lineas)
-- `docs/database-physical-design.md` (189 lineas)
+- `docs/database-conceptual-design.md` (581 lineas)
+- `docs/database-logical-design.md` (448 lineas)
+- `docs/database-physical-design.md` (268 lineas)
 
 ---
 
 ## CSS y Estilos
 
-### `src/Public/css/styles.css` (404 lineas)
+### `src/Public/css/styles.css` (587 lineas)
 
 Estilos personalizados que complementan Materialize CSS. Incluye:
 
-**Variables CSS (Custom Properties)** en `:root`:
+**Variables CSS (Custom Properties)** en `:root` con 22 variables para tema claro.
+**Tema oscuro** con `[data-theme="dark"]` que sobrescribe 22 variables.
 
-```css
-:root {
-    --primary: #6366f1;
-    --primary-light: #818cf8;
-    --primary-dark: #4f46e5;
-    --success: #10b981;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --bg: #f1f5f9;
-    --surface: #ffffff;
-    --text: #1e293b;
-    --text-muted: #64748b;
-    --border: #e2e8f0;
-    --sidebar-width: 280px;
-    --radius: 12px;
-}
-```
-
-**Tema oscuro** con `[data-theme="dark"]`:
-
-```css
-[data-theme="dark"] {
-    --bg: #0f172a;
-    --surface: #1e293b;
-    --text: #e2e8f0;
-    --text-muted: #94a3b8;
-    --border: #334155;
-}
-```
-
-**Clases principales**:
+**Clases principales** (actualizado):
 
 | Clase | Proposito |
 |-------|-----------|
 | `.metric-card` | Tarjetas de metricas con borde colorido |
-| `.station-card` | Tarjetas de estaciones cyber (disponible/ocupada/mantenimiento) |
+| `.station-card` | Tarjetas de estaciones cyber |
 | `.pos-product` | Tarjetas de productos en POS |
 | `.cart-item` | Items del carrito de compras |
 | `.activity-item` | Items de actividad reciente |
 | `.welcome-banner` | Banner de bienvenida en dashboard |
 | `.result-count` | Contador de resultados de busqueda |
+| `.legal-permitido` | Badge verde para documentos permitidos |
+| `.legal-denegado` | Badge rojo para documentos no permitidos |
+| `.zone-divider` | Separador de zonas en cybercafe |
+| `.zone-title` | Titulo de zona en cybercafe |
+| `.station-inner/header/body/footer` | Estructura interna de estaciones |
+| `.pos-add-btn` | Boton "+" flotante en productos POS |
+| `.filter-btn` | Botones de filtro en cybercafe |
 
-### `src/Public/css/login.css` (58 lineas)
+### `src/Public/css/login.css` (65 lineas)
 
 Estilos especificos para la pagina de login (independiente).
 
@@ -810,13 +632,7 @@ Estilos especificos para la pagina de login (independiente).
 
 ### Integracion
 
-jQuery 3.7.1 se carga via CDN con integridad SRI:
-
-```html
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"
-        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
-        crossorigin="anonymous"></script>
-```
+jQuery 3.7.1 se carga via CDN con integridad SRI en layout.php (autenticadas), login.php y menu.php.
 
 ### Donde se usa
 
@@ -846,43 +662,41 @@ Para documentacion detallada de la migracion a jQuery, consultar `DOCUMENTACION_
 ### Login System (Funcional)
 - **Archivos**: `login.php`, `login_validate.php`
 - **Flujo**: Formulario -> Validacion -> Sesion -> Dashboard
-- **Seguridad**: Validacion de metodo POST, sesiones PHP
 - **Credenciales**: admin / 1234 (hardcodeadas)
 
 ### Dashboard (UI Estatica)
-- **Archivo**: `dashboard.php`
+- **Archivo**: `dashboard.php` (130 lineas)
 - **Contenido**: 4 metricas, tablas de horas pico y productos sin stock, actividad reciente
-- **Problema**: Datos estaticos, deberian venir de consultas SQL
 
 ### Inventario (UI Estatica con filtros)
-- **Archivo**: `inventario.php`
+- **Archivo**: `inventario.php` (129 lineas)
 - **Contenido**: Tabla con busqueda (debounce), filtro por estado, paginacion
-- **Problema**: No conecta a BD, datos simulados
 
 ### Punto de Venta (Semi-funcional con jQuery)
-- **Archivo**: `ventas.php`
+- **Archivo**: `ventas.php` (130 lineas)
 - **Funcionalidad**: Carrito completo en jQuery con modal Materialize
 - **Problema**: No persiste en BD, venta simulada con toast
 
 ### Cyber Control (Interactivo con jQuery)
-- **Archivo**: `ciberControl.php`
-- **Funcionalidad**: Toggle de estados con animaciones, filtros visuales, contadores
-- **Problema**: Cambios no persisten en BD
+- **Archivo**: `ciberControl.php` (133 lineas)
+- **Funcionalidad**: Toggle de estados con animaciones, filtros visuales, contadores dinamicos PHP
 
 ### Solicitudes (UI Estatica)
-- **Archivo**: `proveedores.php`
+- **Archivo**: `proveedores.php` (115 lineas)
 - **Contenido**: Tabla de solicitudes con busqueda
-- **Problema**: No conecta a BD
 
 ### Reportes (Simulado)
-- **Archivo**: `reportes.php`
-- **Contenido**: Formulario generador con jQuery (submit simulado)
-- **Problema**: No genera archivos reales
+- **Archivo**: `reportes.php` (139 lineas)
+- **Contenido**: Formulario generador con jQuery (submit simulado) + 4 metricas mensuales
 
 ### Activos (UI Estatica)
-- **Archivo**: `activos.php`
-- **Contenido**: Tarjetas por categoria con busqueda
-- **Problema**: No conecta a BD
+- **Archivo**: `activos.php` (207 lineas)
+- **Contenido**: Tarjetas por categoria con busqueda y resumen
+
+### Asesoria Legal (Semi-funcional con jQuery)
+- **Archivo**: `asesorias.php` (128 lineas)
+- **Funcionalidad**: Validacion de documentos en tiempo real, registro en historial local
+- **Problema**: No persiste en BD (solo en memoria del navegador)
 
 ---
 
@@ -895,18 +709,20 @@ El proyecto es un **prototipo de UI** con:
 - Sistema de login basico
 - Tema oscuro/claro con persistencia
 - Carrito POS funcional (frontend)
-- Control de cyber interactivo
+- Control de cyber interactivo con datos PHP
 - Busquedas y filtros con debounce
+- Validacion de asesoria legal en frontend
+- Esquema de BD completo v2.0 (19 tablas)
+- Modelos CRUD preparados (usuarios, asesorias)
 
 ### Para hacerlo funcional se requiere:
-1. **Crear controladores** en `Controllers/` (logica de negocio)
-2. **Expandir modelos** para todas las tablas
-3. **Conectar vistas con BD** (usar PDO en AJAX)
-4. **Implementar CRUD** real (insert, update, delete)
-5. **Agregar seguridad** (CSRF, password hashing, sanitizacion)
+1. **Conectar vistas con BD** (usar PDO en AJAX)
+2. **Implementar CRUD** real (insert, update, delete) via backend
+3. **Migrar a MVC** (controladores con clases, Request, Router)
+4. **Agregar seguridad** (CSRF, password hashing, sanitizacion)
 
 ---
 
 **Documentacion generada**: Mayo 2026
-**Version**: 1.1
+**Version**: 1.2
 **Autor**: Carlos Paez Guerra

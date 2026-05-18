@@ -55,6 +55,17 @@ classDiagram
         +eliminarUsuario(PDO, id) : bool
     }
 
+    class crud_asesorias_php {
+        +crearAsesoria(PDO, ciudadano, cedula, documento, descripcion, estado, usuario_id) : bool
+        +obtenerAsesorias(PDO) : array
+        +obtenerAsesoriasPorEstado(PDO, estado) : array
+        +obtenerAsesoriaPorId(PDO, id) : array~false
+        +buscarAsesoriasPorCedula(PDO, cedula) : array
+        +actualizarAsesoria(PDO, id, ciudadano, cedula, documento, descripcion, estado) : bool
+        +eliminarAsesoria(PDO, id) : bool
+        +contarAsesoriasPorEstado(PDO) : array
+    }
+
     class login_php {
         +render_form() : void
     }
@@ -112,6 +123,15 @@ classDiagram
         +render_summary() : void
     }
 
+    class asesorias_php {
+        +$allowedDocs : string[]
+        +$asesoriasRegistradas : array
+        +render_form() : void
+        +render_history_table() : void
+        +render_allowed_docs_list() : void
+        +render_search() : void
+    }
+
     class menu_php {
         +render_menu_links() : void
     }
@@ -127,6 +147,10 @@ classDiagram
         +pos_cart_system() : void
         +cyber_station_interaction() : void
         +back_to_top() : void
+        +normalizarDoc(texto) : string
+        +documentoPermitido(doc) : bool
+        +actualizarHistorial() : void
+        +mostrarValidacion(tipo, mensaje, esPermitido) : void
     }
 
     index_php --> router_php : require_once
@@ -140,6 +164,7 @@ classDiagram
     router_php --> proveedores_php : $contentView
     router_php --> reportes_php : $contentView
     router_php --> activos_php : $contentView
+    router_php --> asesorias_php : $contentView
     router_php --> menu_php : $contentView
     layout_php --> dashboard_php : require $contentView
     layout_php --> inventario_php : require $contentView
@@ -148,7 +173,9 @@ classDiagram
     layout_php --> proveedores_php : require $contentView
     layout_php --> reportes_php : require $contentView
     layout_php --> activos_php : require $contentView
+    layout_php --> asesorias_php : require $contentView
     crud_users_php --> database_php : require_once
+    crud_asesorias_php --> database_php : require_once
     login_validate_php ..> router_php : $_SESSION
 ```
 
@@ -279,9 +306,12 @@ flowchart TD
     G --> L[proveedores.php]
     G --> M[reportes.php]
     G --> N[activos.php]
-    C --> O[crud_users.php]
-    O --> P[database.php]
-    P --> Q[(MySQL zwl)]
+    G --> O[asesorias.php]
+    C --> P[crud_users.php]
+    C --> Q[crud_asesorias.php]
+    P --> R[database.php]
+    Q --> R[database.php]
+    R --> S[(MySQL zwl)]
 ```
 
 ---
