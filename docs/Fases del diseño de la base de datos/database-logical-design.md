@@ -76,7 +76,7 @@ categorias ──< productos >── marcas
 | Columna | Tipo | Nulo | Clave | Descripción |
 |---------|------|------|-------|-------------|
 | id | SMALLINT UNSIGNED | NO | PK | Identificador |
-| nombre | VARCHAR(50) | NO | UNI | Tarifa (Gaming, Oficina, Premium, etc.) |
+| nombre | VARCHAR(50) | NO | UNI | Tarifa (Gaming, Oficina, Premium, Estudiante) |
 | precio_por_hora | DECIMAL(8,2) | NO | - | Precio por hora |
 | precio_por_minuto | DECIMAL(6,2) | SI | - | Precio fraccionado |
 | tiempo_minimo | INT UNSIGNED | SI | - | Minutos mínimos por sesión (defecto 30) |
