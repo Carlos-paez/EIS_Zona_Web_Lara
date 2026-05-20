@@ -8,8 +8,9 @@ Se integro **jQuery 3.7.1** y **Materialize CSS 1.0.0** en la aplicacion EIS Sys
 - Creacion de un layout maestro (`layout.php`) que centraliza el HTML/JS comun
 - Migracion de JS vanilla a jQuery para theme toggle, sidebar, busquedas, filtros
 - Implementacion de componentes Materialize: sidenav, modals, selects, tooltips, tabs
-- Refactorizacion de 7 vistas autenticadas para usar solo contenido (sin HTML repetido)
-- Creacion de `app.js` con funcionalidad central (362 lineas)
+- Refactorizacion de 8 vistas autenticadas para usar solo contenido (sin HTML repetido)
+- Creacion de `app.js` con funcionalidad central (525 lineas)
+- Validacion de documentos en modulo de Asesoria Legal
 
 ---
 
@@ -17,14 +18,15 @@ Se integro **jQuery 3.7.1** y **Materialize CSS 1.0.0** en la aplicacion EIS Sys
 
 | Archivo | Tipo | Proposito |
 |---------|------|-----------|
-| `src/Public/js/app.js` | **Creado** | JS central con jQuery (362 lineas) |
+| `src/Public/js/app.js` | **Creado** | JS central con jQuery (525 lineas) |
 | `src/app/template/layout.php` | **Creado** | Layout maestro con jQuery + Materialize |
 | `src/app/core/router.php` | Modificado | Integracion del layout con titulos dinamicos |
-| `src/app/Views/*.php` (7 vistas) | Modificadas | Eliminado HTML/JS duplicado, solo contenido |
+| `src/app/Views/*.php` (8 vistas) | Modificadas | Eliminado HTML/JS duplicado, solo contenido |
+| `src/app/Views/asesorias.php` | **Creado** | Nueva vista con validacion jQuery |
 | `src/app/Views/login.php` | Modificado | JS migrado a jQuery + theme toggle |
 | `src/app/Views/menu.php` | Modificado | JS migrado a jQuery + theme toggle |
-| `src/Public/css/styles.css` | Modificado | Reducido de 748 a 404 lineas (ahora complementa Materialize) |
-| `src/Public/css/login.css` | Modificado | Reducido de 227 a 58 lineas |
+| `src/Public/css/styles.css` | Modificado | Reducido de 748 a 587 lineas (ahora complementa Materialize) |
+| `src/Public/css/login.css` | Modificado | Reducido de 227 a 65 lineas |
 
 ---
 
@@ -75,7 +77,7 @@ Se integro **jQuery 3.7.1** y **Materialize CSS 1.0.0** en la aplicacion EIS Sys
 
 ## 4. Archivo `app.js` - Explicacion detallada
 
-**Ruta**: `src/Public/js/app.js` (362 lineas)
+**Ruta**: `src/Public/js/app.js` (525 lineas)
 
 ### Estructura General
 
@@ -94,8 +96,9 @@ $(function () {
     // 9. Control de estaciones cyber
     // 10. Reportes (formulario simulado)
     // 11. Botones de accion generales
-    // 12. Notificaciones demo (campana)
-    // 13. Boton volver arriba
+    // 12. Asesoria Legal (validacion de documentos)
+    // 13. Notificaciones demo (campana)
+    // 14. Boton volver arriba
 });
 ```
 
@@ -111,9 +114,11 @@ $('.tabs').tabs();
 $('.collapsible').collapsible();
 $('.materialboxed').materialbox();
 $('.parallax').parallax();
+$('.pushpin').pushpin();
+$('.scrollspy').scrollSpy();
 ```
 
-Cada linea inicializa un componente de Materialize CSS usando su plugin jQuery. Los selectores buscan elementos con las clases correspondientes en el DOM. Si no hay elementos que coincidan, la llamada simplemente no hace nada (seguro).
+Cada linea inicializa un componente de Materialize CSS. Los selectores buscan elementos con las clases correspondientes. Si no hay elementos, la llamada simplemente no hace nada (seguro).
 
 ### 4.2 Reloj en Tiempo Real (lineas 18-27)
 
@@ -129,12 +134,12 @@ actualizarReloj();
 setInterval(actualizarReloj, 1000);
 ```
 
-- `new Date()` - Obtiene la fecha/hora actual del sistema
-- `toLocaleTimeString('es-ES', opts)` - Formato hora espanol (24h): "14:30:25"
-- `toLocaleDateString('es-ES', ...)` - Formato fecha: "15 abr 2026"
+- `new Date()` - Fecha/hora actual del sistema
+- `toLocaleTimeString('es-ES', opts)` - Formato 24h: "14:30:25"
+- `toLocaleDateString('es-ES', ...)` - Formato: "15 abr 2026"
 - `setInterval(actualizarReloj, 1000)` - Actualiza cada 1 segundo
 
-### 4.3 Sistema de Notificaciones (lineas 30-35)
+### 4.3 Sistema de Notificaciones (lineas 29-35)
 
 ```javascript
 EIS.toast = function (msg, color, icon) {
@@ -145,11 +150,11 @@ EIS.toast = function (msg, color, icon) {
 };
 ```
 
-Funcion global accesible como `EIS.toast('mensaje', 'color', 'icono')`:
+Funcion global `EIS.toast('mensaje', 'color', 'icono')`:
 - `msg` - Texto del mensaje
-- `color` - Clase de color de Materialize (indigo, green, red, orange, etc.)
+- `color` - Clase de color Materialize
 - `icon` - Nombre del icono Material Icons
-- `M.toast()` - Plugin de Materialize para mostrar toasts
+- `M.toast()` - Plugin de Materialize
 
 ### 4.4 Tema Oscuro/Claro (lineas 37-54)
 
@@ -175,10 +180,10 @@ $(document).on('click', '#themeToggle', function () {
 
 - `localStorage.getItem('theme')` - Recupera preferencia guardada
 - `$('html').attr('data-theme', theme)` - Aplica tema via atributo CSS
-- `$(document).on('click', '#themeToggle', fn)` - Event delegation (funciona aunque el elemento se cargue dinamicamente)
+- `$(document).on('click', '#themeToggle', fn)` - Event delegation
 - `localStorage.setItem('theme', theme)` - Persiste la preferencia
 
-### 4.5 Animacion de Transicion (lineas 57-58)
+### 4.5 Animacion de Transicion (lineas 56-58)
 
 ```javascript
 $('main').hide().fadeIn(400);
@@ -187,7 +192,7 @@ $('.container').hide().fadeIn(500);
 
 Efecto de entrada suave al cargar cada pagina.
 
-### 4.6 Animacion de Contadores (lineas 61-83)
+### 4.6 Animacion de Contadores (lineas 60-83)
 
 ```javascript
 function animarContadores() {
@@ -198,19 +203,16 @@ function animarContadores() {
         if (isNaN(num)) return;
         $({ val: 0 }).animate({ val: num }, {
             duration: 1200,
-            step: function () {
-                var v = isCurrency ? '$' + this.val.toFixed(2).replace(...) : prefix + Math.round(this.val);
-                $el.text(v);
-            }
+            step: function () { ... },
+            complete: function () { $el.text(text); }
         });
     });
 }
 ```
 
-- Selecciona elementos con clase `.metric-value`
-- Extrae el valor numerico del texto (ej: "$1,245.50" -> 1245.50)
-- Usa `$.animate()` para animar de 0 al valor final en 1200ms
-- Soporta formato moneda ($) y numeros enteros
+- `$.animate()` de 0 al valor final en 1200ms
+- Soporta formato moneda ($) y enteros
+- Restaura el texto original al completar (con formato original)
 
 ### 4.7 Busqueda en Tablas con Debounce (lineas 85-127)
 
@@ -236,11 +238,9 @@ function filtrarTabla(inputSelector, tableSelector, colIndex) {
 }
 ```
 
-**Debounce**: Tecnica que limita la frecuencia de ejecucion de una funcion. Aqui se usa para busqueda en tiempo real:
-- `clearTimeout(timer)` - Cancela la ejecucion anterior
-- `setTimeout(fn, delay)` - Programa nueva ejecucion tras 300ms sin escribir
+**Debounce**: Cancela ejecuciones anteriores, solo ejecuta tras 300ms sin escribir.
 
-**Busqueda por campos**: Buscadores para:
+Buscadores configurados:
 - `#searchProducto` - Filtra tabla de inventario por columna 1 (nombre)
 - `#searchProveedor` - Filtra tabla de proveedores por columna 1
 - `#searchActivo` - Filtra tabla de activos por columna 0
@@ -258,14 +258,9 @@ $(document).on('click', '.pos-product', function () {
     posCart.push({ name: name, price: price });
     posTotal += price;
     actualizarPosUI();
-    EIS.toast(name + ' agregado al carrito', 'green', 'add_shopping_cart');
+    ...
 });
 ```
-
-- `posCart` - Array de objetos `{name, price}`
-- `posTotal` - Suma acumulada de precios
-- `actualizarPosUI()` - Actualiza mini-total y modal del carrito
-- `$(document).on('click', '.pos-product', fn)` - Event delegation para productos
 
 **Funciones del POS**:
 
@@ -274,10 +269,10 @@ $(document).on('click', '.pos-product', function () {
 | `actualizarPosUI()` | Actualiza mini-total y modal |
 | `actualizarMiniTotal()` | Actualiza `#posMiniTotal` y `#cartCountBadge` |
 | `actualizarCarritoModal()` | Renderiza items en `#posCartItems` |
-| `procesarVenta` | Simula venta (toast + reseteo) |
+| `procesarVenta` | Simula venta con confirmacion + toast |
 | `vaciarCarrito` | Limpia el carrito |
 
-### 4.9 Control de Estaciones Cyber (lineas 237-291)
+### 4.9 Control de Estaciones Cyber (lineas 236-291)
 
 ```javascript
 function actualizarCyberContadores() {
@@ -286,48 +281,43 @@ function actualizarCyberContadores() {
     var ocup = $('.station-card.ocupada').length;
     var mant = $('.station-card.mantenimiento').length;
     $('#countDisponibles').text(disp);
-    $('#countOcupadas').text(ocup);
-    $('#countMantenimiento').text(mant);
+    ...
+}
+```
+
+- Contadores dinamicos con selectores jQuery
+- Toggle de estados: disponible ↔ ocupada con confirmacion
+- Animacion scale en `.station-status` con `.animate()`
+- Filtro visual con `.slideDown(200)` / `.hide()`
+
+### 4.10 Asesoria Legal (lineas 338-499) — NUEVO
+
+```javascript
+var allowedDocs = [
+    'consulta laboral', 'consulta civil', 'consulta familiar',
+    'orientación legal general', 'revisión de contrato',
+    'elaboración de documento simple', 'asesoría prevencional'
+];
+
+var asesoriasRegistradas = [];
+
+function documentoPermitido(doc) {
+    return allowedDocs.indexOf(normalizarDoc(doc)) !== -1;
 }
 
-$(document).on('click', '.station-card', function () {
-    var $card = $(this);
-    var status = $card.data('status');
-    // Toggle: disponible <-> ocupada, con animacion
-    $card.find('.station-status').css({ transform: 'scale(0.8)', opacity: 0 })
-         .animate({ transform: 'scale(1)', opacity: 1 }, 300);
-    actualizarCyberContadores();
-    EIS.toast('Sesion iniciada en ' + num, 'green', 'play_circle');
-});
+function actualizarHistorial() { ... }
+function mostrarValidacion(tipo, mensaje, esPermitido) { ... }
 ```
 
-- Contadores dinamicos con `$('.station-card.disponible').length`
-- Toggle de estados con animacion `$.animate()`
-- Filtro visual con `$(document).on('click', '.filter-btn', fn)` y `.slideDown(200)` / `.hide()`
+- `allowedDocs` - Array con 11 tipos de documentos permitidos
+- Validacion en tiempo real con evento `input` en `#documento`
+- Cambio dinamico del boton: indigo (permitido) / rojo (derivar)
+- Historial temporal con eliminacion
+- Busqueda en historial con debounce 300ms
 
-### 4.10 Otras Funcionalidades (lineas 293-362)
+### 4.11 Otras Funcionalidades (lineas 501-523)
 
-**Reportes** (lineas 294-302):
-```javascript
-$(document).on('submit', '#formReporte', function (e) {
-    e.preventDefault();
-    EIS.toast('Generando reporte...', 'indigo', 'download');
-});
-```
-
-**Botones de accion** (lineas 305-314):
-- `[data-confirm]` - Confirmacion antes de accion
-- `.btn-nuevo` - Toast de "nuevo elemento"
-
-**Paginacion** (lineas 317-325):
-```javascript
-$(document).on('click', '.pagination li:not(.disabled):not(.active) a', function (e) {
-    e.preventDefault();
-    // Cambia pagina activa y muestra toast
-});
-```
-
-**Notificaciones demo** (lineas 339-347):
+**Notificaciones demo** (lineas 501-509):
 ```javascript
 $(document).on('click', '#notifBell', function () {
     var msgs = ['Stock critico: Mouse', 'Sesion Cyber #2 finalizada', ...];
@@ -335,7 +325,7 @@ $(document).on('click', '#notifBell', function () {
 });
 ```
 
-**Boton volver arriba** (lineas 350-360):
+**Boton volver arriba** (lineas 512-523):
 ```javascript
 $(window).on('scroll', function () {
     $('#backToTop').fadeIn(); // o fadeOut() segun scroll
@@ -359,7 +349,7 @@ $(document).on('click', '#backToTop', function () {
     - Material Icons (Google Fonts)
     - Materialize CSS (CDN)
     - styles.css (personalizado)
-    - jQuery 3.7.1 (CDN)                <-- Linea 10
+    - jQuery 3.7.1 (CDN)
 </head>
 <body>
     - Sidenav (sidebar con navegacion)   <-- Materialize Sidenav
@@ -367,8 +357,8 @@ $(document).on('click', '#backToTop', function () {
     - Main container
         - <?php require $contentView; ?> <-- Contenido especifico
     - Back to top button
-    - Materialize JS (CDN)               <-- Final del body
-    - app.js                             <-- Final del body
+    - Materialize JS (CDN)
+    - app.js
 </body>
 </html>
 ```
@@ -386,7 +376,7 @@ $(document).on('click', '#backToTop', function () {
 
 ## 6. Router - `src/app/core/router.php`
 
-### Integracion del layout (lineas 24-43)
+### Integracion del layout (lineas 30-59)
 
 ```php
 if (in_array($pagina, $public_pages)) {
@@ -410,6 +400,7 @@ $titulos = [
     'proveedores'  => 'Solicitudes a Proveedores',
     'reportes'     => 'Reportes y Estadisticas',
     'activos'      => 'Gestion de Activos',
+    'asesorias'    => 'Asesoria Legal',
 ];
 
 $extraHeaders = [
@@ -421,7 +412,7 @@ $extraHeaders = [
 
 ## 7. Vistas Refactorizadas - De HTML Completo a Solo Contenido
 
-### Antes (ejemplo: `dashboard.php` - 198 lineas):
+### Antes (ejemplo: `dashboard.php` - ~200 lineas):
 
 ```html
 <!DOCTYPE html>
@@ -448,7 +439,7 @@ $extraHeaders = [
 </html>
 ```
 
-### Despues (`dashboard.php` - 135 lineas):
+### Despues (`dashboard.php` - 130 lineas):
 
 ```php
 <!-- Welcome Banner -->
@@ -485,11 +476,12 @@ $extraHeaders = [
 | **Clases CSS** | `element.classList.toggle('open')` | `$('#sidebar').toggleClass('open')` |
 | **Eventos** | `element.addEventListener('click', fn)` | `$(document).on('click', '#btn', fn)` |
 | **Animaciones** | CSS transitions manuales | `$.fadeIn()`, `$.slideDown()`, `$.animate()` |
-| **Framework UI** | CSS propio (748 lineas) | Materialize CSS (CDN) + CSS propio (404 lineas) |
+| **Framework UI** | CSS propio (748 lineas) | Materialize CSS (CDN) + CSS propio (587 lineas) |
 | **Componentes UI** | Sidebar manual, tablas basicas | Sidenav, modals, selects, tooltips, tabs, chips |
-| **Codigo duplicado** | 7 copias del mismo JS + HTML | 1 solo layout + 1 solo app.js |
-| **Lineas CSS** | 975 total (styles + login) | 462 total (404 + 58) |
+| **Codigo duplicado** | 8 copias del mismo JS + HTML | 1 solo layout + 1 solo app.js |
+| **Lineas CSS** | 975 total (styles + login) | 652 total (587 + 65) |
 | **Lineas JS en vistas** | ~200 lineas dispersas | 0 (todo en app.js) |
+| **Lineas app.js** | — | 525 (incluye asesoria legal) |
 | **Iconos** | Emojis | Material Icons (vectorial, escalable) |
 | **Tema oscuro** | No existia | Si, con localStorage |
 
@@ -515,12 +507,13 @@ src/
 |       +-- proveedores.php         <- Solo contenido
 |       +-- reportes.php            <- Solo contenido
 |       +-- activos.php             <- Solo contenido
+|       +-- asesorias.php           <- Solo contenido (validacion JS en app.js)
 +-- Public/
     +-- css/
-    |   +-- styles.css              <- Estilos personalizados (404 lineas)
-    |   +-- login.css               <- Estilos login (58 lineas)
+    |   +-- styles.css              <- Estilos personalizados (587 lineas)
+    |   +-- login.css               <- Estilos login (65 lineas)
     +-- js/
-        +-- app.js                  <- JS central con jQuery (362 lineas)
+        +-- app.js                  <- JS central con jQuery (525 lineas)
 ```
 
 ---
