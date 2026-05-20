@@ -49,41 +49,41 @@
             <!-- Cada producto tiene data-name y data-price para el JS del carrito -->
             <div class="col s6 m4 l3">
                 <div class="card-panel pos-product" data-name="Teclado Mecánico" data-price="45.00">
-                    <i class="material-icons" style="font-size:2.5rem;color:#546e7a;">keyboard</i>
+                    <i class="material-icons" style="font-size:2.5rem;color:var(--text-muted);">keyboard</i>
                     <h6 style="font-size:0.9rem;margin:0.5rem 0 0.25rem;">Teclado Mecánico</h6>
-                    <span style="color:#3949ab;font-weight:700;font-size:1.1rem;">$45.00</span>
+                    <span style="color:var(--primary);font-weight:700;font-size:1.1rem;">$45.00</span>
                     <div class="pos-add-btn"><i class="material-icons">add</i></div> <!-- Botón "+" para agregar al carrito -->
                 </div>
             </div>
             <div class="col s6 m4 l3">
                 <div class="card-panel pos-product" data-name="Mouse USB" data-price="12.50">
-                    <i class="material-icons" style="font-size:2.5rem;color:#546e7a;">mouse</i>
+                    <i class="material-icons" style="font-size:2.5rem;color:var(--text-muted);">mouse</i>
                     <h6 style="font-size:0.9rem;margin:0.5rem 0 0.25rem;">Mouse USB</h6>
-                    <span style="color:#3949ab;font-weight:700;font-size:1.1rem;">$12.50</span>
+                    <span style="color:var(--primary);font-weight:700;font-size:1.1rem;">$12.50</span>
                     <div class="pos-add-btn"><i class="material-icons">add</i></div>
                 </div>
             </div>
             <div class="col s6 m4 l3">
                 <div class="card-panel pos-product" data-name="Auriculares" data-price="35.00">
-                    <i class="material-icons" style="font-size:2.5rem;color:#546e7a;">headphones</i>
+                    <i class="material-icons" style="font-size:2.5rem;color:var(--text-muted);">headphones</i>
                     <h6 style="font-size:0.9rem;margin:0.5rem 0 0.25rem;">Auriculares</h6>
-                    <span style="color:#3949ab;font-weight:700;font-size:1.1rem;">$35.00</span>
+                    <span style="color:var(--primary);font-weight:700;font-size:1.1rem;">$35.00</span>
                     <div class="pos-add-btn"><i class="material-icons">add</i></div>
                 </div>
             </div>
             <div class="col s6 m4 l3">
                 <div class="card-panel pos-product" data-name="Monitor 24" data-price="189.00">
-                    <i class="material-icons" style="font-size:2.5rem;color:#546e7a;">desktop_windows</i>
+                    <i class="material-icons" style="font-size:2.5rem;color:var(--text-muted);">desktop_windows</i>
                     <h6 style="font-size:0.9rem;margin:0.5rem 0 0.25rem;">Monitor 24"</h6>
-                    <span style="color:#3949ab;font-weight:700;font-size:1.1rem;">$189.00</span>
+                    <span style="color:var(--primary);font-weight:700;font-size:1.1rem;">$189.00</span>
                     <div class="pos-add-btn"><i class="material-icons">add</i></div>
                 </div>
             </div>
             <div class="col s6 m4 l3">
                 <div class="card-panel pos-product" data-name="Cable USB-C" data-price="8.00">
-                    <i class="material-icons" style="font-size:2.5rem;color:#546e7a;">usb</i>
+                    <i class="material-icons" style="font-size:2.5rem;color:var(--text-muted);">usb</i>
                     <h6 style="font-size:0.9rem;margin:0.5rem 0 0.25rem;">Cable USB-C</h6>
-                    <span style="color:#3949ab;font-weight:700;font-size:1.1rem;">$8.00</span>
+                    <span style="color:var(--primary);font-weight:700;font-size:1.1rem;">$8.00</span>
                     <div class="pos-add-btn"><i class="material-icons">add</i></div>
                 </div>
             </div>

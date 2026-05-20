@@ -21,4 +21,4 @@ RewriteCond %{REQUEST_FILENAME} !-d   # No es un directorio real
 # Entonces reescribe: /nombre -> index.php?pagina=nombre
 # ^(\w+)$ captura una palabra (letras, números, guión bajo)
 # [L,QSA] = última regla + conservar query string
-RewriteRule ^(\w+)$ index.php?pagina=$1 [L,QSA]
+RewriteRule ^([\w-]+)$ index.php?pagina=$1 [L,QSA]

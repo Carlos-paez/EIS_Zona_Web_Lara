@@ -21,13 +21,13 @@
 <body>
 
     <!-- Tarjeta de inicio de sesión centrada vertical y horizontalmente -->
-    <div class="card login-card z-depth-4 white">
+    <div class="card login-card z-depth-4">
         <div class="card-content" style="padding:0;">
             <!-- Logo y encabezado -->
             <div style="text-align:center;">
                 <div class="login-logo">⚡</div>                              <!-- Ícono del sistema -->
                 <h4 class="card-title" style="font-weight:700;">EIS System</h4>
-                <p style="color:#78909c;margin-bottom:1.5rem;">Ingresa tus credenciales para continuar</p>
+                <p style="color:var(--text-muted);margin-bottom:1.5rem;">Ingresa tus credenciales para continuar</p>
             </div>
 
             <!-- Mensaje de error si viene ?error=1 en la URL (credenciales incorrectas) -->
@@ -67,14 +67,14 @@
 
             <!-- Separador "O continúa con" (para autenticación social) -->
             <div style="display:flex;align-items:center;gap:1rem;margin:1.5rem 0 1rem;">
-                <div style="flex:1;height:1px;background:#e0e0e0;"></div>
-                <span style="color:#90a4ae;font-size:0.9rem;">O continúa con</span>
-                <div style="flex:1;height:1px;background:#e0e0e0;"></div>
+                <div style="flex:1;height:1px;background:var(--border);"></div>
+                <span style="color:var(--text-muted);font-size:0.9rem;">O continúa con</span>
+                <div style="flex:1;height:1px;background:var(--border);"></div>
             </div>
 
             <!-- Botones de inicio de sesión social (Google y GitHub - no funcionales) -->
             <div style="display:flex;justify-content:center;gap:1rem;margin-bottom:1.5rem;">
-                <button type="button" class="btn-flat" style="border:2px solid #e0e0e0;border-radius:12px;padding:0.75rem 1.5rem;" onclick="alert('Funcionalidad no disponible')">
+                <button type="button" class="btn-flat" style="border:2px solid var(--border);border-radius:12px;padding:0.75rem 1.5rem;" onclick="alert('Funcionalidad no disponible')">
                     <!-- SVG del logo de Google -->
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="20" height="20">
                         <path fill="#4285F4" d="M32 16.1c0-1.3-.1-2.7-.4-3.9H16v7.4h9c-.4 2-1.6 3.7-3.3 4.8v5h4.5c3.1-2.9 4.9-7.1 4.9-12.3z"/>
@@ -83,7 +83,7 @@
                         <path fill="#EA4335" d="M16 6.3c2.3 0 4.3.8 5.9 2.3l4.4-4.4C23.9 1.8 20.3 0 16 0 9.4 0 3.9 3.7 1.4 9.5l5.5 4.3C8.2 9.1 11.8 6.3 16 6.3z"/>
                     </svg>
                 </button>
-                <button type="button" class="btn-flat" style="border:2px solid #e0e0e0;border-radius:12px;padding:0.75rem 1.5rem;" onclick="alert('Funcionalidad no disponible')">
+                <button type="button" class="btn-flat" style="border:2px solid var(--border);border-radius:12px;padding:0.75rem 1.5rem;" onclick="alert('Funcionalidad no disponible')">
                     <!-- SVG del logo de GitHub -->
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="20" height="20">
                         <path fill="#1B1F23" d="M16 0C7.2 0 0 7.2 0 16c0 7.1 4.6 13.1 10.9 15.2.8.1 1.1-.3 1.1-.8v-2.8c-4.4 1-5.4-2.1-5.4-2.1-.7-1.9-1.8-2.4-1.8-2.4-1.5-1 .1-1 .1-1 1.6.1 2.5 1.7 2.5 1.7 1.4 2.4 3.7 1.7 4.7 1.3.1-.8.6-1.4 1-1.7-3.5-.4-7.2-1.8-7.2-7.8 0-1.7.6-3.1 1.6-4.2-.2-.4-.7-1.9.2-4 0 0 1.3-.4 4.3 1.6 1.2-.4 2.6-.5 4-.5s2.7.2 4 .5c3-2 4.3-1.6 4.3-1.6.9 2.1.3 3.6.2 4 1 1.1 1.6 2.5 1.6 4.2 0 6.1-3.7 7.4-7.2 7.8.6.5 1.1 1.5 1.1 3v4.4c0 .4.3.9 1.1.8C27.4 29.1 32 23.1 32 16c0-8.8-7.2-16-16-16z"/>
@@ -92,7 +92,7 @@
             </div>
 
             <!-- Enlace de registro (placeholder no funcional) -->
-            <p style="text-align:center;color:#90a4ae;font-size:0.9rem;">
+            <p style="text-align:center;color:var(--text-muted);font-size:0.9rem;">
                 ¿No tienes una cuenta? <a href="#" onclick="return false;" style="color:var(--primary);">Regístrate</a>
             </p>
         </div>
