@@ -1,34 +1,24 @@
 # ============================================================
 # CONFIGURACIÓN DE APACHE (.htaccess)
 # Reglas de reescritura de URL para habilitar rutas limpias
-# y redirigir todas las solicitudes al Front Controller (index.php).
-# Ubicación: raíz del directorio público (src/).
+# y redirigir todas las solicitudes al Front Controller.
 # ============================================================
 
 # Impedir que se pueda ver el listado de contenidos de un directorio
-# Options All -Indexes: deshabilita el listado automático de archivos
-# cuando no hay un index.php/index.html en el directorio.
 Options All -Indexes
 
 # URLS AMIGABLES
 # Activar el motor de reescritura de URLs de Apache (mod_rewrite)
-# Esto permite interceptar todas las solicitudes entrantes
-# y redirigirlas a index.php con un parámetro "pagina".
 RewriteEngine on
 
 # Redirigir la raíz del sitio (http://dominio/) hacia index.php
-# ^$ coincide con la ruta raíz vacía
-# [L] = última regla (Last), detiene el procesamiento de más reglas
-# [QSA] = Query String Append, conserva los parámetros GET existentes
+# [L] = última regla, [QSA] = conservar parámetros GET existentes
 RewriteRule ^$ index.php [L,QSA]
 
 # SÓLO si el archivo o directorio solicitado NO existe físicamente:
-# RewriteCond %{REQUEST_FILENAME} !-f  → No es un archivo real en el disco
-RewriteCond %{REQUEST_FILENAME} !-f
-# RewriteCond %{REQUEST_FILENAME} !-d  → No es un directorio real en el disco
-RewriteCond %{REQUEST_FILENAME} !-d
-# Entonces reescribe: /nombre → index.php?pagina=nombre
+RewriteCond %{REQUEST_FILENAME} !-f   # No es un archivo real
+RewriteCond %{REQUEST_FILENAME} !-d   # No es un directorio real
+# Entonces reescribe: /nombre -> index.php?pagina=nombre
 # ^(\w+)$ captura una palabra (letras, números, guión bajo)
-# [L,QSA] = última regla + conservar query string existente
-# $1 se reemplaza con el valor capturado por (\w+)
-RewriteRule ^(\w+)$ index.php?pagina=$1 [L,QSA]
+# [L,QSA] = última regla + conservar query string
+RewriteRule ^([\w-]+)$ index.php?pagina=$1 [L,QSA]
