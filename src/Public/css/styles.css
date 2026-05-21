@@ -49,13 +49,57 @@ body {
     line-height: 1.6;
 }
 
-header, main {
+header {
+    padding-left: 300px;
+    transition: padding-left 0.3s ease;
+    position: sticky;
+    top: 0;
+    z-index: 997;
+    padding-top: env(safe-area-inset-top, 0);
+}
+
+main {
     padding-left: 300px;
     transition: padding-left 0.3s ease;
 }
 
 @media only screen and (max-width: 992px) {
-    header, main { padding-left: 0; }
+    header { padding-left: 0; }
+    main { padding-left: 0; }
+}
+
+header nav .nav-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    min-height: 56px;
+}
+
+header nav .sidenav-trigger {
+    flex-shrink: 0;
+}
+
+header nav ul.right {
+    float: none;
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+header nav ul.right li {
+    flex-shrink: 0;
+}
+
+header nav .brand-logo {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transform: none;
+    left: auto;
 }
 
 .sidenav li a.sidenav-link.active {
@@ -646,6 +690,24 @@ input, select, textarea {
     .container { width: 100% !important; }
     .card .card-content { padding: 0.85rem; }
     .card .card-content .card-title { font-size: 1.1rem; }
+
+    /* Nav compacto */
+    header nav .nav-wrapper { min-height: 48px; }
+    nav .brand-logo { font-size: 0.85rem !important; }
+    .page-title-mobile { font-size: 0.75rem !important; }
+    nav ul#nav-mobile li span#clock { display: none !important; }
+    nav ul#nav-mobile li span.badge {
+        margin-right: 0.15rem !important;
+        padding: 0.15rem 0.35rem !important;
+        min-height: 40px;
+        min-width: 40px;
+        justify-content: center;
+    }
+    nav ul#nav-mobile li span.badge i { font-size: 0.9rem; margin: 0; }
+    nav ul#nav-mobile li span.badge span { display: none !important; }
+    nav ul#nav-mobile li.header-extra { display: none !important; }
+    #notifBell { min-width: 40px; min-height: 40px; }
+    #notifBell .material-icons { font-size: 1.3rem !important; }
 }
 
 /* --- Phones (< 600px) --- */
@@ -895,14 +957,21 @@ input, select, textarea {
     }
 
     /* Header chips (cyber status in navbar) */
+    header nav ul.right li.header-extra {
+        display: flex !important;
+        align-items: center;
+        gap: 2px;
+        max-width: 120px;
+        overflow: hidden;
+    }
     nav .chip {
-        font-size: 0.65rem !important;
-        padding: 0 0.4rem !important;
-        min-height: 28px;
+        font-size: 0.6rem !important;
+        padding: 0 0.3rem !important;
+        min-height: 24px;
         display: inline-flex !important;
         align-items: center;
+        line-height: 1 !important;
     }
-
     /* Card title floating buttons */
     .card .card-content span.card-title .btn-floating {
         width: 44px !important;
@@ -931,6 +1000,10 @@ input, select, textarea {
 
 /* --- Tablets (600px – 992px) --- */
 @media only screen and (min-width: 601px) and (max-width: 992px) {
+    header nav .nav-wrapper { min-height: 56px; }
+    nav .brand-logo { font-size: 1.05rem !important; padding-left: 0.75rem; }
+    nav ul#nav-mobile li span#clock { font-size: 0.8rem; padding-right: 0.4rem; }
+    nav ul#nav-mobile li span.badge { margin-right: 0.35rem; font-size: 0.75rem; }
     .welcome-banner { padding: 1.75rem; }
     .welcome-banner h2 { font-size: 1.4rem; }
     .metric-card { padding: 1.25rem; }
@@ -1000,14 +1073,6 @@ html { scroll-behavior: smooth; }
     .card .card-content span.card-title .btn-floating i {
         line-height: 28px !important;
         font-size: 0.9rem !important;
-    }
-}
-
-/* --- Cyber status chips in header --- */
-@media only screen and (max-width: 600px) {
-    nav .chip {
-        font-size: 0.6rem !important;
-        padding: 0 0.35rem !important;
     }
 }
 

@@ -8,7 +8,7 @@
 
 <!-- Banner de bienvenida -->
 <div class="welcome-banner">
-    <h2 class="hide-on-small-only">¡Bienvenido de nuevo!</h2>
+    <h2 class="hide-on-small-only">¡Bienvenido de nuevo a EIS One Manager!</h2>
     <h2 class="hide-on-med-and-up">¡Bienvenido!</h2>
     <p>Gestiona tu negocio de manera eficiente con EIS System</p>
 </div>
