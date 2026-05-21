@@ -77,17 +77,16 @@
             <div class="nav-wrapper">
                 <!-- Botón hamburguesa para mostrar/ocultar sidebar en pantallas pequeñas -->
                 <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>
-                <!-- Título de la página (oculto en tablets/desktop) -->
-                <span class="brand-logo hide-on-med-and-down"
-                    style="font-size:1.25rem;padding-left:1rem;"><?php echo $pageTitle; ?></span>
-                <!-- Título centrado en móviles -->
-                <span class="brand-logo hide-on-large-only"
-                    style="font-size:1rem;left:50%;transform:translateX(-50%);max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?php echo $pageTitle; ?></span>
+                <!-- Título de la página en desktop -->
+                <span class="brand-logo hide-on-med-and-down page-title-desktop"
+                    style="position:static;font-size:1.25rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;padding-left:1rem;transform:none;"><?php echo $pageTitle; ?></span>
+                <!-- Título en móviles -->
+                <span class="brand-logo hide-on-large-only page-title-mobile"
+                    style="position:static;font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;flex:1;min-width:0;padding:0 8px;transform:none;"><?php echo $pageTitle; ?></span>
                 <ul id="nav-mobile" class="right">
                     <!-- Header extra opcional (ej: chips de estado en ciberControl) -->
                     <?php if (!empty($headerExtra)): ?>
-                    <li class="hide-on-small-only"><?php echo $headerExtra; ?></li>
-                    <li class="hide-on-med-and-up"><?php echo $headerExtra; ?></li>
+                    <li class="header-extra"><?php echo $headerExtra; ?></li>
                     <?php endif; ?>
                     <!-- Reloj digital actualizado por JS (solo ícono en móvil) -->
                     <li><span id="clock" class="white-text"
