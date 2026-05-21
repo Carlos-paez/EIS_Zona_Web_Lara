@@ -8,7 +8,10 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">                           <!-- Codificación UTF-8 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Diseño responsive -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"> <!-- Diseño responsive con safe-area -->
+    <meta name="theme-color" content="#1a237e">     <!-- Color de barra de navegación en móviles -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="robots" content="noindex,nofollow">  <!-- Evita que los buscadores indexen esta página -->
     <title>Login - EIS System</title>
     <!-- Google Material Icons -->
@@ -73,8 +76,8 @@
             </div>
 
             <!-- Botones de inicio de sesión social (Google y GitHub - no funcionales) -->
-            <div style="display:flex;justify-content:center;gap:1rem;margin-bottom:1.5rem;">
-                <button type="button" class="btn-flat" style="border:2px solid var(--border);border-radius:12px;padding:0.75rem 1.5rem;" onclick="alert('Funcionalidad no disponible')">
+            <div class="social-login-row" style="display:flex;justify-content:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+                <button type="button" class="btn-flat waves-effect waves-light" style="border:2px solid var(--border);border-radius:12px;padding:0.75rem 1.5rem;min-width:48px;min-height:48px;display:flex;align-items:center;justify-content:center;" onclick="alert('Funcionalidad no disponible')">
                     <!-- SVG del logo de Google -->
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="20" height="20">
                         <path fill="#4285F4" d="M32 16.1c0-1.3-.1-2.7-.4-3.9H16v7.4h9c-.4 2-1.6 3.7-3.3 4.8v5h4.5c3.1-2.9 4.9-7.1 4.9-12.3z"/>
@@ -83,7 +86,7 @@
                         <path fill="#EA4335" d="M16 6.3c2.3 0 4.3.8 5.9 2.3l4.4-4.4C23.9 1.8 20.3 0 16 0 9.4 0 3.9 3.7 1.4 9.5l5.5 4.3C8.2 9.1 11.8 6.3 16 6.3z"/>
                     </svg>
                 </button>
-                <button type="button" class="btn-flat" style="border:2px solid var(--border);border-radius:12px;padding:0.75rem 1.5rem;" onclick="alert('Funcionalidad no disponible')">
+                <button type="button" class="btn-flat waves-effect waves-light" style="border:2px solid var(--border);border-radius:12px;padding:0.75rem 1.5rem;min-width:48px;min-height:48px;display:flex;align-items:center;justify-content:center;" onclick="alert('Funcionalidad no disponible')">
                     <!-- SVG del logo de GitHub -->
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="20" height="20">
                         <path fill="#1B1F23" d="M16 0C7.2 0 0 7.2 0 16c0 7.1 4.6 13.1 10.9 15.2.8.1 1.1-.3 1.1-.8v-2.8c-4.4 1-5.4-2.1-5.4-2.1-.7-1.9-1.8-2.4-1.8-2.4-1.5-1 .1-1 .1-1 1.6.1 2.5 1.7 2.5 1.7 1.4 2.4 3.7 1.7 4.7 1.3.1-.8.6-1.4 1-1.7-3.5-.4-7.2-1.8-7.2-7.8 0-1.7.6-3.1 1.6-4.2-.2-.4-.7-1.9.2-4 0 0 1.3-.4 4.3 1.6 1.2-.4 2.6-.5 4-.5s2.7.2 4 .5c3-2 4.3-1.6 4.3-1.6.9 2.1.3 3.6.2 4 1 1.1 1.6 2.5 1.6 4.2 0 6.1-3.7 7.4-7.2 7.8.6.5 1.1 1.5 1.1 3v4.4c0 .4.3.9 1.1.8C27.4 29.1 32 23.1 32 16c0-8.8-7.2-16-16-16z"/>

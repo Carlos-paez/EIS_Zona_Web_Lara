@@ -17,11 +17,12 @@
     <style>
         body {
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             align-items: center;
             justify-content: center;
             background: linear-gradient(135deg, #0f0f23 0%, #1e1e3f 100%); /* Fondo degradado oscuro */
-            padding: 2rem;
+            padding: 1rem;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
@@ -30,6 +31,17 @@
             max-width: 420px;
             border-radius: 12px;
             overflow: hidden;
+        }
+
+        @media only screen and (max-width: 600px) {
+            body { padding: 0.5rem; align-items: flex-start; padding-top: 2rem; }
+            .menu-card { max-width: 100%; border-radius: 8px; }
+            .menu-card .card-content { padding: 1.25rem !important; }
+            .menu-card .card-title { font-size: 1.2rem; }
+            .menu-card .menu-item { padding: 0.85rem 1rem; font-size: 0.9rem; gap: 0.75rem; min-height: 44px; }
+            .menu-card .menu-footer { margin-top: 1rem; padding-top: 1rem; }
+            #themeToggle { width: 44px; height: 44px; }
+            #themeToggle i { line-height: 44px; font-size: 1.3rem; }
         }
 
         .menu-item {

@@ -19,16 +19,20 @@
     <!-- Resumen del total del carrito y botón para abrir el modal -->
     <div class="col s12 m5" style="padding-top:0;">
         <div class="card" style="margin:0;padding:0.75rem 1.25rem;height:100%;display:flex;align-items:center;justify-content:space-between;">
-            <div>
+            <div class="hide-on-small-only">
                 <span style="color:var(--text-muted);font-size:0.8rem;text-transform:uppercase;">Total carrito</span>
                 <div style="font-size:1.5rem;font-weight:800;color:var(--primary);" id="posMiniTotal">$0.00</div> <!-- Actualizado por JS -->
             </div>
+            <div class="hide-on-med-and-up" style="display:flex;flex-direction:column;gap:0.1rem;">
+                <span style="color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">Total</span>
+                <div style="font-size:1.25rem;font-weight:800;color:var(--primary);line-height:1;" id="posMiniTotalMobile">$0.00</div>
+            </div>
             <div style="display:flex;gap:0.5rem;">
                 <!-- Botón que abre el modal del carrito -->
-                <button id="openCartBtn" class="btn waves-effect waves-light indigo" style="border-radius:20px;height:3rem;">
-                    <i class="material-icons left">shopping_cart</i>
-                    <span>Carrito</span>
-                    <span class="new badge white indigo-text" id="cartCountBadge" style="margin-left:0.5rem;border-radius:50%;font-weight:700;">0</span> <!-- Contador de productos -->
+                <button id="openCartBtn" class="btn waves-effect waves-light indigo" style="border-radius:20px;height:3rem;display:flex;align-items:center;">
+                    <i class="material-icons left" style="margin-right:0.25rem;">shopping_cart</i>
+                    <span class="hide-on-small-only">Carrito</span>
+                    <span class="new badge white indigo-text" id="cartCountBadge" style="margin-left:0.25rem;border-radius:50%;font-weight:700;min-width:22px;height:22px;line-height:22px;">0</span> <!-- Contador de productos -->
                 </button>
             </div>
         </div>
@@ -117,12 +121,12 @@
             </div>
             <div style="display:flex;gap:0.75rem;">
                 <!-- Botón para vaciar el carrito -->
-                <button class="btn waves-effect waves-light red lighten-1 modal-close" id="vaciarCarrito" style="border-radius:20px;">
-                    <i class="material-icons left">delete_sweep</i>Vaciar
+                <button class="btn waves-effect waves-light red lighten-1 modal-close" id="vaciarCarrito" style="border-radius:20px;display:inline-flex;align-items:center;">
+                    <i class="material-icons left" style="margin-right:0.35rem;">delete_sweep</i>Vaciar
                 </button>
                 <!-- Botón para procesar la venta -->
-                <button class="btn waves-effect waves-light green" id="procesarVenta" style="border-radius:20px;">
-                    <i class="material-icons left">paid</i>Procesar Venta
+                <button class="btn waves-effect waves-light green" id="procesarVenta" style="border-radius:20px;white-space:normal;line-height:1.2;height:auto;min-height:2.75rem;padding:0.5rem 0.75rem;display:inline-flex;align-items:center;">
+                    <i class="material-icons left" style="margin-right:0.35rem;">paid</i><span>Procesar</span>
                 </button>
             </div>
         </div>

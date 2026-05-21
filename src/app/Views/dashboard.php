@@ -8,7 +8,8 @@
 
 <!-- Banner de bienvenida -->
 <div class="welcome-banner">
-    <h2>¡Bienvenido de nuevo!</h2>
+    <h2 class="hide-on-small-only">¡Bienvenido de nuevo!</h2>
+    <h2 class="hide-on-med-and-up">¡Bienvenido!</h2>
     <p>Gestiona tu negocio de manera eficiente con EIS System</p>
 </div>
 
@@ -59,7 +60,7 @@
         <div class="card">
             <div class="card-content">
                 <span class="card-title"><i class="material-icons left">access_time</i>Horas Pico</span>
-                <table>
+                <table class="responsive-table">
                     <thead>
                         <tr>
                             <th>Hora</th>
@@ -81,7 +82,7 @@
         <div class="card">
             <div class="card-content">
                 <span class="card-title"><i class="material-icons left">inventory</i>Productos Sin Stock</span>
-                <table>
+                <table class="responsive-table">
                     <thead>
                         <tr>
                             <th>Producto</th>

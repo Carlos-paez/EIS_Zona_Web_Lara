@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <!-- ============================================================
      LAYOUT PRINCIPAL (MASTER TEMPLATE)
      Este archivo define la estructura HTML común a todas las
@@ -12,7 +12,10 @@
 
 <head>
     <meta charset="UTF-8"> <!-- Codificación UTF-8 para caracteres especiales -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Diseño responsive -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"> <!-- Diseño responsive con safe-area -->
+    <meta name="theme-color" content="#1a237e"> <!-- Color de la barra de navegación del navegador en móviles -->
+    <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Permitir modo app en iOS -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> <!-- Barra de estado translúcida en iOS -->
     <title><?php echo $pageTitle; ?> - EIS System</title> <!-- Título dinámico de la pestaña -->
     <!-- Google Material Icons (fuente de iconos) -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -59,6 +62,8 @@
         <li>
             <div class="divider"></div>
         </li> <!-- Separador visual -->
+        <li><a href="?pagina=usuarios" class="sidenav-link<?php echo $pagina === 'usuarios' ? ' active' : ''; ?>"><i
+                    class="material-icons left">settings</i>Configuración</a></li>
         <!-- Alternar tema oscuro/claro (manejado por JS en app.js) -->
         <li><a class="sidenav-link" id="themeToggle" style="cursor:pointer;"><i class="material-icons left"
                     id="themeIcon">dark_mode</i><span id="themeLabel">Modo Oscuro</span></a></li>
@@ -77,29 +82,30 @@
                     style="font-size:1.25rem;padding-left:1rem;"><?php echo $pageTitle; ?></span>
                 <!-- Título centrado en móviles -->
                 <span class="brand-logo hide-on-large-only"
-                    style="font-size:1.1rem;left:50%;transform:translateX(-50%);"><?php echo $pageTitle; ?></span>
+                    style="font-size:1rem;left:50%;transform:translateX(-50%);max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?php echo $pageTitle; ?></span>
                 <ul id="nav-mobile" class="right">
-                    <!-- Reloj digital actualizado por JS -->
-                    <li><span id="clock" class="white-text"
-                            style="font-size:0.85rem;padding-right:1rem;opacity:0.85;"><i class="material-icons left"
-                                style="font-size:1rem;">schedule</i>Cargando...</span></li>
                     <!-- Header extra opcional (ej: chips de estado en ciberControl) -->
                     <?php if (!empty($headerExtra)): ?>
-                    <li><?php echo $headerExtra; ?></li>
+                    <li class="hide-on-small-only"><?php echo $headerExtra; ?></li>
+                    <li class="hide-on-med-and-up"><?php echo $headerExtra; ?></li>
                     <?php endif; ?>
+                    <!-- Reloj digital actualizado por JS (solo ícono en móvil) -->
+                    <li><span id="clock" class="white-text"
+                            style="font-size:0.8rem;padding-right:0.5rem;opacity:0.85;"><i class="material-icons left"
+                                style="font-size:1rem;">schedule</i><span class="hide-on-small-only">Cargando...</span></span></li>
                     <!-- Campana de notificaciones con badge (contador) -->
                     <li>
                         <a class="tooltipped" data-position="bottom" data-tooltip="Notificaciones" id="notifBell"
-                            style="cursor:pointer;position:relative;">
+                            style="cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;">
                             <i class="material-icons">notifications</i>
                             <span id="notifBadge" class="new badge red"
-                                style="position:absolute;top:0;right:0;min-width:18px;height:18px;line-height:18px;font-size:0.65rem;padding:0 5px;border-radius:50%;">3</span>
+                                style="position:absolute;top:6px;right:2px;min-width:20px;height:20px;line-height:20px;font-size:0.6rem;padding:0 5px;border-radius:50%;pointer-events:none;">3</span>
                         </a>
                     </li>
-                    <!-- Badge con el nombre del usuario (hardcodeado como Admin) -->
+                    <!-- Badge con el nombre del usuario (solo avatar en móvil) -->
                     <li><span class="badge indigo lighten-2 white-text"
-                            style="margin-right:1rem;font-size:0.8rem;padding:0.25rem 0.75rem;"><i
-                                class="material-icons left" style="font-size:0.9rem;">person</i>Admin</span></li>
+                            style="margin-right:0.5rem;font-size:0.8rem;padding:0.25rem 0.6rem;display:flex;align-items:center;min-height:44px;"><i
+                                class="material-icons left" style="font-size:1rem;">person</i><span class="hide-on-small-only">Admin</span></span></li>
                 </ul>
             </div>
         </nav>

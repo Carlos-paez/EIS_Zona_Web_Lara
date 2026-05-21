@@ -67,7 +67,7 @@ roles ──< usuarios >───< ventas >───< detalle_ventas >──> pr
 | Atributo | Tipo | Restricciones | Descripción |
 |----------|------|---------------|-------------|
 | id | TINYINT UNSIGNED | PK, AUTO_INCREMENT | Identificador único |
-| nombre | VARCHAR(50) | NOT NULL, UNIQUE | Tipo (Equipos, Herramientas, Licencias, Muebles) |
+| nombre | VARCHAR(50) | NOT NULL, UNIQUE | Tipo (Equipos, Herramientas, Licencias, Mobiliario, Vehículos) |
 | descripcion | VARCHAR(200) | NULL | Descripción |
 | created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Fecha de creación |
 

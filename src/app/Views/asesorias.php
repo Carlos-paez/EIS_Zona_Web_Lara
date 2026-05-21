@@ -7,8 +7,8 @@
                     <h2 style="font-size:1.5rem;font-weight:700;margin:0 0 0.25rem;">Asesoría Legal</h2>
                     <p style="margin:0;opacity:0.9;font-size:0.9rem;">Registro y validación de documentos para asesoría jurídica gratuita</p>
                 </div>
-                <div class="hide-on-small-only">
-                    <span class="chip indigo lighten-2 white-text" style="font-size:0.85rem;padding:0.3rem 1rem;" id="asesoriasCountChip">0 registradas hoy</span>
+                <div>
+                    <span class="chip indigo lighten-2 white-text" style="font-size:0.8rem;padding:0.25rem 0.75rem;display:inline-flex;align-items:center;gap:0.25rem;" id="asesoriasCountChip"><i class="material-icons" style="font-size:1rem;">receipt</i> <span>0 registradas hoy</span></span>
                 </div>
             </div>
         </div>
@@ -92,13 +92,14 @@
                 <table class="striped responsive-table">
                     <thead>
                         <tr>
-                            <th>#</th>
+                            <th class="hide-on-small-only">#</th>
                             <th>Ciudadano</th>
-                            <th>Cédula</th>
+                            <th class="hide-on-small-only">Cédula</th>
                             <th>Documento</th>
                             <th>Estado</th>
-                            <th>Fecha</th>
-                            <th class="right-align">Acción</th>
+                            <th class="hide-on-small-only">Fecha</th>
+                            <th class="right-align hide-on-small-only">Acción</th>
+                            <th class="hide-on-med-and-up right-align">Acción</th>
                         </tr>
                     </thead>
                     <tbody id="asesoriasTableBody">
@@ -114,13 +115,15 @@
         <div class="card">
             <div class="card-content">
                 <span class="card-title"><i class="material-icons left">info</i>Documentos Permitidos</span>
-                <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.8rem;border-radius:4px;height:auto;padding:0.4rem 0.75rem;margin-right:0.5rem;">✓ Consulta Laboral</div>
-                <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.8rem;border-radius:4px;height:auto;padding:0.4rem 0.75rem;margin-right:0.5rem;">✓ Consulta Civil</div>
-                <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.8rem;border-radius:4px;height:auto;padding:0.4rem 0.75rem;margin-right:0.5rem;">✓ Consulta Familiar</div>
-                <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.8rem;border-radius:4px;height:auto;padding:0.4rem 0.75rem;margin-right:0.5rem;">✓ Orientación Legal General</div>
-                <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.8rem;border-radius:4px;height:auto;padding:0.4rem 0.75rem;margin-right:0.5rem;">✓ Revisión de Contrato</div>
-                <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.8rem;border-radius:4px;height:auto;padding:0.4rem 0.75rem;margin-right:0.5rem;">✓ Elaboración de Documento Simple</div>
-                <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.8rem;border-radius:4px;height:auto;padding:0.4rem 0.75rem;margin-right:0.5rem;">✓ Asesoría Prevencional</div>
+                <div style="display:flex;flex-wrap:wrap;gap:0.35rem;">
+                    <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.78rem;border-radius:4px;height:auto;padding:0.35rem 0.6rem;margin:0;">✓ Consulta Laboral</div>
+                    <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.78rem;border-radius:4px;height:auto;padding:0.35rem 0.6rem;margin:0;">✓ Consulta Civil</div>
+                    <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.78rem;border-radius:4px;height:auto;padding:0.35rem 0.6rem;margin:0;">✓ Consulta Familiar</div>
+                    <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.78rem;border-radius:4px;height:auto;padding:0.35rem 0.6rem;margin:0;">✓ Orientación Legal General</div>
+                    <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.78rem;border-radius:4px;height:auto;padding:0.35rem 0.6rem;margin:0;">✓ Revisión de Contrato</div>
+                    <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.78rem;border-radius:4px;height:auto;padding:0.35rem 0.6rem;margin:0;">✓ Elaboración de Documento Simple</div>
+                    <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.78rem;border-radius:4px;height:auto;padding:0.35rem 0.6rem;margin:0;">✓ Asesoría Prevencional</div>
+                </div>
                 <p class="grey-text" style="font-size:0.8rem;margin-top:0.75rem;"><i class="material-icons left" style="font-size:1rem;">lock</i>Documentos no listados (juicios, demandas, apelaciones, herencias, penal, etc.) requieren derivación a una oficina oficial de atención legal.</p>
             </div>
         </div>
