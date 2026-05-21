@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <!-- ============================================================
      LAYOUT PRINCIPAL (MASTER TEMPLATE)
      Este archivo define la estructura HTML común a todas las
@@ -62,6 +62,8 @@
         <li>
             <div class="divider"></div>
         </li> <!-- Separador visual -->
+        <li><a href="?pagina=usuarios" class="sidenav-link<?php echo $pagina === 'usuarios' ? ' active' : ''; ?>"><i
+                    class="material-icons left">settings</i>Configuración</a></li>
         <!-- Alternar tema oscuro/claro (manejado por JS en app.js) -->
         <li><a class="sidenav-link" id="themeToggle" style="cursor:pointer;"><i class="material-icons left"
                     id="themeIcon">dark_mode</i><span id="themeLabel">Modo Oscuro</span></a></li>

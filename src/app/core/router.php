@@ -44,6 +44,7 @@ if(is_file($rutaVista)){ // Verifica que el archivo de vista exista en el sistem
             'reportes'     => 'Reportes y Estadísticas',
             'activos'      => 'Gestión de Activos',
             'asesorias'    => 'Asesoría Legal',
+            'usuarios'     => 'Gestión de Usuarios',
         ];
 
         // 5b. Contenido HTML adicional para el encabezado de páginas específicas
