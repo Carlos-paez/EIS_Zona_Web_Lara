@@ -32,7 +32,7 @@
             </div>
             <!-- Botón para agregar nuevo activo -->
             <div class="col s6 m3 l4 right-align" style="padding-top:0.75rem;">
-                <button class="btn waves-effect waves-light indigo btn-nuevo" data-tipo="activo"><i class="material-icons left">add</i>Nuevo Activo</button>
+                <button class="btn waves-effect waves-light indigo btn-nuevo btn-mobile-full" data-tipo="activo"><i class="material-icons left">add</i><span class="hide-on-small-only">Nuevo Activo</span><span class="hide-on-med-and-up">Nuevo</span></button>
             </div>
         </div>
     </div>
@@ -46,7 +46,7 @@
             <div class="card-content">
                 <span class="card-title">
                     <i class="material-icons left">print</i>Equipos (3)
-                    <a class="btn-floating waves-effect waves-light grey right tooltipped" data-position="top" data-tooltip="Ver todos" style="width:32px;height:32px;"><i class="material-icons" style="font-size:1.1rem;line-height:32px;">arrow_forward</i></a>
+                    <a class="btn-floating waves-effect waves-light grey right tooltipped" data-position="top" data-tooltip="Ver todos"><i class="material-icons">arrow_forward</i></a>
                 </span>
                 <table class="striped">
                     <thead>
@@ -60,11 +60,11 @@
                         <tr>
                             <td>
                                 <div style="font-weight:600;">Impresora Láser HP</div>
-                                <small style="color:var(--text-muted);">Serie: HP-2024-001</small> <!-- Número de serie -->
+                                <small style="color:var(--text-muted);">Serie: HP-2024-001</small>
                             </td>
                             <td><span class="new badge green" data-badge-caption="">Activo</span></td>
                             <td class="right-align">
-                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Editar" style="width:30px;height:30px;"><i class="material-icons" style="font-size:1rem;line-height:30px;">edit</i></button>
+                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Editar"><i class="material-icons">edit</i></button>
                             </td>
                         </tr>
                         <tr>
@@ -72,9 +72,9 @@
                                 <div style="font-weight:600;">Proyector Epson</div>
                                 <small style="color:var(--text-muted);">Serie: EPS-2023-045</small>
                             </td>
-                            <td><span class="new badge orange" data-badge-caption="">Mantenimiento</span></td> <!-- En mantenimiento -->
+                            <td><span class="new badge orange" data-badge-caption="">Mantenimiento</span></td>
                             <td class="right-align">
-                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Editar" style="width:30px;height:30px;"><i class="material-icons" style="font-size:1rem;line-height:30px;">edit</i></button>
+                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Editar"><i class="material-icons">edit</i></button>
                             </td>
                         </tr>
                         <tr>
@@ -84,7 +84,7 @@
                             </td>
                             <td><span class="new badge green" data-badge-caption="">Activo</span></td>
                             <td class="right-align">
-                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Editar" style="width:30px;height:30px;"><i class="material-icons" style="font-size:1rem;line-height:30px;">edit</i></button>
+                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Editar"><i class="material-icons">edit</i></button>
                             </td>
                         </tr>
                     </tbody>
@@ -98,7 +98,7 @@
             <div class="card-content">
                 <span class="card-title">
                     <i class="material-icons left">vpn_key</i>Licencias (2)
-                    <a class="btn-floating waves-effect waves-light grey right tooltipped" data-position="top" data-tooltip="Ver todos" style="width:32px;height:32px;"><i class="material-icons" style="font-size:1.1rem;line-height:32px;">arrow_forward</i></a>
+                    <a class="btn-floating waves-effect waves-light grey right tooltipped" data-position="top" data-tooltip="Ver todos"><i class="material-icons">arrow_forward</i></a>
                 </span>
                 <table class="striped">
                     <thead>
@@ -112,11 +112,11 @@
                         <tr>
                             <td>
                                 <div style="font-weight:600;">Windows 11 Pro</div>
-                                <small style="color:var(--text-muted);">Expira: 2024-12-31</small> <!-- Fecha de expiración -->
+                                <small style="color:var(--text-muted);">Expira: 2024-12-31</small>
                             </td>
                             <td><span class="new badge red" data-badge-caption="">Vencida</span></td>
                             <td class="right-align">
-                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Renovar" style="width:30px;height:30px;"><i class="material-icons" style="font-size:1rem;line-height:30px;">refresh</i></button>
+                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Renovar"><i class="material-icons">refresh</i></button>
                             </td>
                         </tr>
                         <tr>
@@ -126,7 +126,7 @@
                             </td>
                             <td><span class="new badge green" data-badge-caption="">Activa</span></td>
                             <td class="right-align">
-                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Ver detalles" style="width:30px;height:30px;"><i class="material-icons" style="font-size:1rem;line-height:30px;">visibility</i></button>
+                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Ver detalles"><i class="material-icons">visibility</i></button>
                             </td>
                         </tr>
                     </tbody>
@@ -143,7 +143,7 @@
             <div class="card-content">
                 <span class="card-title">
                     <i class="material-icons left">build</i>Herramientas (4)
-                    <a class="btn-floating waves-effect waves-light grey right tooltipped" data-position="top" data-tooltip="Ver todos" style="width:32px;height:32px;"><i class="material-icons" style="font-size:1.1rem;line-height:32px;">arrow_forward</i></a>
+                    <a class="btn-floating waves-effect waves-light grey right tooltipped" data-position="top" data-tooltip="Ver todos"><i class="material-icons">arrow_forward</i></a>
                 </span>
                 <table class="striped">
                     <thead>
@@ -161,7 +161,7 @@
                             </td>
                             <td><span class="new badge green" data-badge-caption="">Disponible</span></td>
                             <td class="right-align">
-                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Ver detalles" style="width:30px;height:30px;"><i class="material-icons" style="font-size:1rem;line-height:30px;">visibility</i></button>
+                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Ver detalles"><i class="material-icons">visibility</i></button>
                             </td>
                         </tr>
                         <tr>
@@ -171,7 +171,7 @@
                             </td>
                             <td><span class="new badge green" data-badge-caption="">Disponible</span></td>
                             <td class="right-align">
-                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Ver detalles" style="width:30px;height:30px;"><i class="material-icons" style="font-size:1rem;line-height:30px;">visibility</i></button>
+                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Ver detalles"><i class="material-icons">visibility</i></button>
                             </td>
                         </tr>
                     </tbody>

@@ -22,6 +22,7 @@
 
 body {
     min-height: 100vh;
+    min-height: 100dvh; /* Mejor soporte para viewport dinámico en móviles */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -89,4 +90,49 @@ body {
 }
 [data-theme="dark"] .btn-floating.indigo {
     background: #1a237e !important;
+}
+
+/* ============================================================
+     RESPONSIVE LOGIN
+     ============================================================ */
+@media only screen and (max-width: 600px) {
+    body { padding: 0.5rem; }
+    .login-card {
+        padding: 1.5rem 1rem;
+        max-width: 100%;
+        border-radius: 8px;
+    }
+    .login-card h4.card-title { font-size: 1.3rem; }
+    .login-card p { font-size: 0.85rem; }
+    .login-logo { width: 56px; height: 56px; font-size: 1.5rem; border-radius: 16px; }
+    .social-login-row { gap: 0.75rem !important; }
+    .social-login-row .btn-flat {
+        padding: 0.6rem 1rem !important;
+        min-width: 48px;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #themeToggle {
+        top: calc(0.5rem + env(safe-area-inset-top, 0px)) !important;
+        right: calc(0.5rem + env(safe-area-inset-right, 0px)) !important;
+        width: 44px;
+        height: 44px;
+    }
+    #themeToggle i { line-height: 44px; font-size: 1.3rem; }
+    .card-panel.red.lighten-4 { font-size: 0.85rem; }
+    .card-panel.red.lighten-4 i { font-size: 1rem !important; }
+    .login-card a[href="#"] {
+        display: inline-block;
+        padding: 0.5rem;
+        min-height: 44px;
+        line-height: 1.5;
+    }
+}
+
+@media only screen and (max-width: 400px) {
+    .login-card { padding: 1.25rem 0.85rem; }
+    .login-card .input-field { margin-bottom: 0.75rem; }
+    .login-card .btn { height: 3rem; font-size: 0.95rem; }
 }

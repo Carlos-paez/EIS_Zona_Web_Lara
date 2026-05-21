@@ -65,14 +65,14 @@
                         <label>Tipo de Reporte</label>
                     </div>
                     <!-- Rango de fechas -->
-                    <div class="row">
-                        <div class="col s6">
+                    <div class="row" style="margin-bottom:0;">
+                        <div class="col s12 m6">
                             <div class="input-field">
                                 <input type="date" id="fechaInicio" value="2024-04-01">
                                 <label for="fechaInicio" class="active">Fecha Inicio</label>
                             </div>
                         </div>
-                        <div class="col s6">
+                        <div class="col s12 m6">
                             <div class="input-field">
                                 <input type="date" id="fechaFin" value="2024-04-30">
                                 <label for="fechaFin" class="active">Fecha Fin</label>
@@ -107,7 +107,7 @@
                         <div class="activity-title">Ventas - Abril 2024</div>
                         <div class="activity-time">Generado hoy a las 10:30 AM</div>
                     </div>
-                    <button class="btn-floating waves-effect waves-light grey btn-download tooltipped" data-position="top" data-tooltip="Descargar" style="width:36px;height:36px;"><i class="material-icons" style="font-size:1.1rem;line-height:36px;">download</i></button>
+                    <button class="btn-floating waves-effect waves-light grey btn-download tooltipped" data-position="top" data-tooltip="Descargar"><i class="material-icons">download</i></button>
                 </div>
                 <div class="activity-item">
                     <div class="activity-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="material-icons">inventory_2</i></div>
@@ -115,7 +115,7 @@
                         <div class="activity-title">Inventario Actual</div>
                         <div class="activity-time">Generado ayer a las 3:15 PM</div>
                     </div>
-                    <button class="btn-floating waves-effect waves-light grey btn-download tooltipped" data-position="top" data-tooltip="Descargar" style="width:36px;height:36px;"><i class="material-icons" style="font-size:1.1rem;line-height:36px;">download</i></button>
+                    <button class="btn-floating waves-effect waves-light grey btn-download tooltipped" data-position="top" data-tooltip="Descargar"><i class="material-icons">download</i></button>
                 </div>
                 <div class="activity-item">
                     <div class="activity-icon" style="background:#fff3e0;color:#e65100;"><i class="material-icons">desktop_windows</i></div>
@@ -123,7 +123,7 @@
                         <div class="activity-title">Horas Cyber - Marzo</div>
                         <div class="activity-time">Generado hace 2 días</div>
                     </div>
-                    <button class="btn-floating waves-effect waves-light grey btn-download tooltipped" data-position="top" data-tooltip="Descargar" style="width:36px;height:36px;"><i class="material-icons" style="font-size:1.1rem;line-height:36px;">download</i></button>
+                    <button class="btn-floating waves-effect waves-light grey btn-download tooltipped" data-position="top" data-tooltip="Descargar"><i class="material-icons">download</i></button>
                 </div>
                 <div class="activity-item">
                     <div class="activity-icon" style="background:#fff3e0;color:#e65100;"><i class="material-icons">assignment</i></div>
@@ -131,7 +131,7 @@
                         <div class="activity-title">Solicitudes Q1 2024</div>
                         <div class="activity-time">Generado hace 5 días</div>
                     </div>
-                    <button class="btn-floating waves-effect waves-light grey btn-download tooltipped" data-position="top" data-tooltip="Descargar" style="width:36px;height:36px;"><i class="material-icons" style="font-size:1.1rem;line-height:36px;">download</i></button>
+                    <button class="btn-floating waves-effect waves-light grey btn-download tooltipped" data-position="top" data-tooltip="Descargar"><i class="material-icons">download</i></button>
                 </div>
             </div>
         </div>

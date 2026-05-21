@@ -31,7 +31,7 @@
             </div>
             <!-- Botón para crear nueva solicitud -->
             <div class="col s6 m3 l4 right-align" style="padding-top:0.75rem;">
-                <button class="btn waves-effect waves-light indigo btn-nuevo" data-tipo="solicitud"><i class="material-icons left">add</i>Nueva Solicitud</button>
+                <button class="btn waves-effect waves-light indigo btn-nuevo btn-mobile-full" data-tipo="solicitud"><i class="material-icons left">add</i><span class="hide-on-small-only">Nueva Solicitud</span><span class="hide-on-med-and-up">Nuevo</span></button>
             </div>
         </div>
     </div>
@@ -65,7 +65,7 @@
                     <td>2024-04-10</td>
                     <td><span class="new badge orange" data-badge-caption="">Pendiente</span></td>
                     <td class="right-align">
-                        <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Ver detalles" style="width:32px;height:32px;"><i class="material-icons" style="font-size:1.1rem;line-height:32px;">visibility</i></button>
+                        <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Ver detalles"><i class="material-icons">visibility</i></button>
                     </td>
                 </tr>
                 <!-- Solicitud 2: Recibida (verde) -->
@@ -78,7 +78,7 @@
                     <td>2024-04-08</td>
                     <td><span class="new badge green" data-badge-caption="">Recibida</span></td>
                     <td class="right-align">
-                        <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Ver detalles" style="width:32px;height:32px;"><i class="material-icons" style="font-size:1.1rem;line-height:32px;">visibility</i></button>
+                        <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Ver detalles"><i class="material-icons">visibility</i></button>
                     </td>
                 </tr>
                 <!-- Solicitud 3: Cancelada (gris) -->

@@ -32,28 +32,28 @@ $statusLabels = [
 ?>
 
 <div class="row" style="margin-bottom:1.5rem;">
-    <div class="col s6 m3">
+    <div class="col s12 m6 l3">
         <div class="metric-card success" style="margin:0;">
             <div class="metric-icon"><i class="material-icons">check_circle</i></div>
             <div class="metric-label">Disponibles</div>
             <div class="metric-value" style="color:var(--success);" id="countDisponibles"><?= $countDisponibles ?></div>
         </div>
     </div>
-    <div class="col s6 m3">
+    <div class="col s12 m6 l3">
         <div class="metric-card warning" style="margin:0;">
             <div class="metric-icon"><i class="material-icons">timelapse</i></div>
             <div class="metric-label">Ocupadas</div>
             <div class="metric-value" style="color:var(--warning);" id="countOcupadas"><?= $countOcupadas ?></div>
         </div>
     </div>
-    <div class="col s6 m3">
+    <div class="col s12 m6 l3">
         <div class="metric-card danger" style="margin:0;">
             <div class="metric-icon"><i class="material-icons">build</i></div>
             <div class="metric-label">Mantenimiento</div>
             <div class="metric-value" style="color:var(--danger);" id="countMantenimiento"><?= $countMantenimiento ?></div>
         </div>
     </div>
-    <div class="col s6 m3">
+    <div class="col s12 m6 l3">
         <div class="metric-card" style="margin:0;">
             <div class="metric-icon"><i class="material-icons">dns</i></div>
             <div class="metric-label">Total Estaciones</div>
@@ -65,19 +65,22 @@ $statusLabels = [
 <div class="card" style="margin-bottom:1.5rem;">
     <div class="card-content" style="padding:0.75rem 1.25rem;">
         <div class="row" style="margin-bottom:0;">
-            <div class="col s12 m7" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;padding-top:0.25rem;padding-bottom:0.25rem;">
-                <span style="font-weight:600;color:var(--text-muted);font-size:0.85rem;margin-right:0.5rem;">FILTRAR:</span>
-                <a class="btn-small waves-effect waves-light green filter-btn active" data-filter="all" style="border-radius:20px;padding:0 1rem;">Todas</a>
-                <a class="btn-small waves-effect waves-light green filter-btn" data-filter="disponible" style="border-radius:20px;padding:0 1rem;">Disponibles</a>
-                <a class="btn-small waves-effect waves-light orange filter-btn" data-filter="ocupada" style="border-radius:20px;padding:0 1rem;">Ocupadas</a>
-                <a class="btn-small waves-effect waves-light red filter-btn" data-filter="mantenimiento" style="border-radius:20px;padding:0 1rem;">Mantenimiento</a>
+            <div class="col s12 m7" style="display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap;padding-top:0.25rem;padding-bottom:0.25rem;">
+                <span class="hide-on-small-only" style="font-weight:600;color:var(--text-muted);font-size:0.85rem;margin-right:0.35rem;">FILTRAR:</span>
+                <a class="btn-small waves-effect waves-light green filter-btn active" data-filter="all" style="border-radius:20px;padding:0 0.75rem;font-size:0.7rem;">Todas</a>
+                <a class="btn-small waves-effect waves-light green filter-btn" data-filter="disponible" style="border-radius:20px;padding:0 0.75rem;font-size:0.7rem;">Disponibles</a>
+                <a class="btn-small waves-effect waves-light orange filter-btn" data-filter="ocupada" style="border-radius:20px;padding:0 0.75rem;font-size:0.7rem;">Ocupadas</a>
+                <a class="btn-small waves-effect waves-light red filter-btn" data-filter="mantenimiento" style="border-radius:20px;padding:0 0.75rem;font-size:0.7rem;">Mantenimiento</a>
             </div>
             <div class="col s12 m5 right-align" style="padding-top:0.25rem;padding-bottom:0.25rem;">
                 <button class="btn-small waves-effect waves-light indigo" id="btnNuevaEstacion" style="border-radius:20px;">
                     <i class="material-icons left" style="font-size:1rem;">add</i>Nueva
                 </button>
-                <button class="btn-small waves-effect waves-light grey darken-1" id="btnHistorialCyber" style="border-radius:20px;margin-left:0.25rem;">
+                <button class="btn-small waves-effect waves-light grey darken-1 hide-on-small-only" id="btnHistorialCyber" style="border-radius:20px;margin-left:0.25rem;">
                     <i class="material-icons left" style="font-size:1rem;">history</i>Historial
+                </button>
+                <button class="btn-small waves-effect waves-light grey darken-1 hide-on-med-and-up" id="btnHistorialCyberMobile" style="border-radius:20px;" title="Historial">
+                    <i class="material-icons" style="font-size:1rem;">history</i>
                 </button>
             </div>
         </div>
@@ -126,7 +129,7 @@ $(function () {
         EIS.toast('Formulario para nueva estación (demo)', 'indigo', 'add_circle');
     });
 
-    $('#btnHistorialCyber').on('click', function () {
+    $('#btnHistorialCyber, #btnHistorialCyberMobile').on('click', function () {
         EIS.toast('Abriendo historial de sesiones (demo)', 'indigo', 'history');
     });
 });

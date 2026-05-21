@@ -167,7 +167,9 @@ $(function () {
 
     function actualizarMiniTotal() {
         var count = posCart.length;
-        $('#posMiniTotal').text('$' + posTotal.toFixed(2));
+        var totalStr = '$' + posTotal.toFixed(2);
+        $('#posMiniTotal').text(totalStr);
+        $('#posMiniTotalMobile').text(totalStr);
         $('#cartCountBadge').text(count);
         $('#cartCountLabel').text(count + ' ' + (count === 1 ? 'producto' : 'productos'));
     }
@@ -379,14 +381,17 @@ $(function () {
             var estadoClass = a.estado === 'Permitido' ? 'legal-permitido' : 'legal-denegado';
             var icono = a.estado === 'Permitido' ? 'check_circle' : 'cancel';
             html += '<tr>'
-                + '<td>' + (i + 1) + '</td>'
+                + '<td class="hide-on-small-only">' + (i + 1) + '</td>'
                 + '<td><strong>' + a.ciudadano + '</strong></td>'
-                + '<td>' + a.cedula + '</td>'
+                + '<td class="hide-on-small-only">' + a.cedula + '</td>'
                 + '<td>' + a.documento + '</td>'
-                + '<td><span class="' + estadoClass + '"><i class="material-icons left" style="font-size:0.85rem;margin:0;">' + icono + '</i>' + a.estado + '</span></td>'
-                + '<td style="font-size:0.8rem;color:var(--text-muted);">' + a.fecha + '</td>'
-                + '<td class="right-align">'
-                + '<button class="btn-floating waves-effect waves-light grey tooltipped btn-eliminar-asesoria" data-index="' + i + '" data-position="top" data-tooltip="Eliminar" style="width:28px;height:28px;"><i class="material-icons" style="font-size:0.95rem;line-height:28px;">delete</i></button>'
+                + '<td><span class="' + estadoClass + '" style="white-space:nowrap;"><i class="material-icons left" style="font-size:0.85rem;margin:0;">' + icono + '</i>' + a.estado + '</span></td>'
+                + '<td class="hide-on-small-only" style="font-size:0.8rem;color:var(--text-muted);">' + a.fecha + '</td>'
+                + '<td class="right-align hide-on-small-only" style="white-space:nowrap;">'
+                + '<button class="btn-floating waves-effect waves-light grey tooltipped btn-eliminar-asesoria" data-index="' + i + '" data-position="top" data-tooltip="Eliminar"><i class="material-icons">delete</i></button>'
+                + '</td>'
+                + '<td class="right-align hide-on-med-and-up">'
+                + '<button class="btn-floating waves-effect waves-light grey tooltipped btn-eliminar-asesoria" data-index="' + i + '" data-position="top" data-tooltip="Eliminar"><i class="material-icons">delete</i></button>'
                 + '</td>'
                 + '</tr>';
         });
