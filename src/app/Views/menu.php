@@ -9,10 +9,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menú - EIS System</title>
-    <!-- Google Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Materialize CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <!-- Material Icons (locales) -->
+    <link rel="stylesheet" href="Public/css/material-icons.css">
+    <!-- Materialize CSS (local) -->
+    <link rel="stylesheet" href="Public/css/materialize.min.css">
     <!-- Estilos CSS embebidos específicos para esta página -->
     <style>
         body {
@@ -151,8 +151,11 @@
     </div>
 
     <!-- Scripts JavaScript -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="Public/js/jquery-3.7.1.min.js"></script>
+    <script src="Public/js/materialize.min.js"></script>
+    <script src="Public/js/app.core.js"></script>
+    <script src="Public/js/app.init.js"></script>
+    <script src="Public/js/app.ui.js"></script>
     <!-- Script de cambio de tema oscuro/claro -->
     <script>
         var currentTheme = localStorage.getItem('theme') || 'light';             // Lee el tema guardado

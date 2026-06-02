@@ -1,20 +1,19 @@
-# EIS_Zona_Web_Lara — Sistema de Gestión Empresarial
+# EIS_Zona_Web_Lara — Sistema de Gestión Integral
 
 ## Descripción
 
-**EIS System** es una aplicación web de gestión empresarial desarrollada en **PHP vanilla** con **Materialize CSS** y **jQuery**. Utiliza una arquitectura **MVC** (Modelo-Vista-Controlador) con enrutador basado en clases, namespaces PSR-4 y autoloading con Composer.
+**EIS System** es una aplicación web de gestión empresarial desarrollada en **PHP vanilla** con **Materialize CSS** y **jQuery**. Utiliza una arquitectura **Front Controller** con enrutador procedural, vistas planas y layout maestro.
 
-El sistema administra múltiples aspectos de un negocio: ventas (POS), inventario, proveedores, activos fijos, control de cybercafé y asesoría legal.
+El sistema administra múltiples aspectos de un negocio: ventas (POS), inventario, proveedores, activos fijos, control de cybercafé y asesoría legal. Todo el frontend funciona sin conexión a Internet gracias a assets locales y un Service Worker.
 
 ---
 
 ## Estado Actual del Proyecto
 
 ### Implementado (Funcional)
-- **Arquitectura MVC** — Namespaces PSR-4, clases `Core\Router`, `Core\Controller`, 10 controladores por módulo
+- **Front Controller** — `index.php` → `router.php` (enrutador procedural)
 - **Sistema de Login** — Autenticación con sesiones PHP (credenciales: admin / 1234)
-- **Sistema de Layout** — Template maestro con sidebar persistente, header y footer
-- **Enrutador Central** — `Router.php` clase con mapa de rutas, dispatch a controladores y auth
+- **Layout Maestro** — `layout.php` con sidebar, header y footer persistente
 - **Tema Oscuro/Claro** — Toggle con persistencia en localStorage
 - **Reloj en Tiempo Real** — Clock actualizado vía JavaScript
 - **Sistema de Notificaciones** — Toast notifications con Materialize
@@ -25,6 +24,10 @@ El sistema administra múltiples aspectos de un negocio: ventas (POS), inventari
 - **Paginación** — UI de paginación con navegación
 - **Animación de Contadores** — Métricas con animación progresiva
 - **Validación de Asesoría Legal** — Validación frontend de documentos permitidos
+- **Assets 100% Locales** — Sin dependencia de CDNs (Materialize, jQuery, Material Icons)
+- **Service Worker** — Caché de assets estáticos para funcionamiento offline
+- **Manifiesto PWA** — `manifest.json` para instalación como app
+- **Página Offline** — `offline.php` como fallback sin conexión
 - **Esquema de Base de Datos** — Completo con 19 tablas, vistas, funciones y procedimientos
 - **Modelos CRUD** — `crud_users.php` (8 funciones) y `crud_asesorias.php` (8 funciones) con PDO preparado
 
@@ -45,66 +48,63 @@ El sistema administra múltiples aspectos de un negocio: ventas (POS), inventari
 
 ---
 
-## Estructura del Proyecto (MVC)
+## Estructura del Proyecto
 
 ```
 eis_zona_web_lara/
-├── src/
-│   ├── index.php                      # Front Controller con autoloader + Router
-│   ├── .htaccess                      # Reglas de reescritura Apache
+├── src/                              # Raíz de la aplicación
+│   ├── index.php                     # Front Controller (punto de entrada)
+│   ├── .htaccess                     # Reglas de reescritura Apache
+│   ├── manifest.json                 # Manifiesto PWA
+│   ├── sw.js                         # Service Worker (caché offline)
+│   ├── offline.php                   # Página de fallo offline
 │   ├── Config/
-│   │   └── database.php               # Configuración BD (PDO + MySQL)
+│   │   └── database.php              # Configuración BD (PDO + MySQL)
 │   ├── app/
-│   │   ├── Core/
-│   │   │   ├── Router.php             # Enrutador con dispatch a Controllers
-│   │   │   └── Controller.php         # Clase base abstracta (render, renderPublic)
-│   │   ├── Controllers/
-│   │   │   ├── LoginController.php    # index() + validate()
-│   │   │   ├── DashboardController.php
-│   │   │   ├── InventarioController.php
-│   │   │   ├── VentasController.php
-│   │   │   ├── ProveedoresController.php
-│   │   │   ├── ReportesController.php
-│   │   │   ├── ActivosController.php
-│   │   │   ├── CiberControlController.php  # Datos PHP movidos del view al controller
-│   │   │   ├── AsesoriasController.php
-│   │   │   └── MenuController.php
+│   │   ├── core/
+│   │   │   └── router.php            # Enrutador procedural (Front Controller)
 │   │   ├── Models/
-│   │   │   ├── crud_users.php         # CRUD usuarios (8 funciones)
-│   │   │   └── crud_asesorias.php     # CRUD asesorías (8 funciones)
+│   │   │   ├── crud_users.php        # CRUD usuarios (8 funciones)
+│   │   │   └── crud_asesorias.php    # CRUD asesorías (8 funciones)
+│   │   ├── template/
+│   │   │   └── layout.php           # Layout maestro (sidebar + header)
 │   │   └── Views/
-│   │       ├── auth/login.php         # Formulario de inicio de sesión
-│   │       ├── dashboard/index.php
-│   │       ├── inventario/index.php
-│   │       ├── ventas/index.php
-│   │       ├── proveedores/index.php
-│   │       ├── reportes/index.php
-│   │       ├── activos/index.php
-│   │       ├── ciber-control/index.php
-│   │       ├── asesorias/index.php
-│   │       ├── menu/index.php
-│   │       └── layouts/main.php       # Layout maestro (sidebar + header)
+│   │       ├── login.php             # Formulario de inicio de sesión
+│   │       ├── login_validate.php    # Validación de credenciales
+│   │       ├── menu.php              # Menú de navegación
+│   │       ├── dashboard.php         # Panel de control
+│   │       ├── inventario.php        # Gestión de inventario
+│   │       ├── ventas.php            # Punto de venta (POS)
+│   │       ├── proveedores.php       # Solicitudes a proveedores
+│   │       ├── reportes.php          # Reportes y estadísticas
+│   │       ├── activos.php           # Activos fijos
+│   │       ├── ciberControl.php      # Control de cybercafé
+│   │       ├── asesorias.php         # Asesoría legal
+│   │       └── usuarios.php          # Gestión de usuarios
 │   ├── Database/
-│   │   ├── estructura.sql             # Esquema BD v2.0 (19 tablas)
-│   │   └── datos_prueba.sql           # Datos de prueba
+│   │   ├── estructura.sql            # Esquema BD v2.0 (19 tablas)
+│   │   └── datos_prueba.sql          # Datos de prueba
 │   └── Public/
 │       ├── css/
-│       │   ├── styles.css             # Estilos personalizados
-│       │   └── login.css              # Estilos login
-│       └── js/
-│           └── app.js                 # JS con jQuery
-├── docs/
-│   ├── database-conceptual-design.md
-│   ├── database-logical-design.md
-│   ├── database-physical-design.md
-│   ├── routing-system.md
-│   └── diagrama-de-clases.md
-├── vendor/                            # Autoloader de Composer
-├── composer.json                      # PSR-4: "App\\": "src/app/"
-├── DOCUMENTACION.md
-├── DOCUMENTACION_JQUERY.md
-├── DOCUMENTACION_COMPLETA.md
-└── README.md
+│       │   ├── styles.css            # Estilos personalizados (1105 líneas)
+│       │   ├── login.css             # Estilos login (138 líneas)
+│       │   ├── materialize.min.css   # Materialize CSS (local)
+│       │   └── material-icons.css    # Material Icons (local)
+│       ├── js/
+│       │   ├── jquery-3.7.1.min.js   # jQuery (local)
+│       │   ├── materialize.min.js    # Materialize JS (local)
+│       │   ├── app.core.js           # Utilidades compartidas (EIS, debounce)
+│       │   ├── app.init.js           # Inicialización Materialize, reloj, tema
+│       │   ├── app.tables.js         # Búsqueda y filtro de tablas
+│       │   ├── app.ui.js             # Notificaciones, botones, tooltips
+│       │   ├── app.pos.js            # Sistema de carrito POS
+│       │   ├── app.cyber.js          # Gestión de estaciones Cyber
+│       │   └── app.legal.js          # Validación de asesoría legal
+│       └── fonts/
+│           └── MaterialIcons-Regular.ttf  # Material Icons (local)
+├── docs/                             # Documentación del proyecto
+├── vendor/                           # Autoloader de Composer
+└── composer.json                     # PSR-4: "App\\": "src/app/"
 ```
 
 ---
@@ -112,35 +112,38 @@ eis_zona_web_lara/
 ## Tecnologías Utilizadas
 
 ### Backend
-- **PHP 7.4+** — Lenguaje principal con namespaces y POO
+- **PHP 7.4+** — Lenguaje principal
 - **PDO (PHP Data Objects)** — Capa de abstracción de BD con prepared statements
 - **MySQL 8.0+ / MariaDB 10.3+** — Sistema de gestión de BD
 - **Motor InnoDB** — Soporte para transacciones y claves foráneas
 - **Composer** — Autocargador de clases PSR-4
 
 ### Frontend
-- **Materialize CSS 1.0.0** — Framework de diseño Material Design (CDN)
-- **jQuery 3.7.1** — Manipulación del DOM y eventos (CDN)
+- **Materialize CSS 1.0.0** — Framework de diseño Material Design (local)
+- **jQuery 3.7.1** — Manipulación del DOM y eventos (local)
+- **Material Icons** — Iconografía (local)
 - **HTML5** — Estructura semántica
 - **CSS3** — Variables CSS, Flexbox, Grid, Media Queries, tema oscuro/claro
-- **Google Fonts / Material Icons** — Tipografía e iconografía
+- **Service Worker** — Caché offline de assets estáticos
+- **PWA** — Manifest.json para instalación como app
 
 ---
 
 ## Módulos del Sistema
 
-| Módulo | Controlador | Vista | Estado |
-|--------|-------------|-------|--------|
-| **Login** | `LoginController` | `auth/login.php` | Funcional |
-| **Dashboard** | `DashboardController` | `dashboard/index.php` | UI Estática |
-| **Inventario** | `InventarioController` | `inventario/index.php` | UI Estática |
-| **Punto de Venta** | `VentasController` | `ventas/index.php` | Semi-funcional* |
-| **Cyber Control** | `CiberControlController` | `ciber-control/index.php` | Interactivo* |
-| **Solicitudes** | `ProveedoresController` | `proveedores/index.php` | UI Estática |
-| **Reportes** | `ReportesController` | `reportes/index.php` | Simulado |
-| **Activos** | `ActivosController` | `activos/index.php` | UI Estática |
-| **Asesoría Legal** | `AsesoriasController` | `asesorias/index.php` | Semi-funcional* |
-| **Menú** | `MenuController` | `menu/index.php` | Funcional |
+| Módulo | Vista | JS Asociado | Estado |
+|--------|-------|-------------|--------|
+| **Login** | `login.php` | `app.core.js` | Funcional |
+| **Dashboard** | `dashboard.php` | `app.init.js`, `app.ui.js` | UI Estática |
+| **Inventario** | `inventario.php` | `app.tables.js` | UI Estática |
+| **Punto de Venta** | `ventas.php` | `app.pos.js` | Semi-funcional* |
+| **Cyber Control** | `ciberControl.php` | `app.cyber.js` | Interactivo* |
+| **Solicitudes** | `proveedores.php` | `app.tables.js` | UI Estática |
+| **Reportes** | `reportes.php` | `app.ui.js` | Simulado |
+| **Activos** | `activos.php` | `app.tables.js` | UI Estática |
+| **Asesoría Legal** | `asesorias.php` | `app.legal.js` | Semi-funcional* |
+| **Menú** | `menu.php` | `app.init.js`, `app.ui.js` | Funcional |
+| **Usuarios** | `usuarios.php` | — | UI Estática |
 
 *Funcionalidad del lado del cliente (JavaScript/jQuery) pero sin persistencia en BD.
 
@@ -185,7 +188,7 @@ eis_zona_web_lara/
 
 5. **Configurar el servidor web**
    
-   Asegúrate de que el directorio raíz apunte a la carpeta `src/` o configura un host virtual.
+   Asegúrate de que el directorio raíz del virtual host apunte a la carpeta `src/`.
 
 6. **Acceder a la aplicación**
    ```
@@ -196,79 +199,80 @@ eis_zona_web_lara/
 
 ---
 
-## Arquitectura MVC
+## Arquitectura
 
 ### Flujo de una petición
 
 ```
-Navegador → src/.htaccess → src/index.php
-                                   │
-                          require vendor/autoload.php
-                                   │
-                          new Router()
-                                   │
-                          $router->dispatch()
-                                   │
-                    ┌──────────────┼──────────────┐
-                    ▼                             ▼
-               ¿Autenticado?               ¿Ruta existe?
-                    │                             │
-          ┌─────────┤                             ▼
-          ▼         ▼                        Error 404
-       No ──→ redirect login
-          Sí
-          │
-          ▼
-   Instanciar Controller::method()
-          │
-          ▼
-   Controller::render('vista', $data)
-          │
-     ┌────┴────┐
-     ▼         ▼
-  layout    Vista
-  main.php  específica
-     │
-     ▼
-   Respuesta HTML
+Navegador → src/.htaccess → src/index.php → src/app/core/router.php
+                                                      │
+                                             session_start()
+                                                      │
+                                             $pagina = $_GET["pagina"]
+                                                      │
+                                             preg_match (seguridad)
+                                                      │
+                                    ┌─────────────────┼────────────────┐
+                                    ▼                                 ▼
+                              ¿Autenticado?                    404 si no existe
+                                    │
+                         ┌──────────┴──────────┐
+                         ▼                     ▼
+                    Página pública         Página privada
+                    (login, etc.)          (dashboard, etc.)
+                         │                     │
+                         ▼                     ▼
+                    Vista directa          require layout.php
+                                          (incluye $contentView)
 ```
 
-### Enrutador (`Router.php`)
-- Mapa de rutas: `?pagina=xxx` → `[Controller, method]`
-- Control de autenticación (rutas públicas vs protegidas)
-- Instanciación automática del controlador vía PSR-4
+### Enrutador (`router.php`)
+- Lee `?pagina=xxx` de la URL
+- Valida el parámetro con regex (seguridad)
+- Redirige al login si no hay sesión
+- Carga la vista directamente (públicas) o dentro del layout (protegidas)
 - Manejo de errores 404
 
-### Controladores
-- Extienden `Core\Controller`
-- `render($viewPath, $data)` — renderiza vista dentro del layout
-- `renderPublic($viewPath, $data)` — renderiza vista standalone (login)
-- `CiberControlController` prepara datos PHP en el servidor y los pasa a la vista
+### Layout (`layout.php`)
+- Sidebar con Materialize Sidenav (10 módulos + theme toggle + cerrar sesión)
+- Header con nav, reloj digital, notificaciones, header extra
+- Contenedor `<main>` que incluye la vista específica
+- Botón "volver arriba"
+- Carga condicional de JS por página (app.pos.js, app.cyber.js, app.legal.js)
+- Service Worker registration
 
-### Vistas
-- Organizadas en subdirectorios por módulo (`dashboard/index.php`)
-- Solo contienen HTML y PHP de presentación (sin lógica de negocio)
-- `layouts/main.php` — layout principal con sidebar y navbar
+### JavaScript Modular
+- **`app.core.js`** — Namespace `EIS`, `debounce()`, `filtrarTabla()`, `EIS.toast()`
+- **`app.init.js`** — Inicialización Materialize, reloj, tema, animaciones
+- **`app.tables.js`** — Búsqueda en tablas, filtro por estado, paginación
+- **`app.ui.js`** — Notificaciones, botones, reportes, tooltips
+- **`app.pos.js`** — Sistema de carrito POS (solo en ventas)
+- **`app.cyber.js`** — Gestión de estaciones Cyber (solo en ciberControl)
+- **`app.legal.js`** — Validación de documentos legales (solo en asesorias)
 
-### Modelos
-- Funciones CRUD con consultas preparadas PDO
-- `crud_users.php` — autenticación con `password_hash`/`password_verify`
-- `crud_asesorias.php` — registro de asesorías con estados
+### Offline / PWA
+- Assets locales (sin CDNs)
+- Service Worker (`sw.js`) con estrategia Cache First para assets
+- Página offline (`offline.php`) como fallback
+- Manifest (`manifest.json`) para instalación
 
 ---
 
 ## Documentación Disponible
 
-### `DOCUMENTACION.md`
-Documentación técnica **línea por línea** de todo el código fuente.
+### `docs/Documentacion/DOCUMENTACION.md`
+Documentación técnica línea por línea de todo el código fuente.
 
-### `DOCUMENTACION_JQUERY.md`
-Documentación específica de la integración de **jQuery 3.7.1** y **Materialize CSS**.
+### `docs/Documentacion/DOCUMENTACION_JQUERY.md`
+Documentación específica de la integración de jQuery 3.7.1 y Materialize CSS.
 
-### `DOCUMENTACION_COMPLETA.md`
+### `docs/Documentacion/DOCUMENTACION_COMPLETA.md`
 Documentación completa para NotebookLM.
 
-### `docs/database-*.md`
+### `docs/Documentacion/routing-system.md`
+Documentación del sistema de enrutamiento.
+
+### `docs/Fases del diseño de la base de datos/`
 Documentación completa de la base de datos (v2.0):
 - **Conceptual**: Diagramas ER, entidades, relaciones, reglas de negocio
 - **Lógico**: Esquemas SQL, tipos de datos, índices, normalización
@@ -279,13 +283,13 @@ Documentación completa de la base de datos (v2.0):
 ## Problemas Conocidos
 
 ### Seguridad
-1. **Credenciales Hardcodeadas** — Usuario y contraseña en `LoginController.php`
+1. **Credenciales Hardcodeadas** — Usuario y contraseña en `login_validate.php`
 2. **Sin CSRF Protection** — Formularios sin tokens de protección
 3. **Sin Password Hashing** — Contraseñas en texto plano en el login
 4. **Configuración de BD** — `echo "Conexión exitosa"` rompería respuestas JSON
 
 ### Arquitectura
-1. **Modelos No Usados** — Los modelos existen pero no se incluyen en los controladores
+1. **Modelos No Usados** — Los modelos existen pero no se utilizan desde las vistas
 2. **Datos Estáticos** — Vistas no se conectan a la base de datos
 3. **Sin .env** — Configuración no flexible
 
@@ -299,8 +303,8 @@ Documentación completa de la base de datos (v2.0):
 - [ ] Implementar CRUD de productos vía AJAX
 - [ ] Persistir cambios de estado en cybercafé
 
-### Fase 2: Mejoras MVC
-- [ ] Convertir models procedurales a clases con namespace
+### Fase 2: Mejoras de Arquitectura
+- [ ] Convertir a MVC con clases y namespaces
 - [ ] Implementar Request como clase encapsuladora
 - [ ] Agregar sistema de middleware (auth, CSRF)
 - [ ] Implementar URLs limpias (/nombre en lugar de ?pagina=nombre)
@@ -309,7 +313,7 @@ Documentación completa de la base de datos (v2.0):
 - [ ] Implementar `password_hash()` para contraseñas
 - [ ] Agregar CSRF tokens
 - [ ] Sanitizar entrada de datos
-- [ ] Usar prepared statements desde los controladores
+- [ ] Usar prepared statements desde las vistas
 
 ### Fase 4: Funcionalidad
 - [ ] Persistencia de ventas en BD
@@ -323,15 +327,15 @@ Documentación completa de la base de datos (v2.0):
 
 | Métrica | Valor |
 |---------|-------|
-| Total archivos PHP | 15 |
-| Clases con namespace | 12 (Router + Controller + 10 Controllers) |
+| Archivos PHP | 16 |
+| Vistas | 12 |
 | Modelos funcionales | 2 (8 funciones c/u) |
-| Vistas | 11 |
-| Archivos CSS | 2 |
-| Archivos JS | 1 |
+| Archivos CSS | 4 |
+| Archivos JS | 9 (2 librerías + 7 módulos) |
 | Archivos SQL | 2 |
 | Tablas en BD | 19 |
-| Módulos del sistema | 9 |
+| Módulos del sistema | 11 |
+| Dependencias CDN | 0 (100% local) |
 
 ---
 
@@ -346,12 +350,13 @@ Email: carlospaezguerra@gmail.com
 
 | Versión | Fecha | Descripción |
 |---------|-------|-------------|
-| 2.0 | 2026 | Migración completa a MVC con namespaces PSR-4, Router clase, 10 Controllers, autoloading Composer |
-| 1.2 | 2026 | Agregado módulo de Asesoría Legal, actualización de BD a v2.0 (19 tablas) |
-| 1.1 | 2026 | Refactorización con Materialize CSS + jQuery + Layout maestro |
+| 2.1 | 2026 | JS modular (7 archivos), assets locales, Service Worker, PWA, offline |
+| 2.0 | 2026 | Refactorización con Materialize CSS + jQuery + Layout maestro |
+| 1.1 | 2026 | Agregado módulo de Asesoría Legal, actualización de BD a v2.0 (19 tablas) |
 | 1.0 | 2024 | Versión inicial — UI Prototype procedural |
 
 ---
 
-**Última actualización**: Mayo 2026
-**Estado**: En desarrollo (Prototipo UI con arquitectura MVC)
+**Última actualización**: Junio 2026
+**Estado**: En desarrollo (Prototipo UI con arquitectura procedural)
+

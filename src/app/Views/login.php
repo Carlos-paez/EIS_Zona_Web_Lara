@@ -13,11 +13,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="robots" content="noindex,nofollow">  <!-- Evita que los buscadores indexen esta página -->
+    <link rel="manifest" href="manifest.json">
     <title>Login - EIS System</title>
-    <!-- Google Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Materialize CSS v1.0.0 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <!-- Material Icons (locales) -->
+    <link rel="stylesheet" href="Public/css/material-icons.css">
+    <!-- Materialize CSS v1.0.0 (local) -->
+    <link rel="stylesheet" href="Public/css/materialize.min.css">
     <!-- Estilos específicos para la página de login -->
     <link rel="stylesheet" href="Public/css/login.css">
 </head>
@@ -107,8 +108,9 @@
     </button>
 
     <!-- Scripts JavaScript -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="Public/js/jquery-3.7.1.min.js"></script>
+    <script src="Public/js/materialize.min.js"></script>
+    <script src="Public/js/app.core.js"></script>
     <!-- Script de cambio de tema (oscuro/claro) -->
     <script>
         var currentTheme = localStorage.getItem('theme') || 'light';             // Lee el tema guardado en localStorage, o 'light' por defecto
@@ -121,6 +123,13 @@
             localStorage.setItem('theme', theme);                                   // Guarda la preferencia en localStorage
             $(this).html('<i class="material-icons">' + (theme === 'dark' ? 'light_mode' : 'dark_mode') + '</i>'); // Actualiza el ícono
         });
+    </script>
+
+    <!-- Registrar Service Worker para funcionamiento offline -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+    }
     </script>
 </body>
 </html>

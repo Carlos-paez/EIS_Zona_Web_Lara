@@ -3,7 +3,7 @@
      Interfaz tipo catálogo con productos seleccionables que se
      agregan a un carrito de compras modal. Incluye búsqueda
      en tiempo real y total acumulado.
-     NOTA: Lógica del carrito manejada por JS en app.js.
+     NOTA: Lógica del carrito manejada por JS en app.pos.js.
      Los productos y precios son estáticos (UI prototype).
      ============================================================ -->
 

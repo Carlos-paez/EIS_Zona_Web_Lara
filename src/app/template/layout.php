@@ -16,16 +16,16 @@
     <meta name="theme-color" content="#1a237e"> <!-- Color de la barra de navegación del navegador en móviles -->
     <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Permitir modo app en iOS -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> <!-- Barra de estado translúcida en iOS -->
+    <link rel="manifest" href="manifest.json">
     <title><?php echo $pageTitle; ?> - EIS System</title> <!-- Título dinámico de la pestaña -->
-    <!-- Google Material Icons (fuente de iconos) -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Materialize CSS v1.0.0 (framework de diseño Material Design) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <!-- Material Icons (locales) -->
+    <link rel="stylesheet" href="Public/css/material-icons.css">
+    <!-- Materialize CSS v1.0.0 (local) -->
+    <link rel="stylesheet" href="Public/css/materialize.min.css">
     <!-- Estilos personalizados de la aplicación -->
     <link rel="stylesheet" href="Public/css/styles.css">
-    <!-- jQuery 3.7.1 (dependencia de Materialize JS y lógica de la app) -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <!-- jQuery 3.7.1 (local) -->
+    <script src="Public/js/jquery-3.7.1.min.js"></script>
 </head>
 
 <body>
@@ -64,7 +64,7 @@
         </li> <!-- Separador visual -->
         <li><a href="?pagina=usuarios" class="sidenav-link<?php echo $pagina === 'usuarios' ? ' active' : ''; ?>"><i
                     class="material-icons left">settings</i>Configuración</a></li>
-        <!-- Alternar tema oscuro/claro (manejado por JS en app.js) -->
+        <!-- Alternar tema oscuro/claro (manejado por JS en app.init.js) -->
         <li><a class="sidenav-link" id="themeToggle" style="cursor:pointer;"><i class="material-icons left"
                     id="themeIcon">dark_mode</i><span id="themeLabel">Modo Oscuro</span></a></li>
         <li><a href="?pagina=login" class="sidenav-link"><i class="material-icons left">logout</i>Cerrar Sesión</a></li>
@@ -125,9 +125,35 @@
     </div>
 
     <!-- Scripts globales -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="Public/js/materialize.min.js"></script>
     <!-- JS de Materialize -->
-    <script src="Public/js/app.js"></script> <!-- Lógica personalizada de la aplicación -->
+
+    <!-- Core: funciones compartidas en todas las páginas -->
+    <script src="Public/js/app.core.js"></script>
+    <!-- Init: inicialización de componentes Materialize, reloj, tema, animaciones -->
+    <script src="Public/js/app.init.js"></script>
+    <!-- Tables: búsqueda, filtro y paginación de tablas -->
+    <script src="Public/js/app.tables.js"></script>
+    <!-- UI: notificaciones, botones, reportes, tooltips -->
+    <script src="Public/js/app.ui.js"></script>
+
+    <!-- Scripts específicos por página (carga condicional) -->
+    <?php if ($pagina === 'ventas'): ?>
+    <script src="Public/js/app.pos.js"></script>
+    <?php endif; ?>
+    <?php if ($pagina === 'ciberControl'): ?>
+    <script src="Public/js/app.cyber.js"></script>
+    <?php endif; ?>
+    <?php if ($pagina === 'asesorias'): ?>
+    <script src="Public/js/app.legal.js"></script>
+    <?php endif; ?>
+
+    <!-- Registrar Service Worker para funcionamiento offline -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+    }
+    </script>
 </body>
 
 </html>
