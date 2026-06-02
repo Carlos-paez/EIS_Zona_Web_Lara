@@ -1,229 +1,202 @@
 -- ============================================================
--- DATOS DE PRUEBA - Sistema ZWL v2.0
+-- DATA DE PRUEBA (INSERTS) - Sistema ZWL v2.1
 -- ============================================================
 
 USE zwl;
 
--- ============================================================
--- CATÁLOGOS
--- ============================================================
+-- Deshabilitar temporalmente llaves foráneas para una inserción limpia y segura
+SET FOREIGN_KEY_CHECKS = 0;
 
-INSERT INTO roles (nombre, descripcion) VALUES
-('Administrador', 'Acceso total al sistema'),
-('Vendedor', 'Gestión de ventas e inventario'),
-('Cyber', 'Acceso solo al módulo de cybercafé'),
-('Asesor', 'Acceso al módulo de asesorías legales'),
-('Consultor', 'Acceso solo de lectura');
+-- Limpieza previa de tablas para evitar duplicados si se vuelve a ejecutar
+TRUNCATE TABLE usuario_asesoria;
+TRUNCATE TABLE asesorias;
+TRUNCATE TABLE clientes_asesorias;
+TRUNCATE TABLE sesiones_cyber;
+TRUNCATE TABLE estaciones_cyber;
+TRUNCATE TABLE bitacora_movimientos_stock;
+TRUNCATE TABLE detalle_solicitudes;
+TRUNCATE TABLE solicitudes;
+TRUNCATE TABLE detalle_ventas;
+TRUNCATE TABLE ventas;
+TRUNCATE TABLE producto_proveedor;
+TRUNCATE TABLE activos;
+TRUNCATE TABLE productos;
+TRUNCATE TABLE proveedores;
+TRUNCATE TABLE clientes;
+TRUNCATE TABLE usuarios;
+TRUNCATE TABLE tarifas_cyber;
+TRUNCATE TABLE tipos_activo;
+TRUNCATE TABLE modelos;
+TRUNCATE TABLE marcas;
+TRUNCATE TABLE categorias;
+TRUNCATE TABLE subcategorias;
+TRUNCATE TABLE roles;
 
-INSERT INTO tipos_pago (nombre) VALUES
-('Efectivo'), ('Transferencia'), ('Punto de Venta'), ('Mixto'), ('Crédito');
-
-INSERT INTO categorias (nombre, descripcion) VALUES
-('Accesorios', 'Periféricos y accesorios de computación'),
-('Monitores', 'Pantallas y monitores'),
-('Cables', 'Cables y adaptadores'),
-('Muebles', 'Muebles de oficina y ergonomía'),
-('Papelería', 'Artículos de oficina y papel'),
-('Insumos', 'Tóner, tintas y consumibles'),
-('Almacenamiento', 'Discos duros, SSD, memorias USB'),
-('Componentes', 'Partes internas de computadoras'),
-('Computadoras', 'Equipos completos');
-
-INSERT INTO marcas (nombre, descripcion) VALUES
-('Logitech', 'Periféricos y accesorios'),
-('Samsung', 'Electrónica y monitores'),
-('HP', 'Impresoras y suministros'),
-('Kingston', 'Memorias y almacenamiento'),
-('MSI', 'Hardware gaming y laptops'),
-('Bond', 'Artículos de papelería'),
-('Generic', 'Productos genéricos');
-
-INSERT INTO tipos_activo (nombre, descripcion) VALUES
-('Equipos', 'Computadoras, laptops, servidores'),
-('Herramientas', 'Herramientas manuales y eléctricas'),
-('Licencias', 'Licencias de software'),
-('Mobiliario', 'Escritorios, sillas, estanterías'),
-('Vehículos', 'Vehículos de la empresa');
-
-INSERT INTO tarifas_cyber (nombre, precio_por_hora, tiempo_minimo, activa) VALUES
-('Gaming', 8.00, 60, TRUE),
-('Oficina', 5.00, 30, TRUE),
-('Premium', 12.00, 60, TRUE),
-('Estudiante', 3.50, 30, TRUE);
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
--- USUARIOS (password_hash: bcrypt de '123456')
+-- 1. MODULO DE CONFIGURACIÓN Y CATÁLOGOS (Lookup Tables)
 -- ============================================================
 
-INSERT INTO usuarios (username, password_hash, nombre, email, telefono, rol_id) VALUES
-('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrador Sistema', 'admin@zwl.local', '0412-0000001', 1),
-('vendedor1', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Juan Pérez', 'juan.perez@email.com', '0412-0000002', 2),
-('vendedor2', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'María García', 'maria.garcia@email.com', '0412-0000003', 2),
-('cyber1', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Carlos López', 'carlos.lopez@email.com', '0412-0000004', 3),
-('asesor1', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Ana Martínez', 'ana.martinez@email.com', '0412-0000005', 4);
+-- Roles de usuario
+INSERT INTO roles (id, nombre, descripcion) VALUES
+(1, 'Administrador', 'Acceso total al sistema, configuraciones y reportes financieros.'),
+(2, 'Operador', 'Atención al cliente en cybercafé, facturación de productos y apertura de sesiones.'),
+(3, 'Asesor Legal', 'Gestión exclusiva de expedientes jurídicos y asignación de asesorías.');
+
+-- Subcategorías (Nivel superior según la jerarquía solicitada)
+INSERT INTO subcategorias (id, nombre, descripcion) VALUES
+(1, 'Componentes de PC', 'Hardware interno y piezas de ensamblaje para computadoras.'),
+(2, 'Periféricos', 'Dispositivos de entrada y salida de datos.'),
+(3, 'Consumibles', 'Materiales de oficina y papelería indispensables.'),
+(4, 'Servicios Digitales', 'Servicios de red, impresiones y navegación.');
+
+-- Categorías (Se relacionan con Subcategorías)
+INSERT INTO categorias (id, subcategoria_id, nombre, descripcion) VALUES
+(1, 1, 'Almacenamiento SSD', 'Discos de estado sólido de alta velocidad (M.2, SATA).'),
+(2, 1, 'Memorias RAM', 'Módulos de memoria para laptops y PCs de escritorio.'),
+(3, 2, 'Teclados y Ratones', 'Accesorios de control periférico cableados e inalámbricos.'),
+(4, 3, 'Papelería e Impresión', 'Hojas, tintas y servicios de copiado.'),
+(5, 4, 'Tiempo de Cybercafé', 'Uso de estaciones de computación o consolas.');
+
+-- Marcas
+INSERT INTO marcas (id, nombre, descripcion) VALUES
+(1, 'Kingston', 'Memorias y soluciones de almacenamiento.'),
+(2, 'Logitech', 'Periféricos y accesorios de alta durabilidad.'),
+(3, 'HP', 'Equipos de computación e insumos de impresión.'),
+(4, 'Corsair', 'Componentes de alto rendimiento y gaming.');
+
+-- Modelos (Se relacionan con Marcas)
+INSERT INTO modelos (id, marca_id, nombre, descripcion) VALUES
+(1, 1, 'A400 480GB', 'SSD SATA de 2.5 pulgadas.'),
+(2, 1, 'Fury Beast DDR4 8GB', 'Módulo de memoria RAM de 3200MHz.'),
+(3, 2, 'G203 Lightsync', 'Ratón cableado enfocado en gaming y oficina.'),
+(4, 2, 'K120 USB', 'Teclado estándar resistente a salpicaduras.'),
+(5, 3, 'LaserJet Pro M15w', 'Insumos relacionados con la línea de impresión láser.'),
+(6, 4, 'Vengeance LPX 16GB', 'Kit de memoria RAM de alto rendimiento.');
+
+-- Tipos de Activos
+INSERT INTO tipos_activo (id, nombre, descripcion) VALUES
+(1, 'Infraestructura y Redes', 'Servidores, routers, cableado estructurado y switches.'),
+(2, 'Mobiliario', 'Escritorios, sillas ergonómicas y estanterías.'),
+(3, 'Equipos de Computación', 'PCs de clientes, laptops administrativas y monitores.'),
+(4, 'Licencias de Software', 'Sistemas operativos, antivirus y licencias de ERP.');
+
+-- Tarifas del Cybercafé (Manejo de costo por hora y tiempo mínimo)
+INSERT INTO tarifas_cyber (id, nombre, precio_por_hora, tiempo_minimo) VALUES
+(1, 'Zona Gaming', 2.50, 30),      -- $2.50 la hora, mínimo 30 minutos ($1.25)
+(2, 'Uso Oficina / Estudio', 1.50, 15), -- $1.50 la hora, mínimo 15 minutos ($0.375)
+(3, 'Impresiones y Consultas', 1.00, 10); -- $1.00 la hora, mínimo 10 minutos ($0.166)
 
 -- ============================================================
--- PROVEEDORES
+-- 2. TABLAS MAESTRAS PRINCIPALES
 -- ============================================================
 
-INSERT INTO proveedores (nombre, rif, tipo_documento, contacto, email, telefono, direccion) VALUES
-('TechSupply S.A.', 'J-12345678-9', 'J', 'Roberto Díaz', 'contacto@techsupply.com', '555-0101', 'Av. Principal, Edif. TechSupply, Piso 2'),
-('Oficina Total C.A.', 'J-23456789-0', 'J', 'Carmen Ruiz', 'ventas@oficinatotal.com', '555-0102', 'Calle Los Mangos, Centro Of. Local 5'),
-('Insumos Cyber 3000', 'J-34567890-1', 'J', 'Miguel Torres', 'info@insumoscyber.com', '555-0103', 'Urb. Industrial, Galpón 12'),
-('Licencias Pro', 'V-12345678', 'V', 'Sofía Vargas', 'sofia@licenciaspro.com', '555-0104', 'CC CTro, Nivel 3, Of. 301'),
-('Distribuidora XYZ', 'J-45678901-2', 'J', 'Pedro Rojas', 'pedro@distxyz.com', '555-0105', 'Zona Industrial Sur, Calle 7');
+-- Usuarios del Sistema (Contraseñas de prueba en hash simulado)
+INSERT INTO usuarios (id, username, password_hash, nombre, email, telefono, rol_id) VALUES
+(1, 'carlos_admin', '$2y$10$xyz123ADMINISTRADORhash', 'Carlos Páez', 'carlos.paez@zwl.com', '0412-5551122', 1),
+(2, 'felix_operador', '$2y$10$abc456OPERADORhash', 'Felix Tapia', 'felix.tapia@zwl.com', '0414-5553344', 2),
+(3, 'jesus_asesor', '$2y$10$jkl789ASESORhash', 'Jesús Torrealba', 'jesus.t@zwl.com', '0416-5555566', 3);
+
+-- Clientes Generales (Módulo Comercial / Cybercafé)
+INSERT INTO clientes (id, cedula_rif, nombre, telefono, email, direccion) VALUES
+(1, 'V-12345678', 'Juan Almarza', '0424-5112233', 'juan.almarza@mail.com', 'Barquisimeto, Centro, Calle 25'),
+(2, 'V-87654321', 'Jeisson Terán', '0412-6334455', 'jeisson.t@mail.com', 'Barquisimeto, Av. Venezuela con Morán'),
+(3, 'J-44556677-1', 'Zona Web Lara C.A.', '0251-2541122', 'contacto@zwlara.com', 'Zona Industrial II, Barquisimeto');
+
+-- Clientes para Asesorías Legales (Con campos extendidos de contacto e historial)
+INSERT INTO clientes_asesorias (id, cedula, nombre, email, telefono, direccion, notas_expediente) VALUES
+(1, 'V-11222333', 'María Linares', 'maria.linares@asesoria.com', '0426-7119988', 'Pavia, Sector Las Veritas, Calle Principal', 'Caso de regularización de linderos de propiedad privada rural.'),
+(2, 'V-44555666', 'Máyela Cadevilla', 'mayela.c@asesoria.com', '0414-8114422', 'Urb. Las Trinitarias, Este de Barquisimeto', 'Constitución y registro de actas de asamblea para firma comercial.');
+
+-- Proveedores (El flag es_proveedor_principal se maneja aquí directamente)
+INSERT INTO proveedores (id, nombre, rif, tipo_documento, contacto, email, telefono, es_proveedor_principal) VALUES
+(1, 'Mayorista Tech Lara', 'J-31122334-0', 'J', 'Alejandro Ramos', 'ventas@techlara.com', '0251-5114477', TRUE),
+(2, 'Insumos Globales Occidente', 'J-41155667-0', 'J', 'Laura Méndez', 'contacto@insumosglobales.com', '0251-6228899', FALSE);
+
+-- Productos (La cantidad/stock reside en esta tabla, se relaciona con Categorías y Modelos)
+INSERT INTO productos (id, codigo, codigo_barras, nombre, descripcion, categoria_id, modelo_id, unidad_medida, stock, stock_minimo, ubicacion, costo_compra, precio_venta) VALUES
+(1, 'SSD-KIN-480', '740617263450', 'SSD Kingston A400 480GB', 'Disco sólido interno de 2.5 pulgadas SATA III.', 1, 1, 'Unidades', 15, 5, 'Pasillo A - Estante 2', 22.00, 35.00),
+(2, 'RAM-KIN-8GB', '740617311731', 'Memoria RAM Kingston Fury Beast 8GB', 'Módulo DDR4 a 3200MHz con disipador.', 2, 2, 'Unidades', 8, 3, 'Pasillo A - Estante 1', 18.00, 28.00),
+(3, 'MOU-LOG-G203', '097855155940', 'Ratón Gaming Logitech G203', 'Ratón óptico con iluminación RGB Lightsync USB.', 3, 3, 'Unidades', 12, 4, 'Pasillo B - Vitrina 1', 15.00, 25.00),
+(4, 'KEY-LOG-K120', '097855061241', 'Teclado Estándar Logitech K120', 'Teclado cableado USB en español, resistente al agua.', 3, 4, 'Unidades', 20, 5, 'Pasillo B - Caja Central', 7.50, 12.00),
+(5, 'IMP-HOJA-A4', '750100412345', 'Resma de Hojas Blancas Carta/A4', 'Paquete de 500 hojas blancas de 75g.', 4, NULL, 'Packs', 50, 10, 'Depósito Trasero - Stand 1', 3.50, 5.50);
+
+-- Activos Físicos de la Empresa (Relacionados con tipos_activo y usuarios responsables)
+INSERT INTO activos (id, nombre, descripcion, tipo_activo_id, estado, ubicacion, valor_adquisicion, fecha_adquisicion, responsable_id) VALUES
+(1, 'Router Balanceador Mikrotik RB3011', 'Router principal de administración de ancho de banda del cyber.', 1, 'Activo', 'Rack del Servidor Principal', 180.00, '2025-01-15', 1),
+(2, 'Estación de Trabajo Cyber PC-01', 'PC de clientes: Ryzen 5, 16GB RAM, SSD 480GB.', 3, 'Activo', 'Módulo Central Cyber - Cubículo 1', 450.00, '2025-03-20', 2),
+(3, 'Estación de Trabajo Cyber PC-02', 'PC de clientes: Ryzen 5, 16GB RAM, SSD 480GB.', 3, 'Mantenimiento', 'Módulo Central Cyber - Cubículo 2', 450.00, '2025-03-20', 2),
+(4, 'Silla Ejecutiva Ergonómica Negra', 'Silla ajustable de red del puesto administrativo.', 2, 'Activo', 'Oficina de Administración', 95.00, '2025-02-10', 1);
 
 -- ============================================================
--- PRODUCTOS
+-- 3. TABLAS PUENTE (Relaciones M:N)
 -- ============================================================
 
-INSERT INTO productos (codigo, codigo_barras, nombre, descripcion, categoria_id, marca_id, unidad_medida, stock, stock_minimo, ubicacion, costo_compra, precio_venta, iva, permite_descuento, estado_venta) VALUES
-('MOU-001', '7501234567891', 'Mouse Inalámbrico Logitech', 'Mouse inalámbrico 2.4GHz con receptor USB', 1, 1, 'Unidades', 30, 5, 'Estante A-01', 15.00, 25.50, 16.00, TRUE, 'Activo'),
-('TEC-001', '7501234567892', 'Teclado Mecánico RGB', 'Teclado mecánico con iluminación RGB personalizable', 1, 1, 'Unidades', 15, 5, 'Estante A-02', 50.00, 85.00, 16.00, TRUE, 'Activo'),
-('MON-001', '7501234567893', 'Monitor LED 24" Samsung', 'Monitor LED 24 pulgadas Full HD 75Hz', 2, 2, 'Unidades', 8, 3, 'Estante B-01', 180.00, 250.00, 16.00, TRUE, 'Activo'),
-('CAB-001', '7501234567894', 'Cable HDMI 2m', 'Cable HDMI 2 metros alta velocidad 4K', 3, 7, 'Unidades', 50, 10, 'Estante B-02', 5.00, 12.00, 16.00, TRUE, 'Activo'),
-('SIL-001', '7501234567895', 'Silla Ergonómica', 'Silla ergonómica de oficina con soporte lumbar', 4, 7, 'Unidades', 4, 5, 'Estante C-01', 200.00, 320.00, 16.00, TRUE, 'Activo'),
-('PAP-001', '7501234567896', 'Papel Bond A4 (500 hojas)', 'Papel bond tamaño carta 500 hojas 75g/m²', 5, 6, 'Unidades', 100, 20, 'Estante C-02', 4.00, 8.50, 16.00, TRUE, 'Activo'),
-('TON-001', '7501234567897', 'Tóner HP 85A', 'Tóner compatible con impresoras HP LaserJet', 6, 3, 'Unidades', 2, 5, 'Estante D-01', 35.00, 65.00, 16.00, TRUE, 'Activo'),
-('SSD-001', '7501234567898', 'Disco SSD 500GB Kingston', 'Disco sólido 500GB SATA III 2.5"', 7, 4, 'Unidades', 0, 3, 'Estante D-02', 50.00, 80.00, 16.00, TRUE, 'Activo'),
-('RAM-001', '7501234567899', 'Memoria RAM 8GB DDR4', 'Memoria RAM 8GB DDR4 2400MHz', 8, 4, 'Unidades', 20, 5, 'Estante D-03', 25.00, 45.00, 16.00, TRUE, 'Activo'),
-('LAP-001', '7501234567900', 'Laptop Gamer MSI Katana', 'Laptop gaming 15.6" i7 16GB RTX 3060', 9, 5, 'Unidades', 3, 2, 'Estante E-01', 900.00, 1200.00, 16.00, FALSE, 'Activo');
+-- Catálogo Cruzado de Producto-Proveedor
+INSERT INTO producto_proveedor (producto_id, proveedor_id, codigo_proveedor, precio_compra, tiempo_entrega_dias) VALUES
+(1, 1, 'PROV-SSD480-K', 21.00, 3),
+(1, 2, 'GLOBAL-SSD-480', 22.50, 5),
+(2, 1, 'PROV-RAM8GB-K', 17.50, 3),
+(3, 2, 'GLOBAL-MOU-G203', 14.80, 4),
+(4, 1, 'PROV-TEC-K120', 7.00, 2);
 
 -- ============================================================
--- TABLA PUENTE: Producto-Proveedor
+-- 4. MOVIMIENTOS TRANSACCIONALES DE PRUEBA
 -- ============================================================
 
-INSERT INTO producto_proveedor (producto_id, proveedor_id, codigo_proveedor, precio_compra, tiempo_entrega_dias, es_proveedor_principal) VALUES
-(1, 1, 'MOU-LOG-001', 12.50, 3, TRUE),
-(1, 3, 'INS-MOU-001', 14.00, 5, FALSE),
-(2, 1, 'TEC-LOG-001', 45.00, 3, TRUE),
-(3, 2, 'MON-SAM-001', 165.00, 7, TRUE),
-(4, 3, 'CAB-HDM-001', 3.50, 2, TRUE),
-(5, 2, 'SIL-ERG-001', 180.00, 10, TRUE),
-(6, 2, 'PAP-BON-001', 3.20, 2, TRUE),
-(7, 3, 'TON-HP-001', 28.00, 4, TRUE),
-(8, 4, 'SSD-KIN-001', 42.00, 5, TRUE),
-(9, 4, 'RAM-KIN-001', 20.00, 3, TRUE),
-(10, 5, 'LAP-MSI-001', 850.00, 15, TRUE);
+-- Ventas Realizadas (Campos calculados netos, sin IVA)
+INSERT INTO ventas (id, fecha, usuario_id, cliente_id, subtotal, descuento, total, estado) VALUES
+(1, '2026-05-25 10:30:00', 2, 1, 35.00, 0.00, 35.00, 'completada'),
+(2, '2026-05-26 14:15:00', 2, 2, 53.00, 3.00, 50.00, 'completada');
+
+-- Detalle de las Ventas correspondientes
+INSERT INTO detalle_ventas (id, venta_id, producto_id, cantidad, precio_unitario, descuento, subtotal) VALUES
+(1, 1, 1, 1, 35.00, 0.00, 35.00), -- 1 SSD de $35
+(2, 2, 2, 1, 28.00, 0.00, 28.00), -- 1 RAM de $28
+(3, 2, 3, 1, 25.00, 3.00, 22.00); -- 1 Mouse de $25 con desc de $3
+
+-- Solicitudes a Proveedores (Maneja Cantidad e incluye tiempo_entrega_dias de la solicitud)
+INSERT INTO solicitudes (id, codigo, proveedor_id, fecha, fecha_estimada_entrega, tiempo_entrega_dias, subtotal, total, estado, usuario_id) VALUES
+(1, 'SOL-2026-001', 1, '2026-05-20', '2026-05-23', 3, 295.00, 295.00, 'Recibida', 1);
+
+-- Detalle de Solicitudes (Cantidades de compra pedidas a proveedores)
+INSERT INTO detalle_solicitudes (id, solicitud_id, producto_id, cantidad_solicitada, cantidad_recibida, precio_unitario_estimado, subtotal) VALUES
+(1, 1, 1, 10, 10, 22.00, 220.00),
+(2, 1, 4, 10, 10, 7.50, 75.00);
+
+-- Historial Manual/Inicial de Auditoría en la Bitácora de Movimientos
+INSERT INTO bitacora_movimientos_stock (producto_id, tipo, cantidad, stock_anterior, stock_nuevo, precio_unitario, costo_total, usuario_id, referencia_tipo, referencia_id, motivo) VALUES
+(1, 'entrada', 15, 0, 15, 22.00, 330.00, 1, 'carga_inicial', NULL, 'Carga inicial de inventario en apertura del sistema.'),
+(2, 'entrada', 8, 0, 8, 18.00, 144.00, 1, 'carga_inicial', NULL, 'Carga inicial de stock.'),
+(3, 'entrada', 12, 0, 12, 15.00, 180.00, 1, 'carga_inicial', NULL, 'Inventario inicial automatizado.');
 
 -- ============================================================
--- ACTIVOS FIJOS
+-- 5. MOVIMIENTOS DEL MODULO CYBERCAFÉ
 -- ============================================================
 
-INSERT INTO activos (nombre, descripcion, tipo_activo_id, estado, ubicacion, valor_adquisicion, fecha_adquisicion, fecha_vencimiento, responsable_id) VALUES
-('Laptop Dell Latitude 3420', 'Laptop corporativa i5 16GB SSD 512GB', 1, 'Activo', 'Oficina Principal', 8500.00, '2024-01-15', NULL, 1),
-('Taladro Bosch 18V', 'Taladro inalámbrico con batería de litio', 2, 'Activo', 'Taller', 2500.00, '2023-06-10', NULL, NULL),
-('Licencia Windows 10 Pro', 'Licencia digital OEM', 3, 'Activo', 'Oficina Principal', 350.00, '2024-02-01', '2026-02-01', 1),
-('Impresora HP LaserJet Pro', 'Impresora láser multifuncional', 1, 'Mantenimiento', 'Oficina Admin', 4200.00, '2023-09-20', NULL, 2),
-('Licencia Adobe Creative Suite', 'Suite de diseño gráfico anual', 3, 'Vencida', 'Oficina Diseño', 1800.00, '2023-01-10', '2025-01-10', 3),
-('Kit Destornilladores Precision', 'Juego de 32 piezas para electrónica', 2, 'Activo', 'Taller', 450.00, '2024-03-05', NULL, NULL),
-('Servidor HP ProLiant DL380', 'Servidor corporativo 2U', 1, 'Activo', 'Cuarto Servidores', 35000.00, '2024-06-01', NULL, 1),
-('Escritorio Ergonómico', 'Escritorio eléctrico ajustable', 4, 'Activo', 'Oficina Principal', 5500.00, '2024-08-15', NULL, NULL);
+-- Apertura de Estaciones Asociadas a Tarifas
+INSERT INTO estaciones_cyber (id, nombre, estado, tarifa_id, ip_local, mac_address) VALUES
+(1, 'PC-CLIENTE-01', 'Ocupada', 2, '192.168.1.51', '00:1A:2B:3C:4D:5E'),
+(2, 'PC-CLIENTE-02', 'Disponible', 2, '192.168.1.52', '00:1A:2B:3C:4D:5F'),
+(3, 'PC-GAMING-03', 'Disponible', 1, '192.168.1.60', '00:1A:2B:88:99:AA');
+
+-- Sesiones de Uso del Cyber (Relacionadas con Clientes generales y operadores)
+INSERT INTO sesiones_cyber (id, estacion_id, usuario_id, cliente_id, hora_inicio, hora_fin, costo_total, estado) VALUES
+(1, '1', 2, 1, '2026-05-27 20:30:00', NULL, NULL, 'activa'), -- Sesión abierta corriendo en tiempo real
+(2, '2', 2, 2, '2026-05-27 18:00:00', '2026-05-27 19:30:00', 2.25, 'cerrada'); -- 1 hora y media en tarifa oficina ($1.50 * 1.5)
 
 -- ============================================================
--- ESTACIONES CYBER
+-- 6. ASESORÍAS LEGALES Y ASIGNACIÓN PUENTE
 -- ============================================================
 
-INSERT INTO estaciones_cyber (nombre, estado, tarifa_id, especificaciones, ip_local, mac_address) VALUES
-('PC-01', 'Disponible', 1, 'i5-12400F / 16GB RAM / RTX 3060 / SSD 512GB', '192.168.1.10', 'AA:BB:CC:DD:01:01'),
-('PC-02', 'Ocupada', 1, 'i5-12400F / 16GB RAM / RTX 3060 / SSD 512GB', '192.168.1.11', 'AA:BB:CC:DD:01:02'),
-('PC-03', 'Disponible', 2, 'i3-12100 / 8GB RAM / SSD 256GB', '192.168.1.12', 'AA:BB:CC:DD:01:03'),
-('PC-04', 'Mantenimiento', 3, 'i7-12700K / 32GB RAM / RTX 4080 / SSD 1TB', '192.168.1.13', 'AA:BB:CC:DD:01:04'),
-('PC-05', 'Disponible', 2, 'i3-12100 / 8GB RAM / SSD 256GB', '192.168.1.14', 'AA:BB:CC:DD:01:05'),
-('PC-06', 'Ocupada', 1, 'i5-12400F / 16GB RAM / RTX 3060 / SSD 512GB', '192.168.1.15', 'AA:BB:CC:DD:01:06');
+-- Casos de Asesorías en Curso (Relacionado con la tabla de clientes de asesoría jurídica)
+INSERT INTO asesorias (id, cliente_asesoria_id, documento, descripcion, estado, fecha_registro) VALUES
+(1, 1, 'EXP-2026-09', 'Revisión técnica de documentos ejidales del sector Pavia para adjudicación definitiva.', 'En Proceso', '2026-05-10 09:00:00'),
+(2, 2, 'REF-9982-A', 'Redacción de estatutos comerciales para constitución de firma personal de servicios.', 'Pendiente', '2026-05-24 11:30:00');
 
--- ============================================================
--- VENTAS
--- ============================================================
-
-INSERT INTO ventas (fecha, usuario_id, cliente_nombre, cliente_cedula, tipo_pago_id, subtotal, descuento, iva_total, total, estado) VALUES
-('2025-04-15 10:30:00', 2, 'Luis Rodríguez', 'V-12345678', 1, 95.26, 0.00, 15.24, 110.50, 'completada'),
-('2025-04-16 14:20:00', 3, 'Pedro Gómez', 'V-87654321', 2, 215.52, 0.00, 34.48, 250.00, 'completada'),
-('2025-04-17 09:15:00', 2, 'Marta Sánchez', 'V-11223344', 1, 31.90, 0.00, 5.10, 37.00, 'completada'),
-('2025-04-18 16:45:00', 3, 'José Contreras', 'E-55667788', 3, 73.28, 0.00, 11.72, 85.00, 'pendiente'),
-('2025-04-19 11:00:00', NULL, 'Cliente Anónimo', NULL, 1, 112.07, 0.00, 17.93, 130.00, 'completada'),
-('2025-04-20 13:30:00', 4, 'Test Cancelada', 'V-99887766', 1, 21.98, 0.00, 3.52, 25.50, 'cancelada');
-
--- ============================================================
--- DETALLE DE VENTAS
--- ============================================================
-
-INSERT INTO detalle_ventas (venta_id, producto_id, cantidad, precio_unitario, iva_unitario, descuento, subtotal) VALUES
-(1, 1, 2, 25.50, 3.52, 0.00, 51.00),
-(1, 6, 7, 8.50, 1.17, 0.00, 59.50),
-(2, 3, 1, 250.00, 34.48, 0.00, 250.00),
-(3, 4, 3, 12.00, 1.66, 0.00, 36.00),
-(3, 6, 1, 8.50, 1.17, 0.00, 8.50),
-(4, 2, 1, 85.00, 11.72, 0.00, 85.00),
-(5, 9, 2, 45.00, 6.21, 0.00, 90.00),
-(5, 4, 2, 12.00, 1.66, 0.00, 24.00),
-(5, 6, 2, 8.00, 1.10, 0.00, 16.00),
-(6, 1, 1, 25.50, 3.52, 0.00, 25.50);
-
--- ============================================================
--- SOLICITUDES A PROVEEDORES
--- ============================================================
-
-INSERT INTO solicitudes (codigo, proveedor_id, fecha, fecha_estimada_entrega, tipo_pago_id, subtotal, iva_total, total, estado, usuario_id) VALUES
-('SOL-2026-0001', 1, '2025-04-10', '2025-04-17', 2, 500.00, 80.00, 580.00, 'Recibida', 1),
-('SOL-2026-0002', 2, '2025-04-12', '2025-04-22', 1, 320.00, 51.20, 371.20, 'Pendiente', 2),
-('SOL-2026-0003', 3, '2025-04-14', '2025-04-18', 2, 150.00, 24.00, 174.00, 'Pendiente', 1),
-('SOL-2026-0004', 1, '2025-04-16', NULL, 3, 200.00, 32.00, 232.00, 'Cancelada', 3),
-('SOL-2026-0005', 4, '2025-04-18', '2025-04-28', 2, 420.00, 67.20, 487.20, 'Recibida', 2);
-
--- ============================================================
--- DETALLE DE SOLICITUDES (Bridge Table)
--- ============================================================
-
-INSERT INTO detalle_solicitudes (solicitud_id, producto_id, cantidad_solicitada, cantidad_recibida, precio_unitario_estimado, subtotal) VALUES
-(1, 1, 20, 20, 12.50, 250.00),
-(1, 2, 5, 5, 45.00, 225.00),
-(1, 4, 10, NULL, 3.50, 35.00),
-(2, 5, 2, NULL, 120.00, 240.00),
-(2, 6, 20, NULL, 4.00, 80.00),
-(3, 8, 5, NULL, 28.00, 140.00),
-(3, 4, 5, NULL, 3.00, 15.00),
-(4, 9, 10, NULL, 20.00, 200.00),
-(5, 10, 1, 1, 420.00, 420.00);
-
--- ============================================================
--- SESIONES CYBER
--- ============================================================
-
-INSERT INTO sesiones_cyber (estacion_id, usuario_id, cliente_nombre, tarifa_id, hora_inicio, hora_fin, costo_total, estado) VALUES
-(1, 2, 'Luis Rodríguez', 1, '2025-04-20 08:00:00', '2025-04-20 10:30:00', 20.00, 'cerrada'),
-(2, 3, 'Carlos López', 1, '2025-04-20 09:00:00', NULL, NULL, 'activa'),
-(3, 2, 'María Pérez', 2, '2025-04-20 10:15:00', '2025-04-20 12:15:00', 10.00, 'cerrada'),
-(5, 4, 'José Contreras', 2, '2025-04-20 11:00:00', '2025-04-20 13:45:00', 13.75, 'cerrada'),
-(6, 3, 'Ana Martínez', 1, '2025-04-20 08:30:00', NULL, NULL, 'activa'),
-(2, 2, 'Pedro Gómez', 1, '2025-04-20 14:00:00', '2025-04-20 16:00:00', 16.00, 'cerrada');
-
--- ============================================================
--- MOVIMIENTOS DE STOCK
--- ============================================================
-
-INSERT INTO movimientos_stock (producto_id, tipo, cantidad, stock_anterior, stock_nuevo, precio_unitario, costo_total, fecha, usuario_id, referencia_tipo, referencia_id, motivo) VALUES
-(1, 'entrada', 20, 10, 30, 15.00, 300.00, '2025-04-01 08:00:00', 1, 'solicitud', 1, 'Recepción SOL-2026-0001'),
-(2, 'entrada', 15, 0, 15, 50.00, 750.00, '2025-04-01 09:00:00', 1, 'solicitud', 1, 'Recepción SOL-2026-0001'),
-(3, 'entrada', 8, 0, 8, 180.00, 1440.00, '2025-04-02 10:00:00', 2, NULL, NULL, 'Compra inicial'),
-(5, 'entrada', 10, 0, 10, 200.00, 2000.00, '2025-04-02 11:00:00', 2, NULL, NULL, 'Compra inicial'),
-(5, 'salida', -6, 10, 4, 200.00, -1200.00, '2025-04-15 15:00:00', 3, 'venta', 2, 'Venta #2'),
-(7, 'entrada', 5, 0, 5, 35.00, 175.00, '2025-04-03 08:30:00', 1, NULL, NULL, 'Compra inicial'),
-(7, 'salida', -3, 5, 2, 35.00, -105.00, '2025-04-18 10:00:00', 2, 'ajuste', NULL, 'Uso interno'),
-(8, 'entrada', 10, 0, 10, 50.00, 500.00, '2025-04-03 09:00:00', 1, NULL, NULL, 'Compra inicial'),
-(8, 'salida', -10, 10, 0, 50.00, -500.00, '2025-04-10 14:00:00', 3, 'venta', 4, 'Venta #4'),
-(9, 'entrada', 20, 0, 20, 25.00, 500.00, '2025-04-04 08:00:00', 2, NULL, NULL, 'Compra inicial'),
-(10, 'entrada', 5, 0, 5, 900.00, 4500.00, '2025-04-04 10:00:00', 2, NULL, NULL, 'Compra inicial'),
-(10, 'salida', -2, 5, 3, 900.00, -1800.00, '2025-04-19 11:30:00', 1, 'venta', 5, 'Venta #5'),
-(4, 'ajuste', 50, 0, 50, 5.00, 250.00, '2025-04-05 08:00:00', 1, 'ajuste', NULL, 'Ajuste inventario inicial');
-
--- ============================================================
--- ASESORÍAS
--- ============================================================
-
-INSERT INTO asesorias (ciudadano, cedula, documento, descripcion, estado, usuario_id, fecha_registro) VALUES
-('María Fernanda Torres', 'V-12345678', 'DNI-2025-001', 'Asesoría sobre constitución de empresa mercantil tipo S.A.', 'Finalizada', 5, '2025-03-10 09:00:00'),
-('José Antonio López', 'V-23456789', 'DNI-2025-002', 'Consulta sobre registro de propiedad intelectual de software', 'En Proceso', 5, '2025-03-15 10:30:00'),
-('Carmen Elena Rivas', 'E-34567890', 'DNI-2025-003', 'Asesoría laboral sobre contratación de personal extranjero', 'Pendiente', 5, '2025-04-01 14:00:00'),
-('Roberto Andrés Silva', 'V-45678901', 'DNI-2025-004', 'Revisión de contrato de arrendamiento comercial', 'Finalizada', 5, '2025-04-05 11:00:00'),
-('Laura Valentina Méndez', 'V-56789012', 'DNI-2025-005', 'Asesoría fiscal sobre declaración de ISLR persona jurídica', 'Pendiente', NULL, '2025-04-10 15:45:00');
+-- Registro en la Tabla Puente (usuario_asesoria) vinculando personal con los casos
+INSERT INTO usuario_asesoria (usuario_id, asesoria_id, rol_en_asesoria) VALUES
+(3, 1, 'Abogado Gestor Principal'), -- Jesús Torrealba lleva el caso de María Linares
+(1, 1, 'Supervisor de Operación'),   -- Carlos Páez supervisa el proceso técnico
+(3, 2, 'Consultor Redactor');       -- Jesús lleva la firma comercial de Máyela
