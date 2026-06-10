@@ -12,7 +12,10 @@ src/
 ├── app/
 │   ├── core/
 │   │   └── router.php           ← Enrutador procedural
+│   ├── Controllers/
+│   │   └── inventarioController.php ← Controlador AJAX inventario
 │   ├── Models/
+│   │   ├── crud_inventario.php  ← CRUD inventario (15+ funciones)
 │   │   ├── crud_users.php       ← CRUD usuarios (8 funciones)
 │   │   └── crud_asesorias.php   ← CRUD asesorias (8 funciones)
 │   ├── template/
@@ -85,7 +88,7 @@ A diferencia de una arquitectura MVC, no hay autoloader de Composer involucrado 
 
 ### Mapa de rutas
 
-El enrutamiento se basa en el parametro GET `?pagina=`. No hay un mapa de rutas explicito; las rutas validas son simplemente los archivos PHP existentes en `src/app/Views/`.
+El enrutamiento se basa en el parametro GET `?pagina=`. Las rutas AJAX de inventario se desvian al controlador antes de cargar la vista. Las rutas validas son los archivos PHP existentes en `src/app/Views/`.
 
 ### Metodo `dispatch()` implicito (todo el archivo)
 
@@ -108,6 +111,12 @@ if (!preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)) {
 $public_pages = ['login', 'login_validate'];
 if (!isset($_SESSION['logged_in']) && !in_array($pagina, $public_pages)) {
     header("Location: ?pagina=login");
+    exit;
+}
+
+// 3b. Ruta AJAX para inventario (controlador en lugar de vista)
+if ($pagina === 'inventario' && isset($_GET['action'])) {
+    require __DIR__ . '/../Controllers/inventarioController.php';
     exit;
 }
 
@@ -156,6 +165,7 @@ if(is_file($rutaVista)){
 | `preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)` | Validacion de seguridad: solo caracteres seguros. Previene path traversal. |
 | `$public_pages` | Array con paginas que no requieren autenticacion (login, login_validate). |
 | `!isset($_SESSION['logged_in']) && !in_array($pagina, $public_pages)` | Redirige al login si la pagina requiere auth y el usuario no ha iniciado sesion. |
+| `$pagina === 'inventario' && isset($_GET['action'])` | Ruta AJAX: carga el controlador `inventarioController.php` en lugar de la vista. |
 | `is_file($rutaVista)` | Verifica que el archivo de vista exista en el sistema de archivos. |
 | `$titulos[$pagina]` | Array asociativo con titulos para cada pagina (usado en el layout). |
 | `$contentView` | Ruta de la vista a incluir dentro del layout. |
@@ -193,6 +203,9 @@ if(is_file($rutaVista)){
 <?php if ($pagina === 'asesorias'): ?>
 <script src="Public/js/app.legal.js"></script>
 <?php endif; ?>
+<?php if ($pagina === 'inventario'): ?>
+<script src="Public/js/app.inventario.js"></script>
+<?php endif; ?>
 ```
 
 ---
@@ -204,7 +217,8 @@ if(is_file($rutaVista)){
 | `login` | `login.php` | Si | Ninguno |
 | `login_validate` | `login_validate.php` | Si | Ninguno |
 | `dashboard` | `dashboard.php` | No | Ninguno |
-| `inventario` | `inventario.php` | No | Ninguno |
+| `inventario` | `inventario.php` | No | `app.inventario.js` |
+| `inventario&action=X` | `inventarioController.php` (JSON) | No | (AJAX) |
 | `ventas` | `ventas.php` | No | `app.pos.js` |
 | `ciberControl` | `ciberControl.php` | No | `app.cyber.js` |
 | `proveedores` | `proveedores.php` | No | Ninguno |
@@ -299,6 +313,7 @@ Usuario: GET /src/?pagina=ventas
    ├── $pagina = "ventas"
    ├── preg_match -> OK
    ├── $_SESSION['logged_in']? -> Si (o redirige a login)
+   ├── ¿Es inventario con action? -> No (sigue a carga de vista)
    ├── $rutaVista = ".../Views/ventas.php" -> existe
    ├── ¿publica? -> No
    ├── $pageTitle = 'Punto de Venta (POS)'

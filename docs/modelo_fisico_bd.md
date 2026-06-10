@@ -1,4 +1,4 @@
-# Modelo Físico de la Base de Datos — Zona Web Lara (ZWL v2.1)
+# Modelo Físico de la Base de Datos — Zona Web Lara (ZWL v2.2)
 
 ## General
 

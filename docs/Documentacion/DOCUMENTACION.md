@@ -68,15 +68,17 @@ El proyecto simula un sistema completo para administrar un negocio que incluye: 
 |---------|--------|----------|
 | src/index.php | 6 | Punto de entrada |
 | src/Config/database.php | 27 | Configuracion BD |
-| src/app/core/router.php | 69 | Enrutamiento + layout |
-| src/app/template/layout.php | 159 | Layout maestro con JS condicional |
+| src/app/core/router.php | 75 | Enrutamiento + layout + ruta AJAX inventario |
+| src/app/template/layout.php | 162 | Layout maestro con JS condicional |
+| src/app/Controllers/inventarioController.php | 247 | Controlador AJAX inventario (10 acciones) |
+| src/app/Models/crud_inventario.php | 265 | CRUD inventario (15+ funciones) |
 | src/app/Models/crud_users.php | 54 | CRUD usuarios (8 funciones) |
 | src/app/Models/crud_asesorias.php | 49 | CRUD asesorias (8 funciones) |
 | src/app/Views/login.php | 134 | Pagina login |
 | src/app/Views/login_validate.php | 30 | Validacion login |
 | src/app/Views/dashboard.php | 130 | Panel principal |
 | src/app/Views/menu.php | 170 | Menu navegacion |
-| src/app/Views/inventario.php | 129 | Gestion inventario |
+| src/app/Views/inventario.php | 474 | Gestion inventario (conectado a BD) |
 | src/app/Views/ventas.php | 130 | Punto de venta |
 | src/app/Views/proveedores.php | 115 | Solicitudes |
 | src/app/Views/reportes.php | 139 | Reportes |
@@ -88,17 +90,18 @@ El proyecto simula un sistema completo para administrar un negocio que incluye: 
 | src/Public/css/login.css | 138 | Estilos login |
 | src/Public/css/material-icons.css | 14 | Estilos Material Icons |
 | src/Public/css/materialize.min.css | — | Materialize CSS (local) |
-| src/Public/js/app.core.js | 37 | Funciones compartidas |
+| src/Public/js/app.core.js | 31 | Funciones compartidas |
 | src/Public/js/app.init.js | 80 | Inicializacion Materialize |
 | src/Public/js/app.tables.js | 47 | Busqueda en tablas |
 | src/Public/js/app.ui.js | 45 | UI notificaciones |
 | src/Public/js/app.pos.js | 117 | Sistema POS |
 | src/Public/js/app.cyber.js | 78 | Estaciones cyber |
 | src/Public/js/app.legal.js | 208 | Asesoria legal |
+| src/Public/js/app.inventario.js | 450 | CRUD inventario via AJAX |
 | src/manifest.json | 15 | Manifiesto PWA |
 | src/sw.js | 83 | Service Worker |
 | src/offline.php | 43 | Pagina offline |
-| src/Database/estructura.sql | 526 | Esquema BD v2.0 |
+| src/Database/estructura.sql | 528 | Esquema BD v2.0 |
 | src/Database/datos_prueba.sql | 229 | Datos prueba |
 
 ---
@@ -117,7 +120,7 @@ Punto de entrada unico (Front Controller). Todas las solicitudes pasan por aqui 
 
 ---
 
-### 2. `src/app/core/router.php` (69 lineas) - EL CEREBRO DE LA APLICACION
+### 2. `src/app/core/router.php` (75 lineas) - EL CEREBRO DE LA APLICACION
 
 ```php
 <?php
@@ -136,6 +139,12 @@ if (!preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)) {
 $public_pages = ['login', 'login_validate'];
 if (!isset($_SESSION['logged_in']) && !in_array($pagina, $public_pages)) {
     header("Location: ?pagina=login");
+    exit;
+}
+
+// RUTA PARA CONTROLADOR DE INVENTARIO (AJAX)
+if ($pagina === 'inventario' && isset($_GET['action'])) {
+    require __DIR__ . '/../Controllers/inventarioController.php';
     exit;
 }
 
@@ -250,6 +259,9 @@ La diferencia clave: si es pagina publica carga directa la vista; si no, usa `la
     <?php if ($pagina === 'asesorias'): ?>
     <script src="Public/js/app.legal.js"></script>
     <?php endif; ?>
+    <?php if ($pagina === 'inventario'): ?>
+    <script src="Public/js/app.inventario.js"></script>
+    <?php endif; ?>
 
     <!-- Service Worker -->
     <script>
@@ -359,8 +371,16 @@ Catalogo de 5 productos con carrito modal. Toda la logica en `app.pos.js`.
 #### 8.3 `ciberControl.php` (133 lineas) - CONTROL DE CYBERCAFE
 10 estaciones organizadas en 3 zonas (Gamer, Estandar, VIP) con estados disponible/ocupada/mantenimiento. Los datos de estaciones se generan desde PHP con un array `$zonas`. Contadores calculados con PHP (`array_filter`).
 
-#### 8.4 `inventario.php` (129 lineas)
-Tabla con 3 productos de ejemplo, busqueda con debounce, filtro por estado, paginacion.
+#### 8.4 `inventario.php` (474 lineas) - GESTION DE INVENTARIO (FUNCIONAL CON BD)
+Modulo completo conectado a la base de datos via `crud_inventario.php`. Incluye:
+- **KPIs**: 4 tarjetas con total de productos, stock critico, stock bajo y valor total (desde BD)
+- **Tabla de productos**: Listado completo con estado, stock, precios (desde BD)
+- **Filtros**: Busqueda por texto con debounce + filtro por estado (OK, Critico, Sin stock)
+- **CRUD completo**: Crear, editar y eliminar productos via AJAX
+- **Movimientos de stock**: Entrada y salida con actualizacion de stock y bitacora
+- **Historial**: Visualizacion de movimientos por producto
+- **3 modales**: Producto (crear/editar), Movimientos (historial), Stock (entrada/salida)
+- **JS**: `app.inventario.js` (450 lineas) para todas las operaciones AJAX
 
 #### 8.5 `proveedores.php` (115 lineas)
 Tabla de solicitudes con 3 ejemplos, busqueda y filtro por estado.
@@ -390,17 +410,18 @@ Gestion de usuarios (UI estatica basica).
 
 ### Arquitectura
 
-El monolito `app.js` original se dividio en **7 archivos modulares** organizados por funcionalidad:
+El monolito `app.js` original se dividio en **8 archivos modulares** organizados por funcionalidad:
 
 | Archivo | Lineas | Proposito | Carga |
 |---------|--------|-----------|-------|
-| `app.core.js` | 37 | Namespace EIS, debounce, filtrarTabla, EIS.toast | Siempre |
+| `app.core.js` | 31 | Namespace EIS, debounce, filtrarTabla, EIS.toast | Siempre |
 | `app.init.js` | 80 | Init Materialize, reloj, tema, animaciones | Siempre |
 | `app.tables.js` | 47 | Busqueda en tablas, filtro estado, paginacion | Siempre |
 | `app.ui.js` | 45 | Notificaciones, botones, reportes, tooltips | Siempre |
 | `app.pos.js` | 117 | Sistema carrito POS | Solo ventas |
 | `app.cyber.js` | 78 | Gestion estaciones cyber | Solo ciberControl |
 | `app.legal.js` | 208 | Validacion documentos legales | Solo asesorias |
+| `app.inventario.js` | 450 | CRUD inventario via AJAX | Solo inventario |
 
 ### app.core.js - Funciones Compartidas
 
@@ -502,7 +523,7 @@ $(function () {
 - **Base de datos**: `zwl` (Zona Web Lara)
 - **Motor**: InnoDB
 - **Charset**: utf8mb4
-- **Version**: 2.0
+- **Version**: 2.2
 
 ### Tablas (19 total)
 
@@ -692,12 +713,14 @@ El proyecto es un **prototipo de UI** con:
 - Control de cyber interactivo con datos PHP
 - Busquedas y filtros con debounce
 - Validacion de asesoria legal en frontend
-- **JavaScript modular** en 7 archivos especializados
+- **JavaScript modular** en 8 archivos especializados
 - **Assets 100% locales** (sin dependencia de CDN)
 - **Service Worker** para funcionamiento offline
 - **PWA** con manifest.json
 - Esquema de BD completo v2.0 (19 tablas)
-- Modelos CRUD preparados (usuarios, asesorias)
+- Modelos CRUD preparados (inventario 15+ funcs, usuarios 8, asesorias 8)
+- Controlador AJAX de inventario con 10 acciones
+- Modulo de inventario completamente funcional con BD
 
 ### Para hacerlo funcional se requiere:
 1. **Conectar vistas con BD** (usar PDO en AJAX)
@@ -708,6 +731,6 @@ El proyecto es un **prototipo de UI** con:
 ---
 
 **Documentacion generada**: Junio 2026
-**Version**: 2.1
+**Version**: 2.2
 **Autor**: Carlos Paez Guerra
 

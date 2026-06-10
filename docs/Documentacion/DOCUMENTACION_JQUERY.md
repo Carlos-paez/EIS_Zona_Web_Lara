@@ -17,7 +17,7 @@ La integracion incluyo:
 
 ## 2. Archivos del Proyecto
 
-### JavaScript (7 modulos)
+### JavaScript (8 modulos)
 
 | Archivo | Proposito | Carga |
 |---------|-----------|-------|
@@ -28,6 +28,7 @@ La integracion incluyo:
 | `Public/js/app.pos.js` | Sistema de carrito POS | Solo en pagina ventas |
 | `Public/js/app.cyber.js` | Gestion de estaciones Cyber | Solo en pagina ciberControl |
 | `Public/js/app.legal.js` | Validacion de documentos de asesoria legal | Solo en pagina asesorias |
+| `Public/js/app.inventario.js` | CRUD de inventario via AJAX | Solo en pagina inventario |
 
 ### Librerias (locales)
 
@@ -71,6 +72,7 @@ La integracion incluyo:
     app.pos.js        (solo en ventas)
     app.cyber.js      (solo en ciberControl)
     app.legal.js      (solo en asesorias)
+    app.inventario.js (solo en inventario)
 
     Service Worker registration
 </body>
@@ -460,5 +462,5 @@ El tema se controla mediante el atributo `data-theme` en `<html>`:
 ---
 
 **Documentacion**: Junio 2026
-**Version**: 2.1
+**Version**: 2.2
 
