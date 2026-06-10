@@ -44,9 +44,12 @@ eis_zona_web_lara/
 │   ├── app/
 │   │   ├── core/
 │   │   │   └── router.php               # Enrutador procedural
+│   │   ├── Controllers/
+│   │   │   └── inventarioController.php # Controlador AJAX inventario
 │   │   ├── template/
 │   │   │   └── layout.php               # Layout maestro
 │   │   ├── Models/
+│   │   │   ├── crud_inventario.php      # CRUD inventario (15+ funcs)
 │   │   │   ├── crud_users.php           # CRUD usuarios
 │   │   │   └── crud_asesorias.php       # CRUD asesorias
 │   │   └── Views/
@@ -77,7 +80,8 @@ eis_zona_web_lara/
 │       │   ├── app.ui.js                # UI notificaciones
 │       │   ├── app.pos.js               # Sistema POS
 │       │   ├── app.cyber.js             # Estaciones cyber
-│       │   └── app.legal.js             # Asesoria legal
+│       │   ├── app.legal.js             # Asesoria legal
+│       │   └── app.inventario.js        # CRUD inventario via AJAX
 │       └── fonts/
 │           └── MaterialIcons-Regular.ttf # Material Icons (local)
 ├── docs/                                # Documentacion
@@ -195,17 +199,28 @@ Navegador → /.htaccess → src/.htaccess → index.php → router.php
 
 | Archivo | Ruta |
 |---------|------|
-| `inventario.php` | `src/app/Views/inventario.php` (129 lineas) |
-| JS asociado | `app.tables.js` |
+| `inventario.php` | `src/app/Views/inventario.php` (474 lineas) |
+| `inventarioController.php` | `src/app/Controllers/inventarioController.php` (247 lineas) |
+| `crud_inventario.php` | `src/app/Models/crud_inventario.php` (265 lineas) |
+| `app.inventario.js` | `src/Public/js/app.inventario.js` (450 lineas) |
+| JS asociado | `app.inventario.js`, `app.tables.js` |
 
 **Secciones:**
-1. Barra de filtros: busqueda por texto + selector de estado + boton "Nuevo Producto"
-2. Tabla de productos con columnas: ID, Producto, Precio, Stock, Minimo, Estado, Acciones
-3. Paginacion
+1. KPIs: Total productos, Stock Critico, Stock Bajo, Valor Total (desde BD)
+2. Barra de filtros: busqueda por texto + selector de estado + boton "Nuevo Producto"
+3. Tabla de productos con estado, precio, stock, minimo y botones de accion
+4. Modales: Crear/Editar producto, Movimientos de stock, Entrada/Salida de stock
 
-**JS**: `app.tables.js` proporciona busqueda con debounce (300ms), filtro por estado y paginacion.
+**Arquitectura MVC:**
+- `crud_inventario.php` (Modelo): 15+ funciones, CRUD completo + KPIs + movimientos de stock
+- `inventarioController.php` (Controlador): 10 acciones AJAX, devuelve JSON
+- `inventario.php` (Vista): Carga datos iniciales desde PHP + interfaz HTML
+- `app.inventario.js` (JavaScript): CRUD via AJAX, actualizacion dinamica de tabla y KPIs
 
-**Estado**: UI Estatica con filtros funcionales (frontend).
+**Acciones del controlador:**
+listar, kpis, categorias, detalle, movimientos, buscar, crear, actualizar, eliminar, entrada, salida
+
+**Estado**: Funcional con conexion a BD (CRUD completo).
 
 ---
 
@@ -352,7 +367,7 @@ Todos los recursos que antes se cargaban desde CDN ahora son locales:
 
 ### JavaScript Modular
 
-El monolito original `app.js` se dividio en 7 archivos especializados:
+El monolito original `app.js` se dividio en 8 archivos especializados:
 
 | Archivo | Funcion | Carga |
 |---------|---------|-------|
@@ -363,9 +378,10 @@ El monolito original `app.js` se dividio en 7 archivos especializados:
 | `app.pos.js` | Sistema POS (carrito) | Solo ventas |
 | `app.cyber.js` | Estaciones cyber | Solo ciberControl |
 | `app.legal.js` | Asesoria legal | Solo asesorias |
+| `app.inventario.js` | CRUD inventario via AJAX | Solo inventario | |
 
 ---
 
 **Documentacion**: Junio 2026  
-**Version**: 2.1
+**Version**: 2.2
 

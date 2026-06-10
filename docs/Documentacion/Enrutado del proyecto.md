@@ -100,7 +100,20 @@ if (!isset($_SESSION['logged_in']) && !in_array($pagina, $public_pages)) {
 - Si el usuario NO esta autenticado Y la pagina NO es publica: redirige al login.
 - `exit`: Detiene la ejecucion para evitar que se siga procesando.
 
-### 3.4 Carga de la Vista
+### 3.4 Ruta para Controlador AJAX de Inventario
+
+```php
+// Si la pagina es "inventario" y tiene un parametro "action"
+if ($pagina === 'inventario' && isset($_GET['action'])) {
+    // Carga el controlador en lugar de la vista
+    require __DIR__ . '/../Controllers/inventarioController.php';
+    exit; // Termina aqui, no sigue a la carga de vista
+}
+```
+
+Esto permite que las peticiones AJAX de `app.inventario.js` (ej: `?pagina=inventario&action=listar`) lleguen al controlador y devuelvan JSON, mientras que la carga normal de la pagina (`?pagina=inventario`) carga la vista completa.
+
+### 3.5 Carga de la Vista
 
 ```php
 $rutaVista = __DIR__ . '/../Views/' . $pagina . '.php';

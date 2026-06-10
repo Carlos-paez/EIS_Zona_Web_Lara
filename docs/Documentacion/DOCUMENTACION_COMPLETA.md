@@ -45,7 +45,10 @@ src/
 ├── app/
 │   ├── core/
 │   │   └── router.php           # Enrutador procedural
+│   ├── Controllers/
+│   │   └── inventarioController.php # Controlador AJAX inventario (10 acc.)
 │   ├── Models/
+│   │   ├── crud_inventario.php  # CRUD inventario (15+ funciones)
 │   │   ├── crud_users.php       # CRUD usuarios (8 funciones)
 │   │   └── crud_asesorias.php   # CRUD asesorias (8 funciones)
 │   ├── template/
@@ -68,7 +71,7 @@ src/
 │   └── datos_prueba.sql         # Datos de prueba
 └── Public/
     ├── css/                     # Estilos (locales)
-    ├── js/                      # JavaScript modular (7 archivos)
+    ├── js/                      # JavaScript modular (8 archivos)
     └── fonts/                   # Material Icons TTF (local)
 ```
 
@@ -234,6 +237,6 @@ roles, categorias, marcas, tipos_activo, tarifas_cyber, tipos_pago, usuarios, pr
 
 ---
 
-**Version**: 2.1
+**Version**: 2.2
 **Junio 2026**
 

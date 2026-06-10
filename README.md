@@ -29,11 +29,16 @@ El sistema administra múltiples aspectos de un negocio: ventas (POS), inventari
 - **Manifiesto PWA** — `manifest.json` para instalación como app
 - **Página Offline** — `offline.php` como fallback sin conexión
 - **Esquema de Base de Datos** — Completo con 19 tablas, vistas, funciones y procedimientos
-- **Modelos CRUD** — `crud_users.php` (8 funciones) y `crud_asesorias.php` (8 funciones) con PDO preparado
+- **Modelos CRUD** — `crud_inventario.php` (15+ funciones), `crud_users.php` (8 funciones) y `crud_asesorias.php` (8 funciones) con PDO preparado
+- **Controlador AJAX de Inventario** — `inventarioController.php` con 10 acciones vía JSON
+- **JavaScript de Inventario** — `app.inventario.js` con CRUD completo vía AJAX (450 líneas)
+- **Enrutamiento AJAX** — Router detecta `action` en inventario y carga controlador en lugar de vista
 
-### Parcialmente Implementado (UI Estática)
+### Implementado (Funcional con BD)
+- **Inventario** — Módulo completo con CRUD de productos, KPIs, movimientos de stock (entrada/salida), búsqueda y filtros. Conectado a BD vía `crud_inventario.php` + `inventarioController.php` + `app.inventario.js`
+
+### Parcialmente Implementado (UI Estática o Semi-funcional)
 - **Dashboard** — Métricas estáticas (deberían venir de consultas SQL)
-- **Inventario** — Interfaz con tabla, búsqueda y filtros pero sin conexión a BD
 - **Ventas (POS)** — Carrito funciona pero no guarda en BD (solo simulación)
 - **Cyber Control** — Cambios de estado temporales (no persisten en BD)
 - **Solicitudes** — Interfaz con tabla y filtros sin funcionalidad backend
@@ -42,8 +47,8 @@ El sistema administra múltiples aspectos de un negocio: ventas (POS), inventari
 - **Asesoría Legal** — Validación frontend sin persistencia en BD
 
 ### No Implementado
-- **Persistencia en BD** — Las vistas no se conectan a la base de datos
-- **CRUD vía AJAX** — No hay operaciones create, update, delete reales vía backend
+- **Persistencia en BD** — La mayoría de vistas no se conectan a la base de datos (excepto inventario)
+- **CRUD vía AJAX** — Solo inventario tiene CRUD completo; el resto no tiene operaciones backend
 - **Seguridad** — Credenciales hardcodeadas, sin CSRF, sin password hashing en login
 
 ---
@@ -63,7 +68,10 @@ eis_zona_web_lara/
 │   ├── app/
 │   │   ├── core/
 │   │   │   └── router.php            # Enrutador procedural (Front Controller)
+│   │   ├── Controllers/
+│   │   │   └── inventarioController.php  # Controlador AJAX de inventario (10 acc.)
 │   │   ├── Models/
+│   │   │   ├── crud_inventario.php   # CRUD inventario (15+ funciones)
 │   │   │   ├── crud_users.php        # CRUD usuarios (8 funciones)
 │   │   │   └── crud_asesorias.php    # CRUD asesorías (8 funciones)
 │   │   ├── template/
@@ -98,8 +106,9 @@ eis_zona_web_lara/
 │       │   ├── app.tables.js         # Búsqueda y filtro de tablas
 │       │   ├── app.ui.js             # Notificaciones, botones, tooltips
 │       │   ├── app.pos.js            # Sistema de carrito POS
-│       │   ├── app.cyber.js          # Gestión de estaciones Cyber
-│       │   └── app.legal.js          # Validación de asesoría legal
+│   │   ├── app.cyber.js          # Gestión de estaciones Cyber
+│   │   ├── app.legal.js          # Validación de asesoría legal
+│   │   └── app.inventario.js     # CRUD de inventario vía AJAX (450 líneas)
 │       └── fonts/
 │           └── MaterialIcons-Regular.ttf  # Material Icons (local)
 ├── docs/                             # Documentación del proyecto
@@ -135,7 +144,7 @@ eis_zona_web_lara/
 |--------|-------|-------------|--------|
 | **Login** | `login.php` | `app.core.js` | Funcional |
 | **Dashboard** | `dashboard.php` | `app.init.js`, `app.ui.js` | UI Estática |
-| **Inventario** | `inventario.php` | `app.tables.js` | UI Estática |
+| **Inventario** | `inventario.php` | `app.inventario.js`, `app.tables.js` | Funcional con BD |
 | **Punto de Venta** | `ventas.php` | `app.pos.js` | Semi-funcional* |
 | **Cyber Control** | `ciberControl.php` | `app.cyber.js` | Interactivo* |
 | **Solicitudes** | `proveedores.php` | `app.tables.js` | UI Estática |
@@ -249,6 +258,7 @@ Navegador → src/.htaccess → src/index.php → src/app/core/router.php
 - **`app.pos.js`** — Sistema de carrito POS (solo en ventas)
 - **`app.cyber.js`** — Gestión de estaciones Cyber (solo en ciberControl)
 - **`app.legal.js`** — Validación de documentos legales (solo en asesorias)
+- **`app.inventario.js`** — CRUD completo de inventario vía AJAX (solo en inventario)
 
 ### Offline / PWA
 - Assets locales (sin CDNs)
@@ -289,8 +299,8 @@ Documentación completa de la base de datos (v2.0):
 4. **Configuración de BD** — `echo "Conexión exitosa"` rompería respuestas JSON
 
 ### Arquitectura
-1. **Modelos No Usados** — Los modelos existen pero no se utilizan desde las vistas
-2. **Datos Estáticos** — Vistas no se conectan a la base de datos
+1. **Modelos Parcialmente Usados** — `crud_inventario.php` se usa desde la vista y el controlador de inventario; `crud_users.php` y `crud_asesorias.php` aún no se integran con las vistas
+2. **Datos Estáticos** — La mayoría de vistas no están conectadas a BD (excepto inventario)
 3. **Sin .env** — Configuración no flexible
 
 ---
@@ -298,9 +308,9 @@ Documentación completa de la base de datos (v2.0):
 ## Próximos Pasos Recomendados
 
 ### Fase 1: Conexión a Base de Datos
+- [x] Módulo de Inventario completo con CRUD + AJAX + BD
 - [ ] Conectar Dashboard con consultas SQL reales
 - [ ] Hacer que el carrito POS persista ventas en BD
-- [ ] Implementar CRUD de productos vía AJAX
 - [ ] Persistir cambios de estado en cybercafé
 
 ### Fase 2: Mejoras de Arquitectura
@@ -327,11 +337,12 @@ Documentación completa de la base de datos (v2.0):
 
 | Métrica | Valor |
 |---------|-------|
-| Archivos PHP | 16 |
+| Archivos PHP | 17 |
 | Vistas | 12 |
-| Modelos funcionales | 2 (8 funciones c/u) |
+| Modelos funcionales | 3 (inventario 15+ funcs, usuarios 8, asesorías 8) |
+| Controladores | 1 (inventario, 10 acciones) |
 | Archivos CSS | 4 |
-| Archivos JS | 9 (2 librerías + 7 módulos) |
+| Archivos JS | 10 (2 librerías + 8 módulos) |
 | Archivos SQL | 2 |
 | Tablas en BD | 19 |
 | Módulos del sistema | 11 |
@@ -350,7 +361,8 @@ Email: carlospaezguerra@gmail.com
 
 | Versión | Fecha | Descripción |
 |---------|-------|-------------|
-| 2.1 | 2026 | JS modular (7 archivos), assets locales, Service Worker, PWA, offline |
+| 2.2 | 2026 | Módulo de Inventario completo con MVC+AJAX, controlador PHP, CRUD con BD, `app.inventario.js` |
+| 2.1 | 2026 | JS modular (8 archivos), assets locales, Service Worker, PWA, offline |
 | 2.0 | 2026 | Refactorización con Materialize CSS + jQuery + Layout maestro |
 | 1.1 | 2026 | Agregado módulo de Asesoría Legal, actualización de BD a v2.0 (19 tablas) |
 | 1.0 | 2024 | Versión inicial — UI Prototype procedural |
@@ -358,5 +370,5 @@ Email: carlospaezguerra@gmail.com
 ---
 
 **Última actualización**: Junio 2026
-**Estado**: En desarrollo (Prototipo UI con arquitectura procedural)
+**Estado**: En desarrollo (Módulo de inventario funcional con MVC+AJAX, resto UI prototipo)
 

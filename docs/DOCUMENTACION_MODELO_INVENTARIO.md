@@ -32,17 +32,23 @@ El archivo `crud_inventario.php` es el **modelo** del módulo de inventario del 
 ```
 src/
 ├── Config/
-│   └── database.php          ← Conexión a MySQL (crea $pdo)
+│   └── database.php                ← Conexión a MySQL (crea $pdo)
 ├── Database/
-│   ├── estructura.sql        ← SQL de las tablas
-│   └── datos_prueba.sql      ← Datos para probar
+│   ├── estructura.sql              ← SQL de las tablas
+│   └── datos_prueba.sql            ← Datos para probar
 └── app/
+    ├── Controllers/
+    │   └── inventarioController.php ← ★ Controlador AJAX (10 acciones)
     ├── Models/
-    │   ├── crud_users.php        ← Modelo de usuarios
-    │   ├── crud_asesorias.php    ← Modelo de asesorías
-    │   └── crud_inventario.php   ← ★ Modelo de inventario
-    └── Views/
-        └── inventario.php       ← Página del inventario
+    │   ├── crud_users.php           ← Modelo de usuarios
+    │   ├── crud_asesorias.php       ← Modelo de asesorías
+    │   └── crud_inventario.php      ← ★ Modelo de inventario
+    ├── Views/
+    │   └── inventario.php           ← Página del inventario
+    └── core/
+        └── router.php               ← Enrutador (rutea AJAX al controlador)
+src/Public/js/
+    └── app.inventario.js            ← ★ JavaScript de inventario (AJAX)
 ```
 
 ---
@@ -57,7 +63,9 @@ La aplicación usa una arquitectura **MVC simple y artesanal** (sin framework):
 |------|----------|---------|
 | **Modelo** | Se conecta a la BD y trae/guarda datos | `crud_inventario.php` |
 | **Vista** | Muestra la interfaz al usuario | `Views/inventario.php` |
-| **Controlador** | Coordina las peticiones | Las vistas incluyen al modelo con `require` |
+| **Controlador** | Procesa peticiones AJAX y coordina datos | `Controllers/inventarioController.php` |
+| **JavaScript** | Interactividad frontend vía AJAX | `Public/js/app.inventario.js` |
+| **Enrutador** | Desvía peticiones AJAX al controlador | `core/router.php` |
 
 ### 2.2 ¿Por qué no se usó un framework como Laravel?
 
@@ -447,3 +455,54 @@ Las tablas están en **3ra Forma Normal (3FN)**:
 ### Pregunta 10: "¿Por qué `valorTotalInventario()` usa un operador ternario?"
 
 > Porque `SUM()` en SQL devuelve `NULL` si no hay productos que coincidan con el `WHERE`. Si devolviéramos `NULL` a la vista, podría mostrar un error o quedar en blanco. El ternario `$fila['total'] ? $fila['total'] : 0` garantiza que siempre devolvemos un número, aunque sea cero.
+
+---
+
+## 8. Arquitectura Completa del Módulo
+
+### El Controlador (`inventarioController.php`)
+
+Actúa como **puente entre el JavaScript y el modelo**. Cuando `app.inventario.js` hace una petición AJAX, el router detecta `?pagina=inventario&action=accion` y carga este controlador.
+
+**Las 10 acciones que maneja:**
+
+| Acción | Método | Descripción |
+|--------|--------|-------------|
+| `listar` | GET | Obtiene todos los productos activos |
+| `kpis` | GET | Calcula total, crítico, bajo y valor |
+| `detalle&id=X` | GET | Obtiene un producto por su ID |
+| `movimientos&id=X` | GET | Historial de movimientos de un producto |
+| `buscar` | POST | Busca productos por nombre o código |
+| `crear` | POST | Crea un producto nuevo |
+| `actualizar` | POST | Actualiza un producto existente |
+| `eliminar` | POST | Elimina un producto |
+| `entrada` | POST | Registra entrada de stock |
+| `salida` | POST | Registra salida de stock |
+
+Todas las acciones devuelven JSON con la estructura `{success: true/false, data/message/error}`.
+
+### El JavaScript (`app.inventario.js`)
+
+Corre en el navegador y proporciona la interactividad del módulo:
+
+- **refrescarKPI()** — Actualiza las 4 tarjetas de indicadores vía AJAX
+- **refrescarTabla()** — Recarga la tabla de productos sin recargar la página
+- **aplicarFiltro()** — Filtra por texto y estado en el lado del cliente
+- **abrirModalProducto()** — Abre el modal de crear/editar producto
+- **abrirModalMovimientos()** — Abre el modal con historial de movimientos
+- **abrirModalStock()** — Abre el modal de entrada/salida de stock
+
+Todas las operaciones CRUD se realizan mediante peticiones AJAX a `?pagina=inventario&action=...`.
+
+### Flujo completo de una petición
+
+```
+Usuario hace clic en "Guardar" (nuevo producto)
+  → app.inventario.js captura el submit
+  → Envía POST a ?pagina=inventario&action=crear
+  → router.php detecta action y carga inventarioController.php
+  → Controlador valida datos y llama a crearProducto() (crud_inventario.php)
+  → Modelo ejecuta INSERT en MySQL
+  → Controlador devuelve JSON {success: true}
+  → JavaScript recibe respuesta, muestra toast, refresca tabla y KPIs
+```
