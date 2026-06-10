@@ -1,7 +1,6 @@
 -- ============================================================
 -- DATA DE PRUEBA (INSERTS) - Sistema ZWL v2.1
 -- ============================================================
-
 USE zwl;
 
 -- Deshabilitar temporalmente llaves foráneas para una inserción limpia y segura

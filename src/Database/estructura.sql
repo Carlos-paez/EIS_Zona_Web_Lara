@@ -3,8 +3,8 @@
 -- Motor: MySQL 8.0+ / MariaDB 10.3+
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS zwl_V2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE zwl_V2;
+CREATE DATABASE IF NOT EXISTS zwl CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE zwl;
 
 -- SET de configuración para asegurar compatibilidad de caracteres
 SET NAMES utf8mb4;
@@ -283,7 +283,7 @@ CREATE INDEX idx_bms_producto ON bitacora_movimientos_stock(producto_id);
 CREATE INDEX idx_bms_fecha ON bitacora_movimientos_stock(fecha);
 
 -- ============================================================
--- 5. MÓDULO CYBERCAFÉ
+-- 5. MÓDULO CYBER
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS estaciones_cyber (

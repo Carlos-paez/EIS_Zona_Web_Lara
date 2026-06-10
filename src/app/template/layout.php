@@ -147,6 +147,9 @@
     <?php if ($pagina === 'asesorias'): ?>
     <script src="Public/js/app.legal.js"></script>
     <?php endif; ?>
+    <?php if ($pagina === 'inventario'): ?>
+    <script src="Public/js/app.inventario.js"></script>
+    <?php endif; ?>
 
     <!-- Registrar Service Worker para funcionamiento offline -->
     <script>
