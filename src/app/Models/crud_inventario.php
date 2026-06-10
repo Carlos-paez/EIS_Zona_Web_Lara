@@ -1,4 +1,21 @@
 <?php
+// =====================================================================
+// MODELO DE INVENTARIO (crud_inventario.php)
+// =====================================================================
+// Este archivo contiene todas las funciones que interactuan con la
+// base de datos para el modulo de inventario.
+//
+// CRUD significa: Create (Crear), Read (Leer), Update (Actualizar),
+// Delete (Eliminar) - las 4 operaciones basicas sobre los datos.
+//
+// Ademas hay funciones para:
+//   - KPIs (indicadores como total de productos, stock critico, etc.)
+//   - Catalogo (categorias, subcategorias, marcas, modelos)
+//   - Movimientos de stock (entradas, salidas y su historial)
+//
+// Todas las funciones reciben $pdo que es la conexion a la base de
+// datos. $pdo se crea en database.php usando la clase PDO de PHP.
+// =====================================================================
 
 // Incluye el archivo database.php que tiene la conexion a MySQL
 // Ese archivo crea la variable $pdo que usamos para hablar con la BD
@@ -22,6 +39,7 @@ function crearProducto($pdo, $codigo, $nombre, $categoria_id, $stock, $stock_min
     // El orden de los valores debe coincidir con el orden de los ? en el SQL
     $stmt->execute([$codigo, $nombre, $categoria_id, $stock, $stock_minimo, $costo_compra, $precio_venta]);
     // Devuelve el objeto statement para que quien llame a la funcion pueda ver si funciono
+    // Si el INSERT fue exitoso, $stmt es "true"; si fallo, arroja una excepcion
     return $stmt;
 }
 
@@ -31,10 +49,12 @@ function obtenerProductos($pdo) {
     // p.* significa "todas las columnas de la tabla productos"
     // c.nombre AS categoria le pone el alias "categoria" al nombre de la categoria
     // WHERE activo = TRUE solo trae los productos que no han sido eliminados
+    // ORDER BY p.nombre los ordena alfabeticamente por nombre
     $sql = "SELECT p.*, c.nombre AS categoria FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id WHERE p.activo = TRUE ORDER BY p.nombre";
     // query() ejecuta la consulta directamente porque no tiene parametros variables
     $stmt = $pdo->query($sql);
     // fetchAll() devuelve TODAS las filas como un arreglo de arreglos asociativos
+    // Cada fila es un arreglo donde las claves son los nombres de las columnas
     return $stmt->fetchAll();
 }
 
@@ -67,16 +87,19 @@ function buscarProductos($pdo, $termino) {
 // Actualiza los datos de un producto existente
 function actualizarProducto($pdo, $id, $codigo, $nombre, $categoria_id, $stock, $stock_minimo, $costo_compra, $precio_venta) {
     // UPDATE cambia los valores de la fila que coincida con WHERE id = ?
+    // SET asigna cada columna con el nuevo valor
     $sql = "UPDATE productos SET codigo = ?, nombre = ?, categoria_id = ?, stock = ?, stock_minimo = ?, costo_compra = ?, precio_venta = ? WHERE id = ?";
     $stmt = $pdo->prepare($sql);
     // Ejecuto con los valores nuevos y el ID para saber cual producto actualizar
+    // El ID es el ultimo porque en el SQL WHERE id = ? esta al final
     $stmt->execute([$codigo, $nombre, $categoria_id, $stock, $stock_minimo, $costo_compra, $precio_venta, $id]);
     return $stmt;
 }
 
 // Elimina un producto de la base de datos (DELETE fisico)
 function eliminarProducto($pdo, $id) {
-    // DELETE FROM borra la fila permanentemente
+    // DELETE FROM borra la fila permanentemente de la tabla
+    // Solo borra el producto cuyo ID coincida
     $sql = "DELETE FROM productos WHERE id = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$id]);
@@ -172,6 +195,7 @@ function registrarEntrada($pdo, $producto_id, $cantidad, $usuario_id, $motivo) {
     $producto = $stmt->fetch();
 
     // Si el producto no existe (fetch devolvio false), termino la funcion
+    // Devuelvo false para indicar que hubo un error
     if (!$producto) return false;
 
     // Guardo el stock que tenia antes de la entrada
@@ -231,6 +255,8 @@ function registrarSalida($pdo, $producto_id, $cantidad, $usuario_id, $motivo) {
 // Obtiene el historial de movimientos de un producto especifico
 function obtenerMovimientos($pdo, $producto_id) {
     // LEFT JOIN con usuarios para mostrar el nombre de quien hizo el movimiento
+    // b.* trae todas las columnas de la bitacora
+    // u.nombre AS usuario trae el nombre de la persona que hizo el movimiento
     // ORDER BY b.fecha DESC ordena del mas reciente al mas antiguo
     $sql = "SELECT b.*, u.nombre AS usuario FROM bitacora_movimientos_stock b LEFT JOIN usuarios u ON b.usuario_id = u.id WHERE b.producto_id = ? ORDER BY b.fecha DESC";
     $stmt = $pdo->prepare($sql);

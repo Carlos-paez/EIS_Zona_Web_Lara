@@ -23,10 +23,16 @@ if (!isset($_SESSION['logged_in']) && !in_array($pagina, $public_pages)) {
     exit; // Detiene la ejecución
 }
 
-// --- 4. RESOLVER LA RUTA DE LA VISTA ---
+// --- 4. RUTA PARA CONTROLADOR DE INVENTARIO (AJAX) ---
+if ($pagina === 'inventario' && isset($_GET['action'])) {
+    require __DIR__ . '/../Controllers/inventarioController.php';
+    exit;
+}
+
+// --- 5. RESOLVER LA RUTA DE LA VISTA ---
 $rutaVista = __DIR__ . '/../Views/' . $pagina . '.php'; // Construye la ruta al archivo de vista
 
-// --- 5. CARGAR LA VISTA ---
+// --- 6. CARGAR LA VISTA ---
 if(is_file($rutaVista)){ // Verifica que el archivo de vista exista en el sistema de archivos
     if (in_array($pagina, $public_pages)) {
         // Páginas públicas (login): se renderizan SOLAS, sin el layout maestro
@@ -34,7 +40,7 @@ if(is_file($rutaVista)){ // Verifica que el archivo de vista exista en el sistem
     } else {
         // Páginas protegidas (requieren autenticación): se renderizan DENTRO del layout maestro
 
-        // 5a. Definir el título de cada página para mostrarlo en la barra de navegación y el tag <title>
+        // 6a. Definir el título de cada página para mostrarlo en la barra de navegación y el tag <title>
         $titulos = [
             'dashboard'    => 'Panel de Control',
             'inventario'   => 'Gestión de Inventario',
@@ -47,7 +53,7 @@ if(is_file($rutaVista)){ // Verifica que el archivo de vista exista en el sistem
             'usuarios'     => 'Gestión de Usuarios',
         ];
 
-        // 5b. Contenido HTML adicional para el encabezado de páginas específicas
+        // 6b. Contenido HTML adicional para el encabezado de páginas específicas
         $extraHeaders = [
             'ciberControl' => '<span class="chip green white-text" style="border-radius:4px;height:auto;padding:0.1rem 0.5rem;line-height:1.5;font-size:0.75rem;">5 Disponibles</span><span class="chip orange white-text" style="border-radius:4px;height:auto;padding:0.1rem 0.5rem;line-height:1.5;font-size:0.75rem;">4 Ocupadas</span>',
         ];
@@ -60,7 +66,7 @@ if(is_file($rutaVista)){ // Verifica que el archivo de vista exista en el sistem
         require __DIR__ . '/../template/layout.php';
     }
 } else {
-    // --- 6. MANEJO DE ERROR 404 ---
+    // --- 7. MANEJO DE ERROR 404 ---
     http_response_code(404);                          // Establece el código de respuesta HTTP 404
     echo "<h1>Error 404: Página no encontrada</h1>"; // Mensaje de error
     echo "<p>La página <strong>{$pagina}</strong> no existe.</p>"; // Indica qué página se buscó
