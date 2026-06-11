@@ -1,46 +1,108 @@
 <?php
-session_start(); // Inicia o reanuda la sesión del usuario (debe ser lo primero)
+namespace App\Core;
 
-// --- 1. DETERMINAR LA PÁGINA SOLICITADA ---
-$pagina = "login"; // Valor por defecto: página de inicio de sesión
+class Router
+{
+    private string $pagina;
 
-if(!empty($_GET["pagina"])){
-    $pagina = $_GET["pagina"]; // Toma el nombre de la página desde la URL: ?pagina=nombre
-}
+    public function __construct()
+    {
+        session_start();
+        $this->pagina = $this->resolvePage();
+    }
 
-// --- 2. SANITIZAR EL PARÁMETRO ---
-// Validar que solo contenga caracteres alfanuméricos y guiones (medida de seguridad)
-if (!preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)) {
-    $pagina = "login"; // Si contiene caracteres no válidos, redirige al login
-}
+    public function handle(): void
+    {
+        if ($this->isAjaxInventario()) {
+            $this->runInventarioController();
+            return;
+        }
 
-// --- 3. CONTROL DE ACCESO (AUTENTICACIÓN) ---
-$public_pages = ['login', 'login_validate']; // Páginas públicas que no requieren autenticación
+        if ($this->isAuthAction()) {
+            $this->runAuthAction();
+            return;
+        }
 
-if (!isset($_SESSION['logged_in']) && !in_array($pagina, $public_pages)) {
-    // Si el usuario NO ha iniciado sesión y la página NO es pública:
-    header("Location: ?pagina=login"); // Redirige al login
-    exit; // Detiene la ejecución
-}
+        $this->renderView();
+    }
 
-// --- 4. RUTA PARA CONTROLADOR DE INVENTARIO (AJAX) ---
-if ($pagina === 'inventario' && isset($_GET['action'])) {
-    require __DIR__ . '/../Controllers/inventarioController.php';
-    exit;
-}
+    private function resolvePage(): string
+    {
+        $pagina = 'login';
 
-// --- 5. RESOLVER LA RUTA DE LA VISTA ---
-$rutaVista = __DIR__ . '/../Views/' . $pagina . '.php'; // Construye la ruta al archivo de vista
+        if (!empty($_GET['pagina'])) {
+            $pagina = $_GET['pagina'];
+        }
 
-// --- 6. CARGAR LA VISTA ---
-if(is_file($rutaVista)){ // Verifica que el archivo de vista exista en el sistema de archivos
-    if (in_array($pagina, $public_pages)) {
-        // Páginas públicas (login): se renderizan SOLAS, sin el layout maestro
-        require $rutaVista;
-    } else {
-        // Páginas protegidas (requieren autenticación): se renderizan DENTRO del layout maestro
+        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)) {
+            $pagina = 'login';
+        }
 
-        // 6a. Definir el título de cada página para mostrarlo en la barra de navegación y el tag <title>
+        return $pagina;
+    }
+
+    private function isAjaxInventario(): bool
+    {
+        return $this->pagina === 'inventario' && isset($_GET['action']);
+    }
+
+    private function isAuthAction(): bool
+    {
+        return $this->pagina === 'login_validate' || $this->pagina === 'logout';
+    }
+
+    private function runInventarioController(): void
+    {
+        $this->requireAuth();
+        $controller = new \App\Controllers\InventarioController();
+        $controller->handle();
+        exit;
+    }
+
+    private function runAuthAction(): void
+    {
+        if ($this->pagina === 'logout') {
+            $controller = new \App\Controllers\AuthController();
+            $controller->logout();
+            return;
+        }
+
+        $controller = new \App\Controllers\AuthController();
+        $controller->login();
+        exit;
+    }
+
+    private function renderView(): void
+    {
+        $publicPages = ['login'];
+
+        if (!isset($_SESSION['logged_in']) && !in_array($this->pagina, $publicPages)) {
+            header('Location: ?pagina=login');
+            exit;
+        }
+
+        $rutaVista = __DIR__ . '/../Views/' . $this->pagina . '.php';
+
+        if (!is_file($rutaVista)) {
+            http_response_code(404);
+            echo '<h1>Error 404: Página no encontrada</h1>';
+            echo '<p>La página <strong>' . htmlspecialchars($this->pagina) . '</strong> no existe.</p>';
+            echo "<a href='?pagina=dashboard'>Volver al dashboard</a>";
+            return;
+        }
+
+        if (in_array($this->pagina, $publicPages)) {
+            require $rutaVista;
+            return;
+        }
+
+        $this->renderWithLayout($rutaVista);
+    }
+
+    private function renderWithLayout(string $contentView): void
+    {
+        $pagina = $this->pagina;
+
         $titulos = [
             'dashboard'    => 'Panel de Control',
             'inventario'   => 'Gestión de Inventario',
@@ -53,23 +115,13 @@ if(is_file($rutaVista)){ // Verifica que el archivo de vista exista en el sistem
             'usuarios'     => 'Gestión de Usuarios',
         ];
 
-        // 6b. Contenido HTML adicional para el encabezado de páginas específicas
         $extraHeaders = [
             'ciberControl' => '<span class="chip green white-text" style="border-radius:4px;height:auto;padding:0.1rem 0.5rem;line-height:1.5;font-size:0.75rem;">5 Disponibles</span><span class="chip orange white-text" style="border-radius:4px;height:auto;padding:0.1rem 0.5rem;line-height:1.5;font-size:0.75rem;">4 Ocupadas</span>',
         ];
 
-        $pageTitle = $titulos[$pagina] ?? 'EIS System'; // Título de la página (o valor por defecto)
-        $headerExtra = $extraHeaders[$pagina] ?? '';    // HTML extra para el header (o vacío)
-        $contentView = $rutaVista;                        // Ruta de la vista a incluir dentro del layout
+        $pageTitle   = $titulos[$pagina] ?? 'EIS System';
+        $headerExtra = $extraHeaders[$pagina] ?? '';
 
-        // Incluye el layout maestro que a su vez incluirá $contentView
         require __DIR__ . '/../template/layout.php';
     }
-} else {
-    // --- 7. MANEJO DE ERROR 404 ---
-    http_response_code(404);                          // Establece el código de respuesta HTTP 404
-    echo "<h1>Error 404: Página no encontrada</h1>"; // Mensaje de error
-    echo "<p>La página <strong>{$pagina}</strong> no existe.</p>"; // Indica qué página se buscó
-    echo "<a href='?pagina=dashboard'>Volver al dashboard</a>";   // Enlace para volver
 }
-?>
