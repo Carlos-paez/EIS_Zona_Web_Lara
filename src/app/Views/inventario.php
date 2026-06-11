@@ -15,27 +15,17 @@
 // (app.inventario.js) se encarga de las operaciones dinamicas.
 // =====================================================================
 
-// Incluye el modelo para obtener datos de la base de datos
-require_once __DIR__ . '/../Models/crud_inventario.php';
+use App\Models\Inventario;
 
-// --- CARGA INICIAL DE DATOS ---
-// Estos datos se obtienen al cargar la pagina por primera vez
-// Luego el JavaScript los actualiza dinamicamente sin recargar
+$inventarioModel = new Inventario();
 
-// Obtiene todos los productos activos con su categoria
-$productos = obtenerProductos($pdo);
-// Cuenta total de productos activos en la base de datos
-$totalP = totalProductos($pdo);
-// Cuenta productos con stock critico (stock <= 0)
-$critico = stockCritico($pdo);
-// Cuenta productos con stock bajo (stock entre 1 y stock_minimo)
-$bajo = stockBajo($pdo);
-// Calcula el valor total del inventario (suma de stock * precio_venta)
-$valor = valorTotalInventario($pdo);
-// Cuenta cuantos productos hay en el arreglo $productos
+$productos      = $inventarioModel->obtenerProductos();
+$totalP         = $inventarioModel->totalProductos();
+$critico        = $inventarioModel->stockCritico();
+$bajo           = $inventarioModel->stockBajo();
+$valor          = $inventarioModel->valorTotalInventario();
 $totalProductos = count($productos);
-// Obtiene todas las categorias para el formulario de producto
-$categorias = obtenerCategorias($pdo);
+$categorias     = $inventarioModel->obtenerCategorias();
 ?>
 
 <!-- ================================================================ -->
@@ -167,127 +157,127 @@ $categorias = obtenerCategorias($pdo);
                 <tbody>
                     <!-- Si no hay productos, muestro un mensaje -->
                     <?php if (empty($productos)): ?>
-                    <tr>
-                        <td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">
-                            <i class="material-icons" style="font-size:2.5rem;display:block;margin-bottom:0.5rem;">inventory_2</i>
-                            No hay productos registrados
-                        </td>
-                    </tr>
-                    <!-- Si hay productos, los recorro con un foreach -->
+                        <tr>
+                            <td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">
+                                <i class="material-icons" style="font-size:2.5rem;display:block;margin-bottom:0.5rem;">inventory_2</i>
+                                No hay productos registrados
+                            </td>
+                        </tr>
+                        <!-- Si hay productos, los recorro con un foreach -->
                     <?php else: ?>
-                    <?php foreach ($productos as $p):
-                        // --- LOGICA PARA DETERMINAR EL ESTADO DEL PRODUCTO ---
-                        // Segun el stock respecto al minimo, se asignan colores e iconos
+                        <?php foreach ($productos as $p):
+                            // --- LOGICA PARA DETERMINAR EL ESTADO DEL PRODUCTO ---
+                            // Segun el stock respecto al minimo, se asignan colores e iconos
 
-                        // Inicializo las variables que usare en la fila
-                        $estado = '';      // Texto del estado: "Sin stock", "Critico" u "OK"
-                        $badgeClass = '';  // Clase CSS para el color de fondo del badge
-                        $icon = '';        // Icono de Material Icons a mostrar
-                        $barClass = '';    // Color de la barra de progreso de stock
-                        $barWidth = 0;     // Ancho porcentual de la barra de stock
-                        $iconBg = '';      // Color de fondo del circulo del icono
-                        $stockColor = '';  // Color del texto del stock
+                            // Inicializo las variables que usare en la fila
+                            $estado = '';      // Texto del estado: "Sin stock", "Critico" u "OK"
+                            $badgeClass = '';  // Clase CSS para el color de fondo del badge
+                            $icon = '';        // Icono de Material Icons a mostrar
+                            $barClass = '';    // Color de la barra de progreso de stock
+                            $barWidth = 0;     // Ancho porcentual de la barra de stock
+                            $iconBg = '';      // Color de fondo del circulo del icono
+                            $stockColor = '';  // Color del texto del stock
 
-                        // CASO 1: Stock en CERO o negativo -> "Sin stock" (rojo)
-                        if ($p['stock'] <= 0) {
-                            $estado = 'Sin stock';
-                            $badgeClass = 'background:#fce4ec;color:#c62828;'; // Fondo rojo claro, texto rojo oscuro
-                            $icon = 'block';       // Icono de "bloqueado/prohibido"
-                            $barClass = 'var(--danger)'; // Color rojo para la barra
-                            $iconBg = '#fce4ec';
-                            $iconColor = 'var(--danger)';
-                            $stockColor = 'var(--danger)';
-                            $barWidth = 0; // Barra vacia
+                            // CASO 1: Stock en CERO o negativo -> "Sin stock" (rojo)
+                            if ($p['stock'] <= 0) {
+                                $estado = 'Sin stock';
+                                $badgeClass = 'background:#fce4ec;color:#c62828;'; // Fondo rojo claro, texto rojo oscuro
+                                $icon = 'block';       // Icono de "bloqueado/prohibido"
+                                $barClass = 'var(--danger)'; // Color rojo para la barra
+                                $iconBg = '#fce4ec';
+                                $iconColor = 'var(--danger)';
+                                $stockColor = 'var(--danger)';
+                                $barWidth = 0; // Barra vacia
 
-                        // CASO 2: Stock entre 1 y el minimo -> "Critico" (rojo)
-                        } elseif ($p['stock'] <= $p['stock_minimo']) {
-                            $estado = 'Crítico';
-                            $badgeClass = 'background:#fce4ec;color:#c62828;';
-                            $icon = 'warning';     // Icono de advertencia
-                            $barClass = 'var(--danger)';
-                            $iconBg = '#fce4ec';
-                            $iconColor = 'var(--danger)';
-                            $stockColor = 'var(--danger)';
-                            // La barra muestra el porcentaje respecto al minimo
-                            $barWidth = $p['stock_minimo'] > 0 ? max(5, ($p['stock'] / $p['stock_minimo']) * 100) : 50;
+                                // CASO 2: Stock entre 1 y el minimo -> "Critico" (rojo)
+                            } elseif ($p['stock'] <= $p['stock_minimo']) {
+                                $estado = 'Crítico';
+                                $badgeClass = 'background:#fce4ec;color:#c62828;';
+                                $icon = 'warning';     // Icono de advertencia
+                                $barClass = 'var(--danger)';
+                                $iconBg = '#fce4ec';
+                                $iconColor = 'var(--danger)';
+                                $stockColor = 'var(--danger)';
+                                // La barra muestra el porcentaje respecto al minimo
+                                $barWidth = $p['stock_minimo'] > 0 ? max(5, ($p['stock'] / $p['stock_minimo']) * 100) : 50;
 
-                        // CASO 3: Stock mayor al minimo -> "OK" (verde)
-                        } else {
-                            $estado = 'OK';
-                            $badgeClass = 'background:#e8f5e9;color:#2e7d32;'; // Fondo verde claro, texto verde oscuro
-                            $icon = 'check_circle';  // Icono de verificado
-                            $barClass = 'var(--success)';
-                            $iconBg = '#e8f5e9';
-                            $iconColor = 'var(--success)';
-                            $stockColor = 'var(--success)';
-                            // La barra se llena hasta 50% como maximo (para no saturar)
-                            $barWidth = $p['stock_minimo'] > 0 ? min(100, ($p['stock'] / $p['stock_minimo']) * 50) : 100;
-                        }
-                    ?>
-                    <!-- Fila del producto con atributos data-* para el JavaScript -->
-                    <!-- data-id: ID del producto, data-nombre: nombre para mostrar -->
-                    <tr data-id="<?php echo $p['id']; ?>" data-nombre="<?php echo htmlspecialchars($p['nombre']); ?>" style="border-bottom:1px solid var(--border-light);transition:background 0.15s;">
+                                // CASO 3: Stock mayor al minimo -> "OK" (verde)
+                            } else {
+                                $estado = 'OK';
+                                $badgeClass = 'background:#e8f5e9;color:#2e7d32;'; // Fondo verde claro, texto verde oscuro
+                                $icon = 'check_circle';  // Icono de verificado
+                                $barClass = 'var(--success)';
+                                $iconBg = '#e8f5e9';
+                                $iconColor = 'var(--success)';
+                                $stockColor = 'var(--success)';
+                                // La barra se llena hasta 50% como maximo (para no saturar)
+                                $barWidth = $p['stock_minimo'] > 0 ? min(100, ($p['stock'] / $p['stock_minimo']) * 50) : 100;
+                            }
+                        ?>
+                            <!-- Fila del producto con atributos data-* para el JavaScript -->
+                            <!-- data-id: ID del producto, data-nombre: nombre para mostrar -->
+                            <tr data-id="<?php echo $p['id']; ?>" data-nombre="<?php echo htmlspecialchars($p['nombre']); ?>" style="border-bottom:1px solid var(--border-light);transition:background 0.15s;">
 
-                        <!-- Columna 1: Nombre del producto y categoria -->
-                        <td style="padding:0.85rem 1rem;">
-                            <div style="display:flex;align-items:center;gap:0.75rem;">
-                                <!-- Icono circular con el color segun estado -->
-                                <div style="width:38px;height:38px;border-radius:8px;background:<?php echo $iconBg; ?>;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                    <i class="material-icons" style="color:<?php echo $iconColor; ?>;font-size:1.2rem;"><?php echo $icon; ?></i>
-                                </div>
-                                <div>
-                                    <!-- Nombre del producto escapado para evitar XSS -->
-                                    <div style="font-weight:600;color:var(--text);font-size:0.9rem;"><?php echo htmlspecialchars($p['nombre']); ?></div>
-                                    <!-- Categoria del producto (o "Sin categoria" si no tiene) -->
-                                    <span style="font-size:0.75rem;color:var(--text-muted);"><?php echo htmlspecialchars($p['categoria'] ?? 'Sin categoría'); ?></span>
-                                </div>
-                            </div>
-                        </td>
+                                <!-- Columna 1: Nombre del producto y categoria -->
+                                <td style="padding:0.85rem 1rem;">
+                                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                                        <!-- Icono circular con el color segun estado -->
+                                        <div style="width:38px;height:38px;border-radius:8px;background:<?php echo $iconBg; ?>;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            <i class="material-icons" style="color:<?php echo $iconColor; ?>;font-size:1.2rem;"><?php echo $icon; ?></i>
+                                        </div>
+                                        <div>
+                                            <!-- Nombre del producto escapado para evitar XSS -->
+                                            <div style="font-weight:600;color:var(--text);font-size:0.9rem;"><?php echo htmlspecialchars($p['nombre']); ?></div>
+                                            <!-- Categoria del producto (o "Sin categoria" si no tiene) -->
+                                            <span style="font-size:0.75rem;color:var(--text-muted);"><?php echo htmlspecialchars($p['categoria'] ?? 'Sin categoría'); ?></span>
+                                        </div>
+                                    </div>
+                                </td>
 
-                        <!-- Columna 2: Codigo del producto -->
-                        <td style="padding:0.85rem 1rem;color:var(--text-muted);font-size:0.85rem;">#<?php echo htmlspecialchars($p['codigo']); ?></td>
+                                <!-- Columna 2: Codigo del producto -->
+                                <td style="padding:0.85rem 1rem;color:var(--text-muted);font-size:0.85rem;">#<?php echo htmlspecialchars($p['codigo']); ?></td>
 
-                        <!-- Columna 3: Precio de venta formateado -->
-                        <td style="padding:0.85rem 1rem;font-weight:600;font-size:0.9rem;">$<?php echo number_format($p['precio_venta'], 2); ?></td>
+                                <!-- Columna 3: Precio de venta formateado -->
+                                <td style="padding:0.85rem 1rem;font-weight:600;font-size:0.9rem;">$<?php echo number_format($p['precio_venta'], 2); ?></td>
 
-                        <!-- Columna 4: Stock con barra de progreso -->
-                        <td style="padding:0.85rem 1rem;">
-                            <div style="display:flex;flex-direction:column;gap:0.25rem;min-width:80px;">
-                                <!-- Numero de stock y minimo -->
-                                <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
-                                    <span style="font-weight:700;color:<?php echo $stockColor; ?>;"><?php echo $p['stock']; ?></span>
-                                    <span style="color:var(--text-muted);font-size:0.7rem;">mín: <?php echo $p['stock_minimo']; ?></span>
-                                </div>
-                                <!-- Barra de progreso visual del stock -->
-                                <div style="width:100%;height:5px;background:var(--border-light);border-radius:4px;overflow:hidden;">
-                                    <div style="width:<?php echo $barWidth; ?>%;height:100%;background:<?php echo $barClass; ?>;border-radius:4px;"></div>
-                                </div>
-                            </div>
-                        </td>
+                                <!-- Columna 4: Stock con barra de progreso -->
+                                <td style="padding:0.85rem 1rem;">
+                                    <div style="display:flex;flex-direction:column;gap:0.25rem;min-width:80px;">
+                                        <!-- Numero de stock y minimo -->
+                                        <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+                                            <span style="font-weight:700;color:<?php echo $stockColor; ?>;"><?php echo $p['stock']; ?></span>
+                                            <span style="color:var(--text-muted);font-size:0.7rem;">mín: <?php echo $p['stock_minimo']; ?></span>
+                                        </div>
+                                        <!-- Barra de progreso visual del stock -->
+                                        <div style="width:100%;height:5px;background:var(--border-light);border-radius:4px;overflow:hidden;">
+                                            <div style="width:<?php echo $barWidth; ?>%;height:100%;background:<?php echo $barClass; ?>;border-radius:4px;"></div>
+                                        </div>
+                                    </div>
+                                </td>
 
-                        <!-- Columna 5: Badge con el estado (Sin stock / Critico / OK) -->
-                        <td style="padding:0.85rem 1rem;">
-                            <span style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.2rem 0.6rem;border-radius:4px;font-size:0.75rem;font-weight:600;<?php echo $badgeClass; ?>">
-                                <i class="material-icons" style="font-size:0.85rem;"><?php echo $icon; ?></i> <?php echo $estado; ?>
-                            </span>
-                        </td>
+                                <!-- Columna 5: Badge con el estado (Sin stock / Critico / OK) -->
+                                <td style="padding:0.85rem 1rem;">
+                                    <span style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.2rem 0.6rem;border-radius:4px;font-size:0.75rem;font-weight:600;<?php echo $badgeClass; ?>">
+                                        <i class="material-icons" style="font-size:0.85rem;"><?php echo $icon; ?></i> <?php echo $estado; ?>
+                                    </span>
+                                </td>
 
-                        <!-- Columna 6: Botones de accion -->
-                        <td style="padding:0.85rem 1rem;text-align:right;white-space:nowrap;">
-                            <!-- Boton: Ver movimientos de stock (gris) -->
-                            <button class="btn-floating waves-effect waves-light grey lighten-1 tooltipped btn-movimientos" data-id="<?php echo $p['id']; ?>" data-position="left" data-tooltip="Ver movimientos" style="margin-right:4px;"><i class="material-icons">inventory</i></button>
-                            <!-- Boton: Editar producto (indigo) -->
-                            <button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar" data-id="<?php echo $p['id']; ?>" data-position="left" data-tooltip="Editar"><i class="material-icons">edit</i></button>
-                            <!-- Boton: Entrada de stock (verde) -->
-                            <button class="btn-floating waves-effect waves-light red tooltipped btn-entrada" data-id="<?php echo $p['id']; ?>" data-position="left" data-tooltip="Entrada" style="margin-right:4px;"><i class="material-icons">add_shopping_cart</i></button>
-                            <!-- Boton: Salida de stock (naranja) -->
-                            <button class="btn-floating waves-effect waves-light orange tooltipped btn-salida" data-id="<?php echo $p['id']; ?>" data-position="left" data-tooltip="Salida" style="margin-right:4px;"><i class="material-icons">remove_shopping_cart</i></button>
-                            <!-- Boton: Eliminar producto (rojo) -->
-                            <button class="btn-floating waves-effect waves-light red tooltipped btn-eliminar" data-id="<?php echo $p['id']; ?>" data-nombre="<?php echo htmlspecialchars($p['nombre']); ?>" data-position="left" data-tooltip="Eliminar"><i class="material-icons">delete</i></button>
-                        </td>
+                                <!-- Columna 6: Botones de accion -->
+                                <td style="padding:0.85rem 1rem;text-align:right;white-space:nowrap;">
+                                    <!-- Boton: Ver movimientos de stock (gris) -->
+                                    <button class="btn-floating waves-effect waves-light grey lighten-1 tooltipped btn-movimientos" data-id="<?php echo $p['id']; ?>" data-position="left" data-tooltip="Ver movimientos" style="margin-right:4px;"><i class="material-icons">inventory</i></button>
+                                    <!-- Boton: Editar producto (indigo) -->
+                                    <button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar" data-id="<?php echo $p['id']; ?>" data-position="left" data-tooltip="Editar"><i class="material-icons">edit</i></button>
+                                    <!-- Boton: Entrada de stock (verde) -->
+                                    <button class="btn-floating waves-effect waves-light red tooltipped btn-entrada" data-id="<?php echo $p['id']; ?>" data-position="left" data-tooltip="Entrada" style="margin-right:4px;"><i class="material-icons">add_shopping_cart</i></button>
+                                    <!-- Boton: Salida de stock (naranja) -->
+                                    <button class="btn-floating waves-effect waves-light orange tooltipped btn-salida" data-id="<?php echo $p['id']; ?>" data-position="left" data-tooltip="Salida" style="margin-right:4px;"><i class="material-icons">remove_shopping_cart</i></button>
+                                    <!-- Boton: Eliminar producto (rojo) -->
+                                    <button class="btn-floating waves-effect waves-light red tooltipped btn-eliminar" data-id="<?php echo $p['id']; ?>" data-nombre="<?php echo htmlspecialchars($p['nombre']); ?>" data-position="left" data-tooltip="Eliminar"><i class="material-icons">delete</i></button>
+                                </td>
 
-                    </tr>
-                    <?php endforeach; ?>
+                            </tr>
+                        <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
             </table>
@@ -303,8 +293,8 @@ $categorias = obtenerCategorias($pdo);
 
 <!-- ================================================================ -->
 <!-- MODAL: Crear / Editar Producto -->
-// Se abre cuando el usuario hace clic en "Nuevo Producto" o en el
-// boton de editar de alguna fila. Cambia el titulo segun la accion.
+<!-- Se abre cuando el usuario hace clic en "Nuevo Producto" o en el -->
+<!-- boton de editar de alguna fila. Cambia el titulo segun la accion. -->
 <!-- ================================================================ -->
 <div id="modal-producto" class="modal modal-fixed-footer">
     <div class="modal-content">
@@ -336,7 +326,7 @@ $categorias = obtenerCategorias($pdo);
                         <option value="" disabled selected>Seleccione</option>
                         <!-- Recorre las categorias desde PHP -->
                         <?php foreach ($categorias as $cat): ?>
-                        <option value="<?php echo $cat['id']; ?>"><?php echo htmlspecialchars($cat['nombre']); ?></option>
+                            <option value="<?php echo $cat['id']; ?>"><?php echo htmlspecialchars($cat['nombre']); ?></option>
                         <?php endforeach; ?>
                     </select>
                     <label>Categoría</label>
@@ -377,8 +367,8 @@ $categorias = obtenerCategorias($pdo);
 
 <!-- ================================================================ -->
 <!-- MODAL: Historial de Movimientos de Stock -->
-// Muestra todos los movimientos (entradas y salidas) de un producto
-// Los datos se cargan via AJAX cuando se abre el modal.
+<!-- Muestra todos los movimientos (entradas y salidas) de un producto -->
+<!-- Los datos se cargan via AJAX cuando se abre el modal. -->
 <!-- ================================================================ -->
 <div id="modal-movimientos" class="modal modal-fixed-footer">
     <div class="modal-content">
@@ -401,7 +391,9 @@ $categorias = obtenerCategorias($pdo);
                 </thead>
                 <tbody>
                     <!-- Mientras carga, muestra "Cargando..." -->
-                    <tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Cargando...</td></tr>
+                    <tr>
+                        <td colspan="7" style="text-align:center;color:var(--text-muted);">Cargando...</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -414,8 +406,8 @@ $categorias = obtenerCategorias($pdo);
 
 <!-- ================================================================ -->
 <!-- MODAL: Registrar Entrada o Salida de Stock -->
-// Formulario para ingresar o sacar stock de un producto.
-// El titulo y el texto del boton cambian segun sea entrada o salida.
+<!-- Formulario para ingresar o sacar stock de un producto. -->
+<!-- El titulo y el texto del boton cambian segun sea entrada o salida. -->
 <!-- ================================================================ -->
 <div id="modal-stock" class="modal">
     <div class="modal-content">
@@ -455,20 +447,50 @@ $categorias = obtenerCategorias($pdo);
 <!-- Pequeños ajustes de estilo para la tabla de inventario -->
 <!-- ================================================================ -->
 <style>
-/* Efecto hover en las filas de la tabla */
-.inv-table tbody tr:hover { background: var(--surface-hover); }
-/* Alineacion vertical centrada en las celdas */
-.inv-table td { vertical-align: middle; }
-/* Contenedor de la barra de stock */
-.inv-table .stock-bar { height:5px; background:var(--border-light); border-radius:4px; overflow:hidden; }
-/* Relleno de la barra de stock (animado) */
-.inv-table .stock-fill { height:100%; border-radius:4px; transition: width 0.4s ease; }
-/* Ajustes responsive para pantallas pequeñas */
-@media only screen and (max-width: 600px) {
-    .inv-table td,
-    .inv-table th { padding: 0.55rem 0.5rem !important; }
-    .inv-table td > div[style*="flex"] { gap: 0.5rem !important; }
-    .inv-table td .product-icon { width: 32px !important; height: 32px !important; }
-    .inv-table td .product-icon i { font-size: 1rem !important; }
-}
+    /* Efecto hover en las filas de la tabla */
+    .inv-table tbody tr:hover {
+        background: var(--surface-hover);
+    }
+
+    /* Alineacion vertical centrada en las celdas */
+    .inv-table td {
+        vertical-align: middle;
+    }
+
+    /* Contenedor de la barra de stock */
+    .inv-table .stock-bar {
+        height: 5px;
+        background: var(--border-light);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    /* Relleno de la barra de stock (animado) */
+    .inv-table .stock-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.4s ease;
+    }
+
+    /* Ajustes responsive para pantallas pequeñas */
+    @media only screen and (max-width: 600px) {
+
+        .inv-table td,
+        .inv-table th {
+            padding: 0.55rem 0.5rem !important;
+        }
+
+        .inv-table td>div[style*="flex"] {
+            gap: 0.5rem !important;
+        }
+
+        .inv-table td .product-icon {
+            width: 32px !important;
+            height: 32px !important;
+        }
+
+        .inv-table td .product-icon i {
+            font-size: 1rem !important;
+        }
+    }
 </style>
