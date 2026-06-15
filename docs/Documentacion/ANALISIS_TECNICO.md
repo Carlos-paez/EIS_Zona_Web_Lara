@@ -49,7 +49,7 @@ eis_zona_web_lara/
 │   │   ├── template/
 │   │   │   └── layout.php               # Layout maestro
 │   │   ├── Models/
-│   │   │   ├── crud_inventario.php      # CRUD inventario (15+ funcs)
+│   │   │   ├── inventario.php          # Modelo POO inventario (17 métodos)
 │   │   │   ├── crud_users.php           # CRUD usuarios
 │   │   │   └── crud_asesorias.php       # CRUD asesorias
 │   │   └── Views/
@@ -201,7 +201,7 @@ Navegador → /.htaccess → src/.htaccess → index.php → router.php
 |---------|------|
 | `inventario.php` | `src/app/Views/inventario.php` (474 lineas) |
 | `inventarioController.php` | `src/app/Controllers/inventarioController.php` (247 lineas) |
-| `crud_inventario.php` | `src/app/Models/crud_inventario.php` (265 lineas) |
+| `inventario.php` | `src/app/Models/inventario.php` (196 lineas, POO) |
 | `app.inventario.js` | `src/Public/js/app.inventario.js` (450 lineas) |
 | JS asociado | `app.inventario.js`, `app.tables.js` |
 
@@ -212,7 +212,7 @@ Navegador → /.htaccess → src/.htaccess → index.php → router.php
 4. Modales: Crear/Editar producto, Movimientos de stock, Entrada/Salida de stock
 
 **Arquitectura MVC:**
-- `crud_inventario.php` (Modelo): 15+ funciones, CRUD completo + KPIs + movimientos de stock
+- `inventario.php` (Modelo POO): 17 métodos, CRUD completo + KPIs + movimientos de stock
 - `inventarioController.php` (Controlador): 10 acciones AJAX, devuelve JSON
 - `inventario.php` (Vista): Carga datos iniciales desde PHP + interfaz HTML
 - `app.inventario.js` (JavaScript): CRUD via AJAX, actualizacion dinamica de tabla y KPIs

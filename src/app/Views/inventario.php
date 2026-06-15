@@ -15,9 +15,9 @@
 // (app.inventario.js) se encarga de las operaciones dinamicas.
 // =====================================================================
 
-use App\Models\Inventario;
+use App\Models\inventario;
 
-$inventarioModel = new Inventario();
+$inventarioModel = new inventario();
 
 $productos      = $inventarioModel->obtenerProductos();
 $totalP         = $inventarioModel->totalProductos();
@@ -103,7 +103,7 @@ $categorias     = $inventarioModel->obtenerCategorias();
                     <select id="filterEstado">
                         <option value="" selected>Todo</option>
                         <option value="ok">Stock OK</option>
-                        <option value="critico">Crítico</option>
+                        <option value="crítico">Crítico</option>
                         <option value="sin stock">Sin stock</option>
                     </select>
                     <label>Estado</label>
@@ -269,7 +269,7 @@ $categorias     = $inventarioModel->obtenerCategorias();
                                     <!-- Boton: Editar producto (indigo) -->
                                     <button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar" data-id="<?php echo $p['id']; ?>" data-position="left" data-tooltip="Editar"><i class="material-icons">edit</i></button>
                                     <!-- Boton: Entrada de stock (verde) -->
-                                    <button class="btn-floating waves-effect waves-light red tooltipped btn-entrada" data-id="<?php echo $p['id']; ?>" data-position="left" data-tooltip="Entrada" style="margin-right:4px;"><i class="material-icons">add_shopping_cart</i></button>
+                                    <button class="btn-floating waves-effect waves-light green tooltipped btn-entrada" data-id="<?php echo $p['id']; ?>" data-position="left" data-tooltip="Entrada" style="margin-right:4px;"><i class="material-icons">add_shopping_cart</i></button>
                                     <!-- Boton: Salida de stock (naranja) -->
                                     <button class="btn-floating waves-effect waves-light orange tooltipped btn-salida" data-id="<?php echo $p['id']; ?>" data-position="left" data-tooltip="Salida" style="margin-right:4px;"><i class="material-icons">remove_shopping_cart</i></button>
                                     <!-- Boton: Eliminar producto (rojo) -->

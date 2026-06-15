@@ -66,8 +66,8 @@ El sistema usa un patrón de diseño llamado **MVC** que separa el código en 3 
          ▼                         │
 ┌──────────────────┐               │
 │     MODEL         │───────────────┘
-│  crud_inventario  │  (datos para
-│  .php             │   mostrar)
+│  inventario.php    │  (datos para
+│                    │   mostrar)
 │  (Base de datos)  │
 └──────────────────┘
 ```
@@ -76,9 +76,9 @@ El sistema usa un patrón de diseño llamado **MVC** que separa el código en 3 
 
 | Parte | ¿Qué es? | ¿Qué hace? |
 |-------|----------|------------|
-| **Model** (Modelo) | `crud_inventario.php` | Habla con la base de datos. Recibe peticiones, ejecuta consultas SQL y devuelve datos. |
+| **Model** (Modelo) | `inventario.php` | Habla con la base de datos. Recibe peticiones, ejecuta consultas SQL y devuelve datos. |
 | **View** (Vista) | `inventario.php` | Es lo que ve el usuario. HTML con diseño bonito (Materialize CSS). |
-| **Controller** (Controlador) | `inventarioController.php` | Es el "mensajero". Recibe la orden del usuario, le pide datos al Modelo y se los pasa a la Vista. |
+| **Controller** (Controlador) | `InventarioController.php` | Es el "mensajero". Recibe la orden del usuario, le pide datos al Modelo y se los pasa a la Vista. |
 | **Router** (Enrutador) | `router.php` | Es el "portero". Decide qué controlador o vista debe ejecutarse según la URL. |
 | **JavaScript** | `app.inventario.js` | Corre en el navegador. Hace que la página sea interactiva sin recargar (AJAX). |
 
@@ -181,9 +181,9 @@ Registra **todo** lo que pasa con el stock (quién, cuándo, cuánto, por qué).
 src/
 ├── app/
 │   ├── Controllers/
-│   │   └── inventarioController.php    ← El controlador
+│   │   └── InventarioController.php    ← El controlador (clase con 11 acciones)
 │   ├── Models/
-│   │   └── crud_inventario.php         ← El modelo
+│   │   └── inventario.php              ← El modelo POO
 │   ├── Views/
 │   │   └── inventario.php              ← La vista (HTML)
 │   └── core/
@@ -204,18 +204,19 @@ src/
 
 1. ❓ **¿Qué página quiere ver?** → Lee `?pagina=inventario` de la URL
 2. 🔐 **¿Está logueado?** → Si no, lo manda al login
-3. 🚦 **¿Es una petición AJAX de inventario?** → Si la URL tiene `?pagina=inventario&action=listar`, carga el controlador `inventarioController.php`
+3. 🚦 **¿Es una petición AJAX de inventario?** → Si la URL tiene `?pagina=inventario&action=listar`, instancia `InventarioController` y ejecuta `handle()`
 4. 🖼️ **¿Es una página normal?** → Carga la vista correspondiente (`Views/inventario.php`)
 5. ❌ **¿No existe la página?** → Muestra error 404
 
-**Fragmento clave (líneas 27-30):**
+**Fragmento clave:**
 
 ```php
 // Si la página es "inventario" y tiene una acción (action)
 if ($pagina === 'inventario' && isset($_GET['action'])) {
-    // En lugar de cargar la vista, carga el controlador
-    require __DIR__ . '/../Controllers/inventarioController.php';
-    exit; // Termina aquí, no carga el layout
+    // Crea el controlador y ejecuta handle()
+    $controller = new \App\Controllers\InventarioController();
+    $controller->handle();
+    exit;
 }
 ```
 
@@ -223,18 +224,21 @@ if ($pagina === 'inventario' && isset($_GET['action'])) {
 
 ---
 
-## 4.2 `inventarioController.php` — El controlador (el mensajero)
+## 4.2 `InventarioController.php` — El controlador (el mensajero)
 
-**Ubicación:** `src/app/Controllers/inventarioController.php`
+**Ubicación:** `src/app/Controllers/InventarioController.php`
 
-**¿Qué hace?** Cuando el JavaScript hace una petición AJAX, este archivo recibe la orden (`action`), ejecuta la función del modelo que corresponda y devuelve el resultado en formato **JSON** (un formato de texto que el JavaScript entiende).
+**¿Qué hace?** Cuando el JavaScript hace una petición AJAX, este archivo recibe la orden (`action`), ejecuta el método del modelo que corresponda y devuelve el resultado en formato **JSON** (un formato de texto que el JavaScript entiende).
 
-### Las acciones que maneja:
+Está implementado como una **clase PHP** con namespace `App\Controllers` y usa `match()` de PHP 8.
+
+### Las 11 acciones que maneja:
 
 | Acción (`action=`) | ¿Qué hace? | ¿Qué devuelve? |
 |-------------------|------------|----------------|
 | `listar` | Obtiene todos los productos | `{success: true, data: [...]}` |
 | `kpis` | Calcula los 4 indicadores | `{success: true, data: {total, critico, bajo, valor}}` |
+| `categorias` | Obtiene lista de categorías | `{success: true, data: [...]}` |
 | `detalle&id=X` | Obtiene 1 producto por ID | `{success: true, data: {...}}` |
 | `movimientos&id=X` | Historial de movimientos | `{success: true, data: [...]}` |
 | `buscar` | Busca productos por texto | `{success: true, data: [...]}` |
@@ -244,34 +248,47 @@ if ($pagina === 'inventario' && isset($_GET['action'])) {
 | `entrada` | Registra entrada de stock | `{success: true, message: "..."}` |
 | `salida` | Registra salida de stock | `{success: true, message: "..."}` |
 
+> **Nota:** La acción `categorias` se agregó para cargar categorías dinámicamente sin recargar la página.
+
 ### Estructura del código (resumen):
 
 ```php
 <?php
-// 1. Incluye el modelo (para poder usar sus funciones)
-require_once __DIR__.'/../Models/crud_inventario.php';
+namespace App\Controllers;
+use App\Models\inventario;
 
-// 2. Dice que la respuesta será JSON
-header('Content-Type: application/json');
+class InventarioController
+{
+    private inventario $model;
 
-// 3. Lee la acción de la URL
-$action = $_GET['action'] ?? '';
-
-// 4. Según la acción, ejecuta el código correspondiente
-try {
-    switch ($action) {
-        case 'listar':
-            $productos = obtenerProductos($pdo);  // Llama al modelo
-            echo json_encode(['success' => true, 'data' => $productos]);
-            break;
-        case 'entrada':
-            // ... procesa la entrada de stock ...
-            break;
-        // ... más casos ...
+    public function __construct()
+    {
+        $this->model = new inventario();  // Crea una instancia del modelo POO
     }
-} catch (\Exception $e) {
-    // Si algo falla, devuelve el error
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+
+    public function handle(): void
+    {
+        header('Content-Type: application/json');
+        $action = $_GET['action'] ?? '';
+
+        try {
+            // match() es como switch pero mejor (PHP 8+)
+            match ($action) {
+                'listar' => $this->listar(),
+                'crear'  => $this->crear(),
+                // ... más casos ...
+                default  => $this->json(false, null, 'Acción no válida'),
+            };
+        } catch (\Exception $e) {
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    private function listar(): void {
+        $productos = $this->model->obtenerProductos();
+        echo json_encode(['success' => true, 'data' => $productos]);
+    }
+    // ... más métodos privados para cada acción ...
 }
 ```
 
@@ -279,11 +296,36 @@ try {
 
 ---
 
-## 4.3 `crud_inventario.php` — El modelo (el que habla con la BD)
+## 4.3 El modelo — El que habla con la BD
 
-**Ubicación:** `src/app/Models/crud_inventario.php`
+Actualmente el modelo está implementado como una **clase POO**:
 
-**¿Qué hace?** Contiene todas las funciones que ejecutan consultas SQL en la base de datos. Es el único archivo que toca la base de datos directamente.
+| Archivo | Enfoque | ¿Se usa? |
+|---------|---------|----------|
+| `inventario.php` | **POO (clase)** — usa `$this->db` y type hints | ✅ Sí (controlador y vista) |
+
+> 📝 **Nota importante:** El archivo está comentado **línea por línea** en español. Si abres `src/app/Models/inventario.php`, verás que cada línea de código tiene una explicación de lo que hace y por qué.
+
+### El modelo POO: `inventario.php`
+
+**Ubicación:** `src/app/Models/inventario.php`
+
+```php
+namespace App\Models;
+use App\Core\Model;
+
+class inventario extends Model
+{
+    public function obtenerProductos(): array {
+        $stmt = $this->db->query("SELECT ...");
+        return $stmt->fetchAll();
+    }
+}
+```
+
+> 🔍 Cada línea de este archivo tiene su comentario explicativo en español.
+
+
 
 ### Las funciones que contiene:
 
@@ -343,25 +385,36 @@ Los signos `?` son **placeholders** (espacios reservados). En lugar de escribir 
 
 **¿Qué hace?** Define cómo se ve la página de inventario. Genera el HTML que ves en el navegador. Cuando entras a `?pagina=inventario` por primera vez, este archivo se ejecuta en el servidor y produce el HTML completo con todos los productos.
 
+Actualmente la vista usa el **modelo POO** directamente para cargar los datos iniciales:
+
+```php
+use App\Models\inventario;
+$inventarioModel = new inventario();
+
+$productos = $inventarioModel->obtenerProductos();
+$totalP    = $inventarioModel->totalProductos();
+// ... etc
+```
+
 ### Secciones de la página:
 
 ```
-┌──────────────────────────────────────────────────┐
-│  KPI 1     │  KPI 2     │  KPI 3     │  KPI 4  │
-│  Total     │  Crítico   │  Bajo      │  Valor   │
-│  productos │            │            │  total   │
-├──────────────────────────────────────────────────┤
-│  [Buscar producto...]  [Filtro: ▼]  [+ Nuevo]   │
-├──────────────────────────────────────────────────┤
-│  Lista de Productos                   12 prod.   │
-├──────────┬──────┬────────┬───────┬──────┬───────┤
-│ Producto │ ID   │ Precio │ Stock │Estado│Acción │
-├──────────┼──────┼────────┼───────┼──────┼───────┤
-│ Mouse X  │M-001 │ $15.00 │  12   │  OK  │[📋][✏️]│
-│ Teclado Y│T-002 │ $25.00 │   2   │⚠️Crít│[📋][✏️]│
-│ Monitor Z│M-003 │$120.00 │   0   │ 🚫Sin│[📋][✏️]│
-└──────────┴──────┴────────┴───────┴──────┴───────┘
+┌──────────────────────────────────────────────────────────────┐
+│  KPI 1 (Total)  │  KPI 2 (Crítico)  │  KPI 3 (Bajo)  │  KPI 4 (Valor)  │
+├──────────────────────────────────────────────────────────────┤
+│  [🔍 Buscar producto...]  [Estado: ▼]  [➕ Nuevo Producto]  │
+├──────────────────────────────────────────────────────────────┤
+│  Lista de Productos                                   12 prod.│
+├────────┬────────┬────────┬──────────┬──────────┬──────────────┤
+│Producto│  ID    │ Precio │  Stock   │ Estado   │    Acción     │
+├────────┼────────┼────────┼──────────┼──────────┼──────────────┤
+│ 🟢Mouse│ M-001  │ $15.00 │ ██░░ 12  │ OK       │[📋][✏️][➕][➖][🗑️]│
+│ 🔴Tecla│ T-002  │ $25.00 │ ██░░  2  │ Crítico  │[📋][✏️][➕][➖][🗑️]│
+│ 🔴Monit│ M-003  │$120.00 │ ░░░░  0  │ Sin stock│[📋][✏️][➕][➖][🗑️]│
+└────────┴────────┴────────┴──────────┴──────────┴──────────────┘
 ```
+
+> **Nota:** Cada producto ahora tiene **5 botones** de acción: movimientos (📋), editar (✏️), entrada (➕), salida (➖) y eliminar (🗑️).
 
 ### La lógica de colores (estado del stock):
 
@@ -383,9 +436,9 @@ Cada producto tiene un **estado** que se calcula comparando `stock` con `stock_m
 
 La vista incluye 3 ventanas modales que aparecen encima de la página:
 
-1. **Modal de producto** → Para crear o editar productos
-2. **Modal de movimientos** → Para ver el historial de un producto
-3. **Modal de stock** → Para registrar entrada o salida
+1. **Modal de producto** → Para crear o editar productos (código, nombre, categoría, stock, stock mínimo, costo, precio)
+2. **Modal de movimientos** → Para ver el historial de un producto (fecha, tipo, cantidad, stock anterior, stock nuevo, usuario, motivo)
+3. **Modal de stock** → Para registrar entrada o salida (cantidad, motivo)
 
 Estos modales están ocultos hasta que el usuario hace clic en un botón.
 
@@ -403,32 +456,39 @@ Estos modales están ocultos hasta que el usuario hace clic en un botón.
 ### AJAX — ¿Cómo funciona?
 
 ```
-┌──────────────────────┐         ┌──────────────────────┐
-│   NAVEGADOR           │         │   SERVIDOR (PHP)     │
-│                       │         │                      │
-│   app.inventario.js   │         │  inventarioController│
-│                       │         │  .php                │
-│   $.post(API+'crear', │ ──────► │                      │
-│     {codigo, nombre,  │  POST   │  Lee los datos       │
-│      categoria...})    │         │  Llama al modelo     │
-│                       │ ◄────── │  Devuelve JSON       │
-│   if (r.success) {    │  JSON   │                      │
-│     toast("Creado!")  │         │                      │
-│     refrescarTabla()  │         │                      │
-│   }                   │         │                      │
-└──────────────────────┘         └──────────────────────┘
+┌──────────────────────┐         ┌──────────────────────────────┐
+│   NAVEGADOR           │         │   SERVIDOR (PHP)             │
+│                       │         │                              │
+│   app.inventario.js   │         │  InventarioController        │
+│                       │         │                              │
+│   $.post(API+'crear', │ ──────► │  $model->crearProducto()    │
+│     {codigo, nombre,  │  POST   │  → inventario.php (POO)     │
+│      categoria...})    │         │                             │
+│                       │ ◄────── │                              │
+│   if (r.success) {    │  JSON   │  {success: true, message}   │
+│     EIS.toast(...)    │         │                              │
+│     refrescarTabla()  │         │                              │
+│   }                   │         │                              │
+└──────────────────────┘         └──────────────────────────────┘
 ```
 
 ### Las funciones principales del JavaScript:
 
 | Función | ¿Qué hace? | ¿Cuándo se ejecuta? |
 |---------|------------|---------------------|
-| `refrescarKPI()` | Actualiza las 4 tarjetas de indicadores | Después de crear, editar, eliminar, entrada o salida |
-| `refrescarTabla()` | Vuelve a cargar toda la tabla de productos | Después de cualquier cambio |
-| `aplicarFiltro()` | Filtra las filas visibles en la tabla | Cuando el usuario escribe o cambia el filtro |
-| `abrirModalProducto(titulo, datos)` | Abre el modal de producto (vacío o con datos) | Al hacer clic en "Nuevo" o "Editar" |
-| `abrirModalMovimientos(id, nombre)` | Abre el modal con el historial | Al hacer clic en el botón de movimientos |
-| `abrirModalStock(tipo, id, nombre)` | Abre el modal de entrada/salida | Al hacer clic en "Entrada" o "Salida" |
+| `refrescarKPI()` | Actualiza las 4 tarjetas de indicadores vía AJAX | Después de crear, editar, eliminar, entrada o salida |
+| `refrescarTabla()` | Vuelve a cargar toda la tabla de productos desde el servidor | Después de cualquier cambio |
+| `aplicarFiltro()` | Filtra las filas visibles en la tabla (por texto y estado) | Cuando el usuario escribe o cambia el filtro |
+| `abrirModalProducto(titulo, datos)` | Abre el modal de producto (vacío o con datos precargados) | Al hacer clic en "Nuevo" o "Editar" |
+| `abrirModalMovimientos(id, nombre)` | Abre el modal con el historial vía AJAX | Al hacer clic en el botón de movimientos |
+| `abrirModalStock(tipo, id, nombre)` | Abre el modal de entrada/salida de stock | Al hacer clic en "Entrada" o "Salida" |
+
+### Detalles de implementación:
+
+- **Toast:** Usa `EIS.toast()` (función global del sistema) en lugar de `M.toast()` de Materialize.
+- **Tooltips:** Los tooltips de los botones se reinician después de cada recarga de tabla con `$('.tooltipped').tooltip();`.
+- **XSS prevention:** Usa `$('<span>').text(valor).html()` para escapar texto y evitar inyección de código.
+- **Debounce:** El filtro de búsqueda usa `debounce(..., 300)` para esperar 300ms antes de filtrar (evita ejecutar muchas veces mientras el usuario escribe).
 
 ### ¿Qué es `debounce`?
 
@@ -458,13 +518,13 @@ PASO 2: router.php recibe la petición
         └── Carga la vista: Views/inventario.php
 
 PASO 3: inventario.php se ejecuta EN EL SERVIDOR
-        └── Incluye crud_inventario.php
-        └── Llama a obtenerProductos($pdo) → consulta SQL
-        └── Llama a totalProductos($pdo) → cuenta productos
-        └── Llama a stockCritico($pdo) → cuenta críticos
-        └── Llama a stockBajo($pdo) → cuenta bajos
-        └── Llama a valorTotalInventario($pdo) → calcula valor
-        └── Llama a obtenerCategorias($pdo) → para el formulario
+        └── Crea instancia: $inventarioModel = new inventario()
+        └── Llama a $inventarioModel->obtenerProductos() → consulta SQL
+        └── Llama a $inventarioModel->totalProductos() → cuenta productos
+        └── Llama a $inventarioModel->stockCritico() → cuenta críticos
+        └── Llama a $inventarioModel->stockBajo() → cuenta bajos
+        └── Llama a $inventarioModel->valorTotalInventario() → calcula valor
+        └── Llama a $inventarioModel->obtenerCategorias() → para el formulario
 
 PASO 4: PHP genera el HTML completo con todos los datos
 
@@ -492,14 +552,14 @@ PASO 3: router.php recibe la petición
         └── ¿pagina = "inventario"? Sí
         └── ¿Hay "action=crear"? Sí → Carga el controlador
 
-PASO 4: inventarioController.php procesa:
+PASO 4: InventarioController (clase) procesa:
         └── Lee cada campo del POST
         └── Valida que los obligatorios no estén vacíos
-        └── Llama a crearProducto($pdo, $codigo, $nombre, ...)
+        └── Llama a $this->model->crearProducto($codigo, $nombre, ...)
 
-PASO 5: crud_inventario.php ejecuta:
+PASO 5: El modelo (inventario.php POO) ejecuta:
         └── $sql = "INSERT INTO productos (...) VALUES (?, ?, ...)"
-        └── $pdo->prepare($sql)
+        └── $this->db->prepare($sql)
         └── $stmt->execute([$codigo, $nombre, ...])
 
 PASO 6: El controlador devuelve JSON:
@@ -524,9 +584,9 @@ PASO 2: JavaScript envía:
         Datos: producto_id=5&cantidad=10&motivo=Reposición
 
 PASO 3: Controlador recibe y llama a:
-        registrarEntrada($pdo, 5, 10, $usuario_id, "Reposición")
+        $this->model->registrarEntrada(5, 10, $usuario_id, "Reposición")
 
-PASO 4: El modelo (crud_inventario.php) hace 3 cosas:
+PASO 4: El modelo (inventario.php POO) hace 3 cosas:
         1. Lee el stock actual del producto (ej: stock = 15)
         2. Actualiza el stock: SET stock = 25 (15 + 10)
         3. Guarda en la bitácora:
@@ -682,8 +742,8 @@ flowchart LR
 
     subgraph Servidor
         R[router.php]
-        C[inventarioController.php]
-        M[crud_inventario.php]
+        C[InventarioController.php]
+        M[inventario.php]
         BD[(MySQL)]
     end
 
@@ -722,6 +782,11 @@ flowchart LR
 | **Modal** | Ventana emergente que se superpone a la página. |
 | **Debounce** | Técnica para esperar un tiempo antes de ejecutar una función (evita ejecutar demasiadas veces). |
 | **XSS** | Ataque donde se inserta código malicioso en una página. `htmlspecialchars()` lo previene. |
+| **POO** | Programación Orientada a Objetos. Organiza el código en clases y objetos. |
+| **Namespace** | Espacio de nombres en PHP para organizar clases (ej: `App\Models`). |
+| **Type Hint** | Indicación del tipo de dato esperado (ej: `int $id`, `string $nombre`). |
+| **`match()`** | Estructura de PHP 8 similar a `switch` pero más segura (no necesita `break`). |
+| **EIS.toast()** | Función global del sistema para mostrar notificaciones temporales. |
 
 ---
 
@@ -758,13 +823,14 @@ flowchart LR
                     │  └──────────┬──────────────────────┘    │
                     │             │                            │
                     │  ┌──────────▼──────────────────────┐    │
-                    │  │   inventarioController.php       │    │
+                    │  │   InventarioController (clase)   │    │
                     │  │   (Procesa la acción)            │    │
+                    │  │   match() → 11 acciones         │    │
                     │  └──────────┬──────────────────────┘    │
                     │             │                            │
                     │  ┌──────────▼──────────────────────┐    │
-                    │  │   crud_inventario.php            │    │
-                    │  │   (Ejecuta SQL)                  │    │
+                    │  │   inventario.php (POO)          │    │
+                    │  │   (Ejecuta SQL)                 │    │
                     │  └──────────┬──────────────────────┘    │
                     │             │                            │
                     └─────────────┼──────────────────────────┘

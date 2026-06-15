@@ -38,14 +38,13 @@ $(function () {
         // GET request a ?pagina=inventario&action=kpis
         // Espera una respuesta JSON con total, critico, bajo, valor
         $.getJSON(API + 'kpis', function (r) {
-            // Si el servidor devolvio success = false, no hago nada
             if (!r.success) return;
-            // Actualizo el texto de cada tarjeta con los nuevos valores
-            $('#kpi-total').text(r.data.total);            // Total de productos
-            $('#kpi-critico').text(r.data.critico);         // Productos con stock critico
-            $('#kpi-bajo').text(r.data.bajo);               // Productos con stock bajo
-            // Para el valor total, lo formateo con 2 decimales y signo $
+            $('#kpi-total').text(r.data.total);
+            $('#kpi-critico').text(r.data.critico);
+            $('#kpi-bajo').text(r.data.bajo);
             $('#kpi-valor').text('$' + parseFloat(r.data.valor).toFixed(2));
+        }).fail(function () {
+            EIS.toast('Error al cargar indicadores', 'red', 'error');
         });
     }
 
@@ -142,8 +141,9 @@ $(function () {
             // Reinicio los tooltips de los botones (Materialize los necesita)
             $('.tooltipped').tooltip();
 
-            // Aplico el filtro actual para mantener consistencia
-            aplicarFiltro();
+                aplicarFiltro();
+        }).fail(function () {
+            EIS.toast('Error al cargar la tabla', 'red', 'error');
         });
     }
 
@@ -240,34 +240,33 @@ $(function () {
         // Abro el modal para que el usuario vea el estado de carga
         $('#modal-movimientos').modal('open');
 
-        // Peticion AJAX para obtener los movimientos del producto
         $.getJSON(API + 'movimientos&id=' + id, function (r) {
             var tbody = $('#tabla-movimientos tbody');
-            tbody.empty(); // Limpio el contenido anterior
+            tbody.empty();
 
-            // Si no hay movimientos, muestro mensaje
             if (!r.success || !r.data || r.data.length === 0) {
                 tbody.html('<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Sin movimientos registrados</td></tr>');
                 return;
             }
 
-            // Recorro cada movimiento y creo una fila en la tabla
             $.each(r.data, function (i, m) {
-                // Color del texto segun el tipo: verde para entrada, rojo para salida
                 var tipoClase = m.tipo === 'entrada' ? 'green-text' : m.tipo === 'salida' ? 'red-text' : 'orange-text';
 
                 var fila = '<tr>';
-                fila += '<td style="padding:0.5rem 0.75rem;">' + m.fecha + '</td>';           // Fecha del movimiento
-                fila += '<td style="padding:0.5rem 0.75rem;"><span class="' + tipoClase + '" style="font-weight:600;text-transform:capitalize;">' + m.tipo + '</span></td>'; // Tipo (entrada/salida) con color
-                fila += '<td style="padding:0.5rem 0.75rem;">' + m.cantidad + '</td>';         // Cantidad movida
-                fila += '<td style="padding:0.5rem 0.75rem;">' + m.stock_anterior + '</td>';   // Stock antes del movimiento
-                fila += '<td style="padding:0.5rem 0.75rem;">' + m.stock_nuevo + '</td>';      // Stock despues del movimiento
-                fila += '<td style="padding:0.5rem 0.75rem;">' + (m.usuario || '-') + '</td>'; // Quien hizo el movimiento
-                fila += '<td style="padding:0.5rem 0.75rem;">' + (m.motivo || '-') + '</td>';  // Motivo del movimiento
+                fila += '<td style="padding:0.5rem 0.75rem;">' + m.fecha + '</td>';
+                fila += '<td style="padding:0.5rem 0.75rem;"><span class="' + tipoClase + '" style="font-weight:600;text-transform:capitalize;">' + m.tipo + '</span></td>';
+                fila += '<td style="padding:0.5rem 0.75rem;">' + m.cantidad + '</td>';
+                fila += '<td style="padding:0.5rem 0.75rem;">' + m.stock_anterior + '</td>';
+                fila += '<td style="padding:0.5rem 0.75rem;">' + m.stock_nuevo + '</td>';
+                fila += '<td style="padding:0.5rem 0.75rem;">' + (m.usuario || '-') + '</td>';
+                fila += '<td style="padding:0.5rem 0.75rem;">' + (m.motivo || '-') + '</td>';
                 fila += '</tr>';
 
                 tbody.append(fila);
             });
+        }).fail(function () {
+            $('#tabla-movimientos tbody').html('<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Error al cargar movimientos</td></tr>');
+            EIS.toast('Error al cargar movimientos', 'red', 'error');
         });
     }
 
@@ -319,12 +318,12 @@ $(function () {
         // Pido los datos completos del producto al servidor
         $.getJSON(API + 'detalle&id=' + id, function (r) {
             if (r.success) {
-                // Si encontro el producto, abro el modal con sus datos
                 abrirModalProducto('Editar Producto', r.data);
             } else {
-                // Si hubo error, muestro un toast de Materialize
                 EIS.toast(r.error || 'Error al cargar producto', 'red', 'error');
             }
+        }).fail(function () {
+            EIS.toast('Error de conexión al cargar producto', 'red', 'error');
         });
     });
 
@@ -338,13 +337,15 @@ $(function () {
             // POST request para eliminar el producto
             $.post(API + 'eliminar', { id: id }, function (r) {
                 if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle'); // Mensaje de exito
-                    refrescarTabla();  // Actualizo la tabla
-                    refrescarKPI();    // Actualizo los KPIs
+                    EIS.toast(r.message, 'green', 'check_circle');
+                    refrescarTabla();
+                    refrescarKPI();
                 } else {
                     EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
                 }
-            }, 'json');
+            }, 'json').fail(function () {
+                EIS.toast('Error de conexión al eliminar', 'red', 'error');
+            });
         }
     });
 
@@ -390,13 +391,15 @@ $(function () {
         $.post(API + accion, data, function (r) {
             if (r.success) {
                 EIS.toast(r.message, 'green', 'check_circle');
-                $('#modal-producto').modal('close'); // Cierro el modal
-                refrescarTabla();  // Actualizo la tabla
-                refrescarKPI();    // Actualizo los KPIs
+                $('#modal-producto').modal('close');
+                refrescarTabla();
+                refrescarKPI();
             } else {
                 EIS.toast(r.error || 'Error al guardar', 'red', 'error');
             }
-        }, 'json');
+        }, 'json').fail(function () {
+            EIS.toast('Error de conexión al guardar', 'red', 'error');
+        });
     });
 
     // Evento: Submit del formulario de movimiento de stock (entrada/salida)
@@ -411,13 +414,15 @@ $(function () {
         $.post(API + tipo, data, function (r) {
             if (r.success) {
                 EIS.toast(r.message, 'green', 'check_circle');
-                $('#modal-stock').modal('close'); // Cierro el modal
-                refrescarTabla();  // Actualizo la tabla (el stock cambio)
-                refrescarKPI();    // Actualizo los KPIs
+                $('#modal-stock').modal('close');
+                refrescarTabla();
+                refrescarKPI();
             } else {
                 EIS.toast(r.error || 'Error al registrar movimiento', 'red', 'error');
             }
-        }, 'json');
+        }, 'json').fail(function () {
+            EIS.toast('Error de conexión al registrar movimiento', 'red', 'error');
+        });
     });
 
     // ================================================================

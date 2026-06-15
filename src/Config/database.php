@@ -1,4 +1,12 @@
 <?php
+// =============================================================================
+// CONFIGURACIÓN DE LA BASE DE DATOS
+// =============================================================================
+// Propósito: Establecer la conexión PDO a MySQL usando las credenciales
+//            definidas aquí. Este archivo es incluido por los CRUDs basados
+//            en funciones sueltas (crud_*.php). Crea la variable $pdo.
+// NOTA: Existe una versión moderna en App\Core\Database (patrón Singleton).
+// =============================================================================
 // Configuración de la conexión a la base de datos MySQL usando PDO
 
     $host = "localhost";          // Dirección del servidor de base de datos
