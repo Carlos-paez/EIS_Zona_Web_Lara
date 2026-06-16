@@ -48,7 +48,7 @@ src/
 │   ├── Controllers/
 │   │   └── inventarioController.php # Controlador AJAX inventario (10 acc.)
 │   ├── Models/
-│   │   ├── crud_inventario.php  # CRUD inventario (15+ funciones)
+│   │   ├── inventario.php      # Modelo POO inventario (17 métodos)
 │   │   ├── crud_users.php       # CRUD usuarios (8 funciones)
 │   │   └── crud_asesorias.php   # CRUD asesorias (8 funciones)
 │   ├── template/

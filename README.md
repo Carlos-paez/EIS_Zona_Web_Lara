@@ -29,13 +29,13 @@ El sistema administra múltiples aspectos de un negocio: ventas (POS), inventari
 - **Manifiesto PWA** — `manifest.json` para instalación como app
 - **Página Offline** — `offline.php` como fallback sin conexión
 - **Esquema de Base de Datos** — Completo con 19 tablas, vistas, funciones y procedimientos
-- **Modelos CRUD** — `crud_inventario.php` (15+ funciones), `crud_users.php` (8 funciones) y `crud_asesorias.php` (8 funciones) con PDO preparado
+- **Modelos CRUD** — `inventario.php` (POO, 17 métodos), `crud_users.php` (8 funciones) y `crud_asesorias.php` (8 funciones) con PDO preparado
 - **Controlador AJAX de Inventario** — `inventarioController.php` con 10 acciones vía JSON
 - **JavaScript de Inventario** — `app.inventario.js` con CRUD completo vía AJAX (450 líneas)
 - **Enrutamiento AJAX** — Router detecta `action` en inventario y carga controlador en lugar de vista
 
 ### Implementado (Funcional con BD)
-- **Inventario** — Módulo completo con CRUD de productos, KPIs, movimientos de stock (entrada/salida), búsqueda y filtros. Conectado a BD vía `crud_inventario.php` + `inventarioController.php` + `app.inventario.js`
+- **Inventario** — Módulo completo con CRUD de productos, KPIs, movimientos de stock (entrada/salida), búsqueda y filtros. Conectado a BD vía `inventario.php` (modelo POO) + `inventarioController.php` + `app.inventario.js`
 
 ### Parcialmente Implementado (UI Estática o Semi-funcional)
 - **Dashboard** — Métricas estáticas (deberían venir de consultas SQL)
@@ -71,7 +71,7 @@ eis_zona_web_lara/
 │   │   ├── Controllers/
 │   │   │   └── inventarioController.php  # Controlador AJAX de inventario (10 acc.)
 │   │   ├── Models/
-│   │   │   ├── crud_inventario.php   # CRUD inventario (15+ funciones)
+│   │   │   ├── inventario.php       # Modelo POO inventario (17 métodos)
 │   │   │   ├── crud_users.php        # CRUD usuarios (8 funciones)
 │   │   │   └── crud_asesorias.php    # CRUD asesorías (8 funciones)
 │   │   ├── template/
@@ -299,7 +299,7 @@ Documentación completa de la base de datos (v2.0):
 4. **Configuración de BD** — `echo "Conexión exitosa"` rompería respuestas JSON
 
 ### Arquitectura
-1. **Modelos Parcialmente Usados** — `crud_inventario.php` se usa desde la vista y el controlador de inventario; `crud_users.php` y `crud_asesorias.php` aún no se integran con las vistas
+1. **Modelos Parcialmente Usados** — `inventario.php` (POO) se usa desde la vista y el controlador de inventario; `crud_users.php` y `crud_asesorias.php` aún no se integran con las vistas
 2. **Datos Estáticos** — La mayoría de vistas no están conectadas a BD (excepto inventario)
 3. **Sin .env** — Configuración no flexible
 

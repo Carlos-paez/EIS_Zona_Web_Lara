@@ -148,7 +148,7 @@ if(is_file($rutaVista)){
 ```php
 $titulos = [
     'dashboard'    => 'Panel de Control',
-    'inventario'   => 'Gestion de Inventario',
+    'inventario'   => 'Gestion de inventario',
     'ventas'       => 'Punto de Venta (POS)',
     'ciberControl' => 'Control de Cybercafe',
     'proveedores'  => 'Solicitudes a Proveedores',

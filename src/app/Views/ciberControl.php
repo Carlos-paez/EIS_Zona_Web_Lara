@@ -1,4 +1,13 @@
 <?php
+// =============================================================================
+// VISTA: CONTROL DE CYBERCAFÉ (ciberControl.php)
+// =============================================================================
+// Propósito: Muestra el estado de las estaciones de cybercafé organizadas
+//            por zonas, con indicadores de disponibles, ocupadas y en
+//            mantenimiento. Incluye filtros rápidos para visualización.
+// =============================================================================
+
+// Datos estáticos (simulados) de las estaciones organizadas por zonas
 $zonas = [
     'Zona A' => [
         ['num' => 1,  'status' => 'disponible',   'icono' => 'check_circle', 'desc' => 'PC Gaming'],
@@ -18,12 +27,15 @@ $zonas = [
     ],
 ];
 
+// Aplana el array multidimensional a un solo nivel para hacer cálculos
 $todasEstaciones = array_merge(...array_values($zonas));
+// Cuenta cuántas estaciones están en cada estado
 $countDisponibles  = count(array_filter($todasEstaciones, fn($e) => $e['status'] === 'disponible'));
 $countOcupadas     = count(array_filter($todasEstaciones, fn($e) => $e['status'] === 'ocupada'));
 $countMantenimiento = count(array_filter($todasEstaciones, fn($e) => $e['status'] === 'mantenimiento'));
-$totalEstaciones   = count($todasEstaciones);
+$totalEstaciones   = count($todasEstaciones); // Total general
 
+// Mapa de estados a etiquetas legibles para mostrar en la UI
 $statusLabels = [
     'disponible'   => 'Disponible',
     'ocupada'      => 'Ocupada',

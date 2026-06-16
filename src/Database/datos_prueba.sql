@@ -168,7 +168,7 @@ INSERT INTO detalle_solicitudes (id, solicitud_id, producto_id, cantidad_solicit
 INSERT INTO bitacora_movimientos_stock (producto_id, tipo, cantidad, stock_anterior, stock_nuevo, precio_unitario, costo_total, usuario_id, referencia_tipo, referencia_id, motivo) VALUES
 (1, 'entrada', 15, 0, 15, 22.00, 330.00, 1, 'carga_inicial', NULL, 'Carga inicial de inventario en apertura del sistema.'),
 (2, 'entrada', 8, 0, 8, 18.00, 144.00, 1, 'carga_inicial', NULL, 'Carga inicial de stock.'),
-(3, 'entrada', 12, 0, 12, 15.00, 180.00, 1, 'carga_inicial', NULL, 'Inventario inicial automatizado.');
+(3, 'entrada', 12, 0, 12, 15.00, 180.00, 1, 'carga_inicial', NULL, 'inventario inicial automatizado.');
 
 -- ============================================================
 -- 5. MOVIMIENTOS DEL MODULO CYBERCAFÉ

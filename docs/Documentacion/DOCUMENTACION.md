@@ -71,7 +71,7 @@ El proyecto simula un sistema completo para administrar un negocio que incluye: 
 | src/app/core/router.php | 75 | Enrutamiento + layout + ruta AJAX inventario |
 | src/app/template/layout.php | 162 | Layout maestro con JS condicional |
 | src/app/Controllers/inventarioController.php | 247 | Controlador AJAX inventario (10 acciones) |
-| src/app/Models/crud_inventario.php | 265 | CRUD inventario (15+ funciones) |
+| src/app/Models/inventario.php | 196 | Modelo POO inventario (17 métodos) |
 | src/app/Models/crud_users.php | 54 | CRUD usuarios (8 funciones) |
 | src/app/Models/crud_asesorias.php | 49 | CRUD asesorias (8 funciones) |
 | src/app/Views/login.php | 134 | Pagina login |
@@ -156,7 +156,7 @@ if(is_file($rutaVista)){
     } else {
         $titulos = [
             'dashboard'    => 'Panel de Control',
-            'inventario'   => 'Gestion de Inventario',
+            'inventario'   => 'Gestion de inventario',
             'ventas'       => 'Punto de Venta (POS)',
             'ciberControl' => 'Control de Cybercafe',
             'proveedores'  => 'Solicitudes a Proveedores',
@@ -372,7 +372,7 @@ Catalogo de 5 productos con carrito modal. Toda la logica en `app.pos.js`.
 10 estaciones organizadas en 3 zonas (Gamer, Estandar, VIP) con estados disponible/ocupada/mantenimiento. Los datos de estaciones se generan desde PHP con un array `$zonas`. Contadores calculados con PHP (`array_filter`).
 
 #### 8.4 `inventario.php` (474 lineas) - GESTION DE INVENTARIO (FUNCIONAL CON BD)
-Modulo completo conectado a la base de datos via `crud_inventario.php`. Incluye:
+Modulo completo conectado a la base de datos via `inventario.php` (modelo POO). Incluye:
 - **KPIs**: 4 tarjetas con total de productos, stock critico, stock bajo y valor total (desde BD)
 - **Tabla de productos**: Listado completo con estado, stock, precios (desde BD)
 - **Filtros**: Busqueda por texto con debounce + filtro por estado (OK, Critico, Sin stock)
