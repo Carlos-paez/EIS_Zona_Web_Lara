@@ -202,7 +202,7 @@
     <?php if ($usarZonas && count($estacionesPremium) > 0): ?>
         <!-- Zona Premium -->
         <div class="zone-divider">
-            <div class="zone-title">⭐ Zona Premium</div>
+            <div class="zone-title"> Zona Premium</div>
         </div>
         <div class="row" id="zona-premium">
             <?php foreach ($estacionesPremium as $e): ?>
@@ -471,11 +471,11 @@ $(function() {
             success: function(response) {
                 if (response.success) {
                     var data = response.data;
-                    var mensaje = 'Sesión finalizada en ' + estacionNombre;
+                    var mensaje = 'costo final de la estación: ' + estacionNombre;
                     if (data.costo_total) {
-                        mensaje += ' - Total: $' + data.costo_total.toFixed(2);
+                       mensaje += ' - Total: $' + parseFloat(data.costo_total).toFixed(2);
                     }
-                    EIS.toast(mensaje, 'orange', 'stop_circle');
+                    EIS.toast(mensaje, 'green', 'stop_circle');
                     actualizarCyberUI(data.estacion);
                     actualizarContadores();
                 } else {
@@ -601,78 +601,272 @@ $(function() {
     // ============================================================
     // HISTORIAL
     // ============================================================
-    $(document).on('click', '#btnHistorialCyber, #btnHistorialCyberMobile', function() {
-        var instance = M.Modal.getInstance($('#modalHistorial'));
-        if (!instance) {
-            $('#modalHistorial').modal();
-            instance = M.Modal.getInstance($('#modalHistorial'));
-        }
-        instance.open();
-        
-        // Cargar historial de todas las estaciones (o mostrar selector)
-        $('#historialContenido').html(`
-            <div class="center-align" style="padding:2rem 0;">
-                <div class="preloader-wrapper small active">
-                    <div class="spinner-layer spinner-green-only">
-                        <div class="circle-clipper left"><div class="circle"></div></div>
-                        <div class="gap-patch"><div class="circle"></div></div>
-                        <div class="circle-clipper right"><div class="circle"></div></div>
-                    </div>
-                </div>
-                <p style="color:var(--text-muted);margin-top:1rem;">Cargando historial...</p>
-            </div>
-        `);
-        
-        // Mostrar selector de estación y últimas sesiones
-        // Por ahora, mostramos un mensaje
-        setTimeout(function() {
-            $('#historialContenido').html(`
-                <p style="color:var(--text-muted);text-align:center;padding:1rem 0;">
-                    <i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">history</i>
-                    Selecciona una estación para ver su historial
-                </p>
-                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;margin-top:1rem;">
-                    ${$('.station-card').map(function() {
-                        var id = $(this).data('estacion-id');
-                        var nombre = $(this).data('nombre');
-                        return '<button class="btn-small waves-effect waves-light grey btn-ver-historial" data-estacion-id="' + id + '" style="border-radius:16px;">' + nombre + '</button>';
-                    }).get().join('')}
-                </div>
-                <div id="historialResultados" style="margin-top:1.5rem;"></div>
-            `);
-        }, 500);
-    });
+  // ============================================================
+// HISTORIAL DE SESIONES - VERSIÓN CORREGIDA
+// ============================================================
 
-    $(document).on('click', '.btn-ver-historial', function() {
-        var estacionId = $(this).data('estacion-id');
-        var $resultados = $('#historialResultados');
-        $resultados.html('<div class="center-align"><div class="preloader-wrapper small active"><div class="spinner-layer spinner-green-only"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div></div>');
-        
-        $.ajax({
-            url: '?pagina=ciberControl&accion=historial',
-            method: 'GET',
-            data: { estacion_id: estacionId, limit: 10 },
-            dataType: 'json',
-            success: function(response) {
-                if (response.success && response.data.length > 0) {
-                    var html = '<table class="striped"><thead><tr><th>#</th><th>Cliente</th><th>Inicio</th><th>Fin</th><th>Duración</th><th>Costo</th><th>Estado</th></tr></thead><tbody>';
-                    response.data.forEach(function(s, i) {
-                        var duracion = s.duracion_minutos ? Math.floor(s.duracion_minutos / 60) + 'h ' + (s.duracion_minutos % 60) + 'min' : '-';
-                        var estadoBadge = s.estado === 'cerrada' ? '<span class="new badge green">Cerrada</span>' : '<span class="new badge orange">' + s.estado + '</span>';
-                        html += '<tr><td>' + (i + 1) + '</td><td>' + (s.cliente_nombre || 'N/A') + '</td><td>' + s.hora_inicio + '</td><td>' + (s.hora_fin || '-') + '</td><td>' + duracion + '</td><td>$' + (s.costo_total ? parseFloat(s.costo_total).toFixed(2) : '0.00') + '</td><td>' + estadoBadge + '</td></tr>';
-                    });
-                    html += '</tbody></table>';
-                    $resultados.html(html);
-                } else {
-                    $resultados.html('<p style="text-align:center;color:var(--text-muted);padding:1rem 0;">No hay sesiones registradas para esta estación</p>');
-                }
-            },
-            error: function() {
-                $resultados.html('<p style="text-align:center;color:var(--danger);padding:1rem 0;">Error al cargar el historial</p>');
+// Variable para almacenar el ID de la estación seleccionada
+var estacionSeleccionadaId = null;
+
+// Abrir modal de historial
+$(document).on('click', '#btnHistorialCyber, #btnHistorialCyberMobile', function() {
+    var instance = M.Modal.getInstance($('#modalHistorial'));
+    if (!instance) {
+        $('#modalHistorial').modal({
+            onCloseStart: function() {
+                // Limpiar al cerrar
+                $('#historialResultados').html('');
+                estacionSeleccionadaId = null;
             }
         });
-    });
+        instance = M.Modal.getInstance($('#modalHistorial'));
+    }
+    instance.open();
+    
+    // Mostrar selector de estaciones
+    mostrarSelectorEstaciones();
+});
 
+// Función para mostrar el selector de estaciones
+function mostrarSelectorEstaciones() {
+    var estaciones = $('.station-card');
+    var totalEstaciones = estaciones.length;
+    
+    if (totalEstaciones === 0) {
+        $('#historialContenido').html(`
+            <div class="center-align" style="padding:2rem 0;">
+                <i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">computer</i>
+                <p style="color:var(--text-muted);">No hay estaciones registradas</p>
+            </div>
+        `);
+        return;
+    }
+    
+    var html = `
+        <div style="margin-bottom:1.5rem;">
+            <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:0.75rem;">
+                <i class="material-icons left" style="font-size:1.1rem;">info</i>
+                Selecciona una estación para ver su historial de sesiones
+            </p>
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;">
+    `;
+    
+    // Generar botones para cada estación
+    estaciones.each(function() {
+        var id = $(this).data('estacion-id');
+        var nombre = $(this).data('nombre') || 'PC-' + id;
+        var estado = $(this).data('status') || 'disponible';
+        var estadoClass = estado === 'disponible' ? 'green' : 
+                          estado === 'ocupada' ? 'orange' : 'red';
+        
+        html += `
+            <button class="btn-small waves-effect waves-light ${estadoClass} btn-ver-historial" 
+                    data-estacion-id="${id}" 
+                    style="border-radius:16px;min-width:60px;text-transform:capitalize;display:inline-flex;align-items:center;gap:0.25rem;">
+                <span style="width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block;"></span>
+                ${nombre}
+            </button>
+        `;
+    });
+    
+    html += `
+            </div>
+        </div>
+        <div id="historialResultados" style="margin-top:1.5rem;"></div>
+    `;
+    
+    $('#historialContenido').html(html);
+    
+    // Si hay estaciones, seleccionar la primera automáticamente
+    if (totalEstaciones > 0) {
+        var primerId = estaciones.first().data('estacion-id');
+        setTimeout(function() {
+            $('.btn-ver-historial[data-estacion-id="' + primerId + '"]').click();
+        }, 300);
+    }
+}
+
+// ============================================================
+// CARGAR HISTORIAL DE UNA ESTACIÓN
+// ============================================================
+
+$(document).on('click', '.btn-ver-historial', function() {
+    var estacionId = $(this).data('estacion-id');
+    var estacionNombre = $(this).text().trim();
+    
+    // Resaltar botón seleccionado
+    $('.btn-ver-historial').removeClass('active indigo darken-2');
+    $(this).addClass('active indigo darken-2');
+    
+    estacionSeleccionadaId = estacionId;
+    cargarHistorialEstacion(estacionId, estacionNombre);
+});
+
+function cargarHistorialEstacion(estacionId, estacionNombre) {
+    var $resultados = $('#historialResultados');
+    
+    // Mostrar loader
+    $resultados.html(`
+        <div class="center-align" style="padding:2rem 0;">
+            <div class="preloader-wrapper small active">
+                <div class="spinner-layer spinner-green-only">
+                    <div class="circle-clipper left"><div class="circle"></div></div>
+                    <div class="gap-patch"><div class="circle"></div></div>
+                    <div class="circle-clipper right"><div class="circle"></div></div>
+                </div>
+            </div>
+            <p style="color:var(--text-muted);margin-top:1rem;">Cargando historial de ${estacionNombre}...</p>
+        </div>
+    `);
+    
+    // Hacer petición AJAX
+    $.ajax({
+        url: '?pagina=ciberControl&accion=historial',
+        method: 'GET',
+        data: { 
+            estacion_id: estacionId, 
+            limit: 20 
+        },
+        dataType: 'json',
+        timeout: 10000,
+        success: function(response) {
+            if (response.success) {
+                if (response.data && response.data.length > 0) {
+                    mostrarTablaHistorial(response.data, estacionNombre);
+                } else {
+                    mostrarMensajeSinHistorial(estacionNombre);
+                }
+            } else {
+                mostrarError('Error al cargar el historial: ' + (response.message || 'Error desconocido'));
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error AJAX:', status, error);
+            mostrarError('Error de conexión al servidor. Por favor, intenta nuevamente.');
+        }
+    });
+}
+
+// ============================================================
+// FUNCIONES PARA MOSTRAR EL HISTORIAL
+// ============================================================
+
+function mostrarTablaHistorial(datos, estacionNombre) {
+    var $resultados = $('#historialResultados');
+    
+    // Construir tabla
+    var html = `
+        <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border-light);">
+            <table class="striped responsive-table" style="margin-bottom:0;font-size:0.9rem;">
+                <thead>
+                    <tr style="background:var(--surface-hover);">
+                        <th style="padding:0.6rem 0.8rem;">#</th>
+                        <th style="padding:0.6rem 0.8rem;">Cliente</th>
+                        <th style="padding:0.6rem 0.8rem;">Inicio</th>
+                        <th style="padding:0.6rem 0.8rem;">Fin</th>
+                        <th style="padding:0.6rem 0.8rem;">Duración</th>
+                        <th style="padding:0.6rem 0.8rem;text-align:right;">Costo</th>
+                        <th style="padding:0.6rem 0.8rem;">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    datos.forEach(function(s, i) {
+        // Formatear duración
+        var duracion = '-';
+        if (s.duracion_minutos !== null && s.duracion_minutos !== undefined) {
+            var horas = Math.floor(s.duracion_minutos / 60);
+            var mins = s.duracion_minutos % 60;
+            duracion = horas + 'h ' + mins + 'min';
+        }
+        
+        // Formatear costo
+        var costo = s.costo_total !== null && s.costo_total !== undefined 
+            ? '$' + parseFloat(s.costo_total).toFixed(2) 
+            : '-';
+        
+        // Estado con color
+        var estadoBadge = '';
+        if (s.estado === 'cerrada') {
+            estadoBadge = '<span class="new badge green" style="background:#43a047;">Cerrada</span>';
+        } else if (s.estado === 'activa') {
+            estadoBadge = '<span class="new badge orange" style="background:#fb8c00;">Activa</span>';
+        } else {
+            estadoBadge = '<span class="new badge red" style="background:#e53935;">' + s.estado + '</span>';
+        }
+        
+        // Formatear fechas
+        var horaInicio = s.hora_inicio ? s.hora_inicio.replace('T', ' ').slice(0, 16) : '-';
+        var horaFin = s.hora_fin ? s.hora_fin.replace('T', ' ').slice(0, 16) : '-';
+        
+        html += `
+            <tr style="border-bottom:1px solid var(--border-light);">
+                <td style="padding:0.5rem 0.8rem;font-weight:600;color:var(--text-muted);">${i + 1}</td>
+                <td style="padding:0.5rem 0.8rem;font-weight:500;">${s.cliente_nombre || 'Anónimo'}</td>
+                <td style="padding:0.5rem 0.8rem;font-size:0.85rem;color:var(--text-muted);">${horaInicio}</td>
+                <td style="padding:0.5rem 0.8rem;font-size:0.85rem;color:var(--text-muted);">${horaFin}</td>
+                <td style="padding:0.5rem 0.8rem;font-weight:500;">${duracion}</td>
+                <td style="padding:0.5rem 0.8rem;text-align:right;font-weight:700;color:var(--primary);">${costo}</td>
+                <td style="padding:0.5rem 0.8rem;">${estadoBadge}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-top:0.75rem;text-align:right;color:var(--text-muted);font-size:0.8rem;">
+            <i class="material-icons left" style="font-size:0.9rem;">info</i>
+            Mostrando ${datos.length} sesiones de ${estacionNombre}
+        </div>
+    `;
+    
+    $resultados.html(html);
+}
+
+function mostrarMensajeSinHistorial(estacionNombre) {
+    $('#historialResultados').html(`
+        <div class="center-align" style="padding:2rem 0;">
+            <i class="material-icons" style="font-size:3.5rem;display:block;margin-bottom:0.5rem;opacity:0.3;">hourglass_empty</i>
+            <p style="color:var(--text-muted);font-size:1rem;">
+                <strong>${estacionNombre}</strong> no tiene sesiones registradas
+            </p>
+            <p style="color:var(--text-muted);font-size:0.85rem;">Las sesiones aparecerán aquí cuando se finalicen</p>
+        </div>
+    `);
+}
+
+function mostrarError(mensaje) {
+    $('#historialResultados').html(`
+        <div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;">
+            <i class="material-icons left" style="font-size:1.3rem;">error</i>
+            ${mensaje}
+        </div>
+    `);
+}
+
+// ============================================================
+// ACTUALIZAR CONTADORES DESPUÉS DE FINALIZAR SESIÓN
+// ============================================================
+
+// Si el historial está abierto, actualizarlo automáticamente
+// cuando se finaliza una sesión
+$(document).on('click', '.btn-finalizar-sesion', function() {
+    // El código existente ya maneja la finalización
+    // Después de finalizar, si el historial está abierto, refrescar
+    var modalAbierto = $('#modalHistorial').hasClass('open');
+    if (modalAbierto && estacionSeleccionadaId) {
+        // Recargar el historial después de 1 segundo
+        setTimeout(function() {
+            var estacionNombre = $('.btn-ver-historial.active').text().trim();
+            if (estacionNombre) {
+                cargarHistorialEstacion(estacionSeleccionadaId, estacionNombre);
+            }
+        }, 1500);
+    }
+});
     // ============================================================
     // ACTUALIZAR (Refrescar)
     // ============================================================
