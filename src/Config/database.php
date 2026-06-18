@@ -18,7 +18,7 @@
     try {
         // Intenta crear la conexión PDO con los parámetros definidos
         $pdo = new PDO($dns, $user, $pass, $options);
-        echo "Conexión exitosa"; // Mensaje de depuración (idealmente debería eliminarse en producción)
+        // echo "Conexión exitosa"; // Mensaje de depuración (idealmente debería eliminarse en producción)
 
     }catch (\PDOException $e) {
         // Captura y relanza cualquier error de conexión
