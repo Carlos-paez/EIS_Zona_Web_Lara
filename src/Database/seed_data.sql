@@ -45,7 +45,7 @@ INSERT INTO categoria (nombre_categoria) VALUES
 
 -- ============================================================
 -- CLIENTES
--- ============================================================A
+-- ============================================================
 INSERT INTO clientes (cedula, nombre, apellido, direccion, telefono) VALUES
 ('V-12345678', 'Carlos', 'González', 'Av. Libertador, Caracas', '0412-1234567'),
 ('V-23456789', 'María', 'Rodríguez', 'Calle Sucre, Maracaibo', '0414-2345678'),
@@ -87,12 +87,12 @@ INSERT INTO status_seguimiento (status) VALUES
 -- TIPO_ASESORIA
 -- ============================================================
 INSERT INTO tipo_asesoria (tipo, permitido) VALUES
-('Asesoría Técnica', TRUE),
-('Asesoría en Redes', TRUE),
-('Asesoría en Software', TRUE),
-('Asesoría en Hardware', TRUE),
-('Asesoría Comercial', TRUE),
-('Soporte Remoto', FALSE);
+('Documentos no controlados', TRUE),
+('Asesoría documental', TRUE),
+('Asesoría general', TRUE),
+('Asesoría sobre tramites generales', TRUE),
+('Asesoría sobre tramites digitales', TRUE),
+('Asesoría Penal', FALSE);
 
 -- ============================================================
 -- TARIFAS
@@ -337,11 +337,11 @@ INSERT INTO sesion_ciber (tiempo_uso, fk_cliente, fk_tarifa) VALUES
 INSERT INTO activos (marca, descripcion, is_ciber, activa, fk_tipo_activo, fk_usuario_usa) VALUES
 ('HP', 'PC Escritorio HP ProDesk 400 G5', TRUE, TRUE, 1, 1),
 ('Dell', 'Laptop Dell Latitude 5490', FALSE, TRUE, 2, 2),
-('Samsung', 'Monitor Samsung 24" Curvo', TRUE, TRUE, 3, NULL),
+('Samsung', 'Monitor Samsung 24" Curvo', TRUE, TRUE, 3, 3),
 ('HP', 'Impresora HP LaserJet M404', FALSE, TRUE, 4, 4),
 ('Dell', 'Servidor Dell PowerEdge T340', FALSE, TRUE, 5, 1),
-('TP-Link', 'Router TP-Link Archer C80', TRUE, TRUE, 6, NULL),
-('Cisco', 'Switch Cisco Catalyst 2960', TRUE, TRUE, 7, NULL),
-('APC', 'UPS APC Back-UPS 1500VA', TRUE, TRUE, 8, NULL),
+('TP-Link', 'Router TP-Link Archer C80', TRUE, TRUE, 6, 4),
+('Cisco', 'Switch Cisco Catalyst 2960', TRUE, TRUE, 7, 1),
+('APC', 'UPS APC Back-UPS 1500VA', TRUE, TRUE, 8, 2),
 ('Lenovo', 'PC Escritorio Lenovo ThinkCentre', TRUE, TRUE, 1, 3),
 ('LG', 'Monitor LG 27" 4K', FALSE, TRUE, 3, 2);
