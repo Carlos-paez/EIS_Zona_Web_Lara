@@ -15,9 +15,9 @@
 // (app.inventario.js) se encarga de las operaciones dinamicas.
 // =====================================================================
 
-use App\Models\inventario;
+use App\Models\Inventario;
 
-$inventarioModel = new inventario();
+$inventarioModel = new Inventario();
 
 $productos      = $inventarioModel->obtenerProductos();
 $totalP         = $inventarioModel->totalProductos();
@@ -316,6 +316,14 @@ $categorias     = $inventarioModel->obtenerCategorias();
                 <div class="input-field col s12 m6">
                     <input type="text" name="nombre" id="producto-nombre" required>
                     <label for="producto-nombre">Nombre del Producto</label>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Campo: Descripción -->
+                <div class="input-field col s12">
+                    <textarea name="descripcion" id="producto-descripcion" class="materialize-textarea" style="min-height:60px;"></textarea>
+                    <label for="producto-descripcion">Descripción</label>
                 </div>
             </div>
 

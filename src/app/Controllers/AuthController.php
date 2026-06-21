@@ -38,12 +38,11 @@ class AuthController
         $usuario = $this->model->autenticar($username, $password);
 
         if ($usuario) {
-            // Si la autenticación fue exitosa, guarda los datos en la sesión
-            $_SESSION['logged_in'] = true;            // Marca como autenticado
-            $_SESSION['user_id']   = $usuario['id'];   // ID del usuario
-            $_SESSION['username']  = $usuario['username']; // Nombre de usuario
-            $_SESSION['nombre']    = $usuario['nombre'];    // Nombre real
-            header('Location: ?pagina=dashboard'); // Redirige al dashboard
+            $_SESSION['logged_in'] = true;
+            $_SESSION['user_id']   = $usuario['id'];
+            $_SESSION['username']  = $usuario['user_name'];
+            $_SESSION['nombre']    = $usuario['nombre'];
+            header('Location: ?pagina=dashboard');
             exit;
         }
 

@@ -64,6 +64,8 @@
         </li> <!-- Separador visual -->
         <li><a href="?pagina=usuarios" class="sidenav-link<?php echo $pagina === 'usuarios' ? ' active' : ''; ?>"><i
                     class="material-icons left">settings</i>Configuración</a></li>
+        <li><a href="?pagina=roles" class="sidenav-link<?php echo $pagina === 'roles' ? ' active' : ''; ?>"><i
+                    class="material-icons left">admin_panel_settings</i>Roles y Permisos</a></li>
         <!-- Alternar tema oscuro/claro (manejado por JS en app.init.js) -->
         <li><a class="sidenav-link" id="themeToggle" style="cursor:pointer;"><i class="material-icons left"
                     id="themeIcon">dark_mode</i><span id="themeLabel">Modo Oscuro</span></a></li>
@@ -149,6 +151,9 @@
     <?php endif; ?>
     <?php if ($pagina === 'inventario'): ?>
     <script src="Public/js/app.inventario.js"></script>
+    <?php endif; ?>
+    <?php if ($pagina === 'roles'): ?>
+    <script src="Public/js/app.roles.js"></script>
     <?php endif; ?>
 
     <!-- Registrar Service Worker para funcionamiento offline -->

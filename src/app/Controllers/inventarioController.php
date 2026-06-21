@@ -8,17 +8,15 @@
 // =============================================================================
 namespace App\Controllers;
 
-use App\Models\inventario;
+use App\Models\Inventario;
 
 class InventarioController
 {
-    // Instancia del modelo inventario para acceder a la BD
-    private inventario $model;
+    private Inventario $model;
 
-    // Constructor: inicializa el modelo de inventario
     public function __construct()
     {
-        $this->model = new inventario();
+        $this->model = new Inventario();
     }
 
     // Método principal: despacha la acción según el parámetro GET 'action'
@@ -127,6 +125,7 @@ class InventarioController
         // Obtiene y sanitiza los datos del formulario
         $codigo       = $_POST['codigo'] ?? '';
         $nombre       = $_POST['nombre'] ?? '';
+        $descripcion  = $_POST['descripcion'] ?? '';
         $categoria_id = (int)($_POST['categoria_id'] ?? 0);
         $stock        = (int)($_POST['stock'] ?? 0);
         $stock_minimo = (int)($_POST['stock_minimo'] ?? 5);
@@ -139,7 +138,7 @@ class InventarioController
             return;
         }
 
-        $resultado = $this->model->crearProducto($codigo, $nombre, $categoria_id, $stock, $stock_minimo, $costo_compra, $precio_venta);
+        $resultado = $this->model->crearProducto($codigo, $nombre, $categoria_id, $stock, $stock_minimo, $costo_compra, $precio_venta, $descripcion);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Producto creado exitosamente']
@@ -153,6 +152,7 @@ class InventarioController
         $id           = (int)($_POST['id'] ?? 0);
         $codigo       = $_POST['codigo'] ?? '';
         $nombre       = $_POST['nombre'] ?? '';
+        $descripcion  = $_POST['descripcion'] ?? '';
         $categoria_id = (int)($_POST['categoria_id'] ?? 0);
         $stock        = (int)($_POST['stock'] ?? 0);
         $stock_minimo = (int)($_POST['stock_minimo'] ?? 5);
@@ -164,7 +164,7 @@ class InventarioController
             return;
         }
 
-        $resultado = $this->model->actualizarProducto($id, $codigo, $nombre, $categoria_id, $stock, $stock_minimo, $costo_compra, $precio_venta);
+        $resultado = $this->model->actualizarProducto($id, $codigo, $nombre, $categoria_id, $stock, $stock_minimo, $costo_compra, $precio_venta, $descripcion);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Producto actualizado exitosamente']

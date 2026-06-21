@@ -210,6 +210,7 @@ $(function () {
             $('#producto-id').val(datos.id);             // ID del producto
             $('#producto-codigo').val(datos.codigo);     // Codigo
             $('#producto-nombre').val(datos.nombre);     // Nombre
+            $('#producto-descripcion').val(datos.descripcion || ''); // Descripcion
             $('#producto-categoria').val(datos.categoria_id); // Categoria
             $('#producto-stock').val(datos.stock);       // Stock actual
             $('#producto-stock-minimo').val(datos.stock_minimo); // Stock minimo

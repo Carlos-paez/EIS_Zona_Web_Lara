@@ -1,77 +1,132 @@
 <?php
-// =============================================================================
-// MODELO Asesoria (Asesoría Legal)
-// =============================================================================
-// Propósito: Gestiona las operaciones de la tabla 'asesorias' para el módulo
-//            de asesoría legal. Permite registrar ciudadanos, sus documentos,
-//            realizar búsquedas, actualizar estados y obtener estadísticas.
-// =============================================================================
 namespace App\Models;
 
 use App\Core\Model;
 
 class Asesoria extends Model
 {
-    // Crea un nuevo registro de asesoría legal
-    public function crear(string $ciudadano, string $cedula, string $documento, string $descripcion, string $estado = 'Pendiente', ?int $usuario_id = null): bool
+    private function obtenerOcrearCliente(string $cedula, string $nombre, string $apellido = ''): int
     {
-        $sql = "INSERT INTO asesorias (ciudadano, cedula, documento, descripcion, estado, usuario_id, fecha_registro) VALUES (?, ?, ?, ?, ?, ?, NOW())";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$ciudadano, $cedula, $documento, $descripcion, $estado, $usuario_id]);
+        $stmt = $this->db->prepare("SELECT id FROM clientes WHERE cedula = ?");
+        $stmt->execute([$cedula]);
+        $cliente = $stmt->fetch();
+        if ($cliente) {
+            return (int)$cliente['id'];
+        }
+        $stmt = $this->db->prepare("INSERT INTO clientes (cedula, nombre, apellido) VALUES (?, ?, ?)");
+        $stmt->execute([$cedula, $nombre, $apellido]);
+        return (int)$this->db->lastInsertId();
     }
 
-    // Obtiene todas las asesorías registradas, ordenadas por fecha (más reciente primero)
+    private function obtenerTipoAsesoria(string $documento): ?int
+    {
+        $stmt = $this->db->prepare("SELECT id FROM tipo_asesoria WHERE LOWER(tipo) = LOWER(?)");
+        $stmt->execute([$documento]);
+        $tipo = $stmt->fetch();
+        return $tipo ? (int)$tipo['id'] : null;
+    }
+
+    public function crear(string $ciudadano, string $cedula, string $documento, string $descripcion): bool
+    {
+        $nombre_partes = explode(' ', $ciudadano, 2);
+        $nombre = $nombre_partes[0];
+        $apellido = $nombre_partes[1] ?? '';
+
+        $fk_cliente = $this->obtenerOcrearCliente($cedula, $nombre, $apellido);
+        $fk_tipo_asesoria = $this->obtenerTipoAsesoria($documento);
+
+        $sql = "INSERT INTO asesoria (documento, descripcion, fecha, fk_cliente, fk_tipo_asesoria) VALUES (?, ?, CURDATE(), ?, ?)";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$documento, $descripcion, $fk_cliente, $fk_tipo_asesoria]);
+    }
+
     public function obtenerTodas(): array
     {
-        $stmt = $this->db->query("SELECT a.*, u.nombre AS usuario_registro FROM asesorias a LEFT JOIN usuarios u ON a.usuario_id = u.id ORDER BY a.fecha_registro DESC");
+        $stmt = $this->db->query("
+            SELECT a.id, a.documento, a.descripcion, a.fecha,
+                   c.cedula, c.nombre AS ciudadano_nombre, c.apellido AS ciudadano_apellido,
+                   CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+                   ta.tipo AS tipo_documento, ta.permitido
+            FROM asesoria a
+            LEFT JOIN clientes c ON a.fk_cliente = c.id
+            LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
+            ORDER BY a.fecha DESC
+        ");
         return $stmt->fetchAll();
     }
 
-    // Filtra asesorías por su estado (Pendiente, Finalizada, Archivada, etc.)
     public function obtenerPorEstado(string $estado): array
     {
-        $stmt = $this->db->prepare("SELECT a.*, u.nombre AS usuario_registro FROM asesorias a LEFT JOIN usuarios u ON a.usuario_id = u.id WHERE a.estado = ? ORDER BY a.fecha_registro DESC");
-        $stmt->execute([$estado]);
+        $permitido = ($estado === 'Permitido' ? 1 : 0);
+        $stmt = $this->db->prepare("
+            SELECT a.id, a.documento, a.descripcion, a.fecha,
+                   c.cedula, c.nombre AS ciudadano_nombre, c.apellido AS ciudadano_apellido,
+                   CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+                   ta.tipo AS tipo_documento, ta.permitido
+            FROM asesoria a
+            LEFT JOIN clientes c ON a.fk_cliente = c.id
+            LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
+            WHERE ta.permitido = ?
+            ORDER BY a.fecha DESC
+        ");
+        $stmt->execute([$permitido]);
         return $stmt->fetchAll();
     }
 
-    // Obtiene una asesoría específica por su ID
     public function obtenerPorId(int $id): array|false
     {
-        $stmt = $this->db->prepare("SELECT a.*, u.nombre AS usuario_registro FROM asesorias a LEFT JOIN usuarios u ON a.usuario_id = u.id WHERE a.id = ?");
+        $stmt = $this->db->prepare("
+            SELECT a.*, c.cedula, c.nombre AS ciudadano_nombre, c.apellido AS ciudadano_apellido,
+                   CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+                   ta.tipo AS tipo_documento, ta.permitido
+            FROM asesoria a
+            LEFT JOIN clientes c ON a.fk_cliente = c.id
+            LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
+            WHERE a.id = ?
+        ");
         $stmt->execute([$id]);
         return $stmt->fetch();
     }
 
-    // Busca asesorías por número de cédula (búsqueda parcial con LIKE)
     public function buscarPorCedula(string $cedula): array
     {
-        $stmt = $this->db->prepare("SELECT a.*, u.nombre AS usuario_registro FROM asesorias a LEFT JOIN usuarios u ON a.usuario_id = u.id WHERE a.cedula LIKE ? ORDER BY a.fecha_registro DESC");
+        $stmt = $this->db->prepare("
+            SELECT a.id, a.documento, a.descripcion, a.fecha,
+                   c.cedula, c.nombre AS ciudadano_nombre, c.apellido AS ciudadano_apellido,
+                   CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+                   ta.tipo AS tipo_documento, ta.permitido
+            FROM asesoria a
+            INNER JOIN clientes c ON a.fk_cliente = c.id
+            LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
+            WHERE c.cedula LIKE ?
+            ORDER BY a.fecha DESC
+        ");
         $stmt->execute(["%$cedula%"]);
         return $stmt->fetchAll();
     }
 
-    // Actualiza los datos de una asesoría y registra fecha de cierre si corresponde
-    public function actualizar(int $id, string $ciudadano, string $cedula, string $documento, string $descripcion, string $estado): bool
+    public function actualizar(int $id, string $documento, string $descripcion): bool
     {
-        // Si el estado es 'Finalizada' o 'Archivada', asigna la fecha y hora actual como cierre
-        $fecha_cierre = ($estado === 'Finalizada' || $estado === 'Archivada') ? date('Y-m-d H:i:s') : null;
-        $sql = "UPDATE asesorias SET ciudadano = ?, cedula = ?, documento = ?, descripcion = ?, estado = ?, fecha_cierre = COALESCE(?, fecha_cierre) WHERE id = ?";
+        $fk_tipo_asesoria = $this->obtenerTipoAsesoria($documento);
+        $sql = "UPDATE asesoria SET documento = ?, descripcion = ?, fk_tipo_asesoria = COALESCE(?, fk_tipo_asesoria) WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$ciudadano, $cedula, $documento, $descripcion, $estado, $fecha_cierre, $id]);
+        return $stmt->execute([$documento, $descripcion, $fk_tipo_asesoria, $id]);
     }
 
-    // Elimina una asesoría de la base de datos
     public function eliminar(int $id): bool
     {
-        $stmt = $this->db->prepare("DELETE FROM asesorias WHERE id = ?");
+        $stmt = $this->db->prepare("DELETE FROM asesoria WHERE id = ?");
         return $stmt->execute([$id]);
     }
 
-    // Cuenta cuántas asesorías hay en cada estado (agrupado por estado)
     public function contarPorEstado(): array
     {
-        $stmt = $this->db->query("SELECT estado, COUNT(*) AS total FROM asesorias GROUP BY estado");
+        $stmt = $this->db->query("
+            SELECT CASE WHEN ta.permitido = 1 THEN 'Permitido' ELSE 'Denegado' END AS estado, COUNT(*) AS total
+            FROM asesoria a
+            LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
+            GROUP BY ta.permitido
+        ");
         return $stmt->fetchAll();
     }
 }
