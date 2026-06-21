@@ -1,296 +1,60 @@
-# Sistema de Enrutamiento - EIS Zona Web Lara
+El proceso de enrutamiento de esta aplicación sigue el patrón **Front Controller**, lo que significa que todas las peticiones son centralizadas y procesadas por un único punto de entrada. A continuación, se detalla el funcionamiento paso a paso y línea por línea basándose en las fuentes:
 
-El proceso de enrutamiento de esta aplicacion sigue el patron **Front Controller**, centralizando todas las peticiones en un unico punto de entrada. A continuacion, se detalla el funcionamiento paso a paso.
+### 1. Nivel de Servidor: Redirección (.htaccess)
 
----
+Antes de que el código PHP se ejecute, el servidor web (Apache) prepara el camino:
 
-## 1. Nivel de Servidor: Redireccion (.htaccess)
+- **Raíz del proyecto (`/.htaccess`):**
+    - **Línea 7:** `RewriteEngine On` activa el motor de reescritura.
+    - **Líneas 9-10:** `RewriteCond %{REQUEST_FILENAME} !-f` y `!-d` verifican que la petición no sea un archivo o carpeta real (como una imagen o CSS).
+    - **Línea 11:** `RewriteRule ^(.*)$ src/$1 [L]` redirige internamente cualquier petición a la carpeta `src/`.
+- **Dentro de `src/` (`src/.htaccess`):**
+    - **Línea 25:** `RewriteRule ^(.*)$ index.php [QSA,L]` envía cualquier ruta (como `/dashboard` o `/login`) al archivo **index.php**, preservando los parámetros de la URL con `QSA`.
 
-### Raiz del proyecto (`/.htaccess`)
+### 2. Punto de Entrada: index.php
 
-```apache
-RewriteEngine On
+Aquí comienza la ejecución de PHP para cada petición:
 
-# Si la URL no existe como archivo o directorio, redirige a src/
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ src/$1 [L]
+- **Línea 2:** `session_start();` inicia la sesión para verificar si el usuario está autenticado.
+- **Línea 4:** `require_once __DIR__ . '/../vendor/autoload.php';` carga el autoloader de Composer para que las clases se carguen automáticamente bajo el estándar PSR-4.
+- **Líneas 12-15:** Se calcula la **BASE_URL**. Esto permite que la aplicación funcione correctamente ya sea en la raíz del servidor o en subcarpetas, eliminando el nombre del script de la URI para obtener una ruta limpia.
+- **Línea 20:** `$router = new Router();` se crea la instancia del enrutador que gestionará las rutas.
 
-# Si la URL es la raiz, redirige a src/
-RewriteRule ^$ src/ [L,R=301]
-```
+### 3. Registro de Rutas e Instancia de Petición
 
-- `RewriteEngine On`: Activa el motor de reescritura de Apache.
-- `RewriteCond %{REQUEST_FILENAME} !-f` y `!-d`: Verifican que NO sea un archivo o directorio real (imagenes, CSS, etc.).
-- `RewriteRule ^(.*)$ src/$1 [L]`: Redirige internamente cualquier peticion a la carpeta `src/`.
-- `RewriteRule ^$ src/ [L,R=301]`: La raiz redirige permanentemente a `src/`.
+En `index.php` se definen qué controladores responden a qué URLs:
 
-### Dentro de `src/` (`src/.htaccess`)
+- **Líneas 23-40:** Se registran las rutas usando métodos como `$router->get('/login', 'AuthController@showLogin');`.
+- **Línea 30:** Se pueden encadenar middlewares, como `->middleware('auth')`, que protegen rutas específicas exigiendo inicio de sesión.
+- **Línea 42:** Se ejecuta `$router->dispatch(Request::capture());`.
+    - `Request::capture()` crea un objeto que encapsula `$_GET`, `$_POST` y `$_SERVER` para no usarlos globalmente.
+    - `dispatch()` es el motor que busca la coincidencia.
 
-```apache
-Options All -Indexes
-RewriteEngine On
+### 4. El Motor del Router (Router.php)
 
-RewriteRule ^$ index.php [L,QSA]
+El método `dispatch` realiza el trabajo pesado de comparación:
 
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [QSA,L]
-```
+- **Líneas 74-76:** El Router obtiene la **URI limpia** (ej: `/inventario`) y el **método HTTP** (GET o POST) desde el objeto Request.
+- **Líneas 80-84:** Si la URI es la raíz `/`, el sistema decide si mostrar el login o el dashboard basándose en si el usuario está autenticado (`isAuthenticated()`).
+- **Líneas 95-119 (Bucle de Rutas):**
+    - Itera sobre todas las rutas guardadas en el arreglo `$routes`.
+    - **Línea 96:** Verifica que el método HTTP coincida.
+    - **Línea 97:** Usa `preg_match` para comparar la URI actual contra el patrón Regex de la ruta (generado previamente al registrar la ruta convirtiendo parámetros como `{id}` en grupos de captura).
+    - Si hay coincidencia, ejecuta `runMiddleware()`.
 
-- `Options All -Indexes`: Bloquea el listado de directorios por seguridad.
-- `RewriteRule ^$ index.php [L,QSA]`: La raiz de `src/` se sirve desde `index.php`.
-- `RewriteRule ^(.*)$ index.php [QSA,L]`: Cualquier otra ruta (como `/dashboard`) se envia a `index.php`, preservando parametros con `QSA`.
+### 5. Ejecución del Controlador (callHandler)
 
----
+Si la ruta coincide y el middleware (como 'auth') permite el paso, se llama al controlador:
 
-## 2. Punto de Entrada: `src/index.php`
+- **Línea 160:** `explode('@', $handler)` divide el string `"DashboardController@index"` en el nombre de la clase y el método.
+- **Línea 163:** Construye el nombre completo con namespace: `App\\Controllers\\DashboardController`.
+- **Línea 174:** `new $controllerClass()` crea dinámicamente la instancia del controlador.
+- **Línea 177:** `$controller->$methodName(...$params)` ejecuta el método pasando los parámetros extraídos de la URL (usando el operador _splat_ `...`).
 
-```php
-<?php
-require_once __DIR__.'/app/core/router.php';
-```
+### 6. Finalización y Renderizado
 
-- `require_once`: Incluye el archivo `router.php` una sola vez.
-- `__DIR__`: Constante magica que apunta al directorio actual (`src/`).
-- **No usa autoloader de Composer** para el enrutamiento (el router es procedural, no orientado a objetos).
+Finalmente, el controlador decide qué mostrar:
 
----
-
-## 3. El Router: `src/app/core/router.php`
-
-### 3.1 Inicio de Sesion y Parametro de Pagina
-
-```php
-session_start();
-$pagina = "login";
-
-if(!empty($_GET["pagina"])){
-    $pagina = $_GET["pagina"];
-}
-```
-
-- `session_start()`: Inicia o reanuda la sesion PHP (debe ser lo primero).
-- `$pagina = "login"`: Valor por defecto (pagina de inicio de sesion).
-- `$_GET["pagina"]`: Toma el nombre de la pagina desde la URL (ej: `?pagina=dashboard`).
-
-### 3.2 Validacion de Seguridad
-
-```php
-if (!preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)) {
-    $pagina = "login";
-}
-```
-
-- `preg_match`: Valida que el parametro solo contenga caracteres alfanumericos y guiones.
-- **Seguridad**: Previene path traversal (ej: `?pagina=../../../etc/passwd` se redirige a login).
-
-### 3.3 Control de Acceso (Autenticacion)
-
-```php
-$public_pages = ['login', 'login_validate'];
-
-if (!isset($_SESSION['logged_in']) && !in_array($pagina, $public_pages)) {
-    header("Location: ?pagina=login");
-    exit;
-}
-```
-
-- `$public_pages`: Array con las paginas que no requieren autenticacion.
-- Si el usuario NO esta autenticado Y la pagina NO es publica: redirige al login.
-- `exit`: Detiene la ejecucion para evitar que se siga procesando.
-
-### 3.4 Ruta para Controlador AJAX de Inventario
-
-```php
-// Si la pagina es "inventario" y tiene un parametro "action"
-if ($pagina === 'inventario' && isset($_GET['action'])) {
-    // Carga el controlador en lugar de la vista
-    require __DIR__ . '/../Controllers/inventarioController.php';
-    exit; // Termina aqui, no sigue a la carga de vista
-}
-```
-
-Esto permite que las peticiones AJAX de `app.inventario.js` (ej: `?pagina=inventario&action=listar`) lleguen al controlador y devuelvan JSON, mientras que la carga normal de la pagina (`?pagina=inventario`) carga la vista completa.
-
-### 3.5 Carga de la Vista
-
-```php
-$rutaVista = __DIR__ . '/../Views/' . $pagina . '.php';
-
-if(is_file($rutaVista)){
-    if (in_array($pagina, $public_pages)) {
-        // Paginas publicas: se renderizan solas
-        require $rutaVista;
-    } else {
-        // Paginas protegidas: se renderizan dentro del layout maestro
-        $pageTitle = $titulos[$pagina] ?? 'EIS System';
-        $headerExtra = $extraHeaders[$pagina] ?? '';
-        $contentView = $rutaVista;
-        require __DIR__ . '/../template/layout.php';
-    }
-} else {
-    // Error 404
-    http_response_code(404);
-    echo "<h1>Error 404: Pagina no encontrada</h1>";
-    echo "<p>La pagina <strong>{$pagina}</strong> no existe.</p>";
-    echo "<a href='?pagina=dashboard'>Volver al dashboard</a>";
-}
-```
-
-- Si la vista existe:
-  - **Publica**: Carga solo el archivo de vista (login, login_validate).
-  - **Protegida**: Define variables (`$pageTitle`, `$headerExtra`, `$contentView`) e incluye el layout maestro.
-- Si la vista NO existe: Muestra error 404 con enlace al dashboard.
-
-### 3.5 Titulos y Extras por Pagina
-
-```php
-$titulos = [
-    'dashboard'    => 'Panel de Control',
-    'inventario'   => 'Gestion de inventario',
-    'ventas'       => 'Punto de Venta (POS)',
-    'ciberControl' => 'Control de Cybercafe',
-    'proveedores'  => 'Solicitudes a Proveedores',
-    'reportes'     => 'Reportes y Estadisticas',
-    'activos'      => 'Gestion de Activos',
-    'asesorias'    => 'Asesoria Legal',
-    'usuarios'     => 'Gestion de Usuarios',
-];
-
-$extraHeaders = [
-    'ciberControl' => '<span class="chip green white-text">5 Disponibles</span>'
-                    . '<span class="chip orange white-text">4 Ocupadas</span>',
-];
-```
-
-- `$titulos`: Array asociativo con el titulo de cada pagina (para el `<title>` y la barra de navegacion).
-- `$extraHeaders`: HTML adicional para el header (actualmente solo para ciberControl, muestra contadores de estaciones).
-
----
-
-## 4. Layout Maestro: `src/app/template/layout.php`
-
-El layout recibe las siguientes variables desde `router.php`:
-
-| Variable | Proposito |
-|----------|-----------|
-| `$pageTitle` | Titulo de la pagina en `<title>` y barra de navegacion |
-| `$headerExtra` | HTML extra en el header (badges, chips) |
-| `$contentView` | Ruta a la vista a incluir dentro del `<main>` |
-| `$pagina` | Nombre de la pagina actual (para active en sidebar y carga condicional de JS) |
-
-### Carga Condicional de JavaScript
-
-El layout carga 4 archivos JS base siempre, y 3 archivos especificos segun la pagina:
-
-```php
-<!-- Siempre -->
-<script src="Public/js/app.core.js"></script>
-<script src="Public/js/app.init.js"></script>
-<script src="Public/js/app.tables.js"></script>
-<script src="Public/js/app.ui.js"></script>
-
-<!-- Condicional -->
-<?php if ($pagina === 'ventas'): ?>
-<script src="Public/js/app.pos.js"></script>
-<?php endif; ?>
-<?php if ($pagina === 'ciberControl'): ?>
-<script src="Public/js/app.cyber.js"></script>
-<?php endif; ?>
-<?php if ($pagina === 'asesorias'): ?>
-<script src="Public/js/app.legal.js"></script>
-<?php endif; ?>
-```
-
----
-
-## 5. Mapa de Rutas Completo
-
-| Pagina (`?pagina=`) | Vista | Tipo | JS Adicional |
-|---------------------|-------|------|--------------|
-| `login` | `login.php` | Publica | Ninguno |
-| `login_validate` | `login_validate.php` | Publica | Ninguno |
-| `dashboard` | `dashboard.php` | Protegida | Ninguno |
-| `inventario` | `inventario.php` | Protegida | Ninguno |
-| `ventas` | `ventas.php` | Protegida | `app.pos.js` |
-| `proveedores` | `proveedores.php` | Protegida | Ninguno |
-| `ciberControl` | `ciberControl.php` | Protegida | `app.cyber.js` |
-| `reportes` | `reportes.php` | Protegida | Ninguno |
-| `activos` | `activos.php` | Protegida | Ninguno |
-| `asesorias` | `asesorias.php` | Protegida | `app.legal.js` |
-| `menu` | `menu.php` | Protegida | Ninguno |
-| `usuarios` | `usuarios.php` | Protegida | Ninguno |
-
-Cualquier otro valor de `?pagina=` devuelve error 404.
-
----
-
-## 6. Flujo Completo de una Peticion
-
-```
-Usuario: GET /src/?pagina=ventas
-
-1. Apache recibe la peticion
-   └── /.htaccess: RewriteRule ^(.*)$ src/$1 [L]
-   └── src/.htaccess: RewriteRule ^(.*)$ index.php [QSA,L]
-
-2. index.php:
-   └── require_once __DIR__.'/app/core/router.php'
-
-3. router.php:
-   ├── session_start()
-   ├── $pagina = "ventas"
-   ├── preg_match('/^[a-zA-Z0-9_-]+$/', "ventas") -> OK
-   ├── ¿$_SESSION['logged_in']? -> Si (redirige a login si no)
-   ├── $rutaVista = ".../Views/ventas.php" -> existe
-   ├── ¿es publica? -> No
-   ├── $pageTitle = 'Punto de Venta (POS)'
-   ├── $contentView = ".../Views/ventas.php"
-   └── require layout.php
-
-4. layout.php renderiza:
-   ├── <html><head> con CSS local + jQuery
-   ├── Sidebar con navegacion
-   ├── Header con reloj y notificaciones
-   ├── <main> -> require $contentView (ventas.php)
-   ├── Scripts base (core, init, tables, ui)
-   ├── $pagina === 'ventas' -> app.pos.js
-   └── Service Worker registration
-
-5. Navegador recibe HTML + CSS + JS
-   ├── jQuery inicializa componentes Materialize
-   ├── Reloj comienza a actualizarse
-   ├── app.pos.js prepara carrito POS
-   └── Service Worker registrado para offline
-```
-
----
-
-## 7. Seguridad del Sistema de Enrutamiento
-
-| Aspecto | Implementacion |
-|---------|----------------|
-| **Path Traversal** | Regex `preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)` en router.php |
-| **Autenticacion** | Verificacion de `$_SESSION['logged_in']` antes de cargar vistas protegidas |
-| **404** | `is_file()` verifica que la vista exista; si no, `http_response_code(404)` |
-| **CSRF** | Pendiente de implementar |
-| **SQL Injection** | Los modelos usan prepared statements con PDO (aunque no estan conectados a las vistas) |
-
----
-
-## 8. Diferencias con una Arquitectura MVC
-
-| Aspecto | Arquitectura Actual (Procedural) | MVC con Clases |
-|---------|----------------------------------|----------------|
-| **Enrutador** | `router.php` (69 lineas, procedural) | Clase Router con mapa de rutas |
-| **Controladores** | No existen (logica en vistas) | Clases Controller por modulo |
-| **Modelos** | Funciones procedurales incluidas manualmente | Clases con namespaces |
-| **Vistas** | Planas en `/Views/` | En subdirectorios por modulo |
-| **Layout** | `template/layout.php` | `Views/layouts/main.php` |
-| **Autoloader** | No usado para el router | Composer PSR-4 |
-
----
-
-**Documentacion**: Junio 2026
-
+- El controlador (que hereda de `Controller.php`) usa `render()` o `renderWithLayout()`.
+- **Línea 33 (Controller.php):** `extract($data)` convierte las claves de un arreglo en variables disponibles para la vista.
+- Si el Router no encuentra ninguna coincidencia al final del bucle, ejecuta **`handleNotFound()`** (Línea 122), que establece el código HTTP 404 y carga la vista de error.

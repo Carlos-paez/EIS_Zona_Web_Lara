@@ -1,25 +1,23 @@
-# ANALISIS TECNICO — EIS System (Zona Web Lara)
+# ANÁLISIS TÉCNICO — EIS System (Zona Web Lara)
 
-**Arquitectura:** Front Controller procedural con layout maestro  
-**Base de datos:** MySQL 8+ (InnoDB, utf8mb4, 19 tablas)  
-**Frontend:** jQuery 3.7.1 + Materialize CSS 1.0.0 (assets locales)  
-**Offline:** Service Worker + PWA Manifest + pagina offline
+**Arquitectura:** MVC con POO y PDO estricto  
+**Base de datos:** MySQL 8+ (InnoDB, utf8mb4)  
+**Frontend:** Vanilla JS + CSS3 (Grid/Flexbox)  
+**Namespace:** `Carlospez\Clase\` (PSR-4)
 
 ---
 
-## Indice de Modulos
+## Índice de Módulos
 
 1. [Arquitectura General](#1-arquitectura-general)
-2. [Modulo de Autenticacion](#2-modulo-de-autenticacion)
-3. [Modulo Dashboard](#3-modulo-dashboard)
-4. [Modulo Inventario](#4-modulo-inventario)
-5. [Modulo Ventas (POS)](#5-modulo-ventas-pos)
-6. [Modulo Proveedores / Solicitudes](#6-modulo-proveedores--solicitudes)
-7. [Modulo Reportes](#7-modulo-reportes)
-8. [Modulo Activos Fijos](#8-modulo-activos-fijos)
-9. [Modulo Cybercafe](#9-modulo-cybercafe)
-10. [Modulo Asesoria Legal](#10-modulo-asesoria-legal)
-11. [Offline y PWA](#11-offline-y-pwa)
+2. [Módulo de Autenticación](#2-módulo-de-autenticación)
+3. [Módulo Dashboard](#3-módulo-dashboard)
+4. [Módulo Inventario](#4-módulo-inventario)
+5. [Módulo Ventas (POS)](#5-módulo-ventas-pos)
+6. [Módulo Proveedores / Solicitudes](#6-módulo-proveedores--solicitudes)
+7. [Módulo Reportes](#7-módulo-reportes)
+8. [Módulo Activos Fijos](#8-módulo-activos-fijos)
+9. [Módulo Cybercafé](#9-módulo-cybercafé)
 
 ---
 
@@ -30,358 +28,997 @@
 ```
 eis_zona_web_lara/
 ├── composer.json                        # PSR-4 autoloading
-├── src/                                 # Raiz de la aplicacion
+├── src/                                 # Document root
 │   ├── .htaccess                        # Apache Rewrite Rules
-│   ├── index.php                        # Front Controller
-│   ├── manifest.json                    # Manifiesto PWA
-│   ├── sw.js                            # Service Worker
-│   ├── offline.php                      # Pagina offline
+│   ├── index.php                        # Front Controller (entry point)
 │   ├── Config/
-│   │   └── database.php                 # Conexion PDO MySQL
+│   │   └── database.php                 # Conexión PDO
 │   ├── Database/
-│   │   ├── estructura.sql               # Esquema completo (19 tablas)
-│   │   └── datos_prueba.sql             # Datos de prueba
+│   │   ├── mian.sql                     # Esquema completo (10 tablas)
+│   │   └── seed.sql                     # Datos de prueba
 │   ├── app/
 │   │   ├── core/
-│   │   │   └── router.php               # Enrutador procedural
-│   │   ├── Controllers/
-│   │   │   └── inventarioController.php # Controlador AJAX inventario
-│   │   ├── template/
-│   │   │   └── layout.php               # Layout maestro
+│   │   │   └── router.php               # Enrutador / Front Controller
 │   │   ├── Models/
-│   │   │   ├── inventario.php          # Modelo POO inventario (17 métodos)
-│   │   │   ├── crud_users.php           # CRUD usuarios
-│   │   │   └── crud_asesorias.php       # CRUD asesorias
+│   │   │   └── crud.php                 # Operaciones CRUD base
 │   │   └── Views/
-│   │       ├── login.php                # Autenticacion
-│   │       ├── login_validate.php       # Validacion credenciales
+│   │       ├── login.php                # Autenticación
+│   │       ├── login_validate.php       # Validación de credenciales
 │   │       ├── dashboard.php            # Panel principal
-│   │       ├── menu.php                 # Menu navegacion
-│   │       ├── inventario.php           # Gestion inventario
+│   │       ├── menu.php                 # Menú de navegación
+│   │       ├── inventario.php           # Gestión de inventario
 │   │       ├── ventas.php               # Punto de venta (POS)
 │   │       ├── proveedores.php          # Solicitudes a proveedores
-│   │       ├── reportes.php             # Reportes y estadisticas
+│   │       ├── reportes.php             # Reportes y estadísticas
 │   │       ├── activos.php              # Activos fijos
-│   │       ├── ciberControl.php         # Control de cybercafe
-│   │       ├── asesorias.php            # Asesoria legal
-│   │       └── usuarios.php             # Gestion usuarios
+│   │       └── ciberControl.php         # Control de cybercafé
 │   └── Public/
-│       ├── css/
-│       │   ├── styles.css               # Estilos generales (1105 lineas)
-│       │   ├── login.css                # Estilos login (138 lineas)
-│       │   ├── materialize.min.css      # Materialize CSS (local)
-│       │   └── material-icons.css       # Material Icons (local)
-│       ├── js/
-│       │   ├── jquery-3.7.1.min.js      # jQuery (local)
-│       │   ├── materialize.min.js       # Materialize JS (local)
-│       │   ├── app.core.js              # Funciones compartidas
-│       │   ├── app.init.js              # Inicializacion
-│       │   ├── app.tables.js            # Busqueda en tablas
-│       │   ├── app.ui.js                # UI notificaciones
-│       │   ├── app.pos.js               # Sistema POS
-│       │   ├── app.cyber.js             # Estaciones cyber
-│       │   ├── app.legal.js             # Asesoria legal
-│       │   └── app.inventario.js        # CRUD inventario via AJAX
-│       └── fonts/
-│           └── MaterialIcons-Regular.ttf # Material Icons (local)
-├── docs/                                # Documentacion
+│       └── css/
+│           ├── styles.css               # Estilos generales (796 líneas)
+│           └── login.css                # Estilos de login (306 líneas)
+├── docs/
+│   ├── database-conceptual-design.md    # Diseño conceptual
+│   ├── database-logical-design.md       # Diseño lógico
+│   └── database-physical-design.md      # Diseño físico
 └── vendor/                              # Composer dependencies
 ```
 
-### 1.2 Flujo de Trabajo Global (Request → Response)
+### 1.2 Patrón MVC
+
+| Capa | Ubicación | Responsabilidad |
+|------|-----------|-----------------|
+| **Model** | `src/app/Models/crud.php` + clases de entidad | Lógica de negocio, acceso a datos con PDO prepared statements |
+| **View** | `src/app/Views/*.php` | Presentación HTML, recepción de datos del controlador |
+| **Controller** | `src/app/Controlers/` | Orquestación: recibe request, llama a modelos, retorna vista |
+| **Core** | `src/app/core/router.php` | Enrutamiento, sesión, carga de vistas |
+| **Config** | `src/Config/database.php` | Conexión PDO con configuración estricta |
+
+### 1.3 Principios PDO Estricto
 
 ```
-Navegador → /.htaccess → src/.htaccess → index.php → router.php
-                                                         │
-                                                session_start()
-                                                         │
-                                                $pagina = $_GET["pagina"]
-                                                         │
-                                                preg_match (seguridad)
-                                                         │
-                                               ┌──────────┴──────────┐
-                                               ▼                     ▼
-                                          ¿Requiere              Pagina no
-                                          auth?                  existe
-                                               │                     │
-                                     ┌─────────┴─────────┐          ▼
-                                     ▼                   ▼      Error 404
-                                  ¿Sesion            Pagina
-                                  activa?            publica
-                                     │                   │
-                            ┌────────┴────────┐          │
-                            ▼                 ▼          │
-                         Redirige         Cargar         │
-                         a login          layout        │
-                                           + vista       │
-                                            │            │
-                                            ▼            │
-                                        Respuesta       │
-                                        HTML             │
-                                                          ▼
-                                                     Vista directa
-                                                     (standalone)
+PDO::ATTR_ERRMODE            → PDO::ERRMODE_EXCEPTION
+PDO::ATTR_DEFAULT_FETCH_MODE → PDO::FETCH_ASSOC
+PDO::ATTR_EMULATE_PREPARES   → false  (prepared statements reales)
+```
+
+- Toda consulta parametrizada usa `prepare()` + `execute()` con placeholders `?`
+- Las transacciones multi-tabla usan `beginTransaction()`, `commit()`, `rollback()`
+- Las excepciones PDO se capturan para manejo centralizado de errores
+
+### 1.4 Flujo de Trabajo Global (Request → Response)
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌──────────────┐
+│  Navegador  │ ──→ │  .htaccess   │ ──→ │  index.php  │ ──→ │  router.php  │
+└─────────────┘     └──────────────┘     └─────────────┘     └──────────────┘
+                                                                    │
+                                                                    ▼
+                                                           ┌─────────────────┐
+                                                           │  ¿Requiere      │
+                                                           │  autenticación? │
+                                                           └───────┬─────────┘
+                                                              Sí  │   No
+                                                              ▼   ▼
+                                                    ┌─────────────────────┐
+                                                    │  Validar sesión     │
+                                                    │  (redirect si no)   │
+                                                    └──────────┬──────────┘
+                                                               ▼
+                                                     ┌───────────────────┐
+                                                     │  Cargar Vista     │
+                                                     │  require_once     │
+                                                     └───────────────────┘
+                                                               │
+                                                               ▼
+                                                     ┌───────────────────┐
+                                                     │  Renderizar HTML  │
+                                                     │  → Navegador      │
+                                                     └───────────────────┘
 ```
 
 ---
 
-## 2. Modulo de Autenticacion
+## 2. Módulo de Autenticación
 
 ### 2.1 Archivos
 
-| Archivo | Ruta | Funcion |
+| Archivo | Ruta | Función |
 |---------|------|---------|
-| `login.php` | `src/app/Views/login.php` | Formulario de inicio de sesion (134 lineas) |
-| `login_validate.php` | `src/app/Views/login_validate.php` | Procesa credenciales (30 lineas) |
+| `login.php` | `src/app/Views/login.php` | Formulario de inicio de sesión |
+| `login_validate.php` | `src/app/Views/login_validate.php` | Procesa credenciales y gestiona sesión |
 
 ### 2.2 Diseño y Estructura
 
-**Enrutador:** `router.php` determina si la pagina es publica y carga la vista correspondiente.
+**Controlador implícito:** `router.php` (enruta a la vista correspondiente)
+
+**Modelos relacionados:**
+- `crud.php` → funciones `crearUsuario()`, `obtenerUsuarios()`, `obtenerUsuarioPorId()`, `actualizarUsuario()`, `eliminarUsuario()` — todas con PDO prepared statements
+- `database.php` → conexión PDO con configuración estricta
 
 **Vistas:**
-- `login.php`: standalone (sin layout), con Material Design, tema oscuro/claro
-- `login_validate.php`: solo logica PHP, no produce HTML visible
+- `login.php`: standalone (sin sidebar), con glassmorphism, tema oscuro/claro
+- `login_validate.php`: lógica de validación POST, gestión de sesión
 
 ### 2.3 Flujo de Trabajo
 
 ```
-1. Usuario visita ?pagina=login
-   → router.php: pagina publica, carga views/login.php
-   → Renderiza formulario con Material Design
-
-2. Usuario completa formulario y hace POST
-   → router.php: pagina publica, carga login_validate.php
-   → Extrae $_POST["username"] y $_POST["password"]
-   → Valida contra credenciales hardcodeadas (admin/1234)
-   → Si exito:
-     • $_SESSION['logged_in'] = true
-     • $_SESSION['username'] = 'admin'
-     • Redirige a ?pagina=dashboard
-   → Si falla:
-     • Redirige a ?pagina=login&error=1
-
-3. Cierre de sesion
-   → Enlace "Cerrar Sesion" en sidebar
-   → Redirige a ?pagina=login
+┌──────────────────────────────────────────────────────────────────┐
+│                        FLUJO DE LOGIN                           │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. Usuario visita ?pagina=login                                 │
+│     → router.php detecta página pública                          │
+│     → Carga views/login.php                                      │
+│     → Renderiza formulario con:                                  │
+│       • Campo username + password                                │
+│       • Tema oscuro/claro (localStorage)                         │
+│       • Botones sociales (Google/GitHub)                         │
+│       • Mensaje de error si ?error=1                             │
+│                                                                  │
+│  2. Usuario completa formulario y hace POST                      │
+│     → router.php carga login_validate.php                        │
+│     → Extrae $_POST["username"] y $_POST["password"]             │
+│     → Valida contra credenciales del sistema                     │
+│     → Si éxito:                                                  │
+│       • $_SESSION['logged_in'] = true                            │
+│       • $_SESSION['username'] = $username                        │
+│       • Redirige a ?pagina=dashboard                             │
+│     → Si falla:                                                  │
+│       • Redirige a ?pagina=login&error=1                         │
+│                                                                  │
+│  3. Cierre de sesión                                             │
+│     → Enlace "Cerrar Sesión" en sidebar                          │
+│     → Redirige a ?pagina=login                                   │
+│     → session sin destruir (pendiente de implementar)            │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-### 2.4 Sesion
+### 2.4 Elementos de la UI
 
-| Variable | Proposito |
+```
+┌──────────────────────────────────────┐
+│            ⚡ EIS SYSTEM              │
+│   Ingresa tus credenciales           │
+│                                      │
+│   ┌──────────────────────────────┐   │
+│   │ Usuario                      │   │
+│   │ [_________________________]  │   │
+│   └──────────────────────────────┘   │
+│                                      │
+│   ┌──────────────────────────────┐   │
+│   │ Contraseña                   │   │
+│   │ [_________________________]  │   │
+│   └──────────────────────────────┘   │
+│                                      │
+│   ¿Olvidaste tu contraseña?          │
+│                                      │
+│   ┌──────────────────────────────┐   │
+│   │  🚀 Iniciar Sesión           │   │
+│   └──────────────────────────────┘   │
+│                                      │
+│   ─── O continúa con ───            │
+│   [G] [GitHub]                       │
+│                                      │
+│   ¿No tienes una cuenta? Regístrate  │
+└──────────────────────────────────────┘
+```
+
+### 2.5 Rutas
+
+| Método | Ruta | Acción |
+|--------|------|--------|
+| GET | `?pagina=login` | Muestra formulario de login |
+| POST | `?pagina=login_validate` | Procesa credenciales |
+
+### 2.6 Consultas PDO (Modelo crud.php)
+
+```php
+// Crear usuario
+$sql = "INSERT INTO usuarios (nombre, email) VALUES (?, ?)";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([$nombre, $email]);
+
+// Obtener todos
+$stmt = $pdo->query("SELECT * FROM usuarios");
+
+// Obtener por ID
+$stmt = $pdo->prepare("SELECT * FROM usuarios WHERE id = ?");
+$stmt->execute([$id]);
+
+// Actualizar
+$sql = "UPDATE usuarios SET nombre = ?, email = ? WHERE id = ?";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([$nombre, $email, $id]);
+
+// Eliminar
+$sql = "DELETE FROM usuarios WHERE id = ?";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([$id]);
+```
+
+### 2.7 Sesión
+
+| Variable | Propósito |
 |----------|-----------|
-| `$_SESSION['logged_in']` | Indica si el usuario esta autenticado |
+| `$_SESSION['logged_in']` | Indica si el usuario está autenticado |
 | `$_SESSION['username']` | Nombre del usuario para mostrar en UI |
 
-**Paginas publicas** (no requieren autenticacion): `login`, `login_validate`
+**Páginas públicas** (no requieren autenticación):
+- `login`
+- `login_validate`
 
-**Paginas protegidas**: `dashboard`, `inventario`, `ventas`, `proveedores`, `reportes`, `activos`, `ciberControl`, `asesorias`, `menu`, `usuarios`
+**Páginas protegidas** (requieren `$_SESSION['logged_in']`):
+- `dashboard`, `inventario`, `ventas`, `proveedores`, `reportes`, `activos`, `ciberControl`, `menu`
 
 ---
 
-## 3. Modulo Dashboard
+## 3. Módulo Dashboard
+
+### 3.1 Archivo
 
 | Archivo | Ruta |
 |---------|------|
-| `dashboard.php` | `src/app/Views/dashboard.php` (130 lineas) |
-| JS asociado | `app.init.js`, `app.ui.js` |
+| `dashboard.php` | `src/app/Views/dashboard.php` |
+
+### 3.2 Diseño y Estructura
+
+**Layout:** Sidebar (izquierda) + Main Content (derecha)
 
 **Secciones:**
-1. Banner de bienvenida con gradiente
-2. 4 metricas: Ventas Hoy, Stock Critico, Sesiones Cyber, Solicitudes Pend.
-3. Tablas: Horas Pico y Productos Sin Stock
-4. Actividad Reciente
+1. **Banner de bienvenida** — gradiente primary → secondary
+2. **Métricas (grid-4)** — 4 tarjetas con indicadores clave
+3. **Tablas (grid-2)** — Horas pico + Productos sin stock
+4. **Actividad reciente** — Feed de eventos
 
-**Estado**: UI Estatica (datos de ejemplo, sin conexion a BD).
+**Modelos involucrados:**
+- `crud.php` → `obtenerUsuarios()` para obtener datos del usuario actual
+- Queries PDO para métricas (ventas, stock, sesiones cyber, solicitudes)
 
----
+### 3.3 Esquema de la Interfaz
 
-## 4. Modulo Inventario
-
-| Archivo | Ruta |
-|---------|------|
-| `inventario.php` | `src/app/Views/inventario.php` (474 lineas) |
-| `inventarioController.php` | `src/app/Controllers/inventarioController.php` (247 lineas) |
-| `inventario.php` | `src/app/Models/inventario.php` (196 lineas, POO) |
-| `app.inventario.js` | `src/Public/js/app.inventario.js` (450 lineas) |
-| JS asociado | `app.inventario.js`, `app.tables.js` |
-
-**Secciones:**
-1. KPIs: Total productos, Stock Critico, Stock Bajo, Valor Total (desde BD)
-2. Barra de filtros: busqueda por texto + selector de estado + boton "Nuevo Producto"
-3. Tabla de productos con estado, precio, stock, minimo y botones de accion
-4. Modales: Crear/Editar producto, Movimientos de stock, Entrada/Salida de stock
-
-**Arquitectura MVC:**
-- `inventario.php` (Modelo POO): 17 métodos, CRUD completo + KPIs + movimientos de stock
-- `inventarioController.php` (Controlador): 10 acciones AJAX, devuelve JSON
-- `inventario.php` (Vista): Carga datos iniciales desde PHP + interfaz HTML
-- `app.inventario.js` (JavaScript): CRUD via AJAX, actualizacion dinamica de tabla y KPIs
-
-**Acciones del controlador:**
-listar, kpis, categorias, detalle, movimientos, buscar, crear, actualizar, eliminar, entrada, salida
-
-**Estado**: Funcional con conexion a BD (CRUD completo).
-
----
-
-## 5. Modulo Ventas (POS)
-
-| Archivo | Ruta |
-|---------|------|
-| `ventas.php` | `src/app/Views/ventas.php` (130 lineas) |
-| JS asociado | `app.pos.js` |
-
-**Secciones:**
-1. Catalogo de productos (grid de 5 productos)
-2. Carrito de compras con modal Materialize
-
-**JS**: `app.pos.js` implementa:
-- Array `posCart` con objetos `{name, price}`
-- Agregar producto al carrito
-- Modal de carrito con total, eliminar y procesar
-- Busqueda de productos con debounce 200ms
-
-**Estado**: Semi-funcional (carrito frontend funcional, sin persistencia en BD).
-
----
-
-## 6. Modulo Proveedores / Solicitudes
-
-| Archivo | Ruta |
-|---------|------|
-| `proveedores.php` | `src/app/Views/proveedores.php` (115 lineas) |
-| JS asociado | `app.tables.js` |
-
-**Secciones:**
-1. Barra de filtros: busqueda + selector de estado + boton "Nueva Solicitud"
-2. Tabla de solicitudes con paginacion
-
-**Estado**: UI Estatica.
-
----
-
-## 7. Modulo Reportes
-
-| Archivo | Ruta |
-|---------|------|
-| `reportes.php` | `src/app/Views/reportes.php` (139 lineas) |
-| JS asociado | `app.ui.js` |
-
-**Secciones:**
-1. 4 metricas rapidas (Ventas del mes, Productos activos, Horas Cyber, Solicitudes)
-2. Generador de reportes con formulario (tipo, fechas, formato)
-3. Reportes recientes
-
-**Estado**: Simulado (submit del formulario muestra toast, sin generacion real).
-
----
-
-## 8. Modulo Activos Fijos
-
-| Archivo | Ruta |
-|---------|------|
-| `activos.php` | `src/app/Views/activos.php` (207 lineas) |
-| JS asociado | `app.tables.js` |
-
-**Secciones:**
-1. Barra de filtros con busqueda
-2. Grid de tarjetas por tipo: Equipos (3), Licencias (2), Herramientas (4)
-3. Resumen con totales
-
-**Estado**: UI Estatica.
-
----
-
-## 9. Modulo Cybercafe
-
-| Archivo | Ruta |
-|---------|------|
-| `ciberControl.php` | `src/app/Views/ciberControl.php` (133 lineas) |
-| JS asociado | `app.cyber.js` |
-
-**Particularidad**: Los datos de estaciones se generan desde PHP con un array `$zonas` que define 3 zonas (Gamer, Estandar, VIP) con estaciones especificas. Los contadores se calculan con PHP nativo (`array_filter`, `array_merge`).
-
-**JS**: `app.cyber.js` implementa:
-- Toggle de estado entre disponible/ocupada con confirmacion
-- Animacion de transicion con jQuery `.animate()`
-- Filtro visual por estado (todas/disponible/ocupada/mantenimiento)
-
-**Estado**: Interactivo (cambios temporales en frontend, sin persistencia en BD).
-
----
-
-## 10. Modulo Asesoria Legal
-
-| Archivo | Ruta |
-|---------|------|
-| `asesorias.php` | `src/app/Views/asesorias.php` (128 lineas) |
-| JS asociado | `app.legal.js` |
-
-**JS**: `app.legal.js` implementa:
-- Catalogo de 11 tipos de documentos permitidos
-- Validacion en tiempo real: boton cambia de color (indigo = permitido, rojo = derivar)
-- Historial de asesorias registradas en la sesion (array en memoria)
-- Busqueda en historial con debounce 300ms
-- Eliminacion de registros
-
-**Estado**: Semi-funcional (validacion frontend completa, sin persistencia en BD).
-
----
-
-## 11. Offline y PWA
-
-### Service Worker (`src/sw.js`)
-
-```javascript
-var CACHE_NAME = 'eis-cache-v1';
-var STATIC_ASSETS = [
-  'Public/css/material-icons.css',
-  'Public/css/materialize.min.css',
-  'Public/css/styles.css',
-  'Public/css/login.css',
-  'Public/js/jquery-3.7.1.min.js',
-  'Public/js/materialize.min.js',
-  'Public/js/app.core.js',
-  'Public/js/app.init.js',
-  'Public/js/app.tables.js',
-  'Public/js/app.ui.js',
-  'Public/js/app.pos.js',
-  'Public/js/app.cyber.js',
-  'Public/js/app.legal.js',
-  'Public/fonts/MaterialIcons-Regular.ttf',
-  'manifest.json',
-  'offline.php'
-];
+```
+┌──────────────────────────────────────────────────────────────┐
+│  ☰ Panel de Control                      🌙  👤 Admin      │
+├──────────────────────────────────────────────────────────────┤
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │  ¡Bienvenido de nuevo!                                 │  │
+│  │  Gestiona tu negocio de manera eficiente con EIS System │  │
+│  └────────────────────────────────────────────────────────┘  │
+│                                                               │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
+│  │ 💰       │  │ ⚠️       │  │ 🖥️       │  │ 📋       │    │
+│  │ Ventas   │  │ Stock    │  │ Sesiones │  │ Solic.   │    │
+│  │ Hoy      │  │ Crítico  │  │ Cyber    │  │ Pend.    │    │
+│  │ $1,245.50│  │ 4        │  │ 7        │  │ 3        │    │
+│  │ ↗23 trans│  │ Bajo mín │  │ 45min prom│  │ Ctas pag │    │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘    │
+│                                                               │
+│  ┌────────────────────┐  ┌────────────────────┐              │
+│  │ 🕒 Horas Pico      │  │ 📦 Sin Stock       │              │
+│  │────────────────────│  │────────────────────│              │
+│  │ 10-11am │ 42  ↑12% │  │ Resma A4   │ 0    │              │
+│  │ 2-3pm   │ 38  ↑8%  │  │ Tóner Negro│ 0    │              │
+│  │ 6-7pm   │ 31  ↓5%  │  │ Cable USB-C│ 0    │              │
+│  └────────────────────┘  └────────────────────┘              │
+│                                                               │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ 📋 Actividad Reciente                                  │  │
+│  │ 🛒 Venta #V-00142 procesada        — hace 5 min       │  │
+│  │ 📦 Stock: Mouse Inalámbrico        — hace 15 min      │  │
+│  │ 🖥️ Nueva sesión Cyber #5          — hace 30 min      │  │
+│  └────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-**Estrategias de cache:**
-- **Cache First** para assets estaticos (CSS, JS, fuentes, manifest)
-- **Network First** con fallback a `offline.php` para navegacion PHP
+### 3.4 Flujo de Trabajo
 
-### Assets Locales
+```
+1. Usuario autenticado visita ?pagina=dashboard
+2. router.php verifica $_SESSION['logged_in']
+3. Carga views/dashboard.php
+4. La vista obtiene datos (actualmente estáticos) que provendrán de:
+   → Consulta PDO: SELECT COUNT(*), SUM(total) FROM ventas WHERE DATE(fecha)=CURDATE()
+   → Consulta PDO: SELECT COUNT(*) FROM productos WHERE stock <= stock_minimo
+   → Consulta PDO: SELECT COUNT(*) FROM sesiones_cyber WHERE hora_fin IS NULL
+   → Consulta PDO: SELECT COUNT(*) FROM solicitudes WHERE estado='Pendiente'
+   → Consulta PDO: horas pico con GROUP BY HOUR(fecha)
+   → Consulta PDO: productos con stock = 0
+5. Renderiza el dashboard completo
+```
 
-Todos los recursos que antes se cargaban desde CDN ahora son locales:
-- Materialize CSS/JS → `Public/css/` y `Public/js/`
-- jQuery 3.7.1 → `Public/js/jquery-3.7.1.min.js`
-- Material Icons → `Public/css/material-icons.css` + `Public/fonts/MaterialIcons-Regular.ttf`
+### 3.5 Datasheet de Métricas
 
-### JavaScript Modular
-
-El monolito original `app.js` se dividio en 8 archivos especializados:
-
-| Archivo | Funcion | Carga |
-|---------|---------|-------|
-| `app.core.js` | EIS, debounce, filtrarTabla, toast | Siempre |
-| `app.init.js` | Materialize init, reloj, tema, animaciones | Siempre |
-| `app.tables.js` | Busqueda en tablas, filtros, paginacion | Siempre |
-| `app.ui.js` | Notificaciones, botones, reportes, tooltips | Siempre |
-| `app.pos.js` | Sistema POS (carrito) | Solo ventas |
-| `app.cyber.js` | Estaciones cyber | Solo ciberControl |
-| `app.legal.js` | Asesoria legal | Solo asesorias |
-| `app.inventario.js` | CRUD inventario via AJAX | Solo inventario | |
+| Métrica | Descripción | Tipo | Color |
+|---------|-------------|------|-------|
+| Ventas Hoy | Total $ y # transacciones del día | primary | Azul índigo |
+| Stock Crítico | Productos por debajo del mínimo | danger | Rojo |
+| Sesiones Cyber | Estaciones ocupadas actualmente | warning | Ámbar |
+| Solicitudes Pend. | Solicitudes a proveedores sin resolver | info | Azul |
 
 ---
 
-**Documentacion**: Junio 2026  
-**Version**: 2.2
+## 4. Módulo Inventario
 
+### 4.1 Archivo
+
+| Archivo | Ruta |
+|---------|------|
+| `inventario.php` | `src/app/Views/inventario.php` |
+
+### 4.2 Diseño y Estructura
+
+**Layout:** Sidebar + Main Content
+
+**Secciones:**
+1. **Barra de filtros** — búsqueda por texto + selector de estado + botón "Nuevo Producto"
+2. **Tabla de productos** — columnas: ID, Producto, Precio, Stock, Mínimo, Estado, Acciones
+3. **Paginación** — controles Anterior/1/2/3/Siguiente
+
+**Modelo involucrado:** `crud.php` (funciones de lectura/escritura con PDO)
+
+### 4.3 Esquema de la Interfaz
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  ☰ Gestión de Inventario                  🌙  👤 Admin      │
+├──────────────────────────────────────────────────────────────┤
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ 🔍 [Buscar producto...       ] [Todos los estados ▼]  │  │
+│  │                                    [+ Nuevo Producto]  │  │
+│  └────────────────────────────────────────────────────────┘  │
+│                                                               │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ 📦 Lista de Productos           Mostrando 2 de 45     │  │
+│  ├──────┬──────────────┬───────┬──────┬──────┬──────┬───┤  │
+│  │ ID   │ Producto     │ Precio│ Stock│ Mín  │ Est. │ 🔧│  │
+│  ├──────┼──────────────┼───────┼──────┼──────┼──────┼───┤  │
+│  │#1042 │ Mouse Inalámb│ $12.50│   5  │  10  │Críti.│ 📦✏️│  │
+│  │#1043 │ Monitor 24"  │ $189  │  24  │   5  │ OK   │ 📦✏️│  │
+│  │#1044 │ Teclado Mec. │ $45.00│   8  │  10  │ Bajo │ 📦✏️│  │
+│  └──────┴──────────────┴───────┴──────┴──────┴──────┴───┘  │
+│                                                               │
+│   Mostrando 1-3 de 45    [← Ant] [1] [2] [3] [Sig →]        │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### 4.4 Flujo de Trabajo
+
+```
+1. Usuario visita ?pagina=inventario
+2. router.php verifica autenticación
+3. Carga views/inventario.php
+4. Filtros disponibles:
+   → Búsqueda por nombre o código
+   → Filtro por estado: Todos / Stock OK / Crítico / Sin stock
+5. Acciones por producto:
+   → 📦 (Ver movimientos): abre historial de movimientos de stock
+   → ✏️ (Editar): abre formulario de edición del producto
+6. Paginación:
+   → Navegación entre páginas de resultados
+   → Cada página muestra un lote de productos desde DB
+7. Botón "+ Nuevo Producto": abre formulario de creación
+
+Consultas PDO asociadas:
+   SELECT * FROM productos 
+   WHERE (nombre LIKE ? OR codigo LIKE ?) AND estado = ?
+   ORDER BY created_at DESC LIMIT ? OFFSET ?
+```
+
+### 4.5 Tabla de Estados de Producto
+
+| Estado | Badge | Condición |
+|--------|-------|-----------|
+| OK | `badge-success` (verde) | `stock >= stock_minimo` |
+| Bajo | `badge-warning` (ámbar) | `stock > 0 AND stock < stock_minimo` |
+| Crítico | `badge-danger` (rojo) | `stock <= stock_minimo * 0.5` (ejemplo) |
+| Sin stock | `badge-danger` (rojo) | `stock = 0` |
+
+---
+
+## 5. Módulo Ventas (POS)
+
+### 5.1 Archivo
+
+| Archivo | Ruta |
+|---------|------|
+| `ventas.php` | `src/app/Views/ventas.php` |
+
+### 5.2 Diseño y Estructura
+
+**Layout:** Sidebar + Main Content con layout de 2 columnas (POS)
+
+**Secciones:**
+1. **Catálogo de productos** (izquierda) — grid de tarjetas de producto con precio
+2. **Carrito de compras** (derecha) — sticky, lista de items + total + botón procesar
+
+**JavaScript funcional:**
+- `cart[]` — array de objetos `{name, price}`
+- `posAddItem(name, price)` — agrega al carrito
+- `updateCart()` — renderiza carrito y actualiza total
+- `removeItem(index)` — elimina del carrito
+
+### 5.3 Esquema de la Interfaz
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  ☰ Punto de Venta (POS)                   🌙  👤 Admin      │
+├──────────────────────────────────────────────────────────────┤
+│  ┌───────────────────────────┐  ┌─────────────────────────┐  │
+│  │ 🛍️ Catálogo [Buscar...]  │  │ 🧾 Carrito Actual       │  │
+│  │───────────────────────────│  │─────────────────────────│  │
+│  │ ┌─────┐ ┌─────┐ ┌─────┐  │  │ Teclado Mec.    ×$45.00│  │
+│  │ │⌨️   │ │🖱️   │ │🎧   │  │  │ Mouse USB       ×$12.50│  │
+│  │ │Tecla.│ │Mouse │ │Auri.│  │  │                         │  │
+│  │ │$45   │ │$12.5│ │$35  │  │  │                         │  │
+│  │ └─────┘ └─────┘ └─────┘  │  │─────────────────────────│  │
+│  │ ┌─────┐ ┌─────┐          │  │ Total:          $57.50   │  │
+│  │ │🖥️   │ │🔌   │          │  │                         │  │
+│  │ │Monitor│ │Cable │          │  │ [💵 Procesar Venta]   │  │
+│  │ │$189  │ │$8   │          │  │                         │  │
+│  │ └─────┘ └─────┘          │  └─────────────────────────┘  │
+│  └───────────────────────────┘                               │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### 5.4 Flujo de Trabajo
+
+```
+1. Usuario visita ?pagina=ventas
+2. router.php verifica autenticación
+3. Carga views/ventas.php
+4. Interacción del usuario:
+
+   ┌─────────────────────────────────────────────────────────┐
+   │  a. Usuario hace clic en producto del catálogo          │
+   │     → posAddItem("Mouse USB", 12.50)                   │
+   │     → cart.push({name:"Mouse USB", price:12.50})       │
+   │     → updateCart()                                     │
+   │                                                         │
+   │  b. Producto aparece en carrito                         │
+   │     → Se renderiza con nombre y precio                  │
+   │     → Botón × para eliminar                             │
+   │     → Total se actualiza: total += price                │
+   │                                                         │
+   │  c. Usuario hace clic en "Procesar Venta"               │
+   │     → Valida que hay items en carrito                   │
+   │     → Envía datos al backend vía POST/fetch             │
+   │     → Backend procesa con transacción PDO:              │
+   │        • INSERT INTO ventas                             │
+   │        • INSERT INTO detalle_ventas (por cada item)     │
+   │        • UPDATE productos SET stock = stock - cantidad  │
+   │        • INSERT INTO movimientos_stock                  │
+   │        • commit() / rollback()                          │
+   │     → Responde con éxito o error                        │
+   │     → Si éxito: limpia carrito, muestra confirmación    │
+   │                                                         │
+   └─────────────────────────────────────────────────────────┘
+```
+
+### 5.5 Estructura de Datos del Carrito
+
+```javascript
+// Cada item en el carrito
+{
+    name: "Mouse USB",          // Nombre del producto
+    price: 12.50                // Precio unitario
+}
+
+// Estado del carrito
+let cart = [item1, item2, ...]; // Array de items
+let total = 0;                   // Suma de precios
+```
+
+### 5.6 Productos del Catálogo
+
+| Producto | Precio | Emoji |
+|----------|--------|-------|
+| Teclado Mecánico | $45.00 | ⌨️ |
+| Mouse USB | $12.50 | 🖱️ |
+| Auriculares | $35.00 | 🎧 |
+| Monitor 24" | $189.00 | 🖥️ |
+| Cable USB-C | $8.00 | 🔌 |
+
+---
+
+## 6. Módulo Proveedores / Solicitudes
+
+### 6.1 Archivo
+
+| Archivo | Ruta |
+|---------|------|
+| `proveedores.php` | `src/app/Views/proveedores.php` |
+
+### 6.2 Diseño y Estructura
+
+**Layout:** Sidebar + Main Content
+
+**Secciones:**
+1. **Barra de filtros** — búsqueda por proveedor/ID + selector de estado + botón "Nueva Solicitud"
+2. **Tabla de solicitudes** — columnas: ID, Proveedor, Fecha, Estado, Acciones
+3. **Paginación** — controles de navegación
+
+### 6.3 Esquema de la Interfaz
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  ☰ Solicitudes a Proveedores               🌙  👤 Admin     │
+├──────────────────────────────────────────────────────────────┤
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ 🔍 [Buscar por proveedor o ID...]  [Todos los est. ▼] │  │
+│  │                                    [+ Nueva Solicitud] │  │
+│  └────────────────────────────────────────────────────────┘  │
+│                                                               │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ 📝 Lista de Solicitudes          Mostrando 3 de 28    │  │
+│  ├──────────┬─────────────────┬──────────┬────────┬──────┤  │
+│  │ ID       │ Proveedor       │ Fecha    │ Estado │ Acc. │  │
+│  ├──────────┼─────────────────┼──────────┼────────┼──────┤  │
+│  │#SOL-089  │ TechSupplies S.A│2024-04-10│Pend.   │ 👁️  │  │
+│  │#SOL-088  │ GlobalParts Inc.│2024-04-08│Recib.  │ 👁️  │  │
+│  │#SOL-087  │ OfficeMax Corp. │2024-04-05│Cancel. │ 👁️  │  │
+│  └──────────┴─────────────────┴──────────┴────────┴──────┘  │
+│                                                               │
+│   Mostrando 1-3 de 28    [← Ant] [1] [2] [3] [Sig →]        │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### 6.4 Flujo de Trabajo
+
+```
+1. Usuario visita ?pagina=proveedores
+2. router.php verifica autenticación
+3. Carga views/proveedores.php
+4. Filtros disponibles:
+   → Búsqueda por nombre de proveedor o ID de solicitud
+   → Filtro por estado: Todos / Pendiente / Recibida / Cancelada
+5. Acciones:
+   → 👁️ (Ver): abre detalle completo de la solicitud
+   → "+ Nueva Solicitud": abre formulario de creación
+6. Paginación entre resultados
+
+Consultas PDO asociadas:
+   SELECT s.*, p.nombre as proveedor_nombre 
+   FROM solicitudes s 
+   JOIN proveedores p ON s.proveedor_id = p.id
+   WHERE s.estado = ? 
+   ORDER BY s.fecha DESC 
+   LIMIT ? OFFSET ?
+```
+
+### 6.5 Estados de Solicitud
+
+| Estado | Badge | Significado |
+|--------|-------|-------------|
+| Pendiente | `badge-warning` (ámbar) | Solicitud creada, no recibida |
+| Recibida | `badge-success` (verde) | Productos recibidos |
+| Cancelada | `badge-gray` (gris) | Solicitud anulada |
+
+---
+
+## 7. Módulo Reportes
+
+### 7.1 Archivo
+
+| Archivo | Ruta |
+|---------|------|
+| `reportes.php` | `src/app/Views/reportes.php` |
+
+### 7.2 Diseño y Estructura
+
+**Layout:** Sidebar + Main Content
+
+**Secciones:**
+1. **Métricas rápidas (grid-4)** — Ventas del mes, Productos activos, Horas Cyber, Solicitudes
+2. **Generador de reportes** — formulario con tipo, fechas y formato de salida
+3. **Reportes recientes** — lista de reportes generados con botón de descarga
+
+### 7.3 Esquema de la Interfaz
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  ☰ Reportes y Estadísticas                🌙  👤 Admin      │
+├──────────────────────────────────────────────────────────────┤
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
+│  │ 💰       │  │ 📦       │  │ 🖥️       │  │ 📋       │    │
+│  │ Ventas   │  │ Prod.    │  │ Horas    │  │ Solic.   │    │
+│  │ del Mes  │  │ Activos  │  │ Cyber    │  │          │    │
+│  │ $34,580  │  │ 245      │  │ 1,240    │  │ 28       │    │
+│  │ ↗12%     │  │ Inv.     │  │ Este mes │  │ Proc.    │    │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘    │
+│                                                               │
+│  ┌────────────────────────┐  ┌────────────────────────┐     │
+│  │ 📈 Generador Reportes  │  │ 📊 Reportes Recientes  │     │
+│  │                        │  │                        │     │
+│  │ Tipo: [Ventas por fecha│  │ 📈 Ventas - Abril 2024 │     │
+│  │       ▼               │  │    Hoy 10:30AM    [⬇️]  │     │
+│  │                        │  │                        │     │
+│  │ Fecha Inicio: [____]   │  │ 📦 Inventario Actual  │     │
+│  │ Fecha Fin:    [____]   │  │    Ayer 3:15PM   [⬇️]  │     │
+│  │                        │  │                        │     │
+│  │ Formato:               │  │ 🖥️ Horas Cyber - Marzo │     │
+│  │ ○ PDF  ○ Excel  ○ CSV  │  │    Hace 2 días   [⬇️]  │     │
+│  │                        │  │                        │     │
+│  │ [🔍 Generar Reporte]   │  │ 📋 Solicitudes Q1     │     │
+│  └────────────────────────┘  │    Hace 5 días   [⬇️]  │     │
+│                              └────────────────────────┘     │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### 7.4 Flujo de Trabajo
+
+```
+1. Usuario visita ?pagina=reportes
+2. router.php verifica autenticación
+3. Carga views/reportes.php
+4. Las métricas se cargan con consultas agregadas:
+   → Ventas del mes: SUM(total) FROM ventas WHERE MONTH(fecha)=MONTH(NOW())
+   → Productos activos: COUNT(*) FROM productos WHERE estado_venta='Activo'
+   → Horas cyber: SUM(duracion_minutos) FROM sesiones_cyber WHERE MONTH(...)
+   → Solicitudes: COUNT(*) FROM solicitudes WHERE MONTH(...)
+
+5. Generación de reporte:
+   a. Usuario selecciona:
+      • Tipo de reporte (Ventas, Inventario, Movimientos, Solicitudes, Cyber)
+      • Rango de fechas (inicio - fin)
+      • Formato de salida (PDF, Excel, CSV)
+   b. Envía formulario
+   c. Backend procesa:
+      • Consulta DB con filtros de fechas
+      • Genera archivo en formato seleccionado
+      • Ofrece descarga al usuario
+```
+
+### 7.5 Tipos de Reporte
+
+| Tipo | Descripción | Tabla(s) involucrada(s) |
+|------|-------------|------------------------|
+| Ventas por fecha | Transacciones en rango | `ventas`, `detalle_ventas` |
+| Estado de inventario | Productos con stock | `productos` |
+| Movimientos de stock | Auditoría de movimientos | `movimientos_stock` |
+| Solicitudes a proveedores | Compras realizadas | `solicitudes`, `proveedores` |
+| Horas Cybercafé | Sesiones y costos | `sesiones_cyber`, `estaciones_cyber` |
+
+---
+
+## 8. Módulo Activos Fijos
+
+### 8.1 Archivo
+
+| Archivo | Ruta |
+|---------|------|
+| `activos.php` | `src/app/Views/activos.php` |
+
+### 8.2 Diseño y Estructura
+
+**Layout:** Sidebar + Main Content
+
+**Secciones:**
+1. **Barra de filtros** — búsqueda + filtro por categoría + botón "Nuevo Activo"
+2. **Grid de tarjetas por tipo (grid-2):**
+   - Equipos (3 items)
+   - Licencias (2 items)
+   - Herramientas (2 items)
+   - Resumen (totales)
+3. Cada tarjeta contiene tabla con items y botón de acción
+
+### 8.3 Esquema de la Interfaz
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  ☰ Gestión de Activos                      🌙  👤 Admin     │
+├──────────────────────────────────────────────────────────────┤
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ 🔍 [Buscar activo...            ] [Todos ▼]           │  │
+│  │                                    [+ Nuevo Activo]   │  │
+│  └────────────────────────────────────────────────────────┘  │
+│                                                               │
+│  ┌──────────────────────────┐  ┌──────────────────────────┐  │
+│  │ 🖨️ Equipos (3)          │  │ 🔑 Licencias (2)        │  │
+│  │ [Ver todos]              │  │ [Ver todos]              │  │
+│  │──────────────────────────│  │──────────────────────────│  │
+│  │ Impresora HP   │ Activo  │  │ Windows 11 Pro│ Vencida │  │
+│  │ Proyector Epson│ Mant.   │  │ Office 365    │ Activa  │  │
+│  │ Router Cisco   │ Activo  │  │              │         │  │
+│  └──────────────────────────┘  └──────────────────────────┘  │
+│                                                               │
+│  ┌──────────────────────────┐  ┌──────────────────────────┐  │
+│  │ 🔧 Herramientas (2)     │  │ 📊 Resumen               │  │
+│  │ [Ver todos]              │  │                          │  │
+│  │──────────────────────────│  │ 🟢 Activos Totales: 9   │  │
+│  │ Kit Destornill. │ Dispon.│  │ 🔵 En Mantenimiento: 1  │  │
+│  │ Multímetro      │ Dispon.│  │ 🔴 Requieren Atenc.: 1  │  │
+│  └──────────────────────────┘  └──────────────────────────┘  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### 8.4 Flujo de Trabajo
+
+```
+1. Usuario visita ?pagina=activos
+2. router.php verifica autenticación
+3. Carga views/activos.php
+4. Los activos se agrupan por tipo (Equipos, Herramientas, Licencias)
+5. Filtros:
+   → Búsqueda por nombre
+   → Filtro por tipo de activo
+6. Acciones por activo:
+   → ✏️ (Editar): modificar datos del activo
+   → 🔄 (Renovar): para licencias próximas a vencer
+   → 👁️ (Ver detalles): información completa
+7. Resumen muestra totales calculados:
+   → Conteo por estado (Activo, Mantenimiento, Vencida)
+
+Consultas PDO asociadas:
+   SELECT * FROM activos WHERE tipo = ? ORDER BY nombre
+   SELECT COUNT(*), 
+          SUM(estado = 'Activo') as activos,
+          SUM(estado = 'Mantenimiento') as mantenimiento,
+          SUM(estado = 'Vencida') as vencidas
+   FROM activos
+```
+
+### 8.5 Categorías de Activos
+
+| Tipo | Ejemplos | Estados posibles |
+|------|----------|------------------|
+| Equipos | Impresoras, proyectores, routers | Activo, Mantenimiento |
+| Herramientas | Kits, multímetros | Disponible (Activo) |
+| Licencias | Windows, Office | Activa, Vencida |
+
+---
+
+## 9. Módulo Cybercafé
+
+### 9.1 Archivo
+
+| Archivo | Ruta |
+|---------|------|
+| `ciberControl.php` | `src/app/Views/ciberControl.php` |
+
+### 9.2 Diseño y Estructura
+
+**Layout:** Sidebar + Main Content
+
+**Secciones:**
+1. **Barra de acciones** — botones "Nueva Estación", "Historial Sesiones", filtros de estado
+2. **Grid de estaciones (grid-cyber)** — 10 tarjetas con estado visual
+
+**JavaScript interactivo:**
+- `toggleStation(element)` — cambia estado entre Disponible/Ocupada con confirmación
+- `filterStations(filter)` — muestra/oculta estaciones por data-status
+
+### 9.3 Esquema de la Interfaz
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  ☰ Control de Cybercafé     [7🟢] [3🟡]   🌙  👤 Admin    │
+├──────────────────────────────────────────────────────────────┤
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ [+ Nueva Estación] [📜 Historial]                     │  │
+│  │ [🟢Disponibles] [🟡Ocupadas] [🔴Manten.] [◻️Todas]  │  │
+│  └────────────────────────────────────────────────────────┘  │
+│                                                               │
+│  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐         │
+│  │ 🟢   │  │ 🟡   │  │ 🟢   │  │ 🔴   │  │ 🟡   │         │
+│  │  #1  │  │  #2  │  │  #3  │  │  #4  │  │  #5  │         │
+│  │ Disp.│  │ Ocup.│  │ Disp.│  │ Mant.│  │ Ocup.│         │
+│  │Gaming│  │45min │  │Estánd│  │Tecl. │  │1h20m │         │
+│  │      │  │$2.50 │  │      │  │dañado│  │$4.50 │         │
+│  └──────┘  └──────┘  └──────┘  └──────┘  └──────┘         │
+│  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐         │
+│  │ 🟢   │  │ 🟡   │  │ 🟢   │  │ 🟢   │  │ 🟡   │         │
+│  │  #6  │  │  #7  │  │  #8  │  │  #9  │  │ #10  │         │
+│  │ Disp.│  │ Ocup.│  │ Disp.│  │ Disp.│  │ Ocup.│         │
+│  │Gaming│  │30min │  │Estánd│  │Gaming│  │ 2h   │         │
+│  │      │  │$1.50 │  │      │  │      │  │ $6.00│         │
+│  └──────┘  └──────┘  └──────┘  └──────┘  └──────┘         │
+│                                                               │
+│  💡 Haz clic en una estación para cambiar su estado          │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### 9.4 Flujo de Trabajo
+
+```
+1. Usuario visita ?pagina=ciberControl
+2. router.php verifica autenticación
+3. Carga views/ciberControl.php
+4. Las estaciones se renderizan desde DB con su estado actual
+
+5. Interacción del usuario:
+
+   ┌─────────────────────────────────────────────────────────┐
+   │  a. Hacer clic en estación DISPONIBLE                   │
+   │     → confirm("¿Iniciar sesión en estación #N?")       │
+   │     → Si acepta:                                        │
+   │       • Cliente: cambia UI a Ocupada                    │
+   │       • Backend: INSERT sesion_cyber, UPDATE estacion   │
+   │                                                         │
+   │  b. Hacer clic en estación OCUPADA                      │
+   │     → confirm("¿Finalizar sesión en estación #N?")     │
+   │     → Si acepta:                                        │
+   │       • Cliente: cambia UI a Disponible                 │
+   │       • Backend: UPDATE sesion (hora_fin, duracion,     │
+   │         costo), UPDATE estacion a Disponible            │
+   │                                                         │
+   │  c. Hacer clic en estación MANTENIMIENTO                │
+   │     → alert("Estación #N en mantenimiento")             │
+   │     → No se permite acción                              │
+   │                                                         │
+   │  d. Filtros:                                            │
+   │     → Disponibles / Ocupadas / Mantenimiento / Todas    │
+   │     → filterStations() muestra/oculta por data-status   │
+   └─────────────────────────────────────────────────────────┘
+```
+
+### 9.5 Estados de Estación
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      CICLO DE VIDA                          │
+│                                                             │
+│        ┌─────────────────────────────────────┐              │
+│        │                                     │              │
+│        ▼                                     │              │
+│  ┌──────────┐       ┌──────────┐             │              │
+│  │DISPONIBLE│ ────→ │ OCUPADA  │ ────────────┘              │
+│  └──────────┘       └──────────┘                            │
+│        │                                                    │
+│        │                                                    │
+│        ▼                                                    │
+│  ┌──────────┐                                               │
+│  │MANTENIM. │                                               │
+│  └──────────┘                                               │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+| Estado | Color | Acción al hacer clic |
+|--------|-------|----------------------|
+| Disponible | 🟢 Verde (`--success`) | Iniciar sesión |
+| Ocupada | 🟡 Ámbar (`--warning`) | Finalizar sesión |
+| Mantenimiento | 🔴 Rojo (`--danger`) | Mostrar alerta informativa |
+
+### 9.6 Consultas PDO Asociadas
+
+```php
+// Listar estaciones con sesión activa
+$sql = "SELECT ec.*, sc.id as sesion_id, sc.hora_inicio,
+               TIMESTAMPDIFF(MINUTE, sc.hora_inicio, NOW()) as minutos_transcurridos
+        FROM estaciones_cyber ec
+        LEFT JOIN sesiones_cyber sc 
+            ON ec.id = sc.estacion_id AND sc.hora_fin IS NULL
+        ORDER BY ec.nombre";
+
+// Iniciar sesión (transacción)
+$pdo->beginTransaction();
+$stmt = $pdo->prepare("INSERT INTO sesiones_cyber (estacion_id, usuario_id, hora_inicio) VALUES (?, ?, NOW())");
+$stmt->execute([$estacionId, $usuarioId]);
+$stmt = $pdo->prepare("UPDATE estaciones_cyber SET estado = 'Ocupada' WHERE id = ?");
+$stmt->execute([$estacionId]);
+$pdo->commit();
+
+// Finalizar sesión (transacción)
+$pdo->beginTransaction();
+$stmt = $pdo->prepare("UPDATE sesiones_cyber SET hora_fin = NOW(), duracion_minutos = TIMESTAMPDIFF(MINUTE, hora_inicio, NOW()), costo = ROUND(TIMESTAMPDIFF(MINUTE, hora_inicio, NOW()) * 0.10, 2) WHERE id = ? AND hora_fin IS NULL");
+$stmt->execute([$sesionId]);
+$stmt = $pdo->prepare("UPDATE estaciones_cyber SET estado = 'Disponible' WHERE id = (SELECT estacion_id FROM sesiones_cyber WHERE id = ?)");
+$stmt->execute([$sesionId]);
+$pdo->commit();
+```
+
+### 9.7 Modelo de Datos: Estaciones + Sesiones
+
+```
+┌─────────────────────────┐       ┌─────────────────────────┐
+│    estaciones_cyber     │       │     sesiones_cyber      │
+├─────────────────────────┤       ├─────────────────────────┤
+│ id (PK)                 │◄──────│ estacion_id (FK)        │
+│ nombre (UNIQUE)         │       │ usuario_id (FK)         │
+│ estado (ENUM)           │       │ hora_inicio             │
+│ tipo (VARCHAR)          │       │ hora_fin (NULL=activa)  │
+│ created_at              │       │ duracion_minutos        │
+│ updated_at              │       │ costo                   │
+└─────────────────────────┘       └─────────────────────────┘
+```
+
+---
+
+## Apéndice A: Base de Datos — Diagrama Relacional
+
+```
+┌───────────┐       ┌──────────────┐       ┌────────────────┐
+│  usuarios │       │   ventas     │       │ detalle_ventas  │
+├───────────┤       ├──────────────┤       ├────────────────┤
+│ id (PK)   │──┐    │ id (PK)      │──┐    │ id (PK)        │
+│ nombre    │  │    │ fecha        │  │    │ venta_id (FK)───┘
+│ email     │  │    │ total        │  │    │ producto_id (FK)─┐
+│ password  │  │    │ usuario_id(FK)┘  │    │ cantidad        │
+│ created_at│  │    │ estado       │    │    │ precio_unitario │
+│ updated_at│  │    └──────────────┘    │    │ subtotal        │
+└───────────┘  │                       │    └────────────────┘
+               │                       │
+┌──────────────┐│  ┌────────────────┐  │    ┌────────────────┐
+│  solicitudes ││  │ movimientos    │  │    │   productos    │
+├──────────────┤│  │ _stock        │  │    ├────────────────┤
+│ id (PK)      ││  ├────────────────┤  │    │ id (PK)        │──┘
+│ codigo (UNQ) ││  │ id (PK)        │  │    │ codigo (UNIQUE)│
+│ proveedor_id ││  │ producto_id(FK)┘  │    │ nombre         │
+│ fecha        ││  │ tipo           │  │    │ categoria      │
+│ estado       ││  │ cantidad       │  │    │ stock          │
+│ usuario_id(FK)┘  │ stock_anterior │  │    │ precio_venta   │
+└──────────────┘   │ stock_nuevo    │  │    └────────────────┘
+                   │ usuario_id(FK)─┘
+┌───────────┐      │ fecha          │       ┌────────────────┐
+│proveedores│      │ motivo         │       │estaciones_cyber│
+├───────────┤      └────────────────┘       ├────────────────┤
+│ id (PK)   │──┐                             │ id (PK)        │
+│ nombre    │  │  ┌────────────────┐         │ nombre (UNIQUE)│
+│ contacto  │  └──│sesiones_cyber  │         │ estado         │
+│ email     │     ├────────────────┤         │ tipo           │
+│ telefono  │     │ id (PK)        │         └───────┬────────┘
+└───────────┘     │ estacion_id(FK)│───────────────┘
+                  │ usuario_id(FK)─┘
+┌───────────┐     │ hora_inicio    │
+│  activos  │     │ hora_fin       │
+├───────────┤     │ duracion_minutos│
+│ id (PK)   │     │ costo          │
+│ nombre    │     └────────────────┘
+│ tipo      │
+│ estado    │
+└───────────┘
+```
+
+## Apéndice B: Sistema de Rutas
+
+```
+public/                   → .htaccess redirige a index.php
+index.php                 → require_once router.php
+router.php                → session_start + dispatch
+
+Queries GET:
+  ?pagina=login           → views/login.php           (pública)
+  ?pagina=login_validate  → views/login_validate.php  (pública, POST)
+  ?pagina=dashboard       → views/dashboard.php       (protegida)
+  ?pagina=inventario      → views/inventario.php      (protegida)
+  ?pagina=ventas          → views/ventas.php          (protegida)
+  ?pagina=proveedores     → views/proveedores.php     (protegida)
+  ?pagina=reportes        → views/reportes.php        (protegida)
+  ?pagina=activos         → views/activos.php         (protegida)
+  ?pagina=ciberControl    → views/ciberControl.php    (protegida)
+  ?pagina=menu            → views/menu.php            (protegida)
+  cualquier otra          → 404 Error                 (protegida)
+
+Reescritura Apache (.htaccess):
+  /dashboard  →  ?pagina=dashboard
+  /inventario →  ?pagina=inventario
+  (etc.)
+```
+
+## Apéndice C: Temas (Claro/Oscuro)
+
+El sistema implementa un sistema de temas persistente vía `localStorage`:
+
+```
+1. Al cargar la página:
+   → Lee localStorage.getItem('theme') || 'light'
+   → Aplica data-theme="dark|light" en <html>
+   → Ajusta ícono del toggle (🌙/☀️)
+
+2. Al hacer clic en toggle:
+   → Intercambia data-theme
+   → Guarda en localStorage
+   → Cambia ícono
+
+3. CSS variables cambian con [data-theme="dark"]:
+   → --bg: #f1f5f9  →  #0f172a
+   → --surface: #ffffff → #1e293b
+   → --text: #1e293b → #f1f5f9
+   → (y todas las demás variables de color)
+```
+
+---
+
+*Documento de análisis técnico generado el 7 de mayo de 2026 — EIS System (Zona Web Lara)*  
+*Arquitectura: MVC + POO + PDO estricto | Base de datos: MySQL 8+ / InnoDB / utf8mb4*

@@ -1,64 +1,109 @@
 <?php
-// =============================================================================
-// FUNCIONES CRUD DE ASESORÍAS (Versión basada en funciones sueltas)
-// =============================================================================
-// Propósito: Proporciona funciones para gestionar asesorías legales en la
-//            tabla 'asesorias' usando una conexión PDO pasada como parámetro.
-// NOTA: Existe una versión orientada a objetos (Asesoria.php) que hace lo mismo.
-// =============================================================================
+require_once __DIR__.'/../../Config/database.php';
 
-require_once __DIR__.'/../../Config/database.php'; // Trae la conexión $pdo
+function obtenerOcrearCliente($pdo, $cedula, $nombre, $apellido = '') {
+    $stmt = $pdo->prepare("SELECT id FROM clientes WHERE cedula = ?");
+    $stmt->execute([$cedula]);
+    $cliente = $stmt->fetch();
+    if ($cliente) return (int)$cliente['id'];
+    $stmt = $pdo->prepare("INSERT INTO clientes (cedula, nombre, apellido) VALUES (?, ?, ?)");
+    $stmt->execute([$cedula, $nombre, $apellido]);
+    return (int)$pdo->lastInsertId();
+}
 
-// Crea una nueva asesoría legal
-function crearAsesoria($pdo, $ciudadano, $cedula, $documento, $descripcion, $estado = 'Pendiente', $usuario_id = null) {
-    $sql = "INSERT INTO asesorias (ciudadano, cedula, documento, descripcion, estado, usuario_id, fecha_registro) VALUES (?, ?, ?, ?, ?, ?, NOW())";
+function obtenerTipoAsesoria($pdo, $documento) {
+    $stmt = $pdo->prepare("SELECT id FROM tipo_asesoria WHERE LOWER(tipo) = LOWER(?)");
+    $stmt->execute([$documento]);
+    $tipo = $stmt->fetch();
+    return $tipo ? (int)$tipo['id'] : null;
+}
+
+function crearAsesoria($pdo, $ciudadano, $cedula, $documento, $descripcion) {
+    $nombre_partes = explode(' ', $ciudadano, 2);
+    $nombre = $nombre_partes[0];
+    $apellido = $nombre_partes[1] ?? '';
+    $fk_cliente = obtenerOcrearCliente($pdo, $cedula, $nombre, $apellido);
+    $fk_tipo_asesoria = obtenerTipoAsesoria($pdo, $documento);
+    $sql = "INSERT INTO asesoria (documento, descripcion, fecha, fk_cliente, fk_tipo_asesoria) VALUES (?, ?, CURDATE(), ?, ?)";
     $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$ciudadano, $cedula, $documento, $descripcion, $estado, $usuario_id]);
+    return $stmt->execute([$documento, $descripcion, $fk_cliente, $fk_tipo_asesoria]);
 }
 
-// Obtiene todas las asesorías con el nombre de quien las registró
 function obtenerAsesorias($pdo) {
-    $stmt = $pdo->query("SELECT a.*, u.nombre AS usuario_registro FROM asesorias a LEFT JOIN usuarios u ON a.usuario_id = u.id ORDER BY a.fecha_registro DESC");
+    $stmt = $pdo->query("
+        SELECT a.id, a.documento, a.descripcion, a.fecha,
+               c.cedula, CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+               ta.tipo AS tipo_documento, ta.permitido
+        FROM asesoria a
+        LEFT JOIN clientes c ON a.fk_cliente = c.id
+        LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
+        ORDER BY a.fecha DESC
+    ");
     return $stmt->fetchAll();
 }
 
-// Filtra asesorías por estado (Pendiente, Finalizada, etc.)
 function obtenerAsesoriasPorEstado($pdo, $estado) {
-    $stmt = $pdo->prepare("SELECT a.*, u.nombre AS usuario_registro FROM asesorias a LEFT JOIN usuarios u ON a.usuario_id = u.id WHERE a.estado = ? ORDER BY a.fecha_registro DESC");
-    $stmt->execute([$estado]);
+    $permitido = ($estado === 'Permitido' ? 1 : 0);
+    $stmt = $pdo->prepare("
+        SELECT a.id, a.documento, a.descripcion, a.fecha,
+               c.cedula, CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+               ta.tipo AS tipo_documento, ta.permitido
+        FROM asesoria a
+        LEFT JOIN clientes c ON a.fk_cliente = c.id
+        LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
+        WHERE ta.permitido = ?
+        ORDER BY a.fecha DESC
+    ");
+    $stmt->execute([$permitido]);
     return $stmt->fetchAll();
 }
 
-// Obtiene una asesoría por su ID
 function obtenerAsesoriaPorId($pdo, $id) {
-    $stmt = $pdo->prepare("SELECT a.*, u.nombre AS usuario_registro FROM asesorias a LEFT JOIN usuarios u ON a.usuario_id = u.id WHERE a.id = ?");
+    $stmt = $pdo->prepare("
+        SELECT a.*, c.cedula, CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+               ta.tipo AS tipo_documento, ta.permitido
+        FROM asesoria a
+        LEFT JOIN clientes c ON a.fk_cliente = c.id
+        LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
+        WHERE a.id = ?
+    ");
     $stmt->execute([$id]);
     return $stmt->fetch();
 }
 
-// Busca asesorías por cédula (búsqueda parcial)
 function buscarAsesoriasPorCedula($pdo, $cedula) {
-    $stmt = $pdo->prepare("SELECT a.*, u.nombre AS usuario_registro FROM asesorias a LEFT JOIN usuarios u ON a.usuario_id = u.id WHERE a.cedula LIKE ? ORDER BY a.fecha_registro DESC");
+    $stmt = $pdo->prepare("
+        SELECT a.id, a.documento, a.descripcion, a.fecha,
+               c.cedula, CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+               ta.tipo AS tipo_documento, ta.permitido
+        FROM asesoria a
+        INNER JOIN clientes c ON a.fk_cliente = c.id
+        LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
+        WHERE c.cedula LIKE ?
+        ORDER BY a.fecha DESC
+    ");
     $stmt->execute(["%$cedula%"]);
     return $stmt->fetchAll();
 }
 
-// Actualiza una asesoría y asigna fecha de cierre si está finalizada/archivada
-function actualizarAsesoria($pdo, $id, $ciudadano, $cedula, $documento, $descripcion, $estado) {
-    $fecha_cierre = ($estado === 'Finalizada' || $estado === 'Archivada') ? date('Y-m-d H:i:s') : null;
-    $sql = "UPDATE asesorias SET ciudadano = ?, cedula = ?, documento = ?, descripcion = ?, estado = ?, fecha_cierre = COALESCE(?, fecha_cierre) WHERE id = ?";
+function actualizarAsesoria($pdo, $id, $documento, $descripcion) {
+    $fk_tipo_asesoria = obtenerTipoAsesoria($pdo, $documento);
+    $sql = "UPDATE asesoria SET documento = ?, descripcion = ?, fk_tipo_asesoria = COALESCE(?, fk_tipo_asesoria) WHERE id = ?";
     $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$ciudadano, $cedula, $documento, $descripcion, $estado, $fecha_cierre, $id]);
+    return $stmt->execute([$documento, $descripcion, $fk_tipo_asesoria, $id]);
 }
 
-// Elimina una asesoría
 function eliminarAsesoria($pdo, $id) {
-    $stmt = $pdo->prepare("DELETE FROM asesorias WHERE id = ?");
+    $stmt = $pdo->prepare("DELETE FROM asesoria WHERE id = ?");
     return $stmt->execute([$id]);
 }
 
-// Cuenta asesorías agrupadas por estado (estadística)
 function contarAsesoriasPorEstado($pdo) {
-    $stmt = $pdo->query("SELECT estado, COUNT(*) AS total FROM asesorias GROUP BY estado");
+    $stmt = $pdo->query("
+        SELECT CASE WHEN ta.permitido = 1 THEN 'Permitido' ELSE 'Denegado' END AS estado, COUNT(*) AS total
+        FROM asesoria a
+        LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
+        GROUP BY ta.permitido
+    ");
     return $stmt->fetchAll();
 }

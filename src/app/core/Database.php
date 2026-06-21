@@ -23,7 +23,7 @@ class Database
         if (self::$instance === null) {
             // Configuración del servidor MySQL
             $host = 'localhost';               // Dirección del servidor
-            $db   = 'zwl';                     // Nombre de la base de datos
+            $db   = 'zona_web_lara';                     // Nombre de la base de datos
             $user = 'root';                    // Usuario de MySQL
             $pass = '';                        // Contraseña (vacía en desarrollo)
             $charset = 'utf8mb4';              // Juego de caracteres UTF-8 completo

@@ -29,6 +29,12 @@ class Router
             return;                           // Sale para no seguir procesando
         }
 
+        // Si es una petición AJAX de roles (tiene ?action=...), deriva al controlador
+        if ($this->isAjaxRoles()) {
+            $this->runRolController();
+            return;
+        }
+
         // Si es una acción de autenticación (login_validate o logout), deriva al AuthController
         if ($this->isAuthAction()) {
             $this->runAuthAction();
@@ -65,6 +71,12 @@ class Router
         return $this->pagina === 'inventario' && isset($_GET['action']);
     }
 
+    // Verifica si la solicitud es una petición AJAX del módulo de roles
+    private function isAjaxRoles(): bool
+    {
+        return $this->pagina === 'roles' && isset($_GET['action']);
+    }
+
     // Verifica si la solicitud es una acción de autenticación
     private function isAuthAction(): bool
     {
@@ -88,6 +100,15 @@ class Router
     {
         $this->requireAuth();
         $controller = new \App\Controllers\InventarioController();
+        $controller->handle();
+        exit;
+    }
+
+    // Ejecuta el controlador de roles para peticiones AJAX
+    private function runRolController(): void
+    {
+        $this->requireAuth();
+        $controller = new \App\Controllers\RolController();
         $controller->handle();
         exit;
     }
@@ -157,6 +178,7 @@ class Router
             'activos'      => 'Gestión de Activos',
             'asesorias'    => 'Asesoría Legal',
             'usuarios'     => 'Gestión de Usuarios',
+            'roles'        => 'Gestión de Roles y Permisos',
         ];
 
         // Cabeceras adicionales por página (ej: chips de estado para ciberControl)
