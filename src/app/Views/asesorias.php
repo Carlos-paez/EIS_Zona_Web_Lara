@@ -9,16 +9,18 @@
 
 <div class="row">
     <div class="col s12">
-        <!-- Banner de bienvenida con degradado -->
+        <!-- ===== BANNER DE BIENVENIDA CON DEGRADADO ===== -->
         <div class="card welcome-banner" style="background:linear-gradient(135deg, #283593 0%, #5c6bc0 100%);padding:1.75rem 2rem;">
             <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+                <!-- Ícono decorativo (gavel = martillo de juez) -->
                 <div><i class="material-icons" style="font-size:2.5rem;">gavel</i></div>
+                <!-- Texto de bienvenida -->
                 <div style="flex:1;">
                     <h2 style="font-size:1.5rem;font-weight:700;margin:0 0 0.25rem;">Asesoría Legal</h2>
                     <p style="margin:0;opacity:0.9;font-size:0.9rem;">Registro y validación de documentos para asesoría jurídica gratuita</p>
                 </div>
+                <!-- Chip que muestra cuántas asesorías se registraron hoy (actualizado dinámicamente por JS) -->
                 <div>
-                    <!-- Chip que muestra cuántas asesorías se registraron hoy (actualizado por JS) -->
                     <span class="chip indigo lighten-2 white-text" style="font-size:0.8rem;padding:0.25rem 0.75rem;display:inline-flex;align-items:center;gap:0.25rem;" id="asesoriasCountChip"><i class="material-icons" style="font-size:1rem;">receipt</i> <span>0 registradas hoy</span></span>
                 </div>
             </div>
@@ -27,17 +29,19 @@
 </div>
 
 <div class="row">
-    <!-- Columna izquierda: Formulario de registro -->
+    <!-- ===== COLUMNA IZQUIERDA: FORMULARIO DE REGISTRO ===== -->
     <div class="col s12 l5">
         <div class="card">
             <div class="card-content">
                 <span class="card-title"><i class="material-icons left">note_add</i>Registrar Asesoría</span>
 
-                <!-- Contenedor para mostrar resultado de validación de documento (oculto inicialmente) -->
+                <!-- Contenedor para mostrar resultado de validación de documento (oculto por defecto) -->
                 <div id="documentValidationResult" style="display:none;" class="card-panel mb-3">
+                    <!-- Aquí se inyecta el mensaje de validación vía JavaScript -->
                     <div id="validationMessage"></div>
                 </div>
 
+                <!-- Formulario de registro de asesoría -->
                 <form id="asesoriaForm">
                     <div class="row" style="margin-bottom:0;">
                         <!-- Campo: Nombre del ciudadano -->
@@ -52,12 +56,13 @@
                             <input type="text" id="cedula" name="cedula" required>
                             <label for="cedula">Cédula de Identidad</label>
                         </div>
-                        <!-- Campo: Tipo de documento con sugerencias (datalist) -->
+                        <!-- Campo: Tipo de documento con sugerencias autocompletables (datalist) -->
                         <div class="input-field col s12">
                             <i class="material-icons prefix">description</i>
+                            <!-- Input con datalist para sugerencias de tipos de documentos -->
                             <input type="text" id="documento" name="documento" list="documentSuggestions" required placeholder="Ej: Consulta Laboral">
                             <label for="documento">Tipo de Documento / Asesoría</label>
-                            <!-- Lista de sugerencias para autocompletado -->
+                            <!-- Lista de sugerencias de documentos para autocompletado -->
                             <datalist id="documentSuggestions">
                                 <option value="Consulta Laboral">
                                 <option value="Consulta Civil">
@@ -74,6 +79,7 @@
                                 <option value="Herencia / Sucesión">
                                 <option value="Penal / Delito">
                             </datalist>
+                            <!-- Texto de ayuda -->
                             <small class="grey-text" style="font-size:0.75rem;">Selecciona o escribe el tipo de documento</small>
                         </div>
                         <!-- Campo: Descripción del motivo de la consulta -->
@@ -82,7 +88,7 @@
                             <textarea id="descripcion" name="descripcion" class="materialize-textarea"></textarea>
                             <label for="descripcion">Descripción / Motivo de la Consulta</label>
                         </div>
-                        <!-- Botón de envío (deshabilitado hasta validar el documento) -->
+                        <!-- Botón de envío del formulario (deshabilitado hasta validar el documento) -->
                         <div class="col s12" style="margin-top:0.5rem;">
                             <button type="submit" class="btn waves-effect waves-light indigo" id="btnRegistrar" style="width:100%;" disabled>
                                 <i class="material-icons left">verified</i>Validar y Registrar
@@ -94,25 +100,25 @@
         </div>
     </div>
 
-    <!-- Columna derecha: Historial e información -->
+    <!-- ===== COLUMNA DERECHA: HISTORIAL E INFORMACIÓN ===== -->
     <div class="col s12 l7">
-        <!-- Tarjeta: Historial de asesorías registradas -->
+        <!-- ===== TARJETA: HISTORIAL DE ASESORÍAS REGISTRADAS ===== -->
         <div class="card">
             <div class="card-content">
                 <span class="card-title">
                     <i class="material-icons left">history</i>Historial de Asesorías
-                    <!-- Badge con el total de asesorías (actualizado por JS) -->
+                    <!-- Badge con el total de asesorías registradas (actualizado dinámicamente por JS) -->
                     <span class="badge indigo white-text" id="totalAsesoriasBadge" style="font-size:0.85rem;border-radius:4px;">0</span>
                 </span>
                 <div class="row" style="margin-bottom:0;">
-                    <!-- Buscador en el historial -->
+                    <!-- Buscador en el historial de asesorías -->
                     <div class="input-field col s12">
                         <i class="material-icons prefix">search</i>
                         <input type="text" id="searchAsesoria" placeholder="Buscar por ciudadano, cédula o documento...">
                         <label for="searchAsesoria">Buscar en historial</label>
                     </div>
                 </div>
-                <!-- Tabla de asesorías (los datos los carga JS dinámicamente) -->
+                <!-- Tabla de asesorías (los datos se cargan dinámicamente con JavaScript) -->
                 <table class="striped responsive-table">
                     <thead>
                         <tr>
@@ -122,15 +128,17 @@
                             <th>Documento</th>
                             <th>Estado</th>
                             <th class="hide-on-small-only">Fecha</th>
+                            <!-- Columna de acciones en escritorio -->
                             <th class="right-align hide-on-small-only">Acción</th>
+                            <!-- Columna de acciones en móvil -->
                             <th class="hide-on-med-and-up right-align">Acción</th>
                         </tr>
                     </thead>
+                    <!-- Cuerpo de la tabla: las filas se generan dinámicamente con JavaScript -->
                     <tbody id="asesoriasTableBody">
-                        <!-- Las filas se generan dinámicamente con JavaScript -->
                     </tbody>
                 </table>
-                <!-- Mensaje mostrado cuando no hay asesorías -->
+                <!-- Mensaje mostrado cuando no hay asesorías registradas -->
                 <div id="asesoriasEmpty" class="center-align" style="padding:2rem 0;color:var(--text-muted);">
                     <i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">gavel</i>
                     <p>No hay asesorías registradas aún.<br><small>Completa el formulario para registrar la primera.</small></p>
@@ -138,12 +146,13 @@
             </div>
         </div>
 
-        <!-- Tarjeta informativa: Documentos permitidos -->
+        <!-- ===== TARJETA INFORMATIVA: DOCUMENTOS PERMITIDOS ===== -->
         <div class="card">
             <div class="card-content">
                 <span class="card-title"><i class="material-icons left">info</i>Documentos Permitidos</span>
-                <!-- Chips con los tipos de documento aceptados -->
+                <!-- Lista de chips con los tipos de documento aceptados -->
                 <div style="display:flex;flex-wrap:wrap;gap:0.35rem;">
+                    <!-- Cada chip muestra un documento permitido con palomita verde -->
                     <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.78rem;border-radius:4px;height:auto;padding:0.35rem 0.6rem;margin:0;">✓ Consulta Laboral</div>
                     <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.78rem;border-radius:4px;height:auto;padding:0.35rem 0.6rem;margin:0;">✓ Consulta Civil</div>
                     <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.78rem;border-radius:4px;height:auto;padding:0.35rem 0.6rem;margin:0;">✓ Consulta Familiar</div>
@@ -152,7 +161,7 @@
                     <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.78rem;border-radius:4px;height:auto;padding:0.35rem 0.6rem;margin:0;">✓ Elaboración de Documento Simple</div>
                     <div class="chip green lighten-4 green-text" style="font-weight:600;font-size:0.78rem;border-radius:4px;height:auto;padding:0.35rem 0.6rem;margin:0;">✓ Asesoría Prevencional</div>
                 </div>
-                <!-- Nota sobre documentos que requieren derivación -->
+                <!-- Nota aclaratoria sobre documentos que requieren derivación a una oficina oficial -->
                 <p class="grey-text" style="font-size:0.8rem;margin-top:0.75rem;"><i class="material-icons left" style="font-size:1rem;">lock</i>Documentos no listados (juicios, demandas, apelaciones, herencias, penal, etc.) requieren derivación a una oficina oficial de atención legal.</p>
             </div>
         </div>

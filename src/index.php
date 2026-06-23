@@ -9,12 +9,13 @@
 // =============================================================================
 
 // Carga el autoloader de Composer para tener disponibles todas las clases
+// y namespaces registrados en el proyecto (autoloading PSR-4)
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// Importa la clase Router del namespace App\Core
+// Importa la clase Router del namespace App\Core para usarla sin prefijo
 use App\Core\Router;
 
-// Crea una instancia del enrutador (inicia sesión y resuelve la página)
+// Crea una instancia del enrutador principal (inicia sesión y resuelve la página solicitada)
 $router = new Router();
-// Procesa la solicitud: determina qué acción ejecutar y renderiza la respuesta
+// Procesa la solicitud entrante: determina qué acción ejecutar y renderiza la respuesta
 $router->handle();

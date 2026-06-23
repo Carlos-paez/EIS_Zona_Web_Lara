@@ -6,11 +6,11 @@
      NOTA: Todos los datos son estáticos (UI prototype).
      ============================================================ -->
 
-<!-- Barra de herramientas: búsqueda, filtro por categoría y botón de nuevo activo -->
+<!-- ===== BARRA DE HERRAMIENTAS: BÚSQUEDA, FILTRO Y BOTÓN NUEVO ACTIVO ===== -->
 <div class="card">
     <div class="card-content" style="padding:1.25rem 1.5rem;">
         <div class="row" style="margin-bottom:0;">
-            <!-- Buscador de activos -->
+            <!-- Buscador de activos por nombre o código -->
             <div class="col s12 m6 l5">
                 <div class="input-field" style="margin-top:0;margin-bottom:0;">
                     <i class="material-icons prefix">search</i>
@@ -18,10 +18,11 @@
                     <label for="searchActivo">Buscar activo</label>
                 </div>
             </div>
-            <!-- Filtro por categoría -->
+            <!-- Filtro por categoría de activo -->
             <div class="col s6 m3 l3">
                 <div class="input-field" style="margin-top:0;margin-bottom:0;">
                     <select>
+                        <!-- Opción por defecto: todos los activos -->
                         <option value="" selected>Todos los activos</option>
                         <option value="equipos">Equipos</option>
                         <option value="herramientas">Herramientas</option>
@@ -30,7 +31,7 @@
                     <label>Categoría</label>
                 </div>
             </div>
-            <!-- Botón para agregar nuevo activo -->
+            <!-- Botón para agregar un nuevo activo -->
             <div class="col s6 m3 l4 right-align" style="padding-top:0.75rem;">
                 <button class="btn waves-effect waves-light indigo btn-nuevo btn-mobile-full" data-tipo="activo"><i class="material-icons left">add</i><span class="hide-on-small-only">Nuevo Activo</span><span class="hide-on-med-and-up">Nuevo</span></button>
             </div>
@@ -38,14 +39,15 @@
     </div>
 </div>
 
-<!-- Tablas de activos agrupados por categoría -->
+<!-- ===== TABLAS DE ACTIVOS AGRUPADOS POR CATEGORÍA ===== -->
 <div class="row">
-    <!-- Equipos -->
+    <!-- ===== SECCIÓN: EQUIPOS ===== -->
     <div class="col s12 l6">
         <div class="card">
             <div class="card-content">
                 <span class="card-title">
                     <i class="material-icons left">print</i>Equipos (3)
+                    <!-- Botón para ver todos los equipos -->
                     <a class="btn-floating waves-effect waves-light grey right tooltipped" data-position="top" data-tooltip="Ver todos"><i class="material-icons">arrow_forward</i></a>
                 </span>
                 <table class="striped">
@@ -57,26 +59,32 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <!-- Equipo 1: Impresora Láser HP -->
                         <tr>
                             <td>
                                 <div style="font-weight:600;">Impresora Láser HP</div>
+                                <!-- Número de serie -->
                                 <small style="color:var(--text-muted);">Serie: HP-2024-001</small>
                             </td>
+                            <!-- Badge de estado: Activo (verde) -->
                             <td><span class="new badge green" data-badge-caption="">Activo</span></td>
                             <td class="right-align">
                                 <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Editar"><i class="material-icons">edit</i></button>
                             </td>
                         </tr>
+                        <!-- Equipo 2: Proyector Epson -->
                         <tr>
                             <td>
                                 <div style="font-weight:600;">Proyector Epson</div>
                                 <small style="color:var(--text-muted);">Serie: EPS-2023-045</small>
                             </td>
+                            <!-- Badge de estado: Mantenimiento (naranja) -->
                             <td><span class="new badge orange" data-badge-caption="">Mantenimiento</span></td>
                             <td class="right-align">
                                 <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Editar"><i class="material-icons">edit</i></button>
                             </td>
                         </tr>
+                        <!-- Equipo 3: Router Cisco -->
                         <tr>
                             <td>
                                 <div style="font-weight:600;">Router Cisco</div>
@@ -92,7 +100,8 @@
             </div>
         </div>
     </div>
-    <!-- Licencias -->
+
+    <!-- ===== SECCIÓN: LICENCIAS ===== -->
     <div class="col s12 l6">
         <div class="card">
             <div class="card-content">
@@ -109,16 +118,20 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <!-- Licencia 1: Windows 11 Pro (vencida) -->
                         <tr>
                             <td>
                                 <div style="font-weight:600;">Windows 11 Pro</div>
+                                <!-- Fecha de expiración -->
                                 <small style="color:var(--text-muted);">Expira: 2024-12-31</small>
                             </td>
+                            <!-- Badge de estado: Vencida (rojo) -->
                             <td><span class="new badge red" data-badge-caption="">Vencida</span></td>
                             <td class="right-align">
                                 <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Renovar"><i class="material-icons">refresh</i></button>
                             </td>
                         </tr>
+                        <!-- Licencia 2: Office 365 (activa) -->
                         <tr>
                             <td>
                                 <div style="font-weight:600;">Office 365</div>
@@ -137,7 +150,7 @@
 </div>
 
 <div class="row">
-    <!-- Herramientas -->
+    <!-- ===== SECCIÓN: HERRAMIENTAS ===== -->
     <div class="col s12 l6">
         <div class="card">
             <div class="card-content">
@@ -154,6 +167,7 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <!-- Herramienta 1: Kit Destornilladores -->
                         <tr>
                             <td>
                                 <div style="font-weight:600;">Kit Destornilladores</div>
@@ -164,6 +178,7 @@
                                 <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Ver detalles"><i class="material-icons">visibility</i></button>
                             </td>
                         </tr>
+                        <!-- Herramienta 2: Multímetro Digital -->
                         <tr>
                             <td>
                                 <div style="font-weight:600;">Multímetro Digital</div>
@@ -179,23 +194,24 @@
             </div>
         </div>
     </div>
-    <!-- Resumen de activos -->
+
+    <!-- ===== SECCIÓN: RESUMEN DE ACTIVOS ===== -->
     <div class="col s12 l6">
         <div class="card">
             <div class="card-content">
                 <span class="card-title"><i class="material-icons left">assessment</i>Resumen</span>
                 <div style="display:flex;flex-direction:column;gap:0.75rem;">
-                    <!-- Total de activos -->
+                    <!-- Indicador: Activos Totales (verde) -->
                     <div class="card-panel green lighten-4" style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;margin:0;border-radius:8px;">
                         <span style="font-weight:600;color:#2e7d32;">Activos Totales</span>
                         <span style="font-weight:800;font-size:1.5rem;color:#2e7d32;">9</span>
                     </div>
-                    <!-- En mantenimiento -->
+                    <!-- Indicador: En Mantenimiento (azul) -->
                     <div class="card-panel blue lighten-4" style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;margin:0;border-radius:8px;">
                         <span style="font-weight:600;color:#1565c0;">En Mantenimiento</span>
                         <span style="font-weight:800;font-size:1.5rem;color:#1565c0;">1</span>
                     </div>
-                    <!-- Requieren atención -->
+                    <!-- Indicador: Requieren Atención (rojo) -->
                     <div class="card-panel red lighten-4" style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;margin:0;border-radius:8px;">
                         <span style="font-weight:600;color:#c62828;">Requieren Atención</span>
                         <span style="font-weight:800;font-size:1.5rem;color:#c62828;">1</span>
