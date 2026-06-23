@@ -59,6 +59,16 @@ INSERT INTO clientes (cedula, nombre, apellido, direccion, telefono) VALUES
 ('V-01234567', 'Daniela', 'Torres', 'Urb. El Paraíso, Maracay', '0412-0123456');
 
 -- ============================================================
+-- CLIENTE_ASESORIA
+-- ============================================================
+INSERT INTO cliente_asesoria (cedula, nombre, apellido, direccion, telefono, email) VALUES
+('V-12345678', 'Carlos', 'González', 'Av. Libertador, Caracas', '0412-1234567', 'carlosg@email.com'),
+('V-34567890', 'Pedro', 'Martínez', 'Urb. Las Mercedes, Valencia', '0424-3456789', 'pedrom@email.com'),
+('J-56789012', 'Comercial XYZ, C.A.', 'S/N', 'Zona Industrial, San Cristóbal', '0276-5678901', 'comercialxyz@email.com'),
+('V-23456789', 'María', 'Rodríguez', 'Calle Sucre, Maracaibo', '0414-2345678', 'mariar@email.com'),
+('J-89012345', 'Inversiones ABC, C.A.', 'S/N', 'Centro Empresarial, Los Teques', '0212-8901234', 'inversionesabc@email.com');
+
+-- ============================================================
 -- PROVEEDORES
 -- ============================================================
 INSERT INTO proveedores (rif, nombre, email, telefono) VALUES
@@ -313,35 +323,35 @@ INSERT INTO lineas_abastecimiento (cantidad, precio, fk_orden_abastecimiento, fk
 -- ============================================================
 -- ASESORIA
 -- ============================================================
-INSERT INTO asesoria (documento, descripcion, fecha, fk_cliente, fk_tipo_asesoria) VALUES
+INSERT INTO asesoria (documento, descripcion, fecha, fk_cliente_asesoria, fk_tipo_asesoria) VALUES
 ('ASES-001', 'Asesoría para instalación de servidor en red local', '2026-06-02', 1, 2),
-('ASES-002', 'Diagnóstico y reparación de PC de escritorio', '2026-06-04', 3, 4),
-('ASES-003', 'Configuración de software contable', '2026-06-07', 5, 3),
-('ASES-004', 'Asesoría para migración a Office 365', '2026-06-09', 2, 3),
-('ASES-005', 'Revisión de equipos para renovación de parque tecnológico', '2026-06-11', 8, 1);
-
--- ============================================================
--- SESION_CIBER
--- ============================================================
-INSERT INTO sesion_ciber (tiempo_uso, fk_cliente, fk_tarifa) VALUES
-('01:30:00', 1, 3),
-('00:45:00', 3, 2),
-('02:00:00', 4, 4),
-('01:00:00', 6, 2),
-('00:30:00', 7, 1),
-('03:00:00', 9, 5);
+('ASES-002', 'Diagnóstico y reparación de PC de escritorio', '2026-06-04', 2, 4),
+('ASES-003', 'Configuración de software contable', '2026-06-07', 3, 3),
+('ASES-004', 'Asesoría para migración a Office 365', '2026-06-09', 4, 3),
+('ASES-005', 'Revisión de equipos para renovación de parque tecnológico', '2026-06-11', 5, 1);
 
 -- ============================================================
 -- ACTIVOS
 -- ============================================================
-INSERT INTO activos (marca, descripcion, is_ciber, activa, fk_tipo_activo, fk_usuario_usa) VALUES
-('HP', 'PC Escritorio HP ProDesk 400 G5', TRUE, TRUE, 1, 1),
-('Dell', 'Laptop Dell Latitude 5490', FALSE, TRUE, 2, 2),
-('Samsung', 'Monitor Samsung 24" Curvo', TRUE, TRUE, 3, 3),
-('HP', 'Impresora HP LaserJet M404', FALSE, TRUE, 4, 4),
-('Dell', 'Servidor Dell PowerEdge T340', FALSE, TRUE, 5, 1),
-('TP-Link', 'Router TP-Link Archer C80', TRUE, TRUE, 6, 4),
-('Cisco', 'Switch Cisco Catalyst 2960', TRUE, TRUE, 7, 1),
-('APC', 'UPS APC Back-UPS 1500VA', TRUE, TRUE, 8, 2),
-('Lenovo', 'PC Escritorio Lenovo ThinkCentre', TRUE, TRUE, 1, 3),
-('LG', 'Monitor LG 27" 4K', FALSE, TRUE, 3, 2);
+INSERT INTO activos (marca, descripcion, is_ciber, activa, fk_tipo_activo) VALUES
+('HP', 'PC Escritorio HP ProDesk 400 G5', TRUE, TRUE, 1),
+('Dell', 'Laptop Dell Latitude 5490', FALSE, TRUE, 2),
+('Samsung', 'Monitor Samsung 24" Curvo', TRUE, TRUE, 3),
+('HP', 'Impresora HP LaserJet M404', FALSE, TRUE, 4),
+('Dell', 'Servidor Dell PowerEdge T340', FALSE, TRUE, 5),
+('TP-Link', 'Router TP-Link Archer C80', TRUE, TRUE, 6),
+('Cisco', 'Switch Cisco Catalyst 2960', TRUE, TRUE, 7),
+('APC', 'UPS APC Back-UPS 1500VA', TRUE, TRUE, 8),
+('Lenovo', 'PC Escritorio Lenovo ThinkCentre', TRUE, TRUE, 1),
+('LG', 'Monitor LG 27" 4K', FALSE, TRUE, 3);
+
+-- ============================================================
+-- SESION_CIBER
+-- ============================================================
+INSERT INTO sesion_ciber (tiempo_uso, fk_cliente, fk_tarifa, fk_activo) VALUES
+('01:30:00', 1, 3, NULL),
+('00:45:00', 3, 2, NULL),
+('02:00:00', 4, 4, NULL),
+('01:00:00', 6, 2, NULL),
+('00:30:00', 7, 1, NULL),
+('03:00:00', 9, 5, NULL);
