@@ -1,7 +1,6 @@
 CREATE DATABASE IF NOT EXISTS zona_web_lara;
 USE zona_web_lara;
 
--- 1. Tablas Maestras / Independientes
 CREATE TABLE roles
 (
     id         INT PRIMARY KEY AUTO_INCREMENT,
@@ -45,7 +44,6 @@ CREATE TABLE cliente_asesoria
     email            VARCHAR(80) not null default 'N/A',
     rif              varchar(50)          default 'N/A',
     tipo             varchar(80)          default 'civil',
-    fecha_nacimiento date        not null,
     foreign key (fk_cliente) references clientes (id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -96,7 +94,6 @@ CREATE TABLE tipo_activo
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
 
--- 2. Tablas con dependencias (Llaves Foráneas)
 
 CREATE TABLE rol_usuarios
 (
@@ -218,6 +215,19 @@ CREATE TABLE asesoria
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
 
+CREATE TABLE activos
+(
+    id             INT PRIMARY KEY AUTO_INCREMENT,
+    marca          VARCHAR(100) not null,
+    descripcion    TEXT         not null,
+    is_ciber       BOOLEAN      not null default false,
+    activa         BOOLEAN               DEFAULT TRUE,
+    fk_tipo_activo INT,
+    FOREIGN KEY (fk_tipo_activo) REFERENCES tipo_activo (id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_spanish_ci;
+
 CREATE TABLE sesion_ciber
 (
     id         INT PRIMARY KEY AUTO_INCREMENT,
@@ -228,19 +238,6 @@ CREATE TABLE sesion_ciber
     FOREIGN KEY (fk_cliente) REFERENCES clientes (id),
     FOREIGN KEY (fk_tarifa) REFERENCES tarifas (id),
     FOREIGN KEY (fk_activo) REFERENCES activos (id)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_spanish_ci;
-
-CREATE TABLE activos
-(
-    id             INT PRIMARY KEY AUTO_INCREMENT,
-    marca          VARCHAR(100) not null,
-    descripcion    TEXT         not null,
-    is_ciber       BOOLEAN      not null default false,
-    activa         BOOLEAN               DEFAULT TRUE,
-    fk_tipo_activo INT,
-    FOREIGN KEY (fk_tipo_activo) REFERENCES tipo_activo (id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;

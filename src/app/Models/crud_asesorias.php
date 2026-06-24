@@ -13,15 +13,24 @@ require_once __DIR__.'/../../Config/database.php';
  * @return int            ID del cliente.
  */
 function obtenerOcrearCliente($pdo, $cedula, $nombre, $apellido = '') {
-    // Busca si el cliente ya existe por su cédula
-    $stmt = $pdo->prepare("SELECT id FROM cliente_asesoria WHERE cedula = ?");
+    // 1. Buscar o crear en la tabla clientes
+    $stmt = $pdo->prepare("SELECT id FROM clientes WHERE cedula = ?");
     $stmt->execute([$cedula]);
     $cliente = $stmt->fetch();
-    // Si existe, retorna su ID como entero
-    if ($cliente) return (int)$cliente['id'];
-    // Si no existe, lo inserta y retorna el ID autogenerado
-    $stmt = $pdo->prepare("INSERT INTO cliente_asesoria (cedula, nombre, apellido) VALUES (?, ?, ?)");
-    $stmt->execute([$cedula, $nombre, $apellido]);
+    if ($cliente) {
+        $cliente_id = (int)$cliente['id'];
+    } else {
+        $stmt = $pdo->prepare("INSERT INTO clientes (cedula, nombre, apellido, direccion, telefono) VALUES (?, ?, ?, '', '')");
+        $stmt->execute([$cedula, $nombre, $apellido]);
+        $cliente_id = (int)$pdo->lastInsertId();
+    }
+    // 2. Buscar o crear en cliente_asesoria vinculado al cliente
+    $stmt = $pdo->prepare("SELECT id FROM cliente_asesoria WHERE fk_cliente = ?");
+    $stmt->execute([$cliente_id]);
+    $ca = $stmt->fetch();
+    if ($ca) return (int)$ca['id'];
+    $stmt = $pdo->prepare("INSERT INTO cliente_asesoria (fk_cliente, email, rif, tipo) VALUES (?, 'N/A', 'N/A', 'civil')");
+    $stmt->execute([$cliente_id]);
     return (int)$pdo->lastInsertId();
 }
 
@@ -73,13 +82,14 @@ function crearAsesoria($pdo, $ciudadano, $cedula, $documento, $descripcion) {
  * @return array   Lista de asesorías.
  */
 function obtenerAsesorias($pdo) {
-    // Consulta con JOIN a cliente_asesoria y tipo_asesoria
+    // Consulta con JOIN a cliente_asesoria, clientes y tipo_asesoria
     $stmt = $pdo->query("
         SELECT a.id, a.documento, a.descripcion, a.fecha,
-               c.cedula, CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+               cli.cedula, CONCAT(cli.nombre, ' ', cli.apellido) AS ciudadano,
                ta.tipo AS tipo_documento, ta.permitido
         FROM asesoria a
-        LEFT JOIN cliente_asesoria c ON a.fk_cliente_asesoria = c.id
+        LEFT JOIN cliente_asesoria ca ON a.fk_cliente_asesoria = ca.id
+        LEFT JOIN clientes cli ON ca.fk_cliente = cli.id
         LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
         ORDER BY a.fecha DESC
     ");
@@ -99,10 +109,11 @@ function obtenerAsesoriasPorEstado($pdo, $estado) {
     // Consulta parametrizada filtrando por ta.permitido
     $stmt = $pdo->prepare("
         SELECT a.id, a.documento, a.descripcion, a.fecha,
-               c.cedula, CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+               cli.cedula, CONCAT(cli.nombre, ' ', cli.apellido) AS ciudadano,
                ta.tipo AS tipo_documento, ta.permitido
          FROM asesoria a
-        LEFT JOIN cliente_asesoria c ON a.fk_cliente_asesoria = c.id
+        LEFT JOIN cliente_asesoria ca ON a.fk_cliente_asesoria = ca.id
+        LEFT JOIN clientes cli ON ca.fk_cliente = cli.id
         LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
         WHERE ta.permitido = ?
         ORDER BY a.fecha DESC
@@ -121,10 +132,11 @@ function obtenerAsesoriasPorEstado($pdo, $estado) {
 function obtenerAsesoriaPorId($pdo, $id) {
     // Consulta parametrizada por ID con JOIN a cliente y tipo
     $stmt = $pdo->prepare("
-        SELECT a.*, c.cedula, CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+        SELECT a.*, cli.cedula, CONCAT(cli.nombre, ' ', cli.apellido) AS ciudadano,
                ta.tipo AS tipo_documento, ta.permitido
         FROM asesoria a
-        LEFT JOIN cliente_asesoria c ON a.fk_cliente_asesoria = c.id
+        LEFT JOIN cliente_asesoria ca ON a.fk_cliente_asesoria = ca.id
+        LEFT JOIN clientes cli ON ca.fk_cliente = cli.id
         LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
         WHERE a.id = ?
     ");
@@ -143,12 +155,13 @@ function buscarAsesoriasPorCedula($pdo, $cedula) {
     // INNER JOIN con cliente_asesoria para filtrar por cédula con LIKE
     $stmt = $pdo->prepare("
         SELECT a.id, a.documento, a.descripcion, a.fecha,
-               c.cedula, CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+               cli.cedula, CONCAT(cli.nombre, ' ', cli.apellido) AS ciudadano,
                ta.tipo AS tipo_documento, ta.permitido
         FROM asesoria a
-         INNER JOIN cliente_asesoria c ON a.fk_cliente_asesoria = c.id
+        INNER JOIN cliente_asesoria ca ON a.fk_cliente_asesoria = ca.id
+        INNER JOIN clientes cli ON ca.fk_cliente = cli.id
         LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
-        WHERE c.cedula LIKE ?
+        WHERE cli.cedula LIKE ?
         ORDER BY a.fecha DESC
     ");
     // Agrega comodines % para búsqueda parcial

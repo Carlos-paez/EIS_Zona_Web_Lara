@@ -13,27 +13,40 @@ class Asesoria extends Model
 {
     /**
      * Obtiene o crea un cliente de asesoría basado en su cédula.
-     * Si el cliente ya existe, retorna su ID; si no, lo inserta y retorna el nuevo ID.
+     * Busca en la tabla clientes por cédula; si no existe, lo crea.
+     * Luego busca o crea el registro en cliente_asesoria vinculado al cliente.
      *
      * @param string $cedula   Cédula de identidad del cliente.
      * @param string $nombre   Nombre del cliente.
      * @param string $apellido Apellido del cliente (opcional).
-     * @return int             ID del cliente existente o recién creado.
+     * @return int             ID del registro en cliente_asesoria.
      */
     private function obtenerOcrearCliente(string $cedula, string $nombre, string $apellido = ''): int
     {
-        // Busca si el cliente ya existe por su cédula
-        $stmt = $this->db->prepare("SELECT id FROM cliente_asesoria WHERE cedula = ?");
+        // 1. Buscar o crear en la tabla clientes
+        $stmt = $this->db->prepare("SELECT id FROM clientes WHERE cedula = ?");
         $stmt->execute([$cedula]);
         $cliente = $stmt->fetch();
-        // Si existe, retorna el ID como entero
+
         if ($cliente) {
-            return (int)$cliente['id'];
+            $cliente_id = (int)$cliente['id'];
+        } else {
+            $stmt = $this->db->prepare("INSERT INTO clientes (cedula, nombre, apellido, direccion, telefono) VALUES (?, ?, ?, '', '')");
+            $stmt->execute([$cedula, $nombre, $apellido]);
+            $cliente_id = (int)$this->db->lastInsertId();
         }
-        // Si no existe, lo inserta en la tabla cliente_asesoria
-        $stmt = $this->db->prepare("INSERT INTO cliente_asesoria (cedula, nombre, apellido) VALUES (?, ?, ?)");
-        $stmt->execute([$cedula, $nombre, $apellido]);
-        // Retorna el ID autogenerado de la inserción
+
+        // 2. Buscar o crear en cliente_asesoria vinculado al cliente
+        $stmt = $this->db->prepare("SELECT id FROM cliente_asesoria WHERE fk_cliente = ?");
+        $stmt->execute([$cliente_id]);
+        $ca = $stmt->fetch();
+
+        if ($ca) {
+            return (int)$ca['id'];
+        }
+
+        $stmt = $this->db->prepare("INSERT INTO cliente_asesoria (fk_cliente, email, rif, tipo) VALUES (?, 'N/A', 'N/A', 'civil')");
+        $stmt->execute([$cliente_id]);
         return (int)$this->db->lastInsertId();
     }
 
@@ -91,14 +104,15 @@ class Asesoria extends Model
      */
     public function obtenerTodas(): array
     {
-        // Consulta que une asesoria con cliente_asesoria y tipo_asesoria
+        // Consulta que une asesoria con cliente_asesoria, clientes y tipo_asesoria
         $stmt = $this->db->query("
             SELECT a.id, a.documento, a.descripcion, a.fecha,
-                   c.cedula, c.nombre AS ciudadano_nombre, c.apellido AS ciudadano_apellido,
-                   CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+                   cli.cedula, cli.nombre AS ciudadano_nombre, cli.apellido AS ciudadano_apellido,
+                   CONCAT(cli.nombre, ' ', cli.apellido) AS ciudadano,
                    ta.tipo AS tipo_documento, ta.permitido
             FROM asesoria a
-            LEFT JOIN cliente_asesoria c ON a.fk_cliente_asesoria = c.id
+            LEFT JOIN cliente_asesoria ca ON a.fk_cliente_asesoria = ca.id
+            LEFT JOIN clientes cli ON ca.fk_cliente = cli.id
             LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
             ORDER BY a.fecha DESC
         ");
@@ -119,11 +133,12 @@ class Asesoria extends Model
         // Consulta parametrizada que filtra por el campo permitido de tipo_asesoria
         $stmt = $this->db->prepare("
             SELECT a.id, a.documento, a.descripcion, a.fecha,
-                   c.cedula, c.nombre AS ciudadano_nombre, c.apellido AS ciudadano_apellido,
-                   CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+                   cli.cedula, cli.nombre AS ciudadano_nombre, cli.apellido AS ciudadano_apellido,
+                   CONCAT(cli.nombre, ' ', cli.apellido) AS ciudadano,
                    ta.tipo AS tipo_documento, ta.permitido
             FROM asesoria a
-            LEFT JOIN cliente_asesoria c ON a.fk_cliente_asesoria = c.id
+            LEFT JOIN cliente_asesoria ca ON a.fk_cliente_asesoria = ca.id
+            LEFT JOIN clientes cli ON ca.fk_cliente = cli.id
             LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
             WHERE ta.permitido = ?
             ORDER BY a.fecha DESC
@@ -143,11 +158,12 @@ class Asesoria extends Model
     {
         // Consulta parametrizada que obtiene una asesoría por su ID
         $stmt = $this->db->prepare("
-            SELECT a.*, c.cedula, c.nombre AS ciudadano_nombre, c.apellido AS ciudadano_apellido,
-                   CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+            SELECT a.*, cli.cedula, cli.nombre AS ciudadano_nombre, cli.apellido AS ciudadano_apellido,
+                   CONCAT(cli.nombre, ' ', cli.apellido) AS ciudadano,
                    ta.tipo AS tipo_documento, ta.permitido
             FROM asesoria a
-            LEFT JOIN cliente_asesoria c ON a.fk_cliente_asesoria = c.id
+            LEFT JOIN cliente_asesoria ca ON a.fk_cliente_asesoria = ca.id
+            LEFT JOIN clientes cli ON ca.fk_cliente = cli.id
             LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
             WHERE a.id = ?
         ");
@@ -167,13 +183,14 @@ class Asesoria extends Model
         // Consulta con INNER JOIN a cliente_asesoria para filtrar por cédula
         $stmt = $this->db->prepare("
             SELECT a.id, a.documento, a.descripcion, a.fecha,
-                   c.cedula, c.nombre AS ciudadano_nombre, c.apellido AS ciudadano_apellido,
-                   CONCAT(c.nombre, ' ', c.apellido) AS ciudadano,
+                   cli.cedula, cli.nombre AS ciudadano_nombre, cli.apellido AS ciudadano_apellido,
+                   CONCAT(cli.nombre, ' ', cli.apellido) AS ciudadano,
                    ta.tipo AS tipo_documento, ta.permitido
             FROM asesoria a
-            INNER JOIN cliente_asesoria c ON a.fk_cliente_asesoria = c.id
+            INNER JOIN cliente_asesoria ca ON a.fk_cliente_asesoria = ca.id
+            INNER JOIN clientes cli ON ca.fk_cliente = cli.id
             LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
-            WHERE c.cedula LIKE ?
+            WHERE cli.cedula LIKE ?
             ORDER BY a.fecha DESC
         ");
         // Agrega comodines % para la búsqueda parcial

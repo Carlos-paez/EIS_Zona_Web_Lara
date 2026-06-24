@@ -1,53 +1,59 @@
-<!-- ============================================================
-     VISTA: GESTIÓN DE USUARIOS
-     Administración de usuarios del sistema, roles y permisos.
-     ============================================================ -->
+<?php
+use App\Models\Usuario;
 
-<!-- ===== TARJETAS DE RESUMEN (KPIs) ===== -->
+$userModel = new Usuario();
+$usuarios = $userModel->obtenerTodos();
+$totalUsuarios = count($usuarios);
+$activos = count(array_filter($usuarios, fn($u) => $u['activo'] === '1'));
+$inactivos = $totalUsuarios - $activos;
+
+$adminCount = 0;
+foreach ($usuarios as $u) {
+    $rolLower = strtolower($u['rol_nombre'] ?? $u['rol'] ?? '');
+    if (str_contains($rolLower, 'admin') || str_contains($rolLower, 'administrador')) {
+        $adminCount++;
+    }
+}
+?>
+
 <div class="row" style="margin-bottom:1.25rem;">
-    <!-- Tarjeta: Total de usuarios registrados -->
     <div class="col s12 m6 l3">
         <div class="metric-card" style="margin:0;">
             <div class="metric-icon"><i class="material-icons">people</i></div>
             <div class="metric-label">Total Usuarios</div>
-            <div class="metric-value">8</div>
+            <div class="metric-value"><?php echo $totalUsuarios; ?></div>
             <div style="color:var(--text-muted);font-size:0.7rem;margin-top:0.25rem;">Registrados en el sistema</div>
         </div>
     </div>
-    <!-- Tarjeta: Usuarios activos -->
     <div class="col s12 m6 l3">
         <div class="metric-card success" style="margin:0;">
             <div class="metric-icon"><i class="material-icons">check_circle</i></div>
             <div class="metric-label">Activos</div>
-            <div class="metric-value" style="color:var(--success);">6</div>
+            <div class="metric-value" style="color:var(--success);"><?php echo $activos; ?></div>
             <div style="color:var(--text-muted);font-size:0.7rem;margin-top:0.25rem;">Con acceso al sistema</div>
         </div>
     </div>
-    <!-- Tarjeta: Usuarios inactivos -->
     <div class="col s12 m6 l3">
         <div class="metric-card warning" style="margin:0;">
             <div class="metric-icon"><i class="material-icons">block</i></div>
             <div class="metric-label">Inactivos</div>
-            <div class="metric-value" style="color:var(--warning);">2</div>
+            <div class="metric-value" style="color:var(--warning);"><?php echo $inactivos; ?></div>
             <div style="color:var(--text-muted);font-size:0.7rem;margin-top:0.25rem;">Sin acceso</div>
         </div>
     </div>
-    <!-- Tarjeta: Administradores -->
     <div class="col s12 m6 l3">
         <div class="metric-card info" style="margin:0;">
             <div class="metric-icon"><i class="material-icons">admin_panel_settings</i></div>
             <div class="metric-label">Administradores</div>
-            <div class="metric-value" style="color:var(--info);">2</div>
+            <div class="metric-value" style="color:var(--info);"><?php echo $adminCount; ?></div>
             <div style="color:var(--text-muted);font-size:0.7rem;margin-top:0.25rem;">Con permisos totales</div>
         </div>
     </div>
 </div>
 
-<!-- ===== BARRA DE HERRAMIENTAS (BÚSQUEDA, FILTRO, NUEVO USUARIO) ===== -->
 <div class="card" style="margin-bottom:1.25rem;">
     <div class="card-content" style="padding:1rem 1.25rem;">
         <div class="row valign-wrapper" style="margin-bottom:0;flex-wrap:wrap;">
-            <!-- Campo de búsqueda de usuarios -->
             <div class="col s12 m12 l5" style="margin-bottom:0;">
                 <div class="input-field" style="margin:0;">
                     <i class="material-icons prefix">search</i>
@@ -55,7 +61,6 @@
                     <label for="searchUsuario">Buscar usuario</label>
                 </div>
             </div>
-            <!-- Selector de filtro por rol -->
             <div class="col s6 m4 l3" style="margin-bottom:0;">
                 <div class="input-field" style="margin:0;">
                     <select id="filterRol">
@@ -67,7 +72,6 @@
                     <label>Rol</label>
                 </div>
             </div>
-            <!-- Botón para crear nuevo usuario -->
             <div class="col s6 m4 l4 right-align" style="padding:0.5rem 0 0;">
                 <button class="btn waves-effect waves-light indigo" id="btnNuevoUsuario" style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;padding:0 1.25rem;">
                     <i class="material-icons left" style="margin:0;">add</i>
@@ -79,161 +83,84 @@
     </div>
 </div>
 
-<!-- ===== TABLA DE USUARIOS ===== -->
 <div class="card">
     <div class="card-content" style="padding:0;">
-        <!-- Encabezado de la tabla con título y contador -->
         <div style="padding:1.25rem 1.5rem 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
             <span style="font-size:1.1rem;font-weight:600;display:flex;align-items:center;gap:0.5rem;">
                 <i class="material-icons" style="color:var(--primary);">people</i> Usuarios del Sistema
             </span>
-            <span class="result-count" style="color:var(--text-muted);font-size:0.85rem;">8 usuarios</span>
+            <span class="result-count" style="color:var(--text-muted);font-size:0.85rem;"><?php echo $totalUsuarios; ?> usuarios</span>
         </div>
 
-        <!-- Contenedor con scroll horizontal -->
         <div style="overflow-x:auto;margin-top:0.75rem;">
             <table class="striped user-table" style="margin-bottom:0;border-collapse:collapse;width:100%;min-width:600px;">
-                <!-- Cabecera de la tabla -->
                 <thead>
                     <tr style="background:var(--surface-hover);">
                         <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);">Usuario</th>
                         <th class="hide-on-small-only" style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);">Email</th>
                         <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);">Rol</th>
                         <th class="hide-on-small-only" style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);">Estado</th>
-                        <th class="hide-on-small-only" style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);">Último Acceso</th>
+                        <th class="hide-on-small-only" style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);">Username</th>
                         <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);text-align:right;">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- ===== FILA 1: Admin Principal ===== -->
-                    <tr style="border-bottom:1px solid var(--border-light);transition:background 0.15s;">
-                        <td style="padding:0.75rem 1rem;">
-                            <!-- Avatar circular con inicial y datos -->
-                            <div style="display:flex;align-items:center;gap:0.75rem;">
-                                <!-- Inicial "A" en un círculo con gradiente -->
-                                <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#3949ab,#5c6bc0);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:0.9rem;">A</div>
-                                <div>
-                                    <div style="font-weight:600;font-size:0.9rem;">Admin Principal</div>
-                                    <!-- Email visible solo en móvil -->
-                                    <span class="hide-on-med-and-up" style="font-size:0.7rem;color:var(--text-muted);">admin@eis.com</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="hide-on-small-only" style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.85rem;">admin@eis.com</td>
-                        <!-- Badge de rol: Admin (índigo claro) -->
-                        <td style="padding:0.75rem 1rem;">
-                            <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.75rem;font-weight:600;background:#e8eaf6;color:#283593;"><i class="material-icons" style="font-size:0.85rem;">admin_panel_settings</i> Admin</span>
-                        </td>
-                        <!-- Badge de estado: Activo (punto verde) -->
-                        <td class="hide-on-small-only" style="padding:0.75rem 1rem;">
-                            <span style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.8rem;color:var(--success);"><span style="width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;"></span> Activo</span>
-                        </td>
-                        <!-- Fecha/hora del último acceso -->
-                        <td class="hide-on-small-only" style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.8rem;">Hoy 09:15 AM</td>
-                        <!-- Botones de acción: editar y permisos -->
-                        <td style="padding:0.75rem 1rem;text-align:right;white-space:nowrap;">
-                            <button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar-usuario" data-index="0" data-position="left" data-tooltip="Editar"><i class="material-icons">edit</i></button>
-                            <button class="btn-floating waves-effect waves-light grey tooltipped btn-permisos-usuario" data-index="0" data-position="left" data-tooltip="Permisos" style="margin-left:4px;"><i class="material-icons">security</i></button>
+                    <?php if (empty($usuarios)): ?>
+                    <tr>
+                        <td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">
+                            <i class="material-icons" style="font-size:2.5rem;display:block;margin-bottom:0.5rem;">people</i>
+                            No hay usuarios registrados
                         </td>
                     </tr>
-                    <!-- ===== FILA 2: María García ===== -->
-                    <tr style="border-bottom:1px solid var(--border-light);transition:background 0.15s;">
-                        <td style="padding:0.75rem 1rem;">
-                            <div style="display:flex;align-items:center;gap:0.75rem;">
-                                <!-- Inicial "M" con gradiente verde -->
-                                <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#43a047,#66bb6a);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:0.9rem;">M</div>
-                                <div>
-                                    <div style="font-weight:600;font-size:0.9rem;">María García</div>
-                                    <span class="hide-on-med-and-up" style="font-size:0.7rem;color:var(--text-muted);">maria@eis.com</span>
+                    <?php else: ?>
+                        <?php foreach ($usuarios as $i => $u):
+                            $inicial = strtoupper(substr($u['nombre'], 0, 1));
+                            $gradientes = [
+                                'linear-gradient(135deg,#3949ab,#5c6bc0)',
+                                'linear-gradient(135deg,#43a047,#66bb6a)',
+                                'linear-gradient(135deg,#fb8c00,#ffa726)',
+                                'linear-gradient(135deg,#e53935,#ef5350)',
+                                'linear-gradient(135deg,#8e24aa,#ab47bc)',
+                                'linear-gradient(135deg,#00acc1,#26c6da)',
+                            ];
+                            $gIdx = $i % count($gradientes);
+                            $esActivo = $u['activo'] === '1';
+                            $rolDisplay = $u['rol_nombre'] ?? $u['rol'] ?? 'Sin rol';
+                        ?>
+                        <tr style="border-bottom:1px solid var(--border-light);transition:background 0.15s;">
+                            <td style="padding:0.75rem 1rem;">
+                                <div style="display:flex;align-items:center;gap:0.75rem;">
+                                    <div style="width:38px;height:38px;border-radius:50%;background:<?php echo $gradientes[$gIdx]; ?>;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:0.9rem;"><?php echo $inicial; ?></div>
+                                    <div>
+                                        <div style="font-weight:600;font-size:0.9rem;"><?php echo htmlspecialchars($u['nombre'] . ' ' . $u['apellido']); ?></div>
+                                        <span class="hide-on-med-and-up" style="font-size:0.7rem;color:var(--text-muted);"><?php echo htmlspecialchars($u['email']); ?></span>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td class="hide-on-small-only" style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.85rem;">maria@eis.com</td>
-                        <!-- Badge de rol: Editor (azul claro) -->
-                        <td style="padding:0.75rem 1rem;">
-                            <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.75rem;font-weight:600;background:#e3f2fd;color:#1565c0;"><i class="material-icons" style="font-size:0.85rem;">edit_note</i> Editor</span>
-                        </td>
-                        <td class="hide-on-small-only" style="padding:0.75rem 1rem;">
-                            <span style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.8rem;color:var(--success);"><span style="width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;"></span> Activo</span>
-                        </td>
-                        <td class="hide-on-small-only" style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.8rem;">Ayer 04:30 PM</td>
-                        <td style="padding:0.75rem 1rem;text-align:right;white-space:nowrap;">
-                            <button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar-usuario" data-index="1" data-position="left" data-tooltip="Editar"><i class="material-icons">edit</i></button>
-                            <button class="btn-floating waves-effect waves-light grey tooltipped btn-permisos-usuario" data-index="1" data-position="left" data-tooltip="Permisos" style="margin-left:4px;"><i class="material-icons">security</i></button>
-                        </td>
-                    </tr>
-                    <!-- ===== FILA 3: Carlos López ===== -->
-                    <tr style="border-bottom:1px solid var(--border-light);transition:background 0.15s;">
-                        <td style="padding:0.75rem 1rem;">
-                            <div style="display:flex;align-items:center;gap:0.75rem;">
-                                <!-- Inicial "C" con gradiente naranja -->
-                                <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#fb8c00,#ffa726);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:0.9rem;">C</div>
-                                <div>
-                                    <div style="font-weight:600;font-size:0.9rem;">Carlos López</div>
-                                    <span class="hide-on-med-and-up" style="font-size:0.7rem;color:var(--text-muted);">carlos@eis.com</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="hide-on-small-only" style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.85rem;">carlos@eis.com</td>
-                        <!-- Badge de rol: Visor (verde claro) -->
-                        <td style="padding:0.75rem 1rem;">
-                            <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.75rem;font-weight:600;background:#e8f5e9;color:#2e7d32;"><i class="material-icons" style="font-size:0.85rem;">visibility</i> Visor</span>
-                        </td>
-                        <td class="hide-on-small-only" style="padding:0.75rem 1rem;">
-                            <span style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.8rem;color:var(--success);"><span style="width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;"></span> Activo</span>
-                        </td>
-                        <td class="hide-on-small-only" style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.8rem;">2024-04-10</td>
-                        <td style="padding:0.75rem 1rem;text-align:right;white-space:nowrap;">
-                            <button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar-usuario" data-index="2" data-position="left" data-tooltip="Editar"><i class="material-icons">edit</i></button>
-                            <button class="btn-floating waves-effect waves-light grey tooltipped btn-permisos-usuario" data-index="2" data-position="left" data-tooltip="Permisos" style="margin-left:4px;"><i class="material-icons">security</i></button>
-                        </td>
-                    </tr>
-                    <!-- ===== FILA 4: Laura Torres (inactiva) ===== -->
-                    <tr style="border-bottom:1px solid var(--border-light);transition:background 0.15s;">
-                        <td style="padding:0.75rem 1rem;">
-                            <div style="display:flex;align-items:center;gap:0.75rem;">
-                                <!-- Inicial "L" con gradiente rojo -->
-                                <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#e53935,#ef5350);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:0.9rem;">L</div>
-                                <div>
-                                    <div style="font-weight:600;font-size:0.9rem;">Laura Torres</div>
-                                    <span class="hide-on-med-and-up" style="font-size:0.7rem;color:var(--text-muted);">laura@eis.com</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="hide-on-small-only" style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.85rem;">laura@eis.com</td>
-                        <!-- Badge de rol: Inactivo (naranja) -->
-                        <td style="padding:0.75rem 1rem;">
-                            <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.75rem;font-weight:600;background:#fff3e0;color:#e65100;"><i class="material-icons" style="font-size:0.85rem;">block</i> Inactivo</span>
-                        </td>
-                        <!-- Badge de estado: Inactivo (gris) -->
-                        <td class="hide-on-small-only" style="padding:0.75rem 1rem;">
-                            <span style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.8rem;color:var(--text-muted);"><span style="width:8px;height:8px;border-radius:50%;background:var(--text-muted);display:inline-block;"></span> Inactivo</span>
-                        </td>
-                        <td class="hide-on-small-only" style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.8rem;">2024-03-20</td>
-                        <td style="padding:0.75rem 1rem;text-align:right;white-space:nowrap;">
-                            <button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar-usuario" data-index="3" data-position="left" data-tooltip="Editar"><i class="material-icons">edit</i></button>
-                            <button class="btn-floating waves-effect waves-light grey tooltipped btn-permisos-usuario" data-index="3" data-position="left" data-tooltip="Permisos" style="margin-left:4px;"><i class="material-icons">security</i></button>
-                        </td>
-                    </tr>
+                            </td>
+                            <td class="hide-on-small-only" style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.85rem;"><?php echo htmlspecialchars($u['email']); ?></td>
+                            <td style="padding:0.75rem 1rem;">
+                                <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.75rem;font-weight:600;background:#e8eaf6;color:#283593;"><i class="material-icons" style="font-size:0.85rem;">admin_panel_settings</i> <?php echo htmlspecialchars($rolDisplay); ?></span>
+                            </td>
+                            <td class="hide-on-small-only" style="padding:0.75rem 1rem;">
+                                <?php if ($esActivo): ?>
+                                <span style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.8rem;color:var(--success);"><span style="width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;"></span> Activo</span>
+                                <?php else: ?>
+                                <span style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.8rem;color:var(--text-muted);"><span style="width:8px;height:8px;border-radius:50%;background:var(--text-muted);display:inline-block;"></span> Inactivo</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="hide-on-small-only" style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.8rem;"><?php echo htmlspecialchars($u['username']); ?></td>
+                            <td style="padding:0.75rem 1rem;text-align:right;white-space:nowrap;">
+                                <button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar-usuario" data-id="<?php echo $u['id']; ?>" data-position="left" data-tooltip="Editar"><i class="material-icons">edit</i></button>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
 
-        <!-- ===== PAGINACIÓN ===== -->
         <div style="padding:0.85rem 1.25rem;border-top:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;">
-            <!-- Texto indicando cuántos usuarios se muestran -->
-            <span style="color:var(--text-muted);font-size:0.85rem;">Mostrando 4 de 8 usuarios</span>
-            <!-- Navegación de páginas -->
-            <ul class="pagination" style="margin:0;">
-                <!-- Flecha anterior (deshabilitada en página 1) -->
-                <li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>
-                <!-- Página activa (página 1) -->
-                <li class="active indigo"><a href="#!">1</a></li>
-                <!-- Página 2 -->
-                <li class="waves-effect"><a href="#!">2</a></li>
-                <!-- Flecha siguiente -->
-                <li class="waves-effect"><a href="#!"><i class="material-icons">chevron_right</i></a></li>
-            </ul>
+            <span style="color:var(--text-muted);font-size:0.85rem;"><?php echo $totalUsuarios; ?> usuarios</span>
         </div>
     </div>
 </div>

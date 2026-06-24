@@ -10,6 +10,7 @@ INSERT INTO roles (nombre_rol) VALUES
 ('Asesor'),
 ('Soporte Técnico');
 
+
 -- ============================================================
 -- PERMISOS
 -- ============================================================
@@ -61,12 +62,12 @@ INSERT INTO clientes (cedula, nombre, apellido, direccion, telefono) VALUES
 -- ============================================================
 -- CLIENTE_ASESORIA
 -- ============================================================
-INSERT INTO cliente_asesoria (cedula, nombre, apellido, direccion, telefono, email) VALUES
-('V-12345678', 'Carlos', 'González', 'Av. Libertador, Caracas', '0412-1234567', 'carlosg@email.com'),
-('V-34567890', 'Pedro', 'Martínez', 'Urb. Las Mercedes, Valencia', '0424-3456789', 'pedrom@email.com'),
-('J-56789012', 'Comercial XYZ, C.A.', 'S/N', 'Zona Industrial, San Cristóbal', '0276-5678901', 'comercialxyz@email.com'),
-('V-23456789', 'María', 'Rodríguez', 'Calle Sucre, Maracaibo', '0414-2345678', 'mariar@email.com'),
-('J-89012345', 'Inversiones ABC, C.A.', 'S/N', 'Centro Empresarial, Los Teques', '0212-8901234', 'inversionesabc@email.com');
+INSERT INTO cliente_asesoria (fk_cliente, email, rif, tipo) VALUES
+(1, 'carlosg@email.com', 'V-12345678', 'civil'),
+(3, 'pedrom@email.com', 'V-34567890', 'civil'),
+(5, 'comercialxyz@email.com', 'J-56789012', 'juridico'),
+(2, 'mariar@email.com', 'V-23456789', 'civil'),
+(8, 'inversionesabc@email.com', 'J-89012345', 'juridico');
 
 -- ============================================================
 -- PROVEEDORES
@@ -141,12 +142,12 @@ INSERT INTO rol_usuarios (fk_rol, rol) VALUES
 -- USUARIOS
 -- ============================================================
 INSERT INTO usuarios (nombre, apellido, user_name, password_hash, email, estatus, fk_rol_usuario) VALUES
-('Admin', 'Principal', 'admin', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'admin@zonaweb.com', 'activo', 1),
-('Juan', 'Peralta', 'jperalta', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'jperalta@zonaweb.com', 'activo', 2),
-('María', 'Fernández', 'mfernandez', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'mfernandez@zonaweb.com', 'activo', 2),
-('Carlos', 'Rivas', 'crivas', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'crivas@zonaweb.com', 'activo', 3),
-('Ana', 'Mendoza', 'amendoza', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'amendoza@zonaweb.com', 'activo', 4),
-('Pedro', 'García', 'pgarcia', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'pgarcia@zonaweb.com', 'activo', 5);
+('Admin', 'Principal', 'admin', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'admin@zonaweb.com', '1', 1),
+('Juan', 'Peralta', 'jperalta', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'jperalta@zonaweb.com', '1', 2),
+('María', 'Fernández', 'mfernandez', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'mfernandez@zonaweb.com', '1', 2),
+('Carlos', 'Rivas', 'crivas', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'crivas@zonaweb.com', '1', 3),
+('Ana', 'Mendoza', 'amendoza', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'amendoza@zonaweb.com', '1', 4),
+('Pedro', 'García', 'pgarcia', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'pgarcia@zonaweb.com', '1', 5);
 
 -- ============================================================
 -- PERMISOS_ROL (Administrador tiene todos los permisos)

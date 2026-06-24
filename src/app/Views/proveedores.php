@@ -121,7 +121,14 @@ $totalProv = $provModel->totalProveedores();
                 </div>
             </div>
             <!-- Botón para crear nueva solicitud -->
-            <div class="col s6 m4 l4 right-align" style="padding:0.5rem 0 0;">
+            <div class="col s6 m4 l4 right-align" style="padding:0.5rem 0 0;display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap;">
+                <!-- Botón para gestionar proveedores (abre listado) -->
+                <button class="btn waves-effect waves-light grey darken-1 btn-ver-proveedores"
+                    style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;padding:0 1.25rem;">
+                    <i class="material-icons left" style="margin:0;">store</i>
+                    <span class="hide-on-small-only">Proveedores</span>
+                    <span class="hide-on-med-and-up">Prov.</span>
+                </button>
                 <!-- Botón con estilo indigo, bordes redondeados, data-tipo para JS -->
                 <button class="btn waves-effect waves-light indigo btn-nuevo" data-tipo="solicitud"
                     style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;padding:0 1.25rem;">
@@ -416,6 +423,40 @@ $totalProv = $provModel->totalProveedores();
     <div class="modal-footer" style="padding:1rem 2rem;display:flex;gap:0.75rem;justify-content:flex-end;border-top:1px solid var(--border-light);">
         <button class="btn waves-effect waves-light grey lighten-1 modal-close" style="border-radius:24px;">Cancelar</button>
         <button type="submit" form="form-proveedor" class="btn waves-effect waves-light indigo" style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;"><i class="material-icons left" style="margin:0;">save</i> Guardar</button>
+    </div>
+</div>
+
+<!-- ===== MODAL: LISTA DE PROVEEDORES (CRUD COMPLETO) ===== -->
+<div id="modal-lista-proveedores" class="modal modal-fixed-footer">
+    <div class="modal-content">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+            <h4 style="font-weight:700;margin:0;font-size:1.3rem;display:flex;align-items:center;gap:0.5rem;">
+                <i class="material-icons" style="color:var(--primary);">store</i> Gesti&oacute;n de Proveedores
+            </h4>
+            <span class="prov-count" style="color:var(--text-muted);font-size:0.85rem;"></span>
+        </div>
+        <div style="overflow-x:auto;">
+            <table class="striped" id="tabla-proveedores" style="margin-bottom:0;border-collapse:collapse;width:100%;min-width:500px;">
+                <thead>
+                    <tr style="background:var(--surface-hover);">
+                        <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);">Proveedor</th>
+                        <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);">RIF</th>
+                        <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);">Email</th>
+                        <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);">Tel&eacute;fono</th>
+                        <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);text-align:right;">Acci&oacute;n</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal-footer" style="display:flex;gap:0.75rem;justify-content:space-between;padding:0.75rem 1.25rem;">
+        <button class="btn waves-effect waves-light indigo btn-nuevo-proveedor" style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;">
+            <i class="material-icons left" style="margin:0;">add</i> Nuevo Proveedor
+        </button>
+        <a href="#!" class="modal-close waves-effect waves-green btn-flat">Cerrar</a>
     </div>
 </div>
 

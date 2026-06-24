@@ -26,7 +26,7 @@ class Usuario extends Model
         // Genera el hash bcrypt de la contraseña para almacenamiento seguro
         $hash = password_hash($password, PASSWORD_BCRYPT);
         // Sentencia SQL para insertar un nuevo usuario con los datos proporcionados
-        $sql = "INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email) VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email, estatus) VALUES (?, ?, ?, ?, ?, '1')";
         // Prepara la sentencia SQL para evitar inyección SQL
         $stmt = $this->db->prepare($sql);
         // Ejecuta la consulta con los valores y retorna el resultado booleano
@@ -89,7 +89,7 @@ class Usuario extends Model
             FROM usuarios u
             LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
             LEFT JOIN roles r ON ru.fk_rol = r.id
-            WHERE u.user_name = ? AND u.estatus = 'activo'
+            WHERE u.user_name = ? AND u.estatus = '1'
         ");
         // Ejecuta pasando el nombre de usuario
         $stmt->execute([$username]);
@@ -128,7 +128,7 @@ class Usuario extends Model
      * @param string   $estatus         Nuevo estatus ('activo' por defecto).
      * @return bool    True si la actualización fue exitosa.
      */
-    public function actualizar(int $id, string $nombre, string $apellido, string $email, ?int $fk_rol_usuario = null, string $estatus = 'activo'): bool
+    public function actualizar(int $id, string $nombre, string $apellido, string $email, ?int $fk_rol_usuario = null, string $estatus = '1'): bool
     {
         // SQL de actualización; COALESCE mantiene el rol actual si se envía NULL
         $sql = "UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, fk_rol_usuario = COALESCE(?, fk_rol_usuario), estatus = ? WHERE id = ?";

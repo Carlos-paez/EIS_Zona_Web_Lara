@@ -89,11 +89,17 @@ class ProveedorController
                 // Obtiene las líneas de detalle de una orden específica
                 'lineas'        => $this->lineas(),
                 // Agrega una línea de producto a una orden
-                'agregarLinea'  => $this->agregarLinea(),
+                'agregarLinea'      => $this->agregarLinea(),
                 // Elimina una línea de detalle de una orden
-                'eliminarLinea' => $this->eliminarLinea(),
+                'eliminarLinea'     => $this->eliminarLinea(),
+                // Guarda (crea o actualiza) un proveedor
+                'guardarProveedor'  => $this->guardarProveedor(),
+                // Elimina un proveedor
+                'eliminarProveedor' => $this->eliminarProveedor(),
+                // Obtiene un proveedor por ID
+                'proveedorPorId'    => $this->proveedorPorId(),
                 // Si la acción no coincide con ninguna, devuelve error JSON
-                default         => $this->json(false, null, 'Acción no válida'),
+                default             => $this->json(false, null, 'Acción no válida'),
             };
         } catch (\PDOException $e) {
             // Captura excepciones de PDO (base de datos) y devuelve JSON con error
@@ -457,6 +463,91 @@ class ProveedorController
                 // Si el resultado es false, mensaje de error
                 : ['success' => false, 'error' => 'Error al eliminar línea']
         );
+    }
+
+    /**
+     * Guarda (crea o actualiza) un proveedor
+     *
+     * Lee los datos del formulario POST. Si se recibe un ID,
+     * actualiza el proveedor existente; si no, crea uno nuevo.
+     * Valida que RIF y Nombre estén presentes.
+     *
+     * @return void Responde directamente con echo en formato JSON
+     */
+    private function guardarProveedor(): void
+    {
+        $id       = (int)($_POST['id'] ?? 0);
+        $rif      = $_POST['rif'] ?? '';
+        $nombre   = $_POST['nombre'] ?? '';
+        $email    = $_POST['email'] ?? '';
+        $telefono = $_POST['telefono'] ?? '';
+
+        if (empty($rif) || empty($nombre)) {
+            echo json_encode(['success' => false, 'error' => 'RIF y Nombre son obligatorios']);
+            return;
+        }
+
+        if ($id) {
+            $resultado = $this->model->actualizarProveedor($id, $rif, $nombre, $email, $telefono);
+            $msg = 'Proveedor actualizado exitosamente';
+        } else {
+            $resultado = $this->model->crearProveedor($rif, $nombre, $email, $telefono);
+            $msg = 'Proveedor creado exitosamente';
+        }
+
+        echo json_encode(
+            $resultado
+                ? ['success' => true, 'message' => $msg]
+                : ['success' => false, 'error' => 'Error al guardar el proveedor']
+        );
+    }
+
+    /**
+     * Elimina un proveedor por su ID
+     *
+     * Lee el ID desde POST, valida que sea un número positivo,
+     * y llama al modelo para eliminar el registro.
+     * Si el proveedor tiene órdenes asociadas, la FK lanzará
+     * un PDOException que se captura en handle().
+     *
+     * @return void Responde directamente con echo en formato JSON
+     */
+    private function eliminarProveedor(): void
+    {
+        $id = (int)($_POST['id'] ?? 0);
+        if (!$id) {
+            echo json_encode(['success' => false, 'error' => 'ID no válido']);
+            return;
+        }
+        $resultado = $this->model->eliminarProveedor($id);
+        echo json_encode(
+            $resultado
+                ? ['success' => true, 'message' => 'Proveedor eliminado exitosamente']
+                : ['success' => false, 'error' => 'Error al eliminar el proveedor']
+        );
+    }
+
+    /**
+     * Obtiene un proveedor por su ID
+     *
+     * Lee el ID desde GET, valida que sea un entero positivo,
+     * y devuelve los datos del proveedor.
+     *
+     * @return void Responde directamente con echo en formato JSON
+     */
+    private function proveedorPorId(): void
+    {
+        $id = (int)($_GET['id'] ?? 0);
+        if (!$id) {
+            echo json_encode(['success' => false, 'error' => 'ID no válido']);
+            return;
+        }
+        $proveedor = $this->model->obtenerProveedorPorId($id);
+        if ($proveedor) {
+            echo json_encode(['success' => true, 'data' => $proveedor]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Proveedor no encontrado']);
+        }
     }
 
     /**

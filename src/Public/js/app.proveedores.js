@@ -347,6 +347,122 @@ $(function () {
     });
 
     // ================================================================
+    // FUNCIONES DE PROVEEDORES (CRUD)
+    // ================================================================
+
+    // Carga la lista de proveedores en el modal de gestión
+    function refrescarTablaProveedores() {
+        var tbody = $('#tabla-proveedores tbody');
+        tbody.html('<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Cargando...</td></tr>');
+
+        $.getJSON(API + 'proveedores', function (r) {
+            if (!r.success) {
+                tbody.html('<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Error al cargar proveedores</td></tr>');
+                return;
+            }
+            tbody.empty();
+            if (!r.data || r.data.length === 0) {
+                tbody.html('<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);"><i class="material-icons" style="font-size:2.5rem;display:block;margin-bottom:0.5rem;">store</i>No hay proveedores registrados</td></tr>');
+                $('.prov-count').text('0 proveedores');
+                return;
+            }
+            $.each(r.data, function (i, p) {
+                var inits = (p.nombre || '?').substring(0, 2).toUpperCase();
+                var row = '<tr data-id="' + p.id + '">';
+                row += '<td style="padding:0.75rem 1rem;"><div style="display:flex;align-items:center;gap:0.75rem;"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1565c0,#42a5f5);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:0.8rem;">' + inits + '</div><div><div style="font-weight:600;font-size:0.9rem;">' + $('<span>').text(p.nombre).html() + '</div></div></div></td>';
+                row += '<td style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.85rem;">' + $('<span>').text(p.rif || '-').html() + '</td>';
+                row += '<td style="padding:0.75rem 1rem;font-size:0.85rem;">' + $('<span>').text(p.email || '-').html() + '</td>';
+                row += '<td style="padding:0.75rem 1rem;font-size:0.85rem;">' + $('<span>').text(p.telefono || '-').html() + '</td>';
+                row += '<td style="padding:0.75rem 1rem;text-align:right;white-space:nowrap;">';
+                row += '<button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar-proveedor" data-id="' + p.id + '" data-position="left" data-tooltip="Editar proveedor"><i class="material-icons">edit</i></button>';
+                row += '<button class="btn-floating waves-effect waves-light red tooltipped btn-eliminar-proveedor" data-id="' + p.id + '" data-nombre="' + $('<span>').text(p.nombre).html() + '" data-position="left" data-tooltip="Eliminar" style="margin-left:4px;"><i class="material-icons">delete</i></button>';
+                row += '</td></tr>';
+                tbody.append(row);
+            });
+            $('.prov-count').text(r.data.length + ' proveedores');
+            $('.tooltipped').tooltip();
+        }).fail(function () {
+            tbody.html('<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Error de conexión</td></tr>');
+        });
+    }
+
+    // ================================================================
+    // EVENTOS DE PROVEEDORES
+    // ================================================================
+
+    // Botón "Proveedores" en la toolbar — abre modal de gestión
+    $(document).on('click', '.btn-ver-proveedores', function () {
+        $('#modal-lista-proveedores').modal('open');
+        refrescarTablaProveedores();
+    });
+
+    // Botón "Nuevo Proveedor" — abre modal con formulario vacío
+    $(document).on('click', '.btn-nuevo-proveedor', function () {
+        $('#proveedor-id').val('');
+        $('#form-proveedor')[0].reset();
+        $('#modal-proveedor-title').text('Nuevo Proveedor');
+        M.updateTextFields();
+        $('#modal-proveedor').modal('open');
+    });
+
+    // Botón "Editar" en cada fila de la tabla de proveedores
+    $(document).on('click', '.btn-editar-proveedor', function () {
+        var id = $(this).data('id');
+        $.getJSON(API + 'proveedorPorId&id=' + id, function (r) {
+            if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
+            var p = r.data;
+            $('#proveedor-id').val(p.id);
+            $('#proveedor-rif').val(p.rif);
+            $('#proveedor-nombre').val(p.nombre);
+            $('#proveedor-email').val(p.email);
+            $('#proveedor-telefono').val(p.telefono);
+            $('#modal-proveedor-title').text('Editar Proveedor: ' + p.nombre);
+            M.updateTextFields();
+            $('#modal-proveedor').modal('open');
+        }).fail(function () {
+            EIS.toast('Error de conexión', 'red', 'error');
+        });
+    });
+
+    // Submit del formulario de proveedor (crear o actualizar)
+    $('#form-proveedor').on('submit', function (e) {
+        e.preventDefault();
+        var id = $('#proveedor-id').val();
+        var accion = 'guardarProveedor';
+        $.post(API + accion, $(this).serialize(), function (r) {
+            if (r.success) {
+                EIS.toast(r.message, 'green', 'check_circle');
+                $('#modal-proveedor').modal('close');
+                refrescarKPI();
+                refrescarTablaProveedores();
+            } else {
+                EIS.toast(r.error || 'Error al guardar', 'red', 'error');
+            }
+        }, 'json').fail(function () {
+            EIS.toast('Error de conexión', 'red', 'error');
+        });
+    });
+
+    // Botón "Eliminar" en cada fila de la tabla de proveedores
+    $(document).on('click', '.btn-eliminar-proveedor', function () {
+        var id = $(this).data('id');
+        var nombre = $(this).data('nombre');
+        if (confirm('Eliminar el proveedor "' + nombre + '"?\nNota: No se puede eliminar si tiene solicitudes asociadas.')) {
+            $.post(API + 'eliminarProveedor', { id: id }, function (r) {
+                if (r.success) {
+                    EIS.toast(r.message, 'green', 'check_circle');
+                    refrescarKPI();
+                    refrescarTablaProveedores();
+                } else {
+                    EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                }
+            }, 'json').fail(function () {
+                EIS.toast('Error de conexión', 'red', 'error');
+            });
+        }
+    });
+
+    // ================================================================
     // INICIALIZACIÓN DE COMPONENTES MATERIALIZE
     // ================================================================
 
