@@ -73,7 +73,7 @@ class AuthController
         $usuario = $this->model->autenticar($username, $password);
 
         // Evalúa si la autenticación fue exitosa (devuelve un arreglo con datos del usuario)
-        if ($usuario) {
+        if (($usuario)) {
             // Establece la variable de sesión 'logged_in' como true para indicar sesión activa
             $_SESSION['logged_in'] = true;
             // Guarda el ID del usuario autenticado en la sesión para referencias futuras
