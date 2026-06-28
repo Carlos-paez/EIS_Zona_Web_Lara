@@ -1,14 +1,7 @@
 <?php
 // ============================================================
-// VISTA: CONTROL DE CYBERCAFÉ
-// Los datos vienen del controlador CiberController::index()
-// Variables disponibles:
-// - $estaciones: array con todas las estaciones
-// - $estadisticas: array con estadísticas
-// - $countDisponibles, $countOcupadas, $countMantenimiento
-// - $totalEstaciones, $usarZonas
-// - $estacionesGaming, $estacionesOficina, $estacionesPremium
-// - Funciones auxiliares: $getEstadoClase, $getEstadoTexto, $getEstadoIcono
+// VISTA: Control de Cybercafé
+// Variables disponibles desde CiberController::index()
 // ============================================================
 ?>
 
@@ -36,9 +29,9 @@
         </div>
     </div>
     <div class="col s12 m6 l3">
-        <div class="metric-card" style="margin:0;">
+        <div class="metric-card info" style="margin:0;">
             <div class="metric-icon"><i class="material-icons">dns</i></div>
-            <div class="metric-label">Total Estaciones</div>
+            <div class="metric-label">Total PCs</div>
             <div class="metric-value" id="countTotal"><?= $totalEstaciones ?></div>
         </div>
     </div>
@@ -56,8 +49,8 @@
                 <a class="btn-small waves-effect waves-light red filter-btn" data-filter="mantenimiento" style="border-radius:20px;padding:0 0.75rem;font-size:0.7rem;">Mantenimiento</a>
             </div>
             <div class="col s12 m5 right-align" style="padding-top:0.25rem;padding-bottom:0.25rem;">
-                <button class="btn-small waves-effect waves-light indigo" id="btnNuevaEstacion" style="border-radius:20px;">
-                    <i class="material-icons left" style="font-size:1rem;">add</i>Nueva
+                <button class="btn-small waves-effect waves-light indigo" id="btnNuevaSesion" style="border-radius:20px;">
+                    <i class="material-icons left" style="font-size:1rem;">play_arrow</i>Nueva Sesión
                 </button>
                 <button class="btn-small waves-effect waves-light grey darken-1 hide-on-small-only" id="btnHistorialCyber" style="border-radius:20px;margin-left:0.25rem;">
                     <i class="material-icons left" style="font-size:1rem;">history</i>Historial
@@ -87,12 +80,11 @@
                      data-estacion-id="<?= $e['id'] ?>"
                      data-sesion-id="<?= $e['sesion_id'] ?? '' ?>"
                      data-status="<?= strtolower($e['estado']) ?>"
-                     data-nombre="<?= htmlspecialchars($e['nombre']) ?>"
-                     data-tarifa="<?= htmlspecialchars($e['tarifa_nombre'] ?? '') ?>">
+                     data-nombre="<?= htmlspecialchars($e['marca'] . ' ' . ($e['descripcion'] ?? '')) ?>">
                     <div class="station-inner">
                         <div class="station-header">
-                            <span class="station-badge"><?= htmlspecialchars($e['nombre']) ?></span>
-                            <span class="station-header-label">Estación</span>
+                            <span class="station-badge">PC-<?= $e['id'] ?></span>
+                            <span class="station-header-label"><?= htmlspecialchars($e['tipo'] ?? 'PC') ?></span>
                         </div>
                         <div class="station-body">
                             <div class="station-icon">
@@ -107,7 +99,8 @@
                                         <br><small class="station-price">$<?= number_format($e['costo_estimado'], 2) ?></small>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <?= htmlspecialchars($e['especificaciones'] ?? 'PC Estándar') ?>
+                                    <?= htmlspecialchars($e['marca'] ?? 'PC') ?>
+                                    <br><small><?= htmlspecialchars($e['descripcion'] ?? '') ?></small>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -115,7 +108,7 @@
                         <div class="station-footer">
                             <button class="btn-small waves-effect waves-light red btn-finalizar-sesion" 
                                     data-sesion-id="<?= $e['sesion_id'] ?>"
-                                    data-estacion="<?= htmlspecialchars($e['nombre']) ?>"
+                                    data-estacion="PC-<?= $e['id'] ?>"
                                     style="border-radius:16px;font-size:0.65rem;padding:0 0.5rem;width:100%;">
                                 <i class="material-icons left" style="font-size:0.8rem;">stop</i>Finalizar
                             </button>
@@ -124,7 +117,7 @@
                         <div class="station-footer">
                             <button class="btn-small waves-effect waves-light green btn-iniciar-sesion" 
                                     data-estacion-id="<?= $e['id'] ?>"
-                                    data-estacion="<?= htmlspecialchars($e['nombre']) ?>"
+                                    data-estacion="PC-<?= $e['id'] ?>"
                                     style="border-radius:16px;font-size:0.65rem;padding:0 0.5rem;width:100%;">
                                 <i class="material-icons left" style="font-size:0.8rem;">play_arrow</i>Iniciar
                             </button>
@@ -149,12 +142,11 @@
                      data-estacion-id="<?= $e['id'] ?>"
                      data-sesion-id="<?= $e['sesion_id'] ?? '' ?>"
                      data-status="<?= strtolower($e['estado']) ?>"
-                     data-nombre="<?= htmlspecialchars($e['nombre']) ?>"
-                     data-tarifa="<?= htmlspecialchars($e['tarifa_nombre'] ?? '') ?>">
+                     data-nombre="<?= htmlspecialchars($e['marca'] . ' ' . ($e['descripcion'] ?? '')) ?>">
                     <div class="station-inner">
                         <div class="station-header">
-                            <span class="station-badge"><?= htmlspecialchars($e['nombre']) ?></span>
-                            <span class="station-header-label">Estación</span>
+                            <span class="station-badge">PC-<?= $e['id'] ?></span>
+                            <span class="station-header-label"><?= htmlspecialchars($e['tipo'] ?? 'PC') ?></span>
                         </div>
                         <div class="station-body">
                             <div class="station-icon">
@@ -169,7 +161,8 @@
                                         <br><small class="station-price">$<?= number_format($e['costo_estimado'], 2) ?></small>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <?= htmlspecialchars($e['especificaciones'] ?? 'PC Estándar') ?>
+                                    <?= htmlspecialchars($e['marca'] ?? 'PC') ?>
+                                    <br><small><?= htmlspecialchars($e['descripcion'] ?? '') ?></small>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -177,7 +170,7 @@
                         <div class="station-footer">
                             <button class="btn-small waves-effect waves-light red btn-finalizar-sesion" 
                                     data-sesion-id="<?= $e['sesion_id'] ?>"
-                                    data-estacion="<?= htmlspecialchars($e['nombre']) ?>"
+                                    data-estacion="PC-<?= $e['id'] ?>"
                                     style="border-radius:16px;font-size:0.65rem;padding:0 0.5rem;width:100%;">
                                 <i class="material-icons left" style="font-size:0.8rem;">stop</i>Finalizar
                             </button>
@@ -186,7 +179,7 @@
                         <div class="station-footer">
                             <button class="btn-small waves-effect waves-light green btn-iniciar-sesion" 
                                     data-estacion-id="<?= $e['id'] ?>"
-                                    data-estacion="<?= htmlspecialchars($e['nombre']) ?>"
+                                    data-estacion="PC-<?= $e['id'] ?>"
                                     style="border-radius:16px;font-size:0.65rem;padding:0 0.5rem;width:100%;">
                                 <i class="material-icons left" style="font-size:0.8rem;">play_arrow</i>Iniciar
                             </button>
@@ -202,7 +195,7 @@
     <?php if ($usarZonas && count($estacionesPremium) > 0): ?>
         <!-- Zona Premium -->
         <div class="zone-divider">
-            <div class="zone-title"> Zona Premium</div>
+            <div class="zone-title">⭐ Zona Premium</div>
         </div>
         <div class="row" id="zona-premium">
             <?php foreach ($estacionesPremium as $e): ?>
@@ -211,12 +204,11 @@
                      data-estacion-id="<?= $e['id'] ?>"
                      data-sesion-id="<?= $e['sesion_id'] ?? '' ?>"
                      data-status="<?= strtolower($e['estado']) ?>"
-                     data-nombre="<?= htmlspecialchars($e['nombre']) ?>"
-                     data-tarifa="<?= htmlspecialchars($e['tarifa_nombre'] ?? '') ?>">
+                     data-nombre="<?= htmlspecialchars($e['marca'] . ' ' . ($e['descripcion'] ?? '')) ?>">
                     <div class="station-inner">
                         <div class="station-header">
-                            <span class="station-badge"><?= htmlspecialchars($e['nombre']) ?></span>
-                            <span class="station-header-label">Estación</span>
+                            <span class="station-badge">PC-<?= $e['id'] ?></span>
+                            <span class="station-header-label"><?= htmlspecialchars($e['tipo'] ?? 'PC') ?></span>
                         </div>
                         <div class="station-body">
                             <div class="station-icon">
@@ -231,7 +223,8 @@
                                         <br><small class="station-price">$<?= number_format($e['costo_estimado'], 2) ?></small>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <?= htmlspecialchars($e['especificaciones'] ?? 'PC Premium') ?>
+                                    <?= htmlspecialchars($e['marca'] ?? 'PC') ?>
+                                    <br><small><?= htmlspecialchars($e['descripcion'] ?? '') ?></small>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -239,7 +232,7 @@
                         <div class="station-footer">
                             <button class="btn-small waves-effect waves-light red btn-finalizar-sesion" 
                                     data-sesion-id="<?= $e['sesion_id'] ?>"
-                                    data-estacion="<?= htmlspecialchars($e['nombre']) ?>"
+                                    data-estacion="PC-<?= $e['id'] ?>"
                                     style="border-radius:16px;font-size:0.65rem;padding:0 0.5rem;width:100%;">
                                 <i class="material-icons left" style="font-size:0.8rem;">stop</i>Finalizar
                             </button>
@@ -248,7 +241,7 @@
                         <div class="station-footer">
                             <button class="btn-small waves-effect waves-light green btn-iniciar-sesion" 
                                     data-estacion-id="<?= $e['id'] ?>"
-                                    data-estacion="<?= htmlspecialchars($e['nombre']) ?>"
+                                    data-estacion="PC-<?= $e['id'] ?>"
                                     style="border-radius:16px;font-size:0.65rem;padding:0 0.5rem;width:100%;">
                                 <i class="material-icons left" style="font-size:0.8rem;">play_arrow</i>Iniciar
                             </button>
@@ -270,12 +263,11 @@
                      data-estacion-id="<?= $e['id'] ?>"
                      data-sesion-id="<?= $e['sesion_id'] ?? '' ?>"
                      data-status="<?= strtolower($e['estado']) ?>"
-                     data-nombre="<?= htmlspecialchars($e['nombre']) ?>"
-                     data-tarifa="<?= htmlspecialchars($e['tarifa_nombre'] ?? '') ?>">
+                     data-nombre="<?= htmlspecialchars($e['marca'] . ' ' . ($e['descripcion'] ?? '')) ?>">
                     <div class="station-inner">
                         <div class="station-header">
-                            <span class="station-badge"><?= htmlspecialchars($e['nombre']) ?></span>
-                            <span class="station-header-label">Estación</span>
+                            <span class="station-badge">PC-<?= $e['id'] ?></span>
+                            <span class="station-header-label"><?= htmlspecialchars($e['tipo'] ?? 'PC') ?></span>
                         </div>
                         <div class="station-body">
                             <div class="station-icon">
@@ -290,7 +282,8 @@
                                         <br><small class="station-price">$<?= number_format($e['costo_estimado'], 2) ?></small>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <?= htmlspecialchars($e['especificaciones'] ?? 'PC Estándar') ?>
+                                    <?= htmlspecialchars($e['marca'] ?? 'PC') ?>
+                                    <br><small><?= htmlspecialchars($e['descripcion'] ?? '') ?></small>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -298,7 +291,7 @@
                         <div class="station-footer">
                             <button class="btn-small waves-effect waves-light red btn-finalizar-sesion" 
                                     data-sesion-id="<?= $e['sesion_id'] ?>"
-                                    data-estacion="<?= htmlspecialchars($e['nombre']) ?>"
+                                    data-estacion="PC-<?= $e['id'] ?>"
                                     style="border-radius:16px;font-size:0.65rem;padding:0 0.5rem;width:100%;">
                                 <i class="material-icons left" style="font-size:0.8rem;">stop</i>Finalizar
                             </button>
@@ -307,7 +300,7 @@
                         <div class="station-footer">
                             <button class="btn-small waves-effect waves-light green btn-iniciar-sesion" 
                                     data-estacion-id="<?= $e['id'] ?>"
-                                    data-estacion="<?= htmlspecialchars($e['nombre']) ?>"
+                                    data-estacion="PC-<?= $e['id'] ?>"
                                     style="border-radius:16px;font-size:0.65rem;padding:0 0.5rem;width:100%;">
                                 <i class="material-icons left" style="font-size:0.8rem;">play_arrow</i>Iniciar
                             </button>
@@ -322,23 +315,48 @@
 </div>
 
 <!-- Modal para iniciar sesión -->
-<div id="modalIniciarSesion" class="modal" style="max-width:450px;">
+<div id="modalIniciarSesion" class="modal" style="max-width:480px;">
     <div class="modal-content">
         <h4 style="font-weight:700;margin-bottom:1.5rem;">
             <i class="material-icons left" style="color:var(--success);">play_circle</i>
             Iniciar Sesión
         </h4>
         <form id="formIniciarSesion">
-            <input type="hidden" id="modalEstacionId" value="">
+            <input type="hidden" id="modalActivoId" value="">
+            
             <div class="input-field">
                 <i class="material-icons prefix">dns</i>
                 <input type="text" id="modalEstacionNombre" value="" readonly disabled style="color:var(--text);">
-                <label for="modalEstacionNombre" class="active">Estación</label>
+                <label for="modalEstacionNombre" class="active">PC</label>
             </div>
+            
             <div class="input-field">
                 <i class="material-icons prefix">person</i>
-                <input type="text" id="modalClienteNombre" required autofocus>
-                <label for="modalClienteNombre">Nombre del Cliente</label>
+                <select id="modalClienteId" required>
+                    <option value="" disabled selected>Seleccionar cliente</option>
+                    <?php foreach ($clientes as $c): ?>
+                        <option value="<?= $c['id_cliente'] ?>"><?= htmlspecialchars($c['nombre_completo']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <label for="modalClienteId">Cliente</label>
+            </div>
+            
+            <div class="input-field">
+                <i class="material-icons prefix">attach_money</i>
+                <select id="modalTarifaId" required>
+                    <option value="" disabled selected>Seleccionar tarifa</option>
+                    <?php foreach ($tarifas as $t): ?>
+                        <option value="<?= $t['id_tarifa'] ?>">$<?= number_format($t['tarifa_hora'], 2) ?>/hora (<?= $t['precio_tiempo'] ?>)</option>
+                    <?php endforeach; ?>
+                </select>
+                <label for="modalTarifaId">Tarifa</label>
+            </div>
+            
+            <div class="input-field">
+                <i class="material-icons prefix">timer</i>
+                <input type="text" id="modalTiempo" value="01:00:00" required pattern="\d{2}:\d{2}:\d{2}" placeholder="HH:MM:SS">
+                <label for="modalTiempo" class="active">Tiempo (HH:MM:SS)</label>
+                <span class="helper-text" style="font-size:0.8rem;color:var(--text-muted);">Ej: 01:30:00 = 1 hora 30 minutos</span>
             </div>
         </form>
     </div>
@@ -351,7 +369,7 @@
 </div>
 
 <!-- Modal para mostrar historial -->
-<div id="modalHistorial" class="modal" style="max-width:700px;">
+<div id="modalHistorial" class="modal" style="max-width:800px;">
     <div class="modal-content">
         <h4 style="font-weight:700;margin-bottom:1.5rem;">
             <i class="material-icons left" style="color:var(--primary);">history</i>
@@ -383,12 +401,17 @@ $(function() {
     // ============================================================
     $(document).on('click', '.btn-iniciar-sesion', function(e) {
         e.stopPropagation();
-        var estacionId = $(this).data('estacion-id');
+        var activoId = $(this).data('estacion-id');
         var estacionNombre = $(this).data('estacion');
         
-        $('#modalEstacionId').val(estacionId);
+        $('#modalActivoId').val(activoId);
         $('#modalEstacionNombre').val(estacionNombre);
-        $('#modalClienteNombre').val('');
+        $('#modalClienteId').val('');
+        $('#modalTarifaId').val('');
+        $('#modalTiempo').val('01:00:00');
+        
+        // Actualizar selects
+        $('select').formSelect();
         
         var instance = M.Modal.getInstance($('#modalIniciarSesion'));
         if (!instance) {
@@ -397,17 +420,31 @@ $(function() {
         }
         instance.open();
         setTimeout(function() {
-            $('#modalClienteNombre').focus();
+            $('#modalClienteId').focus();
         }, 300);
     });
 
     $('#btnConfirmarInicio').on('click', function() {
-        var estacionId = $('#modalEstacionId').val();
-        var clienteNombre = $('#modalClienteNombre').val().trim();
+        var activoId = $('#modalActivoId').val();
+        var clienteId = $('#modalClienteId').val();
+        var tarifaId = $('#modalTarifaId').val();
+        var tiempo = $('#modalTiempo').val().trim();
         
-        if (!clienteNombre) {
-            EIS.toast('Ingresa el nombre del cliente', 'red', 'error');
-            $('#modalClienteNombre').focus();
+        if (!clienteId) {
+            EIS.toast('Selecciona un cliente', 'red', 'error');
+            $('#modalClienteId').focus();
+            return;
+        }
+        
+        if (!tarifaId) {
+            EIS.toast('Selecciona una tarifa', 'red', 'error');
+            $('#modalTarifaId').focus();
+            return;
+        }
+        
+        if (!tiempo || !/^\d{2}:\d{2}:\d{2}$/.test(tiempo) || tiempo === '00:00:00') {
+            EIS.toast('Ingresa un tiempo válido (HH:MM:SS)', 'red', 'error');
+            $('#modalTiempo').focus();
             return;
         }
         
@@ -418,8 +455,10 @@ $(function() {
             url: '?pagina=ciberControl&accion=iniciar',
             method: 'POST',
             data: {
-                estacion_id: estacionId,
-                cliente_nombre: clienteNombre
+                activo_id: activoId,
+                cliente_id: clienteId,
+                tarifa_id: tarifaId,
+                tiempo: tiempo
             },
             dataType: 'json',
             success: function(response) {
@@ -432,7 +471,8 @@ $(function() {
                     EIS.toast(response.message || 'Error al iniciar sesión', 'red', 'error');
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                console.error('Error AJAX:', status, error);
                 EIS.toast('Error de conexión con el servidor', 'red', 'error');
             },
             complete: function() {
@@ -471,18 +511,21 @@ $(function() {
             success: function(response) {
                 if (response.success) {
                     var data = response.data;
-                    var mensaje = 'costo final de la estación: ' + estacionNombre;
+                    var mensaje = 'Sesión finalizada en ' + estacionNombre;
                     if (data.costo_total) {
                        mensaje += ' - Total: $' + parseFloat(data.costo_total).toFixed(2);
                     }
                     EIS.toast(mensaje, 'green', 'stop_circle');
-                    actualizarCyberUI(data.estacion);
+                    if (data.estacion) {
+                        actualizarCyberUI(data.estacion);
+                    }
                     actualizarContadores();
                 } else {
                     EIS.toast(response.message || 'Error al finalizar sesión', 'red', 'error');
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                console.error('Error AJAX:', status, error);
                 EIS.toast('Error de conexión con el servidor', 'red', 'error');
             },
             complete: function() {
@@ -500,7 +543,7 @@ $(function() {
         var $card = $('.station-card[data-estacion-id="' + estacion.id + '"]');
         if (!$card.length) return;
 
-        var estado = estacion.estado;
+        var estado = estacion.estado || 'Disponible';
         var estadoLower = estado.toLowerCase();
 
         $card.removeClass('disponible ocupada mantenimiento').addClass(estadoLower);
@@ -526,9 +569,15 @@ $(function() {
             }
             $desc.html(html);
         } else if (estado === 'Disponible') {
-            $desc.html(estacion.especificaciones || 'PC Estándar');
+            $desc.html(estacion.marca || 'PC');
+            if (estacion.descripcion) {
+                $desc.append('<br><small>' + estacion.descripcion + '</small>');
+            }
         } else {
-            $desc.html(estacion.especificaciones || 'En mantenimiento');
+            $desc.html(estacion.marca || 'PC');
+            if (estacion.descripcion) {
+                $desc.append('<br><small>' + estacion.descripcion + '</small>');
+            }
         }
 
         var $footer = $card.find('.station-footer');
@@ -537,7 +586,7 @@ $(function() {
             $card.find('.station-inner').append($footer);
         }
 
-        var nombreSeguro = $('<div>').text(estacion.nombre || '').html();
+        var nombreSeguro = $('<div>').text(estacion.id ? 'PC-' + estacion.id : '').html();
         var footerHtml = '';
 
         if (estado === 'Ocupada') {
@@ -601,285 +650,234 @@ $(function() {
     // ============================================================
     // HISTORIAL
     // ============================================================
-  // ============================================================
-// HISTORIAL DE SESIONES - VERSIÓN CORREGIDA
-// ============================================================
+    $(document).on('click', '#btnHistorialCyber, #btnHistorialCyberMobile', function() {
+        var instance = M.Modal.getInstance($('#modalHistorial'));
+        if (!instance) {
+            $('#modalHistorial').modal({
+                onCloseStart: function() {
+                    $('#historialResultados').html('');
+                }
+            });
+            instance = M.Modal.getInstance($('#modalHistorial'));
+        }
+        instance.open();
+        mostrarSelectorEstaciones();
+    });
 
-// Variable para almacenar el ID de la estación seleccionada
-var estacionSeleccionadaId = null;
-
-// Abrir modal de historial
-$(document).on('click', '#btnHistorialCyber, #btnHistorialCyberMobile', function() {
-    var instance = M.Modal.getInstance($('#modalHistorial'));
-    if (!instance) {
-        $('#modalHistorial').modal({
-            onCloseStart: function() {
-                // Limpiar al cerrar
-                $('#historialResultados').html('');
-                estacionSeleccionadaId = null;
-            }
+    function mostrarSelectorEstaciones() {
+        var estaciones = $('.station-card');
+        var totalEstaciones = estaciones.length;
+        
+        if (totalEstaciones === 0) {
+            $('#historialContenido').html(`
+                <div class="center-align" style="padding:2rem 0;">
+                    <i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">computer</i>
+                    <p style="color:var(--text-muted);">No hay PCs registradas</p>
+                </div>
+            `);
+            return;
+        }
+        
+        var html = `
+            <div style="margin-bottom:1.5rem;">
+                <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:0.75rem;">
+                    <i class="material-icons left" style="font-size:1.1rem;">info</i>
+                    Selecciona una PC para ver su historial de sesiones
+                </p>
+                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;">
+        `;
+        
+        estaciones.each(function() {
+            var id = $(this).data('estacion-id');
+            var nombre = $(this).data('nombre') || 'PC-' + id;
+            var estado = $(this).data('status') || 'disponible';
+            var estadoClass = estado === 'disponible' ? 'green' : 
+                              estado === 'ocupada' ? 'orange' : 'red';
+            
+            html += `
+                <button class="btn-small waves-effect waves-light ${estadoClass} btn-ver-historial" 
+                        data-estacion-id="${id}" 
+                        style="border-radius:16px;min-width:60px;text-transform:capitalize;display:inline-flex;align-items:center;gap:0.25rem;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block;"></span>
+                    ${nombre}
+                </button>
+            `;
         });
-        instance = M.Modal.getInstance($('#modalHistorial'));
-    }
-    instance.open();
-    
-    // Mostrar selector de estaciones
-    mostrarSelectorEstaciones();
-});
-
-// Función para mostrar el selector de estaciones
-function mostrarSelectorEstaciones() {
-    var estaciones = $('.station-card');
-    var totalEstaciones = estaciones.length;
-    
-    if (totalEstaciones === 0) {
-        $('#historialContenido').html(`
-            <div class="center-align" style="padding:2rem 0;">
-                <i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">computer</i>
-                <p style="color:var(--text-muted);">No hay estaciones registradas</p>
-            </div>
-        `);
-        return;
-    }
-    
-    var html = `
-        <div style="margin-bottom:1.5rem;">
-            <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:0.75rem;">
-                <i class="material-icons left" style="font-size:1.1rem;">info</i>
-                Selecciona una estación para ver su historial de sesiones
-            </p>
-            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;">
-    `;
-    
-    // Generar botones para cada estación
-    estaciones.each(function() {
-        var id = $(this).data('estacion-id');
-        var nombre = $(this).data('nombre') || 'PC-' + id;
-        var estado = $(this).data('status') || 'disponible';
-        var estadoClass = estado === 'disponible' ? 'green' : 
-                          estado === 'ocupada' ? 'orange' : 'red';
         
         html += `
-            <button class="btn-small waves-effect waves-light ${estadoClass} btn-ver-historial" 
-                    data-estacion-id="${id}" 
-                    style="border-radius:16px;min-width:60px;text-transform:capitalize;display:inline-flex;align-items:center;gap:0.25rem;">
-                <span style="width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block;"></span>
-                ${nombre}
-            </button>
-        `;
-    });
-    
-    html += `
-            </div>
-        </div>
-        <div id="historialResultados" style="margin-top:1.5rem;"></div>
-    `;
-    
-    $('#historialContenido').html(html);
-    
-    // Si hay estaciones, seleccionar la primera automáticamente
-    if (totalEstaciones > 0) {
-        var primerId = estaciones.first().data('estacion-id');
-        setTimeout(function() {
-            $('.btn-ver-historial[data-estacion-id="' + primerId + '"]').click();
-        }, 300);
-    }
-}
-
-// ============================================================
-// CARGAR HISTORIAL DE UNA ESTACIÓN
-// ============================================================
-
-$(document).on('click', '.btn-ver-historial', function() {
-    var estacionId = $(this).data('estacion-id');
-    var estacionNombre = $(this).text().trim();
-    
-    // Resaltar botón seleccionado
-    $('.btn-ver-historial').removeClass('active indigo darken-2');
-    $(this).addClass('active indigo darken-2');
-    
-    estacionSeleccionadaId = estacionId;
-    cargarHistorialEstacion(estacionId, estacionNombre);
-});
-
-function cargarHistorialEstacion(estacionId, estacionNombre) {
-    var $resultados = $('#historialResultados');
-    
-    // Mostrar loader
-    $resultados.html(`
-        <div class="center-align" style="padding:2rem 0;">
-            <div class="preloader-wrapper small active">
-                <div class="spinner-layer spinner-green-only">
-                    <div class="circle-clipper left"><div class="circle"></div></div>
-                    <div class="gap-patch"><div class="circle"></div></div>
-                    <div class="circle-clipper right"><div class="circle"></div></div>
                 </div>
             </div>
-            <p style="color:var(--text-muted);margin-top:1rem;">Cargando historial de ${estacionNombre}...</p>
-        </div>
-    `);
-    
-    // Hacer petición AJAX
-    $.ajax({
-        url: '?pagina=ciberControl&accion=historial',
-        method: 'GET',
-        data: { 
-            estacion_id: estacionId, 
-            limit: 20 
-        },
-        dataType: 'json',
-        timeout: 10000,
-        success: function(response) {
-            if (response.success) {
-                if (response.data && response.data.length > 0) {
-                    mostrarTablaHistorial(response.data, estacionNombre);
-                } else {
-                    mostrarMensajeSinHistorial(estacionNombre);
-                }
-            } else {
-                mostrarError('Error al cargar el historial: ' + (response.message || 'Error desconocido'));
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('Error AJAX:', status, error);
-            mostrarError('Error de conexión al servidor. Por favor, intenta nuevamente.');
+            <div id="historialResultados" style="margin-top:1.5rem;"></div>
+        `;
+        
+        $('#historialContenido').html(html);
+        
+        if (totalEstaciones > 0) {
+            var primerId = estaciones.first().data('estacion-id');
+            setTimeout(function() {
+                $('.btn-ver-historial[data-estacion-id="' + primerId + '"]').click();
+            }, 300);
         }
+    }
+
+    $(document).on('click', '.btn-ver-historial', function() {
+        var estacionId = $(this).data('estacion-id');
+        var estacionNombre = $(this).text().trim();
+        
+        $('.btn-ver-historial').removeClass('active indigo darken-2');
+        $(this).addClass('active indigo darken-2');
+        
+        cargarHistorialEstacion(estacionId, estacionNombre);
     });
-}
 
-// ============================================================
-// FUNCIONES PARA MOSTRAR EL HISTORIAL
-// ============================================================
+    function cargarHistorialEstacion(estacionId, estacionNombre) {
+        var $resultados = $('#historialResultados');
+        
+        $resultados.html(`
+            <div class="center-align" style="padding:2rem 0;">
+                <div class="preloader-wrapper small active">
+                    <div class="spinner-layer spinner-green-only">
+                        <div class="circle-clipper left"><div class="circle"></div></div>
+                        <div class="gap-patch"><div class="circle"></div></div>
+                        <div class="circle-clipper right"><div class="circle"></div></div>
+                    </div>
+                </div>
+                <p style="color:var(--text-muted);margin-top:1rem;">Cargando historial de ${estacionNombre}...</p>
+            </div>
+        `);
+        
+        $.ajax({
+            url: '?pagina=ciberControl&accion=historial',
+            method: 'GET',
+            data: { 
+                activo_id: estacionId, 
+                limit: 20 
+            },
+            dataType: 'json',
+            timeout: 10000,
+            success: function(response) {
+                if (response.success) {
+                    if (response.data && response.data.length > 0) {
+                        mostrarTablaHistorial(response.data, estacionNombre);
+                    } else {
+                        mostrarMensajeSinHistorial(estacionNombre);
+                    }
+                } else {
+                    mostrarError('Error al cargar el historial: ' + (response.message || 'Error desconocido'));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error AJAX:', status, error);
+                mostrarError('Error de conexión al servidor. Por favor, intenta nuevamente.');
+            }
+        });
+    }
 
-function mostrarTablaHistorial(datos, estacionNombre) {
-    var $resultados = $('#historialResultados');
-    
-    // Construir tabla
-    var html = `
-        <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border-light);">
-            <table class="striped responsive-table" style="margin-bottom:0;font-size:0.9rem;">
-                <thead>
-                    <tr style="background:var(--surface-hover);">
-                        <th style="padding:0.6rem 0.8rem;">#</th>
-                        <th style="padding:0.6rem 0.8rem;">Cliente</th>
-                        <th style="padding:0.6rem 0.8rem;">Inicio</th>
-                        <th style="padding:0.6rem 0.8rem;">Fin</th>
-                        <th style="padding:0.6rem 0.8rem;">Duración</th>
-                        <th style="padding:0.6rem 0.8rem;text-align:right;">Costo</th>
-                        <th style="padding:0.6rem 0.8rem;">Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-    
-    datos.forEach(function(s, i) {
-        // Formatear duración
-        var duracion = '-';
-        if (s.duracion_minutos !== null && s.duracion_minutos !== undefined) {
-            var horas = Math.floor(s.duracion_minutos / 60);
-            var mins = s.duracion_minutos % 60;
-            duracion = horas + 'h ' + mins + 'min';
-        }
+    function mostrarTablaHistorial(datos, estacionNombre) {
+        var $resultados = $('#historialResultados');
         
-        // Formatear costo
-        var costo = s.costo_total !== null && s.costo_total !== undefined 
-            ? '$' + parseFloat(s.costo_total).toFixed(2) 
-            : '-';
+        var html = `
+            <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border-light);">
+                <table class="striped responsive-table" style="margin-bottom:0;font-size:0.9rem;">
+                    <thead>
+                        <tr style="background:var(--surface-hover);">
+                            <th style="padding:0.6rem 0.8rem;">#</th>
+                            <th style="padding:0.6rem 0.8rem;">Cliente</th>
+                            <th style="padding:0.6rem 0.8rem;">Inicio</th>
+                            <th style="padding:0.6rem 0.8rem;">Fin</th>
+                            <th style="padding:0.6rem 0.8rem;">Duración</th>
+                            <th style="padding:0.6rem 0.8rem;text-align:right;">Costo</th>
+                            <th style="padding:0.6rem 0.8rem;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
         
-        // Estado con color
-        var estadoBadge = '';
-        if (s.estado === 'cerrada') {
-            estadoBadge = '<span class="new badge green" style="background:#43a047;">Cerrada</span>';
-        } else if (s.estado === 'activa') {
-            estadoBadge = '<span class="new badge orange" style="background:#fb8c00;">Activa</span>';
-        } else {
-            estadoBadge = '<span class="new badge red" style="background:#e53935;">' + s.estado + '</span>';
-        }
-        
-        // Formatear fechas
-        var horaInicio = s.hora_inicio ? s.hora_inicio.replace('T', ' ').slice(0, 16) : '-';
-        var horaFin = s.hora_fin ? s.hora_fin.replace('T', ' ').slice(0, 16) : '-';
+        datos.forEach(function(s, i) {
+            var duracion = '-';
+            if (s.duracion_minutos !== null && s.duracion_minutos !== undefined) {
+                var horas = Math.floor(s.duracion_minutos / 60);
+                var mins = s.duracion_minutos % 60;
+                duracion = horas + 'h ' + mins + 'min';
+            }
+            
+            var costo = s.costo_total !== null && s.costo_total !== undefined 
+                ? '$' + parseFloat(s.costo_total).toFixed(2) 
+                : '-';
+            
+            var estadoBadge = s.estado === 'activa' 
+                ? '<span class="new badge orange" style="background:#fb8c00;">Activa</span>'
+                : '<span class="new badge green" style="background:#43a047;">Cerrada</span>';
+            
+            var horaInicio = s.hora_inicio ? s.hora_inicio.replace('T', ' ').slice(0, 16) : '-';
+            var horaFin = s.hora_fin ? s.hora_fin.replace('T', ' ').slice(0, 16) : '-';
+            
+            html += `
+                <tr style="border-bottom:1px solid var(--border-light);">
+                    <td style="padding:0.5rem 0.8rem;font-weight:600;color:var(--text-muted);">${i + 1}</td>
+                    <td style="padding:0.5rem 0.8rem;font-weight:500;">${s.cliente_nombre || 'Anónimo'}</td>
+                    <td style="padding:0.5rem 0.8rem;font-size:0.85rem;color:var(--text-muted);">${horaInicio}</td>
+                    <td style="padding:0.5rem 0.8rem;font-size:0.85rem;color:var(--text-muted);">${horaFin}</td>
+                    <td style="padding:0.5rem 0.8rem;font-weight:500;">${duracion}</td>
+                    <td style="padding:0.5rem 0.8rem;text-align:right;font-weight:700;color:var(--primary);">${costo}</td>
+                    <td style="padding:0.5rem 0.8rem;">${estadoBadge}</td>
+                </tr>
+            `;
+        });
         
         html += `
-            <tr style="border-bottom:1px solid var(--border-light);">
-                <td style="padding:0.5rem 0.8rem;font-weight:600;color:var(--text-muted);">${i + 1}</td>
-                <td style="padding:0.5rem 0.8rem;font-weight:500;">${s.cliente_nombre || 'Anónimo'}</td>
-                <td style="padding:0.5rem 0.8rem;font-size:0.85rem;color:var(--text-muted);">${horaInicio}</td>
-                <td style="padding:0.5rem 0.8rem;font-size:0.85rem;color:var(--text-muted);">${horaFin}</td>
-                <td style="padding:0.5rem 0.8rem;font-weight:500;">${duracion}</td>
-                <td style="padding:0.5rem 0.8rem;text-align:right;font-weight:700;color:var(--primary);">${costo}</td>
-                <td style="padding:0.5rem 0.8rem;">${estadoBadge}</td>
-            </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top:0.75rem;text-align:right;color:var(--text-muted);font-size:0.8rem;">
+                <i class="material-icons left" style="font-size:0.9rem;">info</i>
+                Mostrando ${datos.length} sesiones de ${estacionNombre}
+            </div>
         `;
-    });
-    
-    html += `
-                </tbody>
-            </table>
-        </div>
-        <div style="margin-top:0.75rem;text-align:right;color:var(--text-muted);font-size:0.8rem;">
-            <i class="material-icons left" style="font-size:0.9rem;">info</i>
-            Mostrando ${datos.length} sesiones de ${estacionNombre}
-        </div>
-    `;
-    
-    $resultados.html(html);
-}
-
-function mostrarMensajeSinHistorial(estacionNombre) {
-    $('#historialResultados').html(`
-        <div class="center-align" style="padding:2rem 0;">
-            <i class="material-icons" style="font-size:3.5rem;display:block;margin-bottom:0.5rem;opacity:0.3;">hourglass_empty</i>
-            <p style="color:var(--text-muted);font-size:1rem;">
-                <strong>${estacionNombre}</strong> no tiene sesiones registradas
-            </p>
-            <p style="color:var(--text-muted);font-size:0.85rem;">Las sesiones aparecerán aquí cuando se finalicen</p>
-        </div>
-    `);
-}
-
-function mostrarError(mensaje) {
-    $('#historialResultados').html(`
-        <div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;">
-            <i class="material-icons left" style="font-size:1.3rem;">error</i>
-            ${mensaje}
-        </div>
-    `);
-}
-
-// ============================================================
-// ACTUALIZAR CONTADORES DESPUÉS DE FINALIZAR SESIÓN
-// ============================================================
-
-// Si el historial está abierto, actualizarlo automáticamente
-// cuando se finaliza una sesión
-$(document).on('click', '.btn-finalizar-sesion', function() {
-    // El código existente ya maneja la finalización
-    // Después de finalizar, si el historial está abierto, refrescar
-    var modalAbierto = $('#modalHistorial').hasClass('open');
-    if (modalAbierto && estacionSeleccionadaId) {
-        // Recargar el historial después de 1 segundo
-        setTimeout(function() {
-            var estacionNombre = $('.btn-ver-historial.active').text().trim();
-            if (estacionNombre) {
-                cargarHistorialEstacion(estacionSeleccionadaId, estacionNombre);
-            }
-        }, 1500);
+        
+        $resultados.html(html);
     }
-});
+
+    function mostrarMensajeSinHistorial(estacionNombre) {
+        $('#historialResultados').html(`
+            <div class="center-align" style="padding:2rem 0;">
+                <i class="material-icons" style="font-size:3.5rem;display:block;margin-bottom:0.5rem;opacity:0.3;">hourglass_empty</i>
+                <p style="color:var(--text-muted);font-size:1rem;">
+                    <strong>${estacionNombre}</strong> no tiene sesiones registradas
+                </p>
+                <p style="color:var(--text-muted);font-size:0.85rem;">Las sesiones aparecerán aquí cuando se finalicen</p>
+            </div>
+        `);
+    }
+
+    function mostrarError(mensaje) {
+        $('#historialResultados').html(`
+            <div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;">
+                <i class="material-icons left" style="font-size:1.3rem;">error</i>
+                ${mensaje}
+            </div>
+        `);
+    }
+
+    // ============================================================
+    // NUEVA SESIÓN (abre modal de inicio)
+    // ============================================================
+    $('#btnNuevaSesion').on('click', function() {
+        // Buscar la primera PC disponible
+        var $primeraDisponible = $('.station-card.disponible').first();
+        if ($primeraDisponible.length) {
+            $primeraDisponible.find('.btn-iniciar-sesion').click();
+        } else {
+            EIS.toast('No hay PCs disponibles en este momento', 'orange', 'warning');
+        }
+    });
+
     // ============================================================
     // ACTUALIZAR (Refrescar)
     // ============================================================
     $('#btnRefrescar').on('click', function() {
         $(this).prop('disabled', true).html('<i class="material-icons left" style="font-size:1rem;">hourglass_top</i>');
         location.reload();
-    });
-
-    // ============================================================
-    // NUEVA ESTACIÓN
-    // ============================================================
-    $('#btnNuevaEstacion').on('click', function() {
-        EIS.toast('Formulario para nueva estación (próximamente)', 'indigo', 'add_circle');
     });
 
     // ============================================================

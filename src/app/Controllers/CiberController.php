@@ -1,5 +1,8 @@
 <?php
-// src/app/Controllers/CiberController.php
+// ============================================================
+// CONTROLADOR: CiberController
+// Maneja las peticiones HTTP del módulo Cyber Control
+// ============================================================
 
 require_once __DIR__ . '/../Models/CiberModel.php';
 
@@ -15,25 +18,12 @@ class CiberController
     {
         $this->model = new CiberModel();
         
-        // Obtener el ID del usuario de la sesión
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
         
-        // Buscar el usuario admin en la base de datos
-        try {
-            global $pdo;
-            if ($pdo) {
-                $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE username = 'admin' LIMIT 1");
-                $stmt->execute();
-                $admin = $stmt->fetch();
-                $this->usuarioId = $admin ? $admin['id'] : 1;
-            } else {
-                $this->usuarioId = 1;
-            }
-        } catch (Exception $e) {
-            $this->usuarioId = 1;
-        }
+        // Usuario por defecto (admin)
+        $this->usuarioId = 1;
     }
 
     /**
@@ -41,11 +31,9 @@ class CiberController
      */
     public function index(): void
     {
-        // Obtener datos del modelo
         $estaciones = $this->model->obtenerEstaciones();
         $estadisticas = $this->model->obtenerEstadisticas();
 
-        // Calcular contadores
         $countDisponibles = 0;
         $countOcupadas = 0;
         $countMantenimiento = 0;
@@ -65,26 +53,11 @@ class CiberController
         }
         $totalEstaciones = count($estaciones);
 
-        // Agrupar estaciones por zona/tipo
-        $estacionesGaming = array_filter($estaciones, function($e) {
-            return strpos($e['especificaciones'] ?? '', 'Gaming') !== false || 
-                   ($e['tarifa_nombre'] ?? '') === 'Gaming';
-        });
+        // Obtener clientes y tarifas
+        $clientes = $this->model->obtenerClientes();
+        $tarifas = $this->model->obtenerTarifas();
 
-        $estacionesOficina = array_filter($estaciones, function($e) {
-            return strpos($e['especificaciones'] ?? '', 'Estándar') !== false || 
-                   ($e['tarifa_nombre'] ?? '') === 'Oficina';
-        });
-
-        $estacionesPremium = array_filter($estaciones, function($e) {
-            return ($e['tarifa_nombre'] ?? '') === 'Premium';
-        });
-
-        $usarZonas = count($estacionesGaming) > 0 || 
-                     count($estacionesOficina) > 0 || 
-                     count($estacionesPremium) > 0;
-
-        // Funciones auxiliares para estados
+        // Funciones auxiliares
         $getEstadoClase = function($estado) {
             switch ($estado) {
                 case 'Disponible': return 'disponible';
@@ -112,13 +85,10 @@ class CiberController
             }
         };
 
-        // ============================================================
-        // PASAR VARIABLES AL LAYOUT Y A LA VISTA
-        // ============================================================
         $pageTitle = 'Control de Cybercafé';
-        $headerExtra = '<span class="chip green white-text">' . $countDisponibles . ' Disponibles</span><span class="chip orange white-text">' . $countOcupadas . ' Ocupadas</span>';
+        $headerExtra = '<span class="chip green white-text">' . $countDisponibles . ' Disponibles</span>
+                        <span class="chip orange white-text">' . $countOcupadas . ' Ocupadas</span>';
         
-        // Guardar todas las variables en un array para pasarlas al layout
         $viewData = [
             'estaciones' => $estaciones,
             'estadisticas' => $estadisticas,
@@ -126,25 +96,25 @@ class CiberController
             'countOcupadas' => $countOcupadas,
             'countMantenimiento' => $countMantenimiento,
             'totalEstaciones' => $totalEstaciones,
-            'usarZonas' => $usarZonas,
-            'estacionesGaming' => $estacionesGaming,
-            'estacionesOficina' => $estacionesOficina,
-            'estacionesPremium' => $estacionesPremium,
+            'usarZonas' => false,
+            'estacionesGaming' => [],
+            'estacionesOficina' => [],
+            'estacionesPremium' => [],
             'getEstadoClase' => $getEstadoClase,
             'getEstadoTexto' => $getEstadoTexto,
-            'getEstadoIcono' => $getEstadoIcono
+            'getEstadoIcono' => $getEstadoIcono,
+            'clientes' => $clientes,
+            'tarifas' => $tarifas
         ];
         
-        // Extraer variables para que estén disponibles en la vista
         extract($viewData);
         
-        // Incluir el layout (que a su vez incluirá la vista)
         $contentView = __DIR__ . '/../Views/ciberControl.php';
         require_once __DIR__ . '/../template/layout.php';
     }
 
     /**
-     * API: Iniciar sesión en una estación
+     * API: Iniciar sesión
      */
     public function iniciarSesion(): void
     {
@@ -155,39 +125,37 @@ class CiberController
             return;
         }
 
-        $estacionId = isset($_POST['estacion_id']) ? (int)$_POST['estacion_id'] : 0;
-        $clienteNombre = isset($_POST['cliente_nombre']) ? trim($_POST['cliente_nombre']) : '';
+        $activoId = isset($_POST['activo_id']) ? (int)$_POST['activo_id'] : 0;
+        $clienteId = isset($_POST['cliente_id']) ? (int)$_POST['cliente_id'] : 0;
+        $tarifaId = isset($_POST['tarifa_id']) ? (int)$_POST['tarifa_id'] : 0;
+        $tiempo = isset($_POST['tiempo']) ? trim($_POST['tiempo']) : '';
 
-        if ($estacionId <= 0) {
-            echo json_encode(['success' => false, 'message' => 'ID de estación inválido']);
+        if ($activoId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'ID de PC inválido']);
             return;
         }
 
-        if (empty($clienteNombre)) {
-            echo json_encode(['success' => false, 'message' => 'El nombre del cliente es obligatorio']);
+        if ($clienteId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Debes seleccionar un cliente']);
             return;
         }
 
-        $resultado = $this->model->iniciarSesion($estacionId, $this->usuarioId, $clienteNombre);
-
-        if ($resultado['success']) {
-            // Obtener datos actualizados de la estación
-            $estaciones = $this->model->obtenerEstaciones();
-            $estacionActualizada = null;
-            foreach ($estaciones as $e) {
-                if ($e['id'] == $estacionId) {
-                    $estacionActualizada = $e;
-                    break;
-                }
-            }
-            $resultado['data']['estacion'] = $estacionActualizada;
+        if ($tarifaId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Debes seleccionar una tarifa']);
+            return;
         }
 
+        if (empty($tiempo) || !preg_match('/^\d{2}:\d{2}:\d{2}$/', $tiempo) || $tiempo === '00:00:00') {
+            echo json_encode(['success' => false, 'message' => 'Tiempo inválido. Usa HH:MM:SS']);
+            return;
+        }
+
+        $resultado = $this->model->iniciarSesion($activoId, $clienteId, $tarifaId, $tiempo);
         echo json_encode($resultado);
     }
 
     /**
-     * API: Finalizar sesión en una estación
+     * API: Finalizar sesión
      */
     public function finalizarSesion(): void
     {
@@ -206,76 +174,36 @@ class CiberController
         }
 
         $resultado = $this->model->finalizarSesion($sesionId);
-
-        if ($resultado['success']) {
-            $estacionId = $resultado['data']['estacion_id'];
-            $estaciones = $this->model->obtenerEstaciones();
-            $estacionActualizada = null;
-            foreach ($estaciones as $e) {
-                if ($e['id'] == $estacionId) {
-                    $estacionActualizada = $e;
-                    break;
-                }
-            }
-            $resultado['data']['estacion'] = $estacionActualizada;
-        }
-
         echo json_encode($resultado);
     }
 
     /**
-     * API: Obtener historial de una estación
+     * API: Obtener historial
      */
     public function obtenerHistorial(): void
     {
         header('Content-Type: application/json');
 
-        $estacionId = isset($_GET['estacion_id']) ? (int)$_GET['estacion_id'] : 0;
-        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+        $activoId = isset($_GET['activo_id']) ? (int)$_GET['activo_id'] : 0;
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
 
-        if ($estacionId <= 0) {
-            echo json_encode(['success' => false, 'message' => 'ID de estación inválido']);
+        if ($activoId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'ID de PC inválido']);
             return;
         }
 
-        $historial = $this->model->obtenerHistorialEstacion($estacionId, $limit);
-
+        $historial = $this->model->obtenerHistorialEstacion($activoId, $limit);
         echo json_encode(['success' => true, 'data' => $historial]);
     }
 
     /**
-     * API: Obtener estadísticas actualizadas
+     * API: Obtener estadísticas
      */
     public function obtenerEstadisticas(): void
     {
         header('Content-Type: application/json');
 
         $estadisticas = $this->model->obtenerEstadisticas();
-        
-        $estaciones = $this->model->obtenerEstaciones();
-        $countDisponibles = 0;
-        $countOcupadas = 0;
-        $countMantenimiento = 0;
-
-        foreach ($estaciones as $e) {
-            switch ($e['estado']) {
-                case 'Disponible':
-                    $countDisponibles++;
-                    break;
-                case 'Ocupada':
-                    $countOcupadas++;
-                    break;
-                case 'Mantenimiento':
-                    $countMantenimiento++;
-                    break;
-            }
-        }
-
-        $estadisticas['disponibles'] = $countDisponibles;
-        $estadisticas['ocupadas'] = $countOcupadas;
-        $estadisticas['mantenimiento'] = $countMantenimiento;
-        $estadisticas['total'] = count($estaciones);
-
         echo json_encode(['success' => true, 'data' => $estadisticas]);
     }
 }

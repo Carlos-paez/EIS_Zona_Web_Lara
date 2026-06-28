@@ -2,7 +2,7 @@
 // Configuración de la conexión a la base de datos MySQL usando PDO
 
     $host = "localhost";          // Dirección del servidor de base de datos
-    $db = "zwl";                 // Nombre de la base de datos
+    $db = "zona_web_lara";        // Nombre de la base de datos
     $user = "root";              // Usuario de MySQL
     $pass = "";                  // Contraseña de MySQL (vacía en desarrollo local)
     $charset = 'utf8mb4';        // Juego de caracteres UTF-8 (soporta emojis y caracteres especiales)
