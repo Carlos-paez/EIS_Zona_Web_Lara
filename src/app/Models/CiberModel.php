@@ -449,6 +449,73 @@ class CiberModel
     }
 
     /**
+     * Busca un cliente por nombre completo y devuelve su ID.
+     */
+    public function buscarClientePorNombre(string $nombreCompleto): int
+    {
+        if (!$this->pdo) {
+            return 0;
+        }
+
+        try {
+            $sql = "SELECT id_cliente FROM clientes WHERE CONCAT(nombre, ' ', apellido) LIKE ? LIMIT 1";
+            $stmt = $this->pdo->prepare($sql);
+            $search = '%' . $nombreCompleto . '%';
+            $stmt->execute([$search]);
+            $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return $cliente ? (int)$cliente['id_cliente'] : 0;
+        } catch (PDOException $e) {
+            error_log('Error en buscarClientePorNombre: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Crea un cliente nuevo usando el nombre completo proporcionado.
+     */
+    public function crearClientePorNombre(string $nombreCompleto): int
+    {
+        if (!$this->pdo) {
+            return 0;
+        }
+
+        $nombreCompleto = trim($nombreCompleto);
+        if ($nombreCompleto === '') {
+            return 0;
+        }
+
+        $partes = preg_split('/\s+/', $nombreCompleto, 2);
+        $nombre = trim($partes[0] ?? '');
+        $apellido = trim($partes[1] ?? '');
+
+        if ($nombre === '') {
+            return 0;
+        }
+
+        $sql = "INSERT INTO clientes (cedula, nombre, apellido, direccion, telefono, email)
+                VALUES (?, ?, ?, '', '', '')";
+
+        $maxIntentos = 5;
+        for ($intento = 0; $intento < $maxIntentos; $intento++) {
+            try {
+                $cedula = 'TEMP-' . date('YmdHis') . '-' . mt_rand(100, 999);
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute([$cedula, $nombre, $apellido]);
+
+                return (int)$this->pdo->lastInsertId();
+            } catch (PDOException $e) {
+                if ($intento === $maxIntentos - 1) {
+                    error_log('Error en crearClientePorNombre: ' . $e->getMessage());
+                    return 0;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
      * Obtiene todas las tarifas para el selector
      */
     public function obtenerTarifas(): array
@@ -467,6 +534,238 @@ class CiberModel
         } catch (PDOException $e) {
             error_log('Error en obtenerTarifas: ' . $e->getMessage());
             return [];
+        }
+    }
+
+    // ============================================================
+    // CRUD DE PCs - MÉTODOS AGREGADOS
+    // ============================================================
+
+    /**
+     * Obtener tipos de activo para el selector (solo tipos relevantes para cyber)
+     */
+    public function obtenerTiposActivo(): array
+    {
+        if (!$this->pdo) {
+            return [];
+        }
+
+        try {
+            $sql = "SELECT id_tipo_activo, nombre_tipo 
+                    FROM tipo_activo 
+                    WHERE nombre_tipo LIKE '%PC%' 
+                       OR nombre_tipo LIKE '%Gaming%' 
+                       OR nombre_tipo LIKE '%Oficina%' 
+                       OR nombre_tipo LIKE '%Premium%'
+                    ORDER BY nombre_tipo";
+            
+            $stmt = $this->pdo->query($sql);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+        } catch (PDOException $e) {
+            error_log('Error en obtenerTiposActivo: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtener una PC específica por ID (incluye datos completos)
+     */
+    public function obtenerPC(int $id): ?array
+    {
+        try {
+            $sql = "SELECT 
+                        a.id_activo as id,
+                        a.marca,
+                        a.descripcion,
+                        a.activa,
+                        a.is_ciber,
+                        a.fk_tipo_activo as tipo_activo_id,
+                        t.nombre_tipo as tipo_nombre,
+                        CASE 
+                            WHEN EXISTS (
+                                SELECT 1 FROM sesion_ciber s 
+                                WHERE s.fk_activo = a.id_activo 
+                                AND DATE_ADD(s.created_at, INTERVAL TIME_TO_SEC(s.tiempo_uso) SECOND) > NOW()
+                            ) THEN 'Ocupada'
+                            WHEN a.activa = 0 THEN 'Mantenimiento'
+                            ELSE 'Disponible'
+                        END as estado
+                    FROM activos a
+                    JOIN tipo_activo t ON a.fk_tipo_activo = t.id_tipo_activo
+                    WHERE a.id_activo = ? AND a.is_ciber = 1";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$id]);
+            return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+            
+        } catch (PDOException $e) {
+            error_log('Error en obtenerPC: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Crear nueva PC
+     */
+    public function crearPC(array $datos): array
+    {
+        try {
+            // Validar que no exista una PC con la misma marca y descripción
+            $sql = "SELECT COUNT(*) FROM activos 
+                    WHERE marca = ? AND descripcion = ? AND is_ciber = 1";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$datos['marca'], $datos['descripcion']]);
+            
+            if ($stmt->fetchColumn() > 0) {
+                return ['success' => false, 'message' => 'Ya existe una PC con esa marca y descripción'];
+            }
+            
+            $sql = "INSERT INTO activos (marca, descripcion, is_ciber, activa, fk_tipo_activo) 
+                    VALUES (?, ?, ?, ?, ?)";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([
+                $datos['marca'],
+                $datos['descripcion'],
+                $datos['is_ciber'],
+                $datos['activa'],
+                $datos['tipo_activo_id']
+            ]);
+            
+            return [
+                'success' => true,
+                'id' => (int)$this->pdo->lastInsertId()
+            ];
+            
+        } catch (PDOException $e) {
+            error_log('Error en crearPC: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Error al crear la PC: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Actualizar PC
+     */
+    public function actualizarPC(int $id, array $datos): array
+    {
+        try {
+            // Validar que la PC existe
+            $sql = "SELECT id_activo FROM activos WHERE id_activo = ? AND is_ciber = 1";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$id]);
+            
+            if (!$stmt->fetch()) {
+                return ['success' => false, 'message' => 'PC no encontrada'];
+            }
+            
+            // Verificar duplicados (excepto la misma PC)
+            $sql = "SELECT COUNT(*) FROM activos 
+                    WHERE marca = ? AND descripcion = ? AND is_ciber = 1 AND id_activo != ?";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$datos['marca'], $datos['descripcion'], $id]);
+            
+            if ($stmt->fetchColumn() > 0) {
+                return ['success' => false, 'message' => 'Ya existe otra PC con esa marca y descripción'];
+            }
+            
+            $sql = "UPDATE activos 
+                    SET marca = ?, descripcion = ?, activa = ?, fk_tipo_activo = ?
+                    WHERE id_activo = ? AND is_ciber = 1";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([
+                $datos['marca'],
+                $datos['descripcion'],
+                $datos['activa'],
+                $datos['tipo_activo_id'],
+                $id
+            ]);
+            
+            return ['success' => true];
+            
+        } catch (PDOException $e) {
+            error_log('Error en actualizarPC: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Error al actualizar la PC: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Cambiar estado de PC (Activar/Desactivar)
+     */
+    public function cambiarEstadoPC(int $id, int $activa): array
+    {
+        try {
+            $sql = "UPDATE activos SET activa = ? WHERE id_activo = ? AND is_ciber = 1";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$activa, $id]);
+            
+            return ['success' => true];
+            
+        } catch (PDOException $e) {
+            error_log('Error en cambiarEstadoPC: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Error al cambiar el estado: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Verificar si una PC tiene sesiones activas
+     */
+    public function tieneSesionActiva(int $id): bool
+    {
+        try {
+            $sql = "SELECT COUNT(*) FROM sesion_ciber s
+                    WHERE s.fk_activo = ?
+                    AND DATE_ADD(s.created_at, INTERVAL TIME_TO_SEC(s.tiempo_uso) SECOND) > NOW()";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$id]);
+            
+            return $stmt->fetchColumn() > 0;
+            
+        } catch (PDOException $e) {
+            error_log('Error en tieneSesionActiva: ' . $e->getMessage());
+            return true;
+        }
+    }
+
+    /**
+     * Verificar si una PC tiene sesiones (historial)
+     */
+    public function tieneSesiones(int $id): bool
+    {
+        try {
+            $sql = "SELECT COUNT(*) FROM sesion_ciber WHERE fk_activo = ?";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$id]);
+            
+            return $stmt->fetchColumn() > 0;
+            
+        } catch (PDOException $e) {
+            error_log('Error en tieneSesiones: ' . $e->getMessage());
+            return true;
+        }
+    }
+
+    /**
+     * Eliminar PC (solo si no tiene sesiones)
+     */
+    public function eliminarPC(int $id): array
+    {
+        try {
+            $sql = "DELETE FROM activos WHERE id_activo = ? AND is_ciber = 1";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$id]);
+            
+            if ($stmt->rowCount() > 0) {
+                return ['success' => true];
+            } else {
+                return ['success' => false, 'message' => 'No se pudo eliminar la PC'];
+            }
+            
+        } catch (PDOException $e) {
+            error_log('Error en eliminarPC: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Error al eliminar la PC: ' . $e->getMessage()];
         }
     }
 }

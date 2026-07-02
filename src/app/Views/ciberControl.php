@@ -49,6 +49,9 @@
                 <a class="btn-small waves-effect waves-light red filter-btn" data-filter="mantenimiento" style="border-radius:20px;padding:0 0.75rem;font-size:0.7rem;">Mantenimiento</a>
             </div>
             <div class="col s12 m5 right-align" style="padding-top:0.25rem;padding-bottom:0.25rem;">
+                <button class="btn-small waves-effect waves-light indigo" id="btnNuevaPC" style="border-radius:20px;">
+                    <i class="material-icons left" style="font-size:1rem;">add</i>Nueva PC
+                </button>
                 <button class="btn-small waves-effect waves-light indigo" id="btnNuevaSesion" style="border-radius:20px;">
                     <i class="material-icons left" style="font-size:1rem;">play_arrow</i>Nueva Sesión
                 </button>
@@ -63,6 +66,88 @@
                 </button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Modal: Crear/Editar PC -->
+<div id="modalPCForm" class="modal" style="max-width:550px;">
+    <div class="modal-content">
+        <h4 style="font-weight:700;margin-bottom:1.5rem;">
+            <i class="material-icons left" style="color:var(--primary);" id="modalPCTitleIcon">computer</i>
+            <span id="modalPCTitle">Nueva PC</span>
+        </h4>
+        <form id="formPC">
+            <input type="hidden" id="pcId" value="">
+            <div class="input-field">
+                <i class="material-icons prefix">branding_watermark</i>
+                <input type="text" id="pcMarca" name="marca" class="form-control" placeholder="Ej: HP, Dell, Lenovo" required>
+                <label for="pcMarca" class="active">Marca</label>
+            </div>
+            <div class="input-field">
+                <i class="material-icons prefix">description</i>
+                <input type="text" id="pcDescripcion" name="descripcion" class="form-control" placeholder="Ej: Intel i5, 8GB RAM, 256GB SSD" required>
+                <label for="pcDescripcion" class="active">Descripción</label>
+            </div>
+            <div class="input-field">
+                <i class="material-icons prefix">devices</i>
+                <select id="pcTipo" required>
+                    <option value="" disabled selected>Seleccionar tipo</option>
+                    <?php foreach ($tiposActivo as $tipo): ?>
+                        <option value="<?= $tipo['id_tipo_activo'] ?>"><?= htmlspecialchars($tipo['nombre_tipo']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <label for="pcTipo">Tipo de PC</label>
+            </div>
+            <div class="input-field" style="margin-top:1.5rem;">
+                <div style="display:flex;gap:2rem;align-items:center;">
+                    <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                        <input type="radio" name="pcEstado" value="1" checked>
+                        <span>Activa</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                        <input type="radio" name="pcEstado" value="0">
+                        <span>Mantenimiento</span>
+                    </label>
+                </div>
+                <label style="color:var(--text-muted);font-size:0.8rem;margin-top:0.5rem;display:block;">Estado de la PC</label>
+            </div>
+            <input type="hidden" id="pcIsCiber" value="1">
+            <div id="pcFormError" class="card-panel red lighten-4 red-text text-darken-4" style="display:none;border-radius:8px;padding:0.75rem;margin-top:1rem;">
+                <i class="material-icons left" style="font-size:1.2rem;">error</i>
+                <span id="pcFormErrorMessage">Error al guardar</span>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer" style="padding:1rem 1.5rem;display:flex;gap:0.75rem;justify-content:flex-end;border-top:1px solid var(--border-light);">
+        <button class="btn waves-effect waves-light grey lighten-1 modal-close" style="border-radius:24px;">Cancelar</button>
+        <button type="button" class="btn waves-effect waves-light indigo" id="btnGuardarPC" style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;">
+            <i class="material-icons left" style="margin:0;">save</i> Guardar PC
+        </button>
+    </div>
+</div>
+
+<!-- Modal: Confirmar Eliminación -->
+<div id="modalConfirmarEliminar" class="modal" style="max-width:450px;">
+    <div class="modal-content">
+        <h4 style="font-weight:700;margin-bottom:1rem;color:var(--danger);">
+            <i class="material-icons left" style="color:var(--danger);">warning</i>
+            Confirmar Eliminación
+        </h4>
+        <p id="confirmarMensaje" style="font-size:1.05rem;margin-bottom:0.5rem;">
+            ¿Estás seguro de eliminar la PC <strong id="confirmarPcNombre"></strong>?
+        </p>
+        <p style="color:var(--text-muted);font-size:0.9rem;">
+            <i class="material-icons left" style="font-size:1rem;">info</i>
+            Esta acción eliminará la PC permanentemente.
+            <strong>Solo se permite si no tiene sesiones registradas.</strong>
+        </p>
+        <input type="hidden" id="confirmarPcId" value="">
+    </div>
+    <div class="modal-footer" style="padding:1rem 1.5rem;display:flex;gap:0.75rem;justify-content:flex-end;border-top:1px solid var(--border-light);">
+        <button class="btn waves-effect waves-light grey lighten-1 modal-close" style="border-radius:24px;">Cancelar</button>
+        <button type="button" class="btn waves-effect waves-light red" id="btnConfirmarEliminar" style="border-radius:24px;">
+            <i class="material-icons left">delete_forever</i> Eliminar
+        </button>
     </div>
 </div>
 
@@ -103,6 +188,35 @@
                                     <br><small><?= htmlspecialchars($e['descripcion'] ?? '') ?></small>
                                 <?php endif; ?>
                             </div>
+                        </div>
+                        <div class="station-actions" style="display:flex;gap:0.25rem;justify-content:center;margin:0.25rem 0;">
+                            <button class="btn-floating btn-small waves-effect waves-light blue tooltipped btn-editar-pc"
+                                    data-estacion-id="<?= $e['id'] ?>"
+                                    data-position="top" data-tooltip="Editar PC"
+                                    style="width:28px;height:28px;line-height:28px;">
+                                <i class="material-icons" style="font-size:0.9rem;line-height:28px;">edit</i>
+                            </button>
+                            <button class="btn-floating btn-small waves-effect waves-light red tooltipped btn-eliminar-pc"
+                                    data-estacion-id="<?= $e['id'] ?>"
+                                    data-position="top" data-tooltip="Eliminar PC"
+                                    style="width:28px;height:28px;line-height:28px;">
+                                <i class="material-icons" style="font-size:0.9rem;line-height:28px;">delete</i>
+                            </button>
+                            <?php if ($e['estado'] === 'Mantenimiento'): ?>
+                                <button class="btn-floating btn-small waves-effect waves-light green tooltipped btn-activar-pc"
+                                        data-estacion-id="<?= $e['id'] ?>"
+                                        data-position="top" data-tooltip="Activar PC"
+                                        style="width:28px;height:28px;line-height:28px;">
+                                    <i class="material-icons" style="font-size:0.9rem;line-height:28px;">check</i>
+                                </button>
+                            <?php else: ?>
+                                <button class="btn-floating btn-small waves-effect waves-light orange tooltipped btn-desactivar-pc"
+                                        data-estacion-id="<?= $e['id'] ?>"
+                                        data-position="top" data-tooltip="Desactivar PC (Mantenimiento)"
+                                        style="width:28px;height:28px;line-height:28px;">
+                                    <i class="material-icons" style="font-size:0.9rem;line-height:28px;">build</i>
+                                </button>
+                            <?php endif; ?>
                         </div>
                         <?php if ($e['estado'] === 'Ocupada'): ?>
                         <div class="station-footer">
@@ -166,6 +280,35 @@
                                 <?php endif; ?>
                             </div>
                         </div>
+                        <div class="station-actions" style="display:flex;gap:0.25rem;justify-content:center;margin:0.25rem 0;">
+                            <button class="btn-floating btn-small waves-effect waves-light blue tooltipped btn-editar-pc"
+                                    data-estacion-id="<?= $e['id'] ?>"
+                                    data-position="top" data-tooltip="Editar PC"
+                                    style="width:28px;height:28px;line-height:28px;">
+                                <i class="material-icons" style="font-size:0.9rem;line-height:28px;">edit</i>
+                            </button>
+                            <button class="btn-floating btn-small waves-effect waves-light red tooltipped btn-eliminar-pc"
+                                    data-estacion-id="<?= $e['id'] ?>"
+                                    data-position="top" data-tooltip="Eliminar PC"
+                                    style="width:28px;height:28px;line-height:28px;">
+                                <i class="material-icons" style="font-size:0.9rem;line-height:28px;">delete</i>
+                            </button>
+                            <?php if ($e['estado'] === 'Mantenimiento'): ?>
+                                <button class="btn-floating btn-small waves-effect waves-light green tooltipped btn-activar-pc"
+                                        data-estacion-id="<?= $e['id'] ?>"
+                                        data-position="top" data-tooltip="Activar PC"
+                                        style="width:28px;height:28px;line-height:28px;">
+                                    <i class="material-icons" style="font-size:0.9rem;line-height:28px;">check</i>
+                                </button>
+                            <?php else: ?>
+                                <button class="btn-floating btn-small waves-effect waves-light orange tooltipped btn-desactivar-pc"
+                                        data-estacion-id="<?= $e['id'] ?>"
+                                        data-position="top" data-tooltip="Desactivar PC (Mantenimiento)"
+                                        style="width:28px;height:28px;line-height:28px;">
+                                    <i class="material-icons" style="font-size:0.9rem;line-height:28px;">build</i>
+                                </button>
+                            <?php endif; ?>
+                        </div>
                         <?php if ($e['estado'] === 'Ocupada'): ?>
                         <div class="station-footer">
                             <button class="btn-small waves-effect waves-light red btn-finalizar-sesion" 
@@ -228,6 +371,35 @@
                                 <?php endif; ?>
                             </div>
                         </div>
+                        <div class="station-actions" style="display:flex;gap:0.25rem;justify-content:center;margin:0.25rem 0;">
+                            <button class="btn-floating btn-small waves-effect waves-light blue tooltipped btn-editar-pc"
+                                    data-estacion-id="<?= $e['id'] ?>"
+                                    data-position="top" data-tooltip="Editar PC"
+                                    style="width:28px;height:28px;line-height:28px;">
+                                <i class="material-icons" style="font-size:0.9rem;line-height:28px;">edit</i>
+                            </button>
+                            <button class="btn-floating btn-small waves-effect waves-light red tooltipped btn-eliminar-pc"
+                                    data-estacion-id="<?= $e['id'] ?>"
+                                    data-position="top" data-tooltip="Eliminar PC"
+                                    style="width:28px;height:28px;line-height:28px;">
+                                <i class="material-icons" style="font-size:0.9rem;line-height:28px;">delete</i>
+                            </button>
+                            <?php if ($e['estado'] === 'Mantenimiento'): ?>
+                                <button class="btn-floating btn-small waves-effect waves-light green tooltipped btn-activar-pc"
+                                        data-estacion-id="<?= $e['id'] ?>"
+                                        data-position="top" data-tooltip="Activar PC"
+                                        style="width:28px;height:28px;line-height:28px;">
+                                    <i class="material-icons" style="font-size:0.9rem;line-height:28px;">check</i>
+                                </button>
+                            <?php else: ?>
+                                <button class="btn-floating btn-small waves-effect waves-light orange tooltipped btn-desactivar-pc"
+                                        data-estacion-id="<?= $e['id'] ?>"
+                                        data-position="top" data-tooltip="Desactivar PC (Mantenimiento)"
+                                        style="width:28px;height:28px;line-height:28px;">
+                                    <i class="material-icons" style="font-size:0.9rem;line-height:28px;">build</i>
+                                </button>
+                            <?php endif; ?>
+                        </div>
                         <?php if ($e['estado'] === 'Ocupada'): ?>
                         <div class="station-footer">
                             <button class="btn-small waves-effect waves-light red btn-finalizar-sesion" 
@@ -287,6 +459,35 @@
                                 <?php endif; ?>
                             </div>
                         </div>
+                        <div class="station-actions" style="display:flex;gap:0.25rem;justify-content:center;margin:0.25rem 0;">
+                            <button class="btn-floating btn-small waves-effect waves-light blue tooltipped btn-editar-pc"
+                                    data-estacion-id="<?= $e['id'] ?>"
+                                    data-position="top" data-tooltip="Editar PC"
+                                    style="width:28px;height:28px;line-height:28px;">
+                                <i class="material-icons" style="font-size:0.9rem;line-height:28px;">edit</i>
+                            </button>
+                            <button class="btn-floating btn-small waves-effect waves-light red tooltipped btn-eliminar-pc"
+                                    data-estacion-id="<?= $e['id'] ?>"
+                                    data-position="top" data-tooltip="Eliminar PC"
+                                    style="width:28px;height:28px;line-height:28px;">
+                                <i class="material-icons" style="font-size:0.9rem;line-height:28px;">delete</i>
+                            </button>
+                            <?php if ($e['estado'] === 'Mantenimiento'): ?>
+                                <button class="btn-floating btn-small waves-effect waves-light green tooltipped btn-activar-pc"
+                                        data-estacion-id="<?= $e['id'] ?>"
+                                        data-position="top" data-tooltip="Activar PC"
+                                        style="width:28px;height:28px;line-height:28px;">
+                                    <i class="material-icons" style="font-size:0.9rem;line-height:28px;">check</i>
+                                </button>
+                            <?php else: ?>
+                                <button class="btn-floating btn-small waves-effect waves-light orange tooltipped btn-desactivar-pc"
+                                        data-estacion-id="<?= $e['id'] ?>"
+                                        data-position="top" data-tooltip="Desactivar PC (Mantenimiento)"
+                                        style="width:28px;height:28px;line-height:28px;">
+                                    <i class="material-icons" style="font-size:0.9rem;line-height:28px;">build</i>
+                                </button>
+                            <?php endif; ?>
+                        </div>
                         <?php if ($e['estado'] === 'Ocupada'): ?>
                         <div class="station-footer">
                             <button class="btn-small waves-effect waves-light red btn-finalizar-sesion" 
@@ -332,13 +533,8 @@
             
             <div class="input-field">
                 <i class="material-icons prefix">person</i>
-                <select id="modalClienteId" required>
-                    <option value="" disabled selected>Seleccionar cliente</option>
-                    <?php foreach ($clientes as $c): ?>
-                        <option value="<?= $c['id_cliente'] ?>"><?= htmlspecialchars($c['nombre_completo']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <label for="modalClienteId">Cliente</label>
+                <input type="text" id="modalClienteNombre" name="cliente" class="form-control" placeholder="Escriba el nombre del cliente" required>
+                <label for="modalClienteNombre" class="active">Cliente</label>
             </div>
             
             <div class="input-field">
@@ -397,6 +593,373 @@
 <script>
 $(function() {
     // ============================================================
+    // CRUD DE PCs
+    // ============================================================
+    $('#btnNuevaPC').on('click', function() {
+        $('#modalPCTitle').text('Nueva PC');
+        $('#modalPCTitleIcon').text('computer');
+        $('#pcId').val('');
+        $('#formPC')[0].reset();
+        $('#pcTipo').val('');
+        $('#pcTipo').formSelect();
+        $('input[name="pcEstado"][value="1"]').prop('checked', true);
+        $('#pcFormError').hide();
+        $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
+        $('#btnGuardarPC').removeClass('orange').addClass('indigo');
+
+        var instance = M.Modal.getInstance($('#modalPCForm'));
+        if (!instance) {
+            $('#modalPCForm').modal();
+            instance = M.Modal.getInstance($('#modalPCForm'));
+        }
+        instance.open();
+        setTimeout(function() {
+            $('#pcMarca').focus();
+        }, 300);
+    });
+
+    $(document).on('click', '.btn-editar-pc', function() {
+        var id = $(this).data('estacion-id');
+        var $card = $('.station-card[data-estacion-id="' + id + '"]');
+        var nombre = $card.data('nombre') || 'PC-' + id;
+
+        $('#modalPCTitle').text('Editar PC - ' + nombre);
+        $('#modalPCTitleIcon').text('edit');
+        $('#pcId').val(id);
+        $('#pcFormError').hide();
+        $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Actualizar PC');
+        $('#btnGuardarPC').removeClass('indigo').addClass('orange');
+
+        $.ajax({
+            url: '?pagina=ciberControl&accion=obtenerPC&id=' + id,
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    var pc = response.data;
+                    $('#pcMarca').val(pc.marca);
+                    $('#pcDescripcion').val(pc.descripcion);
+                    $('#pcTipo').val(pc.tipo_activo_id);
+                    $('#pcTipo').formSelect();
+                    $('input[name="pcEstado"][value="' + pc.activa + '"]').prop('checked', true);
+
+                    var instance = M.Modal.getInstance($('#modalPCForm'));
+                    if (!instance) {
+                        $('#modalPCForm').modal();
+                        instance = M.Modal.getInstance($('#modalPCForm'));
+                    }
+                    instance.open();
+                } else {
+                    EIS.toast('Error al cargar la PC: ' + response.message, 'red', 'error');
+                }
+            },
+            error: function() {
+                EIS.toast('Error de conexión al servidor', 'red', 'error');
+            }
+        });
+    });
+
+    $('#btnGuardarPC').on('click', function() {
+        var id = $('#pcId').val();
+        var marca = $('#pcMarca').val().trim();
+        var descripcion = $('#pcDescripcion').val().trim();
+        var tipo_activo_id = $('#pcTipo').val();
+        var activa = $('input[name="pcEstado"]:checked').val();
+        var is_ciber = 1;
+
+        if (!marca) {
+            EIS.toast('La marca es obligatoria', 'red', 'error');
+            $('#pcMarca').focus();
+            return;
+        }
+        if (!descripcion) {
+            EIS.toast('La descripción es obligatoria', 'red', 'error');
+            $('#pcDescripcion').focus();
+            return;
+        }
+        if (!tipo_activo_id || tipo_activo_id === '') {
+            EIS.toast('Debes seleccionar un tipo de PC', 'red', 'error');
+            $('#pcTipo').focus();
+            return;
+        }
+
+        $(this).prop('disabled', true).html('<i class="material-icons left" style="margin:0;">hourglass_top</i> Guardando...');
+        $('#pcFormError').hide();
+
+        var url = id ? '?pagina=ciberControl&accion=actualizarPC' : '?pagina=ciberControl&accion=crearPC';
+        var data = id ? {
+            id: id,
+            marca: marca,
+            descripcion: descripcion,
+            tipo_activo_id: tipo_activo_id,
+            activa: activa
+        } : {
+            marca: marca,
+            descripcion: descripcion,
+            tipo_activo_id: tipo_activo_id,
+            activa: activa,
+            is_ciber: is_ciber
+        };
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: data,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    EIS.toast(response.message, 'green', 'check_circle');
+                    $('#modalPCForm').modal('close');
+                    if (!id && response.data) {
+                        agregarPCAlGrid(response.data);
+                    } else if (id && response.data) {
+                        actualizarPCEnGrid(response.data);
+                    }
+                    actualizarContadores();
+                } else {
+                    $('#pcFormErrorMessage').text(response.message);
+                    $('#pcFormError').slideDown(300);
+                }
+            },
+            error: function() {
+                $('#pcFormErrorMessage').text('Error de conexión al servidor');
+                $('#pcFormError').slideDown(300);
+            },
+            complete: function() {
+                $('#btnGuardarPC').prop('disabled', false);
+                var isEdit = !!$('#pcId').val();
+                if (isEdit) {
+                    $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Actualizar PC');
+                } else {
+                    $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
+                }
+            }
+        });
+    });
+
+    $(document).on('click', '.btn-eliminar-pc', function() {
+        var id = $(this).data('estacion-id');
+        var $card = $('.station-card[data-estacion-id="' + id + '"]');
+        var nombre = $card.data('nombre') || 'PC-' + id;
+
+        $('#confirmarPcId').val(id);
+        $('#confirmarPcNombre').text(nombre);
+
+        var instance = M.Modal.getInstance($('#modalConfirmarEliminar'));
+        if (!instance) {
+            $('#modalConfirmarEliminar').modal();
+            instance = M.Modal.getInstance($('#modalConfirmarEliminar'));
+        }
+        instance.open();
+    });
+
+    $('#btnConfirmarEliminar').on('click', function() {
+        var id = $('#confirmarPcId').val();
+        $(this).prop('disabled', true).html('<i class="material-icons left">hourglass_top</i> Eliminando...');
+
+        $.ajax({
+            url: '?pagina=ciberControl&accion=eliminarPC',
+            method: 'POST',
+            data: { id: id },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    EIS.toast(response.message, 'green', 'delete');
+                    $('#modalConfirmarEliminar').modal('close');
+                    $('.station-card[data-estacion-id="' + id + '"]').closest('.col').fadeOut(300, function() {
+                        $(this).remove();
+                        actualizarContadores();
+                    });
+                } else {
+                    EIS.toast(response.message, 'red', 'error');
+                }
+            },
+            error: function() {
+                EIS.toast('Error de conexión al servidor', 'red', 'error');
+            },
+            complete: function() {
+                $('#btnConfirmarEliminar').prop('disabled', false).html('<i class="material-icons left">delete_forever</i> Eliminar');
+            }
+        });
+    });
+
+    $(document).on('click', '.btn-activar-pc', function() {
+        var id = $(this).data('estacion-id');
+        cambiarEstadoPC(id, 1, 'PC activada correctamente');
+    });
+
+    $(document).on('click', '.btn-desactivar-pc', function() {
+        var id = $(this).data('estacion-id');
+        cambiarEstadoPC(id, 0, 'PC desactivada (Mantenimiento)');
+    });
+
+    function cambiarEstadoPC(id, activa, mensajeExito) {
+        var $btn = $('.btn-activar-pc, .btn-desactivar-pc').filter('[data-estacion-id="' + id + '"]');
+        $btn.prop('disabled', true).html('<i class="material-icons" style="font-size:0.9rem;line-height:28px;">hourglass_top</i>');
+
+        $.ajax({
+            url: '?pagina=ciberControl&accion=cambiarEstadoPC',
+            method: 'POST',
+            data: { id: id, activa: activa },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    EIS.toast(mensajeExito, 'green', 'check_circle');
+                    if (response.data) {
+                        actualizarPCEnGrid(response.data);
+                    } else {
+                        location.reload();
+                    }
+                } else {
+                    EIS.toast(response.message, 'red', 'error');
+                }
+            },
+            error: function() {
+                EIS.toast('Error de conexión al servidor', 'red', 'error');
+            },
+            complete: function() {
+                $btn.prop('disabled', false);
+                var icono = activa ? 'check' : 'build';
+                $btn.html('<i class="material-icons" style="font-size:0.9rem;line-height:28px;">' + icono + '</i>');
+            }
+        });
+    }
+
+    function agregarPCAlGrid(pc) {
+        var estadoClase = pc.activa ? 'disponible' : 'mantenimiento';
+        var estadoTexto = pc.activa ? 'Disponible' : 'Mantenimiento';
+        var estadoIcono = pc.activa ? 'check_circle' : 'build';
+        var tipoNombre = pc.tipo_nombre || 'PC';
+        var nombre = pc.marca + ' ' + (pc.descripcion || '');
+
+        var html = `
+            <div class="col s6 m4 l3 xl2">
+                <div class="station-card ${estadoClase}"
+                     data-estacion-id="${pc.id}"
+                     data-sesion-id=""
+                     data-status="${estadoClase}"
+                     data-nombre="${nombre}">
+                    <div class="station-inner">
+                        <div class="station-header">
+                            <span class="station-badge">PC-${pc.id}</span>
+                            <span class="station-header-label">${tipoNombre}</span>
+                        </div>
+                        <div class="station-body">
+                            <div class="station-icon">
+                                <i class="material-icons">${estadoIcono}</i>
+                            </div>
+                            <div class="station-status">${estadoTexto}</div>
+                            <div class="station-desc">
+                                ${pc.marca}
+                                <br><small>${pc.descripcion || ''}</small>
+                            </div>
+                        </div>
+                        <div class="station-actions" style="display:flex;gap:0.25rem;justify-content:center;margin:0.25rem 0;">
+                            <button class="btn-floating btn-small waves-effect waves-light blue tooltipped btn-editar-pc"
+                                    data-estacion-id="${pc.id}"
+                                    data-position="top" data-tooltip="Editar PC"
+                                    style="width:28px;height:28px;line-height:28px;">
+                                <i class="material-icons" style="font-size:0.9rem;line-height:28px;">edit</i>
+                            </button>
+                            <button class="btn-floating btn-small waves-effect waves-light red tooltipped btn-eliminar-pc"
+                                    data-estacion-id="${pc.id}"
+                                    data-position="top" data-tooltip="Eliminar PC"
+                                    style="width:28px;height:28px;line-height:28px;">
+                                <i class="material-icons" style="font-size:0.9rem;line-height:28px;">delete</i>
+                            </button>
+                            <button class="btn-floating btn-small waves-effect waves-light orange tooltipped btn-desactivar-pc"
+                                    data-estacion-id="${pc.id}"
+                                    data-position="top" data-tooltip="Desactivar PC (Mantenimiento)"
+                                    style="width:28px;height:28px;line-height:28px;">
+                                <i class="material-icons" style="font-size:0.9rem;line-height:28px;">build</i>
+                            </button>
+                        </div>
+                        <div class="station-footer">
+                            <button class="btn-small waves-effect waves-light green btn-iniciar-sesion"
+                                    data-estacion-id="${pc.id}"
+                                    data-estacion="PC-${pc.id}"
+                                    style="border-radius:16px;font-size:0.65rem;padding:0 0.5rem;width:100%;">
+                                <i class="material-icons left" style="font-size:0.8rem;">play_arrow</i>Iniciar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+        $('#cyberGrid .row:last').append(html);
+        $('.tooltipped').tooltip();
+    }
+
+    function actualizarPCEnGrid(pc) {
+        var $card = $('.station-card[data-estacion-id="' + pc.id + '"]');
+        if (!$card.length) return;
+
+        var estadoClase = pc.activa ? 'disponible' : 'mantenimiento';
+        var estadoTexto = pc.activa ? 'Disponible' : 'Mantenimiento';
+        var estadoIcono = pc.activa ? 'check_circle' : 'build';
+        var nombre = pc.marca + ' ' + (pc.descripcion || '');
+
+        $card.removeClass('disponible ocupada mantenimiento').addClass(estadoClase);
+        $card.data('status', estadoClase);
+        $card.data('nombre', nombre);
+
+        $card.find('.station-badge').text('PC-' + pc.id);
+        $card.find('.station-header-label').text(pc.tipo_nombre || 'PC');
+        $card.find('.station-icon .material-icons').text(estadoIcono);
+        $card.find('.station-status').text(estadoTexto);
+        $card.find('.station-desc').html(pc.marca + '<br><small>' + (pc.descripcion || '') + '</small>');
+
+        var $actions = $card.find('.station-actions');
+        if ($actions.length) {
+            var accionesHtml = `
+                <button class="btn-floating btn-small waves-effect waves-light blue tooltipped btn-editar-pc"
+                        data-estacion-id="${pc.id}"
+                        data-position="top" data-tooltip="Editar PC"
+                        style="width:28px;height:28px;line-height:28px;">
+                    <i class="material-icons" style="font-size:0.9rem;line-height:28px;">edit</i>
+                </button>
+                <button class="btn-floating btn-small waves-effect waves-light red tooltipped btn-eliminar-pc"
+                        data-estacion-id="${pc.id}"
+                        data-position="top" data-tooltip="Eliminar PC"
+                        style="width:28px;height:28px;line-height:28px;">
+                    <i class="material-icons" style="font-size:0.9rem;line-height:28px;">delete</i>
+                </button>`;
+            if (pc.activa) {
+                accionesHtml += `
+                    <button class="btn-floating btn-small waves-effect waves-light orange tooltipped btn-desactivar-pc"
+                            data-estacion-id="${pc.id}"
+                            data-position="top" data-tooltip="Desactivar PC (Mantenimiento)"
+                            style="width:28px;height:28px;line-height:28px;">
+                        <i class="material-icons" style="font-size:0.9rem;line-height:28px;">build</i>
+                    </button>`;
+            } else {
+                accionesHtml += `
+                    <button class="btn-floating btn-small waves-effect waves-light green tooltipped btn-activar-pc"
+                            data-estacion-id="${pc.id}"
+                            data-position="top" data-tooltip="Activar PC"
+                            style="width:28px;height:28px;line-height:28px;">
+                        <i class="material-icons" style="font-size:0.9rem;line-height:28px;">check</i>
+                    </button>`;
+            }
+            $actions.html(accionesHtml);
+        }
+
+        var $footer = $card.find('.station-footer');
+        if ($footer.length) {
+            var nombreSeguro = $('<div>').text('PC-' + pc.id).html();
+            $footer.html(`
+                <button class="btn-small waves-effect waves-light green btn-iniciar-sesion"
+                        data-estacion-id="${pc.id}"
+                        data-estacion="${nombreSeguro}"
+                        style="border-radius:16px;font-size:0.65rem;padding:0 0.5rem;width:100%;">
+                    <i class="material-icons left" style="font-size:0.8rem;">play_arrow</i>Iniciar
+                </button>`);
+        }
+
+        $('.tooltipped').tooltip();
+    }
+
+    // ============================================================
     // INICIAR SESIÓN
     // ============================================================
     $(document).on('click', '.btn-iniciar-sesion', function(e) {
@@ -406,36 +969,33 @@ $(function() {
         
         $('#modalActivoId').val(activoId);
         $('#modalEstacionNombre').val(estacionNombre);
-        $('#modalClienteId').val('');
-        $('#modalTarifaId').val('');
-        $('#modalTiempo').val('01:00:00');
-        
-        // Actualizar selects
-        $('select').formSelect();
-        
-        var instance = M.Modal.getInstance($('#modalIniciarSesion'));
-        if (!instance) {
-            $('#modalIniciarSesion').modal();
-            instance = M.Modal.getInstance($('#modalIniciarSesion'));
-        }
-        instance.open();
-        setTimeout(function() {
-            $('#modalClienteId').focus();
-        }, 300);
-    });
+            $('#modalClienteNombre').val('');
+            $('#modalTarifaId').val('');
+            $('#modalTiempo').val('01:00:00');
+            
+            var instance = M.Modal.getInstance($('#modalIniciarSesion'));
+            if (!instance) {
+                $('#modalIniciarSesion').modal();
+                instance = M.Modal.getInstance($('#modalIniciarSesion'));
+            }
+            instance.open();
+            setTimeout(function() {
+                $('#modalClienteNombre').focus();
+            }, 300);
+        });
 
     $('#btnConfirmarInicio').on('click', function() {
         var activoId = $('#modalActivoId').val();
-        var clienteId = $('#modalClienteId').val();
+        var clienteNombre = $('#modalClienteNombre').val().trim();
         var tarifaId = $('#modalTarifaId').val();
         var tiempo = $('#modalTiempo').val().trim();
         
-        if (!clienteId) {
-            EIS.toast('Selecciona un cliente', 'red', 'error');
-            $('#modalClienteId').focus();
+        if (!clienteNombre) {
+            EIS.toast('Escribe el nombre del cliente', 'red', 'error');
+            $('#modalClienteNombre').focus();
             return;
         }
-        
+
         if (!tarifaId) {
             EIS.toast('Selecciona una tarifa', 'red', 'error');
             $('#modalTarifaId').focus();
@@ -456,7 +1016,7 @@ $(function() {
             method: 'POST',
             data: {
                 activo_id: activoId,
-                cliente_id: clienteId,
+                cliente_nombre: clienteNombre,
                 tarifa_id: tarifaId,
                 tiempo: tiempo
             },
@@ -889,6 +1449,17 @@ $(function() {
 
 <style>
 /* Estilos específicos para el módulo Cyber */
+.station-actions .btn-floating.btn-small {
+    width: 28px !important;
+    height: 28px !important;
+    line-height: 28px !important;
+    min-width: unset !important;
+    min-height: unset !important;
+}
+.station-actions .btn-floating.btn-small i {
+    font-size: 0.9rem !important;
+    line-height: 28px !important;
+}
 .station-card .station-footer .btn-small {
     line-height: 28px;
     height: 28px;

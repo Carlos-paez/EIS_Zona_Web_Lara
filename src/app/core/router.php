@@ -50,6 +50,21 @@ if ($pagina === 'ciberControl' && isset($_GET['accion'])) {
         case 'historial':
             $controller->obtenerHistorial();
             break;
+        case 'obtenerPC':
+            $controller->obtenerPC();
+            break;
+        case 'crearPC':
+            $controller->crearPC();
+            break;
+        case 'actualizarPC':
+            $controller->actualizarPC();
+            break;
+        case 'cambiarEstadoPC':
+            $controller->cambiarEstadoPC();
+            break;
+        case 'eliminarPC':
+            $controller->eliminarPC();
+            break;
         default:
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Acción no encontrada']);
