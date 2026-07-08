@@ -57,7 +57,7 @@ El sistema usa un patrón de diseño llamado **MVC** que separa el código en 3 
           ▼                         ▼
 ┌──────────────────┐     ┌──────────────────────┐
 │  CONTROLLER       │     │       VIEW           │
-│  inventario       │     │   inventario.php     │
+│  Inventario       │     │   inventario.php     │
 │  Controller.php   │     │   (HTML + PHP)       │
 │  (Lógica)         │     │   (Diseño visual)    │
 └────────┬─────────┘     └──────────────────────┘
@@ -76,7 +76,7 @@ El sistema usa un patrón de diseño llamado **MVC** que separa el código en 3 
 
 | Parte | ¿Qué es? | ¿Qué hace? |
 |-------|----------|------------|
-| **Model** (Modelo) | `inventario.php` | Habla con la base de datos. Recibe peticiones, ejecuta consultas SQL y devuelve datos. |
+| **Model** (Modelo) | `Inventario.php` | Habla con la base de datos. Recibe peticiones, ejecuta consultas SQL y devuelve datos. |
 | **View** (Vista) | `inventario.php` | Es lo que ve el usuario. HTML con diseño bonito (Materialize CSS). |
 | **Controller** (Controlador) | `InventarioController.php` | Es el "mensajero". Recibe la orden del usuario, le pide datos al Modelo y se los pasa a la Vista. |
 | **Router** (Enrutador) | `router.php` | Es el "portero". Decide qué controlador o vista debe ejecutarse según la URL. |
