@@ -1,60 +1,79 @@
-El proceso de enrutamiento de esta aplicación sigue el patrón **Front Controller**, lo que significa que todas las peticiones son centralizadas y procesadas por un único punto de entrada. A continuación, se detalla el funcionamiento paso a paso y línea por línea basándose en las fuentes:
+El proceso de enrutamiento de esta aplicación sigue el patrón **Front Controller** con una clase **Router OOP** en `App\Core\Router`. Todas las peticiones son centralizadas, procesadas por la clase Router, y derivadas a controladores según el tipo de solicitud.
 
 ### 1. Nivel de Servidor: Redirección (.htaccess)
 
 Antes de que el código PHP se ejecute, el servidor web (Apache) prepara el camino:
 
-- **Raíz del proyecto (`/.htaccess`):**
-    - **Línea 7:** `RewriteEngine On` activa el motor de reescritura.
-    - **Líneas 9-10:** `RewriteCond %{REQUEST_FILENAME} !-f` y `!-d` verifican que la petición no sea un archivo o carpeta real (como una imagen o CSS).
-    - **Línea 11:** `RewriteRule ^(.*)$ src/$1 [L]` redirige internamente cualquier petición a la carpeta `src/`.
 - **Dentro de `src/` (`src/.htaccess`):**
-    - **Línea 25:** `RewriteRule ^(.*)$ index.php [QSA,L]` envía cualquier ruta (como `/dashboard` o `/login`) al archivo **index.php**, preservando los parámetros de la URL con `QSA`.
+    - `Options All -Indexes` bloquea el listado de directorios.
+    - `RewriteEngine On` activa el motor de reescritura.
+    - `RewriteRule ^$ index.php [L,QSA]`: la raíz va a `index.php`.
+    - `RewriteCond %{REQUEST_FILENAME} !-f` y `!-d`: solo aplica si no es archivo/directorio real.
+    - `RewriteRule ^([\w-]+)$ index.php?pagina=$1 [L,QSA]`: convierte `/dashboard` en `?pagina=dashboard` (URLs limpias parciales).
 
-### 2. Punto de Entrada: index.php
+### 2. Punto de Entrada: index.php (21 líneas)
 
-Aquí comienza la ejecución de PHP para cada petición:
+La ejecución de PHP:
 
-- **Línea 2:** `session_start();` inicia la sesión para verificar si el usuario está autenticado.
-- **Línea 4:** `require_once __DIR__ . '/../vendor/autoload.php';` carga el autoloader de Composer para que las clases se carguen automáticamente bajo el estándar PSR-4.
-- **Líneas 12-15:** Se calcula la **BASE_URL**. Esto permite que la aplicación funcione correctamente ya sea en la raíz del servidor o en subcarpetas, eliminando el nombre del script de la URI para obtener una ruta limpia.
-- **Línea 20:** `$router = new Router();` se crea la instancia del enrutador que gestionará las rutas.
+- `require_once __DIR__ . '/../vendor/autoload.php'` — carga el autoloader PSR-4 de Composer.
+- `use App\Core\Router` — importa la clase Router.
+- `$router = new Router()` — constructor: `session_start()` + `$this->resolvePage()`.
+- `$router->handle()` — método principal que procesa la solicitud.
 
-### 3. Registro de Rutas e Instancia de Petición
+El Router **no usa Request encapsulado ni registro de rutas con métodos HTTP**. En su lugar, usa un enfoque más simple: analiza `$_GET['pagina']` y deriva según casos.
 
-En `index.php` se definen qué controladores responden a qué URLs:
+### 3. El Motor del Router (router.php, 385 líneas)
 
-- **Líneas 23-40:** Se registran las rutas usando métodos como `$router->get('/login', 'AuthController@showLogin');`.
-- **Línea 30:** Se pueden encadenar middlewares, como `->middleware('auth')`, que protegen rutas específicas exigiendo inicio de sesión.
-- **Línea 42:** Se ejecuta `$router->dispatch(Request::capture());`.
-    - `Request::capture()` crea un objeto que encapsula `$_GET`, `$_POST` y `$_SERVER` para no usarlos globalmente.
-    - `dispatch()` es el motor que busca la coincidencia.
+La clase `Router` tiene los siguientes métodos clave:
 
-### 4. El Motor del Router (Router.php)
+| Método | Función |
+|--------|---------|
+| `__construct()` | Inicia sesión y resuelve `$pagina` mediante `resolvePage()` |
+| `handle()` | Determina el tipo de petición y redirige al controlador/vista correspondiente |
+| `resolvePage()` | Lee `$_GET["pagina"]`, valida con regex (solo alfanumérico+guiones), retorna string |
+| `isAjaxInventario()` | True si es inventario + action |
+| `isAjaxRoles()` | True si es roles + action |
+| `isAjaxProveedores()` | True si es proveedores + action |
+| `isAuthAction()` | True si es login_validate o logout |
+| `requireAuth()` | Verifica `$_SESSION['logged_in']`, retorna JSON error si no |
+| `runInventarioController()` | Instancia y ejecuta `\App\Controllers\InventarioController::handle()` |
+| `runRolController()` | Instancia y ejecuta `\App\Controllers\RolController::handle()` |
+| `runProveedorController()` | Instancia y ejecuta `\App\Controllers\ProveedorController::handle()` |
+| `runAuthAction()` | AuthController::login() o logout() |
+| `renderView()` | Verifica autenticación, carga vista pública o llama a `renderWithLayout()` |
+| `renderWithLayout()` | Define `$titulos` (10 módulos) y `$extraHeaders`, incluye `layout.php` |
 
-El método `dispatch` realiza el trabajo pesado de comparación:
+### 4. Procesamiento en handle()
 
-- **Líneas 74-76:** El Router obtiene la **URI limpia** (ej: `/inventario`) y el **método HTTP** (GET o POST) desde el objeto Request.
-- **Líneas 80-84:** Si la URI es la raíz `/`, el sistema decide si mostrar el login o el dashboard basándose en si el usuario está autenticado (`isAuthenticated()`).
-- **Líneas 95-119 (Bucle de Rutas):**
-    - Itera sobre todas las rutas guardadas en el arreglo `$routes`.
-    - **Línea 96:** Verifica que el método HTTP coincida.
-    - **Línea 97:** Usa `preg_match` para comparar la URI actual contra el patrón Regex de la ruta (generado previamente al registrar la ruta convirtiendo parámetros como `{id}` en grupos de captura).
-    - Si hay coincidencia, ejecuta `runMiddleware()`.
+1. ¿Es AJAX de inventario? → `InventarioController::handle()` → JSON response
+2. ¿Es AJAX de roles? → `RolController::handle()` → JSON response
+3. ¿Es AJAX de proveedores? → `ProveedorController::handle()` → JSON response
+4. ¿Es auth (login_validate/logout)? → `AuthController::login()` o `logout()`
+5. ¿Es vista normal? → `renderView()`:
+   - Si es pública (`login`): carga directa
+   - Si es privada: verifica `$_SESSION['logged_in']` → redirige a login si no autenticado
+   - Renderiza dentro de `layout.php` si está autenticado
 
-### 5. Ejecución del Controlador (callHandler)
+### 5. Controladores (Namespace App\Controllers)
 
-Si la ruta coincide y el middleware (como 'auth') permite el paso, se llama al controlador:
+| Controlador | Acciones |
+|-------------|----------|
+| `AuthController` | `login()` — verifica credenciales vs BD con `password_verify`; `logout()` — destruye sesión |
+| `InventarioController` | `handle()` — acciones CRUD para inventario via AJAX |
+| `RolController` | `handle()` — acciones CRUD para roles/permisos via AJAX |
+| `ProveedorController` | `handle()` — acciones CRUD para proveedores/ordenes via AJAX |
 
-- **Línea 160:** `explode('@', $handler)` divide el string `"DashboardController@index"` en el nombre de la clase y el método.
-- **Línea 163:** Construye el nombre completo con namespace: `App\\Controllers\\DashboardController`.
-- **Línea 174:** `new $controllerClass()` crea dinámicamente la instancia del controlador.
-- **Línea 177:** `$controller->$methodName(...$params)` ejecuta el método pasando los parámetros extraídos de la URL (usando el operador _splat_ `...`).
+### 6. Diferencia con el diseño anterior
 
-### 6. Finalización y Renderizado
+El diseño anterior (descrito en versiones previas de la documentación) usaba:
+- Router procedural con `require_once` directo
+- `login_validate.php` como vista independiente
+- Solo rutas AJAX para inventario
+- Sin autoloader de Composer para el enrutamiento
 
-Finalmente, el controlador decide qué mostrar:
-
-- El controlador (que hereda de `Controller.php`) usa `render()` o `renderWithLayout()`.
-- **Línea 33 (Controller.php):** `extract($data)` convierte las claves de un arreglo en variables disponibles para la vista.
-- Si el Router no encuentra ninguna coincidencia al final del bucle, ejecuta **`handleNotFound()`** (Línea 122), que establece el código HTTP 404 y carga la vista de error.
+El diseño actual usa:
+- Clase Router OOP con namespace y métodos privados
+- AuthController para login/logout
+- 3 controladores AJAX (inventario, roles, proveedores)
+- Autoloader PSR-4 de Composer
+- URLs limpias parciales via .htaccess

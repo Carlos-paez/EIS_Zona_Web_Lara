@@ -108,7 +108,7 @@ eis_zona_web_lara/
 
 ├── .htaccess                  # Redirige al directorio src/
 
-├── composer.json              # Configuración de dependencias PHP
+├── composer.json              # Configuración de dependencias PHP (PSR-4)
 
 ├── README.md                  # Documentación general
 
@@ -120,85 +120,135 @@ eis_zona_web_lara/
 
     ├── .htaccess              # Reescribe URLs al front controller
 
-    ├── index.php              # PUNTO DE ENTRADA (Front Controller)
+    ├── index.php              # PUNTO DE ENTRADA (Front Controller + autoloader)
+
+    ├── manifest.json          # Manifiesto PWA
+
+    ├── sw.js                  # Service Worker (caché offline)
+
+    ├── offline.php            # Página de fallo offline
 
     ├── Config/
 
-    │   └── database.php       # Conexión a MySQL con PDO
-
-    ├── Core/
-
-    │   ├── Router.php         # Sistema de enrutamiento MVC
-
-    │   ├── Request.php        # Encapsula la petición HTTP
-
-    │   └── Controller.php     # Clase base para controladores
-
-    ├── Controllers/
-
-    │   ├── AuthController.php         # Login/Logout
-
-    │   ├── DashboardController.php     # Panel principal
-
-    │   ├── InventarioController.php    # Gestión de inventario
-
-    │   ├── VentasController.php        # Punto de venta POS
-
-    │   ├── ProveedoresController.php   # Solicitudes a proveedores
-
-    │   ├── ReportesController.php      # Reportes y estadísticas
-
-    │   ├── CiberControlController.php  # Control de cybercafé
-
-    │   ├── ActivosController.php       # Gestión de activos fijos
-
-    │   └── MenuController.php          # Menú de navegación alternativo
+    │   └── database.php       # Conexión a MySQL con PDO (legacy)
 
     ├── app/
 
+    │   ├── core/
+
+    │   │   ├── Database.php   # Conexión PDO Singleton (moderna)
+
+    │   │   ├── Model.php      # Clase base abstracta para modelos
+
+    │   │   └── router.php     # Enrutador OOP (clase Router, namespace App\Core)
+
+    │   ├── Controllers/
+
+    │   │   ├── AuthController.php        # Login/Logout con sesiones
+
+    │   │   ├── inventarioController.php  # CRUD inventario AJAX
+
+    │   │   ├── RolController.php         # CRUD roles/permisos AJAX
+
+    │   │   └── ProveedorController.php   # CRUD proveedores AJAX
+
+    │   ├── Models/
+
+    │   │   ├── Inventario.php  # Modelo POO inventario (namespace)
+
+    │   │   ├── Usuario.php     # Modelo POO usuarios
+
+    │   │   ├── Proveedor.php   # Modelo POO proveedores
+
+    │   │   ├── Rol.php         # Modelo POO roles/permisos
+
+    │   │   ├── Asesoria.php    # Modelo POO asesorías
+
+    │   │   ├── crud_users.php  # CRUD usuarios legacy (funciones sueltas)
+
+    │   │   └── crud_asesorias.php # CRUD asesorías legacy
+
     │   ├── template/
 
-    │   │   └── layout.php     # Layout HTML principal (sidebar + header)
+    │   │   └── layout.php      # Layout HTML principal (sidebar + header, 12 módulos)
 
-    │   ├── Views/
+    │   └── Views/
 
-    │   │   ├── login.php      # Formulario de inicio de sesión
+    │       ├── login.php       # Formulario de inicio de sesión
 
-    │   │   ├── dashboard.php  # Panel de control con métricas
+    │       ├── login_validate.php # Legacy: validación login
 
-    │   │   ├── inventario.php # Tabla de productos
+    │       ├── dashboard.php   # Panel de control con métricas
 
-    │   │   ├── ventas.php     # POS con catálogo y carrito modal
+    │       ├── inventario.php  # Tabla de productos (conectado a BD)
 
-    │   │   ├── proveedores.php# Solicitudes a proveedores
+    │       ├── ventas.php      # POS con catálogo y carrito modal
 
-    │   │   ├── reportes.php   # Generador de reportes
+    │       ├── proveedores.php # Solicitudes a proveedores (conectado a BD)
 
-    │   │   ├── ciberControl.php # Estaciones de cybercafé
+    │       ├── reportes.php    # Generador de reportes
 
-    │   │   ├── activos.php    # Activos fijos (equipos, licencias)
+    │       ├── ciberControl.php# Estaciones de cybercafé
 
-    │   │   ├── menu.php       # Página de menú independiente
+    │       ├── activos.php     # Activos fijos (equipos, licencias)
 
-    │   │   ├── 404.php        # Página de error 404
+    │       ├── asesorias.php   # Asesoría legal
 
-    │   │   └── login_validate.php # Legacy: ya no se usa
+    │       ├── menu.php        # Página de menú independiente
 
-    │   └── Models/
+    │       ├── usuarios.php    # Gestión de usuarios (conectado a BD)
 
-    │       └── crud_users.php # CRUD de usuarios (funciones sueltas)
+    │       └── roles.php       # Gestión de roles y permisos (conectado a BD)
+
+    ├── Database/
+
+    │   ├── estructura.sql      # Esquema BD v3.0 (27 tablas)
+
+    │   ├── seed_data.sql       # Datos de prueba
+
+    │   └── seed_data_masivo.sql # Datos masivos de prueba
 
     └── Public/
 
         ├── css/
 
-        │   ├── styles.css     # Estilos principales (temas claro/oscuro)
+        │   ├── styles.css      # Estilos principales (temas claro/oscuro)
 
-        │   └── login.css      # Estilos específicos del login
+        │   ├── login.css       # Estilos específicos del login
 
-        └── js/
+        │   ├── materialize.min.css # Materialize CSS (local)
 
-            └── app.js         # Lógica frontend con jQuery
+        │   └── material-icons.css  # Material Icons (local)
+
+        ├── js/
+
+        │   ├── jquery-3.7.1.min.js  # jQuery (local)
+
+        │   ├── materialize.min.js   # Materialize JS (local)
+
+        │   ├── app.core.js      # Utilidades compartidas (EIS, debounce)
+
+        │   ├── app.init.js      # Inicialización Materialize, reloj, tema
+
+        │   ├── app.tables.js    # Búsqueda y filtro de tablas
+
+        │   ├── app.ui.js        # Notificaciones, botones, tooltips
+
+        │   ├── app.pos.js       # Sistema de carrito POS
+
+        │   ├── app.cyber.js     # Gestión de estaciones Cyber
+
+        │   ├── app.legal.js     # Validación de asesoría legal
+
+        │   ├── app.inventario.js # CRUD inventario vía AJAX
+
+        │   ├── app.roles.js     # CRUD roles/permisos vía AJAX
+
+        │   └── app.proveedores.js # CRUD proveedores vía AJAX
+
+        └── fonts/
+
+            └── MaterialIcons-Regular.ttf  # Material Icons (local)
 
 ```
 
@@ -944,7 +994,7 @@ Línea 1-5: Comentarios de configuración de base de datos.
 
   
 
-Línea 8-12: $host = "localhost"; $db = "zwl"; $user = "root"; $pass = ""; $charset = 'utf8mb4';
+Línea 8-12: $host = "localhost"; $db = "zona_web_lara"; $user = "root"; $pass = ""; $charset = 'utf8mb4';
 
            - Datos de conexión a MySQL.
 

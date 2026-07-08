@@ -1,4 +1,4 @@
-# Documentación de la Base de Datos — ZWL v2.1
+# Documentación de la Base de Datos — Zona Web Lara v3.0
 
 > Sistema de Gestión Empresarial — Zona Web Lara  
 > Documentación para asesoría sobre diseño de base de datos
@@ -37,7 +37,7 @@
 
 Este documento tiene dos objetivos:
 
-1. **Documentar** la base de datos del Sistema ZWL v2.1 de forma completa y detallada.
+1. **Documentar** la base de datos del Sistema Zona Web Lara v3.0 de forma completa y detallada.
 2. **Asesorar** sobre las decisiones de diseño tomadas, explicando el porqué de cada elección, las alternativas consideradas y las implicaciones de cada decisión.
 
 Está dirigido a:
@@ -69,7 +69,7 @@ Está dirigido a:
 
 | Aspecto | Valor |
 |---------|-------|
-| Nombre de la BD | `zwl_V2` |
+| Nombre de la BD | `zona_web_lara` |
 | Motor | MySQL 8.0+ / MariaDB 10.3+ |
 | Motor de almacenamiento | **InnoDB** |
 | Charset | `utf8mb4` |
@@ -445,7 +445,7 @@ block-beta
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║                      SISTEMA ZWL v2.1                       ║
+║                      SISTEMA ZONA WEB LARA v3.0                       ║
 ║                      19 Tablas · 26 FKs                     ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
@@ -2092,5 +2092,5 @@ Usuario 2: UPDATE stock = 10 - 5 = 5 ❌ (debería ser 7 - 5 = 2)
 ---
 
 > **Documento generado para asesoría sobre diseño de base de datos**  
-> Sistema ZWL v2.1 — Zona Web Lara (EIS)  
-> 19 tablas · 26 relaciones · 3 vistas · 2 SP · 2 triggers
+> Sistema Zona Web Lara v3.0 — EIS  
+> 27 tablas · 21 relaciones directas · vistas calculadas en PHP · lógica transaccional en PDO

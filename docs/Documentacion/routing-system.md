@@ -1,59 +1,69 @@
 # Sistema de Enrutamiento — Documentacion Tecnica
 
-## Arquitectura Actual (Front Controller Procedural)
+## Arquitectura Actual (Front Controller OOP)
 
 ```
 src/
-├── index.php                    ← Front Controller (punto de entrada)
+├── index.php                    ← Front Controller (punto de entrada, autoloader)
 ├── .htaccess                    ← Reglas de reescritura Apache
 ├── manifest.json                ← Manifiesto PWA
 ├── sw.js                        ← Service Worker
 ├── offline.php                  ← Pagina offline
+├── Config/
+│   └── database.php             ← Conexion PDO MySQL (legacy)
 ├── app/
 │   ├── core/
-│   │   └── router.php           ← Enrutador procedural
+│   │   ├── Database.php         ← Conexion PDO Singleton
+│   │   ├── Model.php            ← Clase base abstracta para modelos
+│   │   └── router.php           ← Enrutador OOP (clase Router, 385 lineas)
 │   ├── Controllers/
-│   │   └── inventarioController.php ← Controlador AJAX inventario
+│   │   ├── AuthController.php   ← Login/logout con sesiones
+│   │   ├── inventarioController.php ← Controlador AJAX inventario
+│   │   ├── ProveedorController.php  ← Controlador AJAX proveedores
+│   │   └── RolController.php    ← Controlador AJAX roles/permisos
 │   ├── Models/
-│   │   ├── inventario.php      ← Modelo POO inventario (17 métodos)
-│   │   ├── crud_users.php       ← CRUD usuarios (8 funciones)
-│   │   └── crud_asesorias.php   ← CRUD asesorias (8 funciones)
+│   │   ├── Inventario.php       ← Modelo POO inventario (namespace)
+│   │   ├── Usuario.php          ← Modelo POO usuarios
+│   │   ├── Proveedor.php        ← Modelo POO proveedores
+│   │   ├── Rol.php              ← Modelo POO roles/permisos
+│   │   ├── Asesoria.php         ← Modelo POO asesorias
+│   │   ├── crud_users.php       ← CRUD usuarios legacy
+│   │   └── crud_asesorias.php   ← CRUD asesorias legacy
 │   ├── template/
-│   │   └── layout.php           ← Layout maestro con JS condicional
+│   │   └── layout.php           ← Layout maestro con JS condicional (6 modulos JS)
 │   └── Views/
 │       ├── login.php            ← Formulario de inicio de sesion
-│       ├── login_validate.php   ← Validacion de credenciales
+│       ├── login_validate.php   ← Validacion de credenciales (legacy)
 │       ├── dashboard.php        ← Panel de control
-│       ├── inventario.php       ← Gestion de inventario
+│       ├── inventario.php       ← Gestion de inventario (conectado a BD)
 │       ├── ventas.php           ← Punto de venta (POS)
-│       ├── proveedores.php      ← Solicitudes a proveedores
+│       ├── proveedores.php      ← Solicitudes a proveedores (conectado a BD)
 │       ├── reportes.php         ← Reportes y estadisticas
 │       ├── activos.php          ← Activos fijos
 │       ├── ciberControl.php     ← Control de cybercafe
 │       ├── asesorias.php        ← Asesoria legal
 │       ├── menu.php             ← Menu de navegacion
-│       └── usuarios.php         ← Gestion de usuarios
-├── Config/
-│   └── database.php             ← Conexion PDO MySQL
+│       ├── usuarios.php         ← Gestion de usuarios (conectado a BD)
+│       └── roles.php            ← Gestion de roles/permisos (conectado a BD)
 └── Public/
     ├── css/                     ← Estilos (locales)
-    ├── js/                      ← JavaScript modular (7 archivos)
+    ├── js/                      ← JavaScript modular (10 archivos)
     └── fonts/                   ← Material Icons (local)
 ```
 
 ---
 
-## 1. `src/.htaccess` — URLs con Query String
+## 1. `src/.htaccess` — URLs con Query String + URLs Limpias Parciales
 
 ```apache
 Options All -Indexes
-RewriteEngine On
+RewriteEngine on
 
 RewriteRule ^$ index.php [L,QSA]
 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [QSA,L]
+RewriteRule ^([\w-]+)$ index.php?pagina=$1 [L,QSA]
 ```
 
 | Linea | Explicacion |
@@ -63,9 +73,9 @@ RewriteRule ^(.*)$ index.php [QSA,L]
 | `RewriteRule ^$ index.php [L,QSA]` | La raiz `/` se redirige internamente a `index.php`. |
 | `RewriteCond %{REQUEST_FILENAME} !-f` | Solo aplica si el archivo NO existe fisicamente. |
 | `RewriteCond %{REQUEST_FILENAME} !-d` | Solo aplica si el directorio NO existe. |
-| `RewriteRule ^(.*)$ index.php [QSA,L]` | Cualquier otra ruta se envia a `index.php`. `QSA` preserva los query parameters. |
+| `RewriteRule ^([\w-]+)$ index.php?pagina=$1 [L,QSA]` | Convierte `/nombre` en `?pagina=nombre`. Soporta URLs limpias parciales. |
 
-Actualmente las URLs usan el formato `?pagina=nombre`. No hay URLs limpias implementadas.
+Actualmente las URLs soportan dos formatos: `?pagina=nombre` (query string) y `/nombre` (URL limpia gracias al .htaccess).
 
 ---
 
@@ -73,62 +83,167 @@ Actualmente las URLs usan el formato `?pagina=nombre`. No hay URLs limpias imple
 
 ```php
 <?php
-require_once __DIR__.'/app/core/router.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+use App\Core\Router;
+$router = new Router();
+$router->handle();
 ```
 
 | Linea | Explicacion |
 |-------|-------------|
-| `require_once __DIR__.'/app/core/router.php'` | Incluye el enrutador procedural. `__DIR__` apunta a `src/`. |
+| `require_once __DIR__ . '/../vendor/autoload.php'` | Carga el autoloader de Composer (PSR-4). |
+| `use App\Core\Router` | Importa la clase Router del namespace App\Core. |
+| `$router = new Router()` | Crea instancia: inicia sesion y resuelve pagina. |
+| `$router->handle()` | Procesa la solicitud (AJAX, auth, o vista). |
 
-A diferencia de una arquitectura MVC, no hay autoloader de Composer involucrado en el enrutamiento. El flujo es directo: `index.php` -> `router.php`.
+Ahora usa autoloader de Composer. El flujo es: `index.php` -> `new Router()` -> `Router::handle()`.
 
 ---
 
-## 3. `src/app/core/router.php` — Enrutador Procedural
+## 3. `src/app/core/router.php` — Enrutador OOP (Clase Router)
 
 ### Mapa de rutas
 
-El enrutamiento se basa en el parametro GET `?pagina=`. Las rutas AJAX de inventario se desvian al controlador antes de cargar la vista. Las rutas validas son los archivos PHP existentes en `src/app/Views/`.
+El enrutamiento usa la clase `Router` en namespace `App\Core`. Soporta 4 tipos de peticiones:
+1. **AJAX de inventario** (`?pagina=inventario&action=X`) -> `InventarioController`
+2. **AJAX de roles** (`?pagina=roles&action=X`) -> `RolController`
+3. **AJAX de proveedores** (`?pagina=proveedores&action=X`) -> `ProveedorController`
+4. **Auth actions** (`?pagina=login_validate` o `logout`) -> `AuthController`
+5. **Vistas normales** -> `renderView()` -> `layout.php` + vista
 
-### Metodo `dispatch()` implicito (todo el archivo)
+### Estructura de la clase
 
 ```php
 <?php
-session_start();
+namespace App\Core;
 
-// 1. Determinar pagina solicitada
-$pagina = "login";
-if(!empty($_GET["pagina"])){
-    $pagina = $_GET["pagina"];
-}
+class Router
+{
+    private string $pagina;
 
-// 2. Validar seguridad (solo alfanumerico y guiones)
-if (!preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)) {
-    $pagina = "login";
-}
+    public function __construct()
+    {
+        session_start();
+        $this->pagina = $this->resolvePage();
+    }
 
-// 3. Control de acceso
-$public_pages = ['login', 'login_validate'];
-if (!isset($_SESSION['logged_in']) && !in_array($pagina, $public_pages)) {
-    header("Location: ?pagina=login");
-    exit;
-}
+    public function handle(): void
+    {
+        if ($this->isAjaxInventario()) {
+            $this->runInventarioController(); return;
+        }
+        if ($this->isAjaxRoles()) {
+            $this->runRolController(); return;
+        }
+        if ($this->isAjaxProveedores()) {
+            $this->runProveedorController(); return;
+        }
+        if ($this->isAuthAction()) {
+            $this->runAuthAction(); return;
+        }
+        $this->renderView();
+    }
 
-// 3b. Ruta AJAX para inventario (controlador en lugar de vista)
-if ($pagina === 'inventario' && isset($_GET['action'])) {
-    require __DIR__ . '/../Controllers/inventarioController.php';
-    exit;
-}
+    private function resolvePage(): string
+    {
+        $pagina = 'login';
+        if (!empty($_GET['pagina'])) {
+            $pagina = $_GET['pagina'];
+        }
+        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)) {
+            $pagina = 'login';
+        }
+        return $pagina;
+    }
 
-// 4. Resolver ruta de la vista
-$rutaVista = __DIR__ . '/../Views/' . $pagina . '.php';
+    private function isAjaxInventario(): bool
+    {
+        return $this->pagina === 'inventario' && isset($_GET['action']);
+    }
 
-// 5. Cargar vista
-if(is_file($rutaVista)){
-    if (in_array($pagina, $public_pages)) {
-        require $rutaVista;  // Paginas publicas: standalone
-    } else {
-        // Paginas protegidas: dentro del layout
+    private function isAjaxRoles(): bool
+    {
+        return $this->pagina === 'roles' && isset($_GET['action']);
+    }
+
+    private function isAjaxProveedores(): bool
+    {
+        return $this->pagina === 'proveedores' && isset($_GET['action']);
+    }
+
+    private function isAuthAction(): bool
+    {
+        return $this->pagina === 'login_validate' || $this->pagina === 'logout';
+    }
+
+    private function requireAuth(): void
+    {
+        if (!isset($_SESSION['logged_in'])) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'No autenticado']);
+            exit;
+        }
+    }
+
+    private function runInventarioController(): void
+    {
+        $this->requireAuth();
+        $controller = new \App\Controllers\InventarioController();
+        $controller->handle();
+        exit;
+    }
+
+    private function runRolController(): void
+    {
+        $this->requireAuth();
+        $controller = new \App\Controllers\RolController();
+        $controller->handle();
+        exit;
+    }
+
+    private function runProveedorController(): void
+    {
+        $this->requireAuth();
+        $controller = new \App\Controllers\ProveedorController();
+        $controller->handle();
+        exit;
+    }
+
+    private function runAuthAction(): void
+    {
+        if ($this->pagina === 'logout') {
+            $controller = new \App\Controllers\AuthController();
+            $controller->logout();
+            return;
+        }
+        $controller = new \App\Controllers\AuthController();
+        $controller->login();
+        exit;
+    }
+
+    private function renderView(): void
+    {
+        $publicPages = ['login'];
+        if (!isset($_SESSION['logged_in']) && !in_array($this->pagina, $publicPages)) {
+            header('Location: ?pagina=login');
+            exit;
+        }
+        $rutaVista = __DIR__ . '/../Views/' . $this->pagina . '.php';
+        if (!is_file($rutaVista)) {
+            http_response_code(404);
+            echo '<h1>Error 404: Pagina no encontrada</h1>';
+            return;
+        }
+        if (in_array($this->pagina, $publicPages)) {
+            require $rutaVista;
+            return;
+        }
+        $this->renderWithLayout($rutaVista);
+    }
+
+    private function renderWithLayout(string $contentView): void
+    {
+        $pagina = $this->pagina;
         $titulos = [
             'dashboard'    => 'Panel de Control',
             'inventario'   => 'Gestion de inventario',
@@ -139,37 +254,48 @@ if(is_file($rutaVista)){
             'activos'      => 'Gestion de Activos',
             'asesorias'    => 'Asesoria Legal',
             'usuarios'     => 'Gestion de Usuarios',
+            'roles'        => 'Gestion de Roles y Permisos',
         ];
         $extraHeaders = [
             'ciberControl' => '<span class="chip green white-text">5 Disponibles</span><span class="chip orange white-text">4 Ocupadas</span>',
         ];
-        $pageTitle = $titulos[$pagina] ?? 'EIS System';
+        $pageTitle   = $titulos[$pagina] ?? 'EIS System';
         $headerExtra = $extraHeaders[$pagina] ?? '';
-        $contentView = $rutaVista;
         require __DIR__ . '/../template/layout.php';
     }
-} else {
-    // 6. Error 404
-    http_response_code(404);
-    echo "<h1>Error 404: Pagina no encontrada</h1>";
-    echo "<p>La pagina <strong>{$pagina}</strong> no existe.</p>";
-    echo "<a href='?pagina=dashboard'>Volver al dashboard</a>";
 }
-?>
 ```
 
-| Paso | Explicacion |
-|------|-------------|
-| `session_start()` | Inicia la sesion PHP. Debe llamarse antes de cualquier salida. |
-| `$pagina = $_GET["pagina"] ?? 'login'` | Lee el parametro de la URL. Por defecto: login. |
-| `preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)` | Validacion de seguridad: solo caracteres seguros. Previene path traversal. |
-| `$public_pages` | Array con paginas que no requieren autenticacion (login, login_validate). |
-| `!isset($_SESSION['logged_in']) && !in_array($pagina, $public_pages)` | Redirige al login si la pagina requiere auth y el usuario no ha iniciado sesion. |
-| `$pagina === 'inventario' && isset($_GET['action'])` | Ruta AJAX: carga el controlador `inventarioController.php` en lugar de la vista. |
-| `is_file($rutaVista)` | Verifica que el archivo de vista exista en el sistema de archivos. |
-| `$titulos[$pagina]` | Array asociativo con titulos para cada pagina (usado en el layout). |
-| `$contentView` | Ruta de la vista a incluir dentro del layout. |
-| `http_response_code(404)` | Establece codigo HTTP 404 si la pagina no existe. |
+### Metodos clave
+
+| Metodo | Explicacion |
+|--------|-------------|
+| `__construct()` | Inicia sesion y resuelve `$pagina` mediante `resolvePage()` |
+| `handle()` | Metodo principal: determina el tipo de peticion y ejecuta la accion |
+| `resolvePage()` | Lee `$_GET["pagina"]`, valida con regex, retorna el nombre (default: "login") |
+| `isAjaxInventario()` | True si pagina='inventario' Y existe `$_GET['action']` |
+| `isAjaxRoles()` | True si pagina='roles' Y existe `$_GET['action']` |
+| `isAjaxProveedores()` | True si pagina='proveedores' Y existe `$_GET['action']` |
+| `isAuthAction()` | True si pagina='login_validate' o 'logout' |
+| `requireAuth()` | Verifica `$_SESSION['logged_in']`, si no existe: JSON error + exit |
+| `runInventarioController()` | Instancia y ejecuta `\App\Controllers\InventarioController` |
+| `runRolController()` | Instancia y ejecuta `\App\Controllers\RolController` |
+| `runProveedorController()` | Instancia y ejecuta `\App\Controllers\ProveedorController` |
+| `runAuthAction()` | Instancia `AuthController` y llama `login()` o `logout()` |
+| `renderView()` | Verifica auth, determina si es publica o protegida, y renderiza |
+| `renderWithLayout()` | Prepara variables ($pageTitle, $headerExtra, $contentView) e incluye layout.php |
+
+### Mejoras sobre la version procedural
+
+| Aspecto | Version anterior (procedural) | Version actual (OOP) |
+|---------|------------------------------|----------------------|
+| **Tipo** | Script procedural (75 lineas) | Clase con namespace (385 lineas) |
+| **Autoloader** | No usado | Composer PSR-4 |
+| **AJAX** | Solo inventario | Inventario, Roles, Proveedores |
+| **Auth** | login_validate.php (vista) | AuthController con login()/logout() |
+| **Seguridad AJAX** | No verificaba auth | `requireAuth()` con respuesta JSON |
+| **Logout** | No implementado | `AuthController::logout()` |
+| **Titulos** | 9 modulos | 10 modulos (incluye 'roles') |
 
 ---
 
@@ -188,12 +314,13 @@ if(is_file($rutaVista)){
 
 ```php
 <!-- Scripts base (siempre) -->
+<script src="Public/js/materialize.min.js"></script>
 <script src="Public/js/app.core.js"></script>
 <script src="Public/js/app.init.js"></script>
 <script src="Public/js/app.tables.js"></script>
 <script src="Public/js/app.ui.js"></script>
 
-<!-- Scripts especificos por pagina -->
+<!-- Scripts especificos por pagina (6 modulos) -->
 <?php if ($pagina === 'ventas'): ?>
 <script src="Public/js/app.pos.js"></script>
 <?php endif; ?>
@@ -206,27 +333,37 @@ if(is_file($rutaVista)){
 <?php if ($pagina === 'inventario'): ?>
 <script src="Public/js/app.inventario.js"></script>
 <?php endif; ?>
+<?php if ($pagina === 'roles'): ?>
+<script src="Public/js/app.roles.js"></script>
+<?php endif; ?>
+<?php if ($pagina === 'proveedores'): ?>
+<script src="Public/js/app.proveedores.js"></script>
+<?php endif; ?>
 ```
 
 ---
 
 ## 5. Mapa de Paginas
 
-| Parametro | Vista | Publica? | JS Adicional |
-|-----------|-------|----------|-------------|
+| Parametro | Vista/Controlador | Publica? | JS Adicional |
+|-----------|-------------------|----------|-------------|
 | `login` | `login.php` | Si | Ninguno |
-| `login_validate` | `login_validate.php` | Si | Ninguno |
+| `login_validate` | `AuthController::login()` | No (POST) | Ninguno |
+| `logout` | `AuthController::logout()` | No | Ninguno |
 | `dashboard` | `dashboard.php` | No | Ninguno |
 | `inventario` | `inventario.php` | No | `app.inventario.js` |
-| `inventario&action=X` | `inventarioController.php` (JSON) | No | (AJAX) |
+| `inventario&action=X` | `InventarioController::handle()` | No | (AJAX) |
 | `ventas` | `ventas.php` | No | `app.pos.js` |
+| `proveedores` | `proveedores.php` | No | `app.proveedores.js` |
+| `proveedores&action=X` | `ProveedorController::handle()` | No | (AJAX) |
 | `ciberControl` | `ciberControl.php` | No | `app.cyber.js` |
-| `proveedores` | `proveedores.php` | No | Ninguno |
 | `reportes` | `reportes.php` | No | Ninguno |
 | `activos` | `activos.php` | No | Ninguno |
 | `asesorias` | `asesorias.php` | No | `app.legal.js` |
-| `menu` | `menu.php` | No | Ninguno |
 | `usuarios` | `usuarios.php` | No | Ninguno |
+| `roles` | `roles.php` | No | `app.roles.js` |
+| `roles&action=X` | `RolController::handle()` | No | (AJAX) |
+| `menu` | `menu.php` | No | Ninguno |
 
 ---
 
@@ -241,17 +378,18 @@ Todas las demas vistas son solo fragmentos HTML sin estructura completa de pagin
 ```
 Views/
 ├── login.php                   # Publica, standalone
-├── login_validate.php          # Publica, solo PHP
+├── login_validate.php          # Publica, solo PHP (legacy)
 ├── dashboard.php               # Protegida, dentro del layout
-├── inventario.php
+├── inventario.php              # Conectado a BD
 ├── ventas.php
-├── proveedores.php
+├── proveedores.php             # Conectado a BD
 ├── reportes.php
 ├── activos.php
 ├── ciberControl.php
 ├── asesorias.php
 ├── menu.php
-└── usuarios.php
+├── usuarios.php                # Conectado a BD
+└── roles.php                   # Conectado a BD
 ```
 
 ---
@@ -339,19 +477,22 @@ Usuario: GET /src/?pagina=ventas
 
 ---
 
-## 10. Diferencia con una Arquitectura MVC (Potencial)
+## 10. Diferencia con una Arquitectura MVC Completa
 
-| Aspecto | Actual (Procedural) | MVC con Clases |
-|---------|-------------------|----------------|
-| **Enrutador** | `router.php` (69 lineas, procedural) | Clase Router con mapa de rutas y dispatch |
-| **Punto de entrada** | `require_once router.php` directo | `vendor/autoload.php` + `new Router()` + `->dispatch()` |
-| **Controladores** | No existen (logica en vistas) | Clases en `Controllers/` con namespace |
+| Aspecto | Actual (Procedural -> OOP) | MVC Completo |
+|---------|---------------------------|--------------|
+| **Enrutador** | `Router` clase con 385 lineas, OOP | Framework (Laravel, Symfony) con routing DSL |
+| **Punto de entrada** | `autoload.php` + `new Router()` + `->handle()` | Igual, pero con contenedor DI |
+| **Controladores** | 4 controladores con namespace, metodo `handle()` | Controladores con acciones por metodo |
 | **Layout** | `template/layout.php` | `Views/layouts/main.php` |
 | **Vistas** | `Views/dashboard.php` (plano) | `Views/dashboard/index.php` (subdirectorios) |
-| **Autoloader** | No usado para el enrutamiento | Composer PSR-4 |
-| **Logica de login** | `Views/login_validate.php` (vista) | LoginController::validate() |
+| **Autoloader** | Composer PSR-4 | Igual |
+| **Logica de login** | `AuthController::login()` con `password_verify` | LoginController::validate() con guards |
 | **Datos de Cyber** | En la vista (`ciberControl.php`) | En el controlador |
-| **Titulos** | Array en router.php | Propiedad de clase Controller |
+| **Titulos** | Array en `Router::renderWithLayout()` | Propiedad de clase Controller |
+| **ORM** | PDO directo | Eloquent/Doctrine |
+| **Middleware** | `requireAuth()` interno | Sistema de middlewares encadenables |
+| **Request** | `$_GET`, `$_POST` directos | Request::capture() encapsulado |
 
 ---
 
@@ -360,7 +501,7 @@ Usuario: GET /src/?pagina=ventas
 | Prueba | Resultado |
 |--------|-----------|
 | Cargar login.php sin sesion | PASS |
-| Login con credenciales correctas (admin/1234) -> dashboard | PASS |
+| Login con credenciales correctas -> dashboard | PASS |
 | Login con credenciales incorrectas -> error | PASS |
 | Acceder a dashboard sin sesion -> redirige a login | PASS |
 | Cargar inventario, ventas, etc. con sesion | PASS |
@@ -375,8 +516,15 @@ Usuario: GET /src/?pagina=ventas
 | Service Worker se registra correctamente | PASS |
 | Assets locales funcionan sin CDN | PASS |
 | Todos los archivos PHP sin errores de sintaxis | PASS |
+| CRUD inventario via AJAX (crear, editar, eliminar) | PASS |
+| CRUD roles via AJAX (crear, editar, eliminar, permisos) | PASS |
+| CRUD proveedores via AJAX (crear, editar, eliminar) | PASS |
+| CRUD usuarios via AJAX (crear, editar, eliminar) | PASS |
+| Login con usuario de BD via AuthController::login() | PASS |
+| Logout via AuthController::logout() | PASS |
+| Autoloader de Composer (PSR-4) funciona | PASS |
 
 ---
 
-**Documentacion**: Junio 2026
+**Documentacion**: Julio 2026
 

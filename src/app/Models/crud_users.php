@@ -18,7 +18,7 @@ function crearUsuario($pdo, $user_name, $password, $nombre, $apellido, $email) {
     // Genera el hash bcrypt de la contraseña para almacenamiento seguro
     $hash = password_hash($password, PASSWORD_BCRYPT);
     // Sentencia SQL para insertar un nuevo usuario
-    $sql = "INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email) VALUES (?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email, estatus) VALUES (?, ?, ?, ?, ?, '1')";
     $stmt = $pdo->prepare($sql);
     return $stmt->execute([$user_name, $hash, $nombre, $apellido, $email]);
 }
@@ -76,7 +76,7 @@ function obtenerUsuarioPorUsername($pdo, $username) {
         FROM usuarios u
         LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
         LEFT JOIN roles r ON ru.fk_rol = r.id
-        WHERE u.user_name = ? AND u.estatus = 'activo'
+        WHERE u.user_name = ? AND u.estatus = '1'
     ");
     $stmt->execute([$username]);
     return $stmt->fetch();
@@ -114,7 +114,7 @@ function autenticarUsuario($pdo, $username, $password) {
  * @param string $estatus        Nuevo estatus ('activo' por defecto).
  * @return bool  True si la actualización fue exitosa.
  */
-function actualizarUsuario($pdo, $id, $nombre, $apellido, $email, $fk_rol_usuario = null, $estatus = 'activo') {
+function actualizarUsuario($pdo, $id, $nombre, $apellido, $email, $fk_rol_usuario = null, $estatus = '1') {
     // SQL con COALESCE: si fk_rol_usuario es NULL, mantiene el valor actual
     $sql = "UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, fk_rol_usuario = COALESCE(?, fk_rol_usuario), estatus = ? WHERE id = ?";
     $stmt = $pdo->prepare($sql);

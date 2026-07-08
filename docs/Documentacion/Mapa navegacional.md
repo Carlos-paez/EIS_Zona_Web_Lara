@@ -31,7 +31,7 @@ flowchart TB
 
         STATIC["📁 Datos Estáticos/Simulados<br>(Prototipo UI)"]
 
-        DB@{ label: "🗄️ DB 'zwl'<br>MySQL + PDO" }
+        DB@{ label: "🗄️ DB 'zona_web_lara'<br>MySQL + PDO" }
 
         USERS_MODEL["crud_users.php"]
 
@@ -45,7 +45,9 @@ flowchart TB
 
     ROUTER -- "?pagina=login (default)" --> LOGIN["login.php<br>Formulario de acceso"]
 
-    ROUTER -- "?pagina=login_validate" --> VALIDATE["login_validate.php<br>Validar credenciales"]
+    ROUTER -- "?pagina=login_validate" --> VALIDATE["AuthController::login()<br>Validar credenciales vs BD"]
+
+    ROUTER -- "?pagina=logout" --> LOGOUT["AuthController::logout()<br>Cerrar sesión"]
 
     ROUTER -- "?pagina=dashboard" --> DASHBOARD["dashboard.php"]
 
@@ -63,9 +65,13 @@ flowchart TB
 
     ROUTER -- "?pagina=asesorias" --> ASESORIAS["asesorias.php"]
 
+    ROUTER -- "?pagina=usuarios" --> USUARIOS["usuarios.php<br>CRUD Usuarios (BD)"]
+
+    ROUTER -- "?pagina=roles" --> ROLES["roles.php<br>CRUD Roles/Permisos (BD)"]
+
     LOGIN -- POST usuario/contraseña --> VALIDATE
 
-    VALIDATE -- admin / 1234 --> SESSION@{ label: "$_SESSION['logged_in'] = true" }
+    VALIDATE -- AuthController<br>password_verify --> SESSION@{ label: "$_SESSION['logged_in'] = true" }
 
     VALIDATE -- fallo --> LOGIN_ERROR["?pagina=login&error=1"]
 
@@ -89,7 +95,11 @@ flowchart TB
 
     SIDEBAR -- Asesoría Legal --> ASESORIAS
 
-    SIDEBAR -- Cerrar Sesión --> LOGIN
+    SIDEBAR -- Configuración (Usuarios) --> USUARIOS
+
+    SIDEBAR -- Roles y Permisos --> ROLES
+
+    SIDEBAR -- Cerrar Sesión --> LOGOUT
 
     DASHBOARD -- Panel de Control<br>KPIs, Horas pico, Stock crítico --> DASH_VIEW["📊 Vista Dashboard"]
 
@@ -123,6 +133,12 @@ flowchart TB
 
     ASE_VIEW -. (futuro) .-> ASES_MODEL
 
+    USUARIOS_VIEW@{ label: "📋 Vista Usuarios" } ---> USERS_MODEL
+
+    ROLES_VIEW@{ label: "📋 Vista Roles" } ---> ROL_MODEL@{ label: "Model Rol.php" }
+
+    ROL_MODEL --> DB
+
     ASES_MODEL --> DB
 
     USERS_MODEL --> DB
@@ -150,15 +166,17 @@ flowchart TB
 
 | `?pagina=login` | 🔓 Pública | `login.php` | Formulario de acceso |
 
-| `?pagina=login_validate` | 🔓 Pública | `login_validate.php` | Valida admin/1234, crea sesión |
+| `?pagina=login_validate` | 🔒 POST | `AuthController::login()` | Valida credenciales vs BD con password_verify |
+
+| `?pagina=logout` | 🔒 GET | `AuthController::logout()` | Destruye sesión, redirige a login |
 
 | `?pagina=dashboard` | 🔒 Privada | `dashboard.php` | Panel de control con KPIs |
 
-| `?pagina=inventario` | 🔒 Privada | `inventario.php` | Gestión de inventario |
+| `?pagina=inventario` | 🔒 Privada | `inventario.php` | Gestión de inventario (conectado a BD) |
 
 | `?pagina=ventas` | 🔒 Privada | `ventas.php` | Punto de venta (POS) |
 
-| `?pagina=proveedores` | 🔒 Privada | `proveedores.php` | Solicitudes a proveedores |
+| `?pagina=proveedores` | 🔒 Privada | `proveedores.php` | Solicitudes a proveedores (conectado a BD) |
 
 | `?pagina=ciberControl` | 🔒 Privada | `ciberControl.php` | Control de cybercafé |
 
@@ -167,6 +185,10 @@ flowchart TB
 | `?pagina=activos` | 🔒 Privada | `activos.php` | Gestión de activos |
 
 | `?pagina=asesorias` | 🔒 Privada | `asesorias.php` | Asesoría legal |
+
+| `?pagina=usuarios` | 🔒 Privada | `usuarios.php` | Gestión de usuarios (conectado a BD) |
+
+| `?pagina=roles` | 🔒 Privada | `roles.php` | Roles y permisos (conectado a BD) |
 
   
 
@@ -234,21 +256,29 @@ INICIO
 
   
 
-1. **Apache rewrite** (`.htaccess` en `src/`): `/dashboard` → `index.php?pagina=dashboard`
+1. **Apache rewrite** (`.htaccess` en `src/`): `/dashboard` → `index.php?pagina=dashboard` o `/nombre` → `?pagina=nombre`
 
-2. **Front controller** (`index.php`): Requiere `router.php`
+2. **Front controller** (`index.php`): Carga autoloader, instancia `new Router()`, ejecuta `$router->handle()`
 
-3. **Router** (`router.php`):
+3. **Router** (`router.php` - clase `Router` en `App\Core`):
 
-   - Sanitiza el parámetro `?pagina=` (solo alfanumérico + guiones)
+   - `resolvePage()`: Sanitiza `?pagina=` (regex `^[a-zA-Z0-9_-]+$`)
 
-   - Si es página pública (`login`, `login_validate`): renderiza standalone
+   - `handle()`: Determina el tipo de petición:
 
-   - Si es página privada: verifica `$_SESSION['logged_in']`, redirige a login si no existe
+      - ¿AJAX de inventario/roles/proveedores? → Controlador respectivo
+
+      - ¿Auth (login_validate/logout)? → `AuthController::login()` o `logout()`
+
+      - ¿Vista normal? → `renderView()`
+
+   - `renderView()`: Si es pública (`login`), renderiza standalone
+
+   - Si es privada: verifica `$_SESSION['logged_in']`, redirige a login si no existe
 
    - Si la vista no existe: HTTP 404
 
-   - Para páginas privadas: renderiza dentro de `layout.php` vía `require $contentView`
+   - Para páginas privadas: `renderWithLayout()` → `layout.php` vía `require $contentView`
 
   
 
@@ -264,7 +294,7 @@ INICIO
 
 |------------|-------------|
 
-| **Sidebar** | Menú lateral fijo con 8 módulos + modo oscuro + cerrar sesión |
+| **Sidebar** | Menú lateral fijo con 10 módulos + modo oscuro + cerrar sesión |
 
 | **Topbar** | Barra superior con título de página, reloj, notificaciones, usuario |
 

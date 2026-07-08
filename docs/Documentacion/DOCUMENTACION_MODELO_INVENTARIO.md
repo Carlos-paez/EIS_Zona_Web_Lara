@@ -25,7 +25,7 @@ El módulo de inventario del sistema **ZWL (Zona Web Lara)** está implementado 
 
 | Archivo | Enfoque | Ubicación |
 |---------|---------|-----------|
-| `inventario.php` | **POO (Programación Orientada a Objetos)** — clase con namespace | `src/app/Models/inventario.php` |
+| `Inventario.php` | **POO (Programación Orientada a Objetos)** — clase con namespace | `src/app/Models/Inventario.php` |
 
 > 📝 **Novedad:** El archivo ha sido completamente comentado **línea por línea** en español. Cada sentencia SQL, cada método, cada parámetro y cada estructura de control tiene su comentario explicativo, lo que facilita el estudio del código para fines académicos.
 
@@ -49,7 +49,7 @@ src/
     ├── Controllers/
     │   └── InventarioController.php ← ★ Controlador AJAX (clase, 11 acciones)
     ├── Models/
-    │   └── inventario.php           ← ★ Modelo POO
+    │   └── Inventario.php           ← ★ Modelo POO
     │   ├── crud_users.php           ← Modelo de usuarios
     │   └── crud_asesorias.php       ← Modelo de asesorías
     ├── Views/

@@ -2,7 +2,7 @@
 
 ## Descripción
 
-**EIS System** es una aplicación web de gestión empresarial desarrollada en **PHP vanilla** con **Materialize CSS** y **jQuery**. Utiliza una arquitectura **Front Controller** con enrutador procedural, vistas planas y layout maestro.
+**EIS System** es una aplicación web de gestión empresarial desarrollada en **PHP vanilla** con **Materialize CSS** y **jQuery**. Utiliza una arquitectura **Front Controller** con enrutador OOP (clase `Router`), patrón **Singleton** para conexión PDO, y **MVC** modular con controladores y modelos con namespace.
 
 El sistema administra múltiples aspectos de un negocio: ventas (POS), inventario, proveedores, activos fijos, control de cybercafé y asesoría legal. Todo el frontend funciona sin conexión a Internet gracias a assets locales y un Service Worker.
 
@@ -11,8 +11,8 @@ El sistema administra múltiples aspectos de un negocio: ventas (POS), inventari
 ## Estado Actual del Proyecto
 
 ### Implementado (Funcional)
-- **Front Controller** — `index.php` → `router.php` (enrutador procedural)
-- **Sistema de Login** — Autenticación con sesiones PHP (credenciales: admin / 1234)
+- **Front Controller OOP** — `index.php` → `Router::handle()` (clase Router con namespace)
+- **Sistema de Login** — Autenticación con sesiones PHP via `AuthController` (login/logout)
 - **Layout Maestro** — `layout.php` con sidebar, header y footer persistente
 - **Tema Oscuro/Claro** — Toggle con persistencia en localStorage
 - **Reloj en Tiempo Real** — Clock actualizado vía JavaScript
@@ -28,28 +28,30 @@ El sistema administra múltiples aspectos de un negocio: ventas (POS), inventari
 - **Service Worker** — Caché de assets estáticos para funcionamiento offline
 - **Manifiesto PWA** — `manifest.json` para instalación como app
 - **Página Offline** — `offline.php` como fallback sin conexión
-- **Esquema de Base de Datos** — Completo con 19 tablas, vistas, funciones y procedimientos
-- **Modelos CRUD** — `inventario.php` (POO, 17 métodos), `crud_users.php` (8 funciones) y `crud_asesorias.php` (8 funciones) con PDO preparado
-- **Controlador AJAX de Inventario** — `inventarioController.php` con 10 acciones vía JSON
-- **JavaScript de Inventario** — `app.inventario.js` con CRUD completo vía AJAX (450 líneas)
-- **Enrutamiento AJAX** — Router detecta `action` en inventario y carga controlador en lugar de vista
+- **Esquema de Base de Datos** — Completo con 27 tablas, vistas, funciones y procedimientos
+- **Core OOP** — Clases `Database` (Singleton PDO), `Model` (base abstracta), `Router` (Front Controller)
+- **Modelos con Namespace** — `Inventario`, `Usuario`, `Proveedor`, `Rol`, `Asesoria` + `crud_users` y `crud_asesorias`
+- **Controladores AJAX** — `InventarioController`, `RolController`, `ProveedorController`, `AuthController`
+- **JavaScript Modular** — 10 módulos especializados (app.core, init, tables, ui, pos, cyber, legal, inventario, roles, proveedores)
+- **Enrutamiento AJAX** — Router OOP detecta `action` en inventario/roles/proveedores y deriva al controlador correspondiente
 
 ### Implementado (Funcional con BD)
-- **Inventario** — Módulo completo con CRUD de productos, KPIs, movimientos de stock (entrada/salida), búsqueda y filtros. Conectado a BD vía `inventario.php` (modelo POO) + `inventarioController.php` + `app.inventario.js`
+- **Inventario** — Módulo completo con CRUD de productos, KPIs, movimientos de stock (entrada/salida), búsqueda y filtros. Conectado a BD vía `Inventario.php` (modelo POO) + `InventarioController.php` + `app.inventario.js`
+- **Usuarios** — CRUD completo con `Usuario.php` (modelo POO) + `AuthController.php` + `app.core.js`
+- **Roles y Permisos** — CRUD completo con `Rol.php` (modelo POO) + `RolController.php` + `app.roles.js`
+- **Proveedores** — CRUD completo con `Proveedor.php` (modelo POO) + `ProveedorController.php` + `app.proveedores.js`
 
 ### Parcialmente Implementado (UI Estática o Semi-funcional)
 - **Dashboard** — Métricas estáticas (deberían venir de consultas SQL)
 - **Ventas (POS)** — Carrito funciona pero no guarda en BD (solo simulación)
 - **Cyber Control** — Cambios de estado temporales (no persisten en BD)
-- **Solicitudes** — Interfaz con tabla y filtros sin funcionalidad backend
 - **Activos** — Visualización estática con búsqueda
 - **Reportes** — Generador simulado con toasts
 - **Asesoría Legal** — Validación frontend sin persistencia en BD
 
 ### No Implementado
-- **Persistencia en BD** — La mayoría de vistas no se conectan a la base de datos (excepto inventario)
-- **CRUD vía AJAX** — Solo inventario tiene CRUD completo; el resto no tiene operaciones backend
-- **Seguridad** — Credenciales hardcodeadas, sin CSRF, sin password hashing en login
+- **Persistencia en BD** — Dashboard, ventas, cyber, activos, reportes y asesorías aún no persisten en BD
+- **Seguridad** — Credenciales hardcodeadas en `AuthController`, sin CSRF, sin password hashing en login
 
 ---
 
@@ -59,43 +61,55 @@ El sistema administra múltiples aspectos de un negocio: ventas (POS), inventari
 eis_zona_web_lara/
 ├── src/                              # Raíz de la aplicación
 │   ├── index.php                     # Front Controller (punto de entrada)
-│   ├── .htaccess                     # Reglas de reescritura Apache
+│   ├── .htaccess                     # Reglas de reescritura Apache (URLs limpias)
 │   ├── manifest.json                 # Manifiesto PWA
 │   ├── sw.js                         # Service Worker (caché offline)
 │   ├── offline.php                   # Página de fallo offline
 │   ├── Config/
-│   │   └── database.php              # Configuración BD (PDO + MySQL)
+│   │   └── database.php              # Configuración BD (PDO + MySQL) — legacy
 │   ├── app/
 │   │   ├── core/
-│   │   │   └── router.php            # Enrutador procedural (Front Controller)
+│   │   │   ├── Database.php          # Conexión PDO Singleton (moderna)
+│   │   │   ├── Model.php             # Clase base abstracta para modelos
+│   │   │   └── router.php            # Enrutador OOP (clase Router, 385 líneas)
 │   │   ├── Controllers/
-│   │   │   └── inventarioController.php  # Controlador AJAX de inventario (10 acc.)
+│   │   │   ├── AuthController.php    # Login/logout con sesiones
+│   │   │   ├── inventarioController.php  # CRUD inventario AJAX (10+ acc.)
+│   │   │   ├── ProveedorController.php   # CRUD proveedores AJAX
+│   │   │   └── RolController.php         # CRUD roles/permisos AJAX
 │   │   ├── Models/
-│   │   │   ├── inventario.php       # Modelo POO inventario (17 métodos)
-│   │   │   ├── crud_users.php        # CRUD usuarios (8 funciones)
-│   │   │   └── crud_asesorias.php    # CRUD asesorías (8 funciones)
+│   │   │   ├── Inventario.php        # Modelo POO inventario (namespace)
+│   │   │   ├── Usuario.php           # Modelo POO usuarios
+│   │   │   ├── Proveedor.php         # Modelo POO proveedores
+│   │   │   ├── Rol.php               # Modelo POO roles y permisos
+│   │   │   ├── Asesoria.php          # Modelo POO asesorías
+│   │   │   ├── crud_users.php        # CRUD usuarios legacy (8 funciones)
+│   │   │   └── crud_asesorias.php    # CRUD asesorías legacy (8 funciones)
 │   │   ├── template/
-│   │   │   └── layout.php           # Layout maestro (sidebar + header)
+│   │   │   └── layout.php           # Layout maestro (sidebar 12 módulos)
 │   │   └── Views/
 │   │       ├── login.php             # Formulario de inicio de sesión
-│   │       ├── login_validate.php    # Validación de credenciales
+│   │       ├── login_validate.php    # Validación de credenciales (legacy)
 │   │       ├── menu.php              # Menú de navegación
 │   │       ├── dashboard.php         # Panel de control
 │   │       ├── inventario.php        # Gestión de inventario
 │   │       ├── ventas.php            # Punto de venta (POS)
-│   │       ├── proveedores.php       # Solicitudes a proveedores
+│   │       ├── proveedores.php       # Solicitudes a proveedores (conectado a BD)
 │   │       ├── reportes.php          # Reportes y estadísticas
 │   │       ├── activos.php           # Activos fijos
 │   │       ├── ciberControl.php      # Control de cybercafé
 │   │       ├── asesorias.php         # Asesoría legal
-│   │       └── usuarios.php          # Gestión de usuarios
+│   │       ├── usuarios.php          # Gestión de usuarios (conectado a BD)
+│   │       └── roles.php             # Gestión de roles y permisos (conectado a BD)
 │   ├── Database/
-│   │   ├── estructura.sql            # Esquema BD v2.0 (19 tablas)
-│   │   └── datos_prueba.sql          # Datos de prueba
+│   │   ├── estructura.sql            # Esquema BD v3.0 (27 tablas)
+│   │   ├── seed_data.sql             # Datos de prueba
+│   │   ├── seed_data_masivo.sql      # Datos masivos de prueba
+│   │   └── reportes_ejemplo.sql      # Consultas de ejemplo para reportes
 │   └── Public/
 │       ├── css/
-│       │   ├── styles.css            # Estilos personalizados (1105 líneas)
-│       │   ├── login.css             # Estilos login (138 líneas)
+│       │   ├── styles.css            # Estilos personalizados
+│       │   ├── login.css             # Estilos login
 │       │   ├── materialize.min.css   # Materialize CSS (local)
 │       │   └── material-icons.css    # Material Icons (local)
 │       ├── js/
@@ -106,9 +120,11 @@ eis_zona_web_lara/
 │       │   ├── app.tables.js         # Búsqueda y filtro de tablas
 │       │   ├── app.ui.js             # Notificaciones, botones, tooltips
 │       │   ├── app.pos.js            # Sistema de carrito POS
-│   │   ├── app.cyber.js          # Gestión de estaciones Cyber
-│   │   ├── app.legal.js          # Validación de asesoría legal
-│   │   └── app.inventario.js     # CRUD de inventario vía AJAX (450 líneas)
+│       │   ├── app.cyber.js          # Gestión de estaciones Cyber
+│       │   ├── app.legal.js          # Validación de asesoría legal
+│       │   ├── app.inventario.js     # CRUD inventario vía AJAX
+│       │   ├── app.roles.js          # CRUD roles/permisos vía AJAX
+│       │   └── app.proveedores.js    # CRUD proveedores vía AJAX
 │       └── fonts/
 │           └── MaterialIcons-Regular.ttf  # Material Icons (local)
 ├── docs/                             # Documentación del proyecto
@@ -147,12 +163,13 @@ eis_zona_web_lara/
 | **Inventario** | `inventario.php` | `app.inventario.js`, `app.tables.js` | Funcional con BD |
 | **Punto de Venta** | `ventas.php` | `app.pos.js` | Semi-funcional* |
 | **Cyber Control** | `ciberControl.php` | `app.cyber.js` | Interactivo* |
-| **Solicitudes** | `proveedores.php` | `app.tables.js` | UI Estática |
+| **Proveedores** | `proveedores.php` | `app.proveedores.js`, `app.tables.js` | Funcional con BD |
 | **Reportes** | `reportes.php` | `app.ui.js` | Simulado |
 | **Activos** | `activos.php` | `app.tables.js` | UI Estática |
 | **Asesoría Legal** | `asesorias.php` | `app.legal.js` | Semi-funcional* |
 | **Menú** | `menu.php` | `app.init.js`, `app.ui.js` | Funcional |
-| **Usuarios** | `usuarios.php` | — | UI Estática |
+| **Usuarios** | `usuarios.php` | `app.core.js` | Funcional con BD |
+| **Roles y Permisos** | `roles.php` | `app.roles.js` | Funcional con BD |
 
 *Funcionalidad del lado del cliente (JavaScript/jQuery) pero sin persistencia en BD.
 
@@ -181,10 +198,10 @@ eis_zona_web_lara/
 
 3. **Configurar la base de datos**
    
-   Editar `src/Config/database.php`:
+   Editar `src/Config/database.php` (o la conexión en `src/app/core/Database.php`):
    ```php
    $host = "localhost";
-   $db = "zwl";
+   $db = "zona_web_lara";
    $user = "root";
    $pass = "";  // Cambiar por tu contraseña
    ```
@@ -192,7 +209,7 @@ eis_zona_web_lara/
 4. **Crear la base de datos**
    ```bash
    mysql -u root -p < src/Database/estructura.sql
-   mysql -u root -p < src/Database/datos_prueba.sql
+   mysql -u root -p < src/Database/seed_data.sql
    ```
 
 5. **Configurar el servidor web**
@@ -213,34 +230,44 @@ eis_zona_web_lara/
 ### Flujo de una petición
 
 ```
-Navegador → src/.htaccess → src/index.php → src/app/core/router.php
+Navegador → src/.htaccess → src/index.php → App\Core\Router::handle()
                                                       │
-                                             session_start()
+                                               new Router()
                                                       │
-                                             $pagina = $_GET["pagina"]
+                                              session_start()
                                                       │
-                                             preg_match (seguridad)
+                                              $this->resolvePage()
                                                       │
-                                    ┌─────────────────┼────────────────┐
-                                    ▼                                 ▼
-                              ¿Autenticado?                    404 si no existe
-                                    │
-                         ┌──────────┴──────────┐
-                         ▼                     ▼
-                    Página pública         Página privada
-                    (login, etc.)          (dashboard, etc.)
-                         │                     │
-                         ▼                     ▼
-                    Vista directa          require layout.php
-                                          (incluye $contentView)
+                                              preg_match (seguridad)
+                                                      │
+                                     ┌─────────────────┼────────────────────┐
+                                     ▼                 ▼                    ▼
+                               ¿Es AJAX?        ¿Es auth?             ¿Es vista?
+                              (action param)  (login/logout)         (normal)
+                                     │                 │                    │
+                                     ▼                 ▼                    ▼
+                            require Controller   AuthController       renderView()
+                            (Inventario/Rol/     (login/logout)     (layout + vista)
+                             Proveedor)                                  │
+                                                                   ¿Autenticado?
+                                                                         │
+                                                              ┌──────────┴──────────┐
+                                                              ▼                     ▼
+                                                         Página pública         Página privada
+                                                         (login)                (dashboard, etc.)
+                                                              │                     │
+                                                              ▼                     ▼
+                                                         Vista directa        require layout.php
+                                                                              (incluye $contentView)
 ```
 
-### Enrutador (`router.php`)
-- Lee `?pagina=xxx` de la URL
-- Valida el parámetro con regex (seguridad)
-- Redirige al login si no hay sesión
-- Carga la vista directamente (públicas) o dentro del layout (protegidas)
-- Manejo de errores 404
+### Enrutador (`router.php` - Clase OOP)
+- Clase `Router` en namespace `App\Core` con método `handle()`
+- Constructor llama a `session_start()` y `resolvePage()` (valida con regex)
+- Detecta peticiones AJAX por `?action=` y deriva a `InventarioController`, `RolController` o `ProveedorController`
+- Acciones de autenticación (`login_validate`, `logout`) se derivan a `AuthController`
+- `renderView()` carga vistas públicas (sin layout) o protegidas (con `layout.php`)
+- Manejo de errores 404 con `http_response_code(404)`
 
 ### Layout (`layout.php`)
 - Sidebar con Materialize Sidenav (10 módulos + theme toggle + cerrar sesión)
@@ -259,6 +286,8 @@ Navegador → src/.htaccess → src/index.php → src/app/core/router.php
 - **`app.cyber.js`** — Gestión de estaciones Cyber (solo en ciberControl)
 - **`app.legal.js`** — Validación de documentos legales (solo en asesorias)
 - **`app.inventario.js`** — CRUD completo de inventario vía AJAX (solo en inventario)
+- **`app.roles.js`** — CRUD completo de roles y permisos vía AJAX (solo en roles)
+- **`app.proveedores.js`** — CRUD completo de proveedores vía AJAX (solo en proveedores)
 
 ### Offline / PWA
 - Assets locales (sin CDNs)
@@ -293,15 +322,14 @@ Documentación completa de la base de datos (v2.0):
 ## Problemas Conocidos
 
 ### Seguridad
-1. **Credenciales Hardcodeadas** — Usuario y contraseña en `login_validate.php`
+1. **Credenciales Hardcodeadas** — Usuario y contraseña en `AuthController.php`
 2. **Sin CSRF Protection** — Formularios sin tokens de protección
 3. **Sin Password Hashing** — Contraseñas en texto plano en el login
 4. **Configuración de BD** — `echo "Conexión exitosa"` rompería respuestas JSON
 
 ### Arquitectura
-1. **Modelos Parcialmente Usados** — `inventario.php` (POO) se usa desde la vista y el controlador de inventario; `crud_users.php` y `crud_asesorias.php` aún no se integran con las vistas
-2. **Datos Estáticos** — La mayoría de vistas no están conectadas a BD (excepto inventario)
-3. **Sin .env** — Configuración no flexible
+1. **Datos Estáticos** — Dashboard, ventas, cyber, activos, reportes y asesorías aún no persisten en BD
+2. **Sin .env** — Configuración no flexible
 
 ---
 
@@ -309,12 +337,15 @@ Documentación completa de la base de datos (v2.0):
 
 ### Fase 1: Conexión a Base de Datos
 - [x] Módulo de Inventario completo con CRUD + AJAX + BD
+- [x] Módulo de Usuarios completo con CRUD + AJAX + BD
+- [x] Módulo de Roles y Permisos completo con CRUD + AJAX + BD
+- [x] Módulo de Proveedores completo con CRUD + AJAX + BD
 - [ ] Conectar Dashboard con consultas SQL reales
 - [ ] Hacer que el carrito POS persista ventas en BD
 - [ ] Persistir cambios de estado en cybercafé
 
 ### Fase 2: Mejoras de Arquitectura
-- [ ] Convertir a MVC con clases y namespaces
+- [x] Convertir a MVC con clases y namespaces (Router, Database, Model, Controllers)
 - [ ] Implementar Request como clase encapsuladora
 - [ ] Agregar sistema de middleware (auth, CSRF)
 - [ ] Implementar URLs limpias (/nombre en lugar de ?pagina=nombre)
@@ -329,7 +360,7 @@ Documentación completa de la base de datos (v2.0):
 - [ ] Persistencia de ventas en BD
 - [ ] Cálculo real de tiempos en cybercafé
 - [ ] Generación real de reportes (PDF/Excel)
-- [ ] Gestión completa de inventario
+- [ ] Conexión de dashboard a BD real
 
 ---
 
@@ -337,15 +368,16 @@ Documentación completa de la base de datos (v2.0):
 
 | Métrica | Valor |
 |---------|-------|
-| Archivos PHP | 17 |
-| Vistas | 12 |
-| Modelos funcionales | 3 (inventario 15+ funcs, usuarios 8, asesorías 8) |
-| Controladores | 1 (inventario, 10 acciones) |
+| Archivos PHP | 25+ |
+| Vistas | 14 |
+| Modelos funcionales | 7 (5 POO con namespace + 2 legacy procedurales) |
+| Controladores | 4 (Inventario, Auth, Rol, Proveedor) |
+| Archivos Core OOP | 3 (Database, Model, Router) |
 | Archivos CSS | 4 |
-| Archivos JS | 10 (2 librerías + 8 módulos) |
-| Archivos SQL | 2 |
-| Tablas en BD | 19 |
-| Módulos del sistema | 11 |
+| Archivos JS | 12 (2 librerías + 10 módulos) |
+| Archivos SQL | 4 (estructura + 3 seed) |
+| Tablas en BD | 27 |
+| Módulos del sistema | 12 |
 | Dependencias CDN | 0 (100% local) |
 
 ---
@@ -361,7 +393,8 @@ Email: carlospaezguerra@gmail.com
 
 | Versión | Fecha | Descripción |
 |---------|-------|-------------|
-| 2.2 | 2026 | Módulo de Inventario completo con MVC+AJAX, controlador PHP, CRUD con BD, `app.inventario.js` |
+| 3.1 | 2026 | Migración a OOP: Router clase, Database Singleton, Model abstracto. Nuevos módulos: Usuarios, Roles/Permisos, Proveedores con CRUD AJAX+BD. 27 tablas en BD. |
+| 3.0 | 2026 | Módulo de Inventario completo con MVC+AJAX, controlador PHP, CRUD con BD, `app.inventario.js` |
 | 2.1 | 2026 | JS modular (8 archivos), assets locales, Service Worker, PWA, offline |
 | 2.0 | 2026 | Refactorización con Materialize CSS + jQuery + Layout maestro |
 | 1.1 | 2026 | Agregado módulo de Asesoría Legal, actualización de BD a v2.0 (19 tablas) |
@@ -369,6 +402,6 @@ Email: carlospaezguerra@gmail.com
 
 ---
 
-**Última actualización**: Junio 2026
-**Estado**: En desarrollo (Módulo de inventario funcional con MVC+AJAX, resto UI prototipo)
+**Última actualización**: Julio 2026
+**Estado**: En desarrollo (Inventario, Usuarios, Roles, Proveedores funcionales con MVC+AJAX+BD; resto UI prototipo)
 

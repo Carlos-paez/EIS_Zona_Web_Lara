@@ -2,76 +2,89 @@
 
 ## Descripcion General
 
-EIS System es una aplicacion web de gestion empresarial desarrollada en **PHP vanilla** con **Materialize CSS 1.0.0** y **jQuery 3.7.1**. Utiliza un patron Front Controller con enrutador procedural, layout maestro y JavaScript modular. Todos los assets son locales (sin CDN) y cuenta con Service Worker para funcionamiento offline.
+EIS System es una aplicacion web de gestion empresarial desarrollada en **PHP vanilla** con **Materialize CSS 1.0.0** y **jQuery 3.7.1**. Utiliza un patron Front Controller con enrutador OOP (clase `Router`), arquitectura MVC con namespaces PSR-4, layout maestro y JavaScript modular (10 archivos). Todos los assets son locales (sin CDN) y cuenta con Service Worker para funcionamiento offline.
 
 ## Arquitectura
 
-### Patron: Front Controller
-- `index.php` es el unico punto de entrada
-- `router.php` gestiona el enrutamiento, autenticacion y carga de vistas
-- Las vistas publicas se cargan directamente
-- Las vistas protegidas se cargan dentro del layout maestro
+### Patron: Front Controller + MVC OOP
+- `index.php` es el unico punto de entrada (carga autoloader + instancia Router)
+- `Router` clase en `App\Core` gestiona enrutamiento, autenticacion, rutas AJAX y vistas
+- 3 tipos de peticiones AJAX: InventarioController, RolController, ProveedorController
+- Acciones de auth: AuthController::login() y AuthController::logout()
+- Las vistas publicas se cargan directamente; las protegidas dentro del layout maestro
 
 ### Flujo de Peticion
 ```
-Navegador -> .htaccess -> index.php -> router.php
-    -> session_start()
-    -> leer ?pagina= de la URL
-    -> validar parametro (regex seguridad)
-    -> verificar autenticacion
-    -> cargar vista (publica: directa | protegida: dentro de layout)
+Navegador -> .htaccess -> index.php -> new Router() -> Router::handle()
+    -> session_start() + resolvePage()
+    -> leer ?pagina= de la URL + validar regex
+    -> ¿Es AJAX? (inventario/roles/proveedores + action) -> controlador
+    -> ¿Es auth? (login_validate/logout) -> AuthController
+    -> ¿Es vista? -> renderView():
+        -> verificar autenticacion
+        -> cargar vista (publica: directa | protegida: renderWithLayout())
 ```
 
-### Enrutador (router.php)
-- Variable `$pagina` del parametro GET `?pagina=`
-- Validacion con `preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)`
-- Paginas publicas: `login`, `login_validate`
-- Array `$titulos` con titulos para cada pagina
-- Array `$extraHeaders` con HTML extra para el header
-- Layout incluido via `require __DIR__ . '/../template/layout.php'`
-- Error 404 si la vista no existe
+### Enrutador (router.php - Clase Router)
+- Propiedad `$pagina` resuelta por `resolvePage()` con validacion regex
+- `handle()`: metodo principal que deriva segun el tipo de peticion
+- `isAjaxInventario()`, `isAjaxRoles()`, `isAjaxProveedores()`: detectan rutas AJAX
+- `isAuthAction()`: detecta login_validate y logout
+- `requireAuth()`: verifica sesion, retorna JSON error si no autenticado
+- `renderWithLayout()`: prepara `$titulos` (10 modulos) + `$extraHeaders` + incluye layout.php
 
 ## Estructura de Directorios
 
 ```
 src/
-├── index.php                    # Front Controller
-├── .htaccess                    # Reglas rewrite Apache
+├── index.php                    # Front Controller (autoloader + Router OOP)
+├── .htaccess                    # Reglas rewrite Apache (URLs limpias parciales)
 ├── manifest.json                # Manifiesto PWA
 ├── sw.js                        # Service Worker
 ├── offline.php                  # Pagina offline fallback
 ├── Config/
-│   └── database.php             # Conexion PDO MySQL
+│   └── database.php             # Conexion PDO MySQL (legacy)
 ├── app/
 │   ├── core/
-│   │   └── router.php           # Enrutador procedural
+│   │   ├── Database.php         # Conexion PDO Singleton (moderna)
+│   │   ├── Model.php            # Clase base abstracta para modelos
+│   │   └── router.php           # Enrutador OOP (clase Router, 385 lineas)
 │   ├── Controllers/
-│   │   └── inventarioController.php # Controlador AJAX inventario (10 acc.)
+│   │   ├── AuthController.php   # Login/logout con sesiones
+│   │   ├── inventarioController.php # Controlador AJAX inventario
+│   │   ├── RolController.php    # Controlador AJAX roles/permisos
+│   │   └── ProveedorController.php  # Controlador AJAX proveedores
 │   ├── Models/
-│   │   ├── inventario.php      # Modelo POO inventario (17 métodos)
-│   │   ├── crud_users.php       # CRUD usuarios (8 funciones)
-│   │   └── crud_asesorias.php   # CRUD asesorias (8 funciones)
+│   │   ├── Inventario.php       # Modelo POO inventario (namespace)
+│   │   ├── Usuario.php          # Modelo POO usuarios
+│   │   ├── Proveedor.php        # Modelo POO proveedores
+│   │   ├── Rol.php              # Modelo POO roles/permisos
+│   │   ├── Asesoria.php         # Modelo POO asesorias
+│   │   ├── crud_users.php       # CRUD usuarios legacy (8 funciones)
+│   │   └── crud_asesorias.php   # CRUD asesorias legacy (8 funciones)
 │   ├── template/
-│   │   └── layout.php           # Layout maestro
+│   │   └── layout.php           # Layout maestro (12 modulos, 6 JS condicionales)
 │   └── Views/
 │       ├── login.php            # Login
-│       ├── login_validate.php   # Validacion credenciales
+│       ├── login_validate.php   # Validacion credenciales (legacy)
 │       ├── dashboard.php        # Panel de control
-│       ├── inventario.php       # Inventario
+│       ├── inventario.php       # Inventario (conectado a BD)
 │       ├── ventas.php           # POS
-│       ├── proveedores.php      # Solicitudes
+│       ├── proveedores.php      # Solicitudes (conectado a BD)
 │       ├── reportes.php         # Reportes
 │       ├── activos.php          # Activos fijos
 │       ├── ciberControl.php     # Cybercafe
 │       ├── asesorias.php        # Asesoria legal
 │       ├── menu.php             # Menu navegacion
-│       └── usuarios.php         # Gestion usuarios
+│       ├── usuarios.php         # Gestion usuarios (conectado a BD)
+│       └── roles.php            # Roles y permisos (conectado a BD)
 ├── Database/
-│   ├── estructura.sql           # Esquema BD (19 tablas)
-│   └── datos_prueba.sql         # Datos de prueba
+│   ├── estructura.sql           # Esquema BD v3.0 (27 tablas)
+│   ├── seed_data.sql            # Datos de prueba
+│   └── seed_data_masivo.sql     # Datos masivos de prueba
 └── Public/
-    ├── css/                     # Estilos (locales)
-    ├── js/                      # JavaScript modular (8 archivos)
+    ├── css/                     # Estilos (locales, 4 archivos)
+    ├── js/                      # JavaScript modular (10 archivos + 2 librerias)
     └── fonts/                   # Material Icons TTF (local)
 ```
 
@@ -84,7 +97,7 @@ src/
 - JS: jquery-3.7.1.min.js (en head para disponibilidad inmediata)
 
 ### Sidebar (Materialize Sidenav)
-- 10 modulos: Dashboard, Inventario, Ventas (POS), Solicitudes, Cyber, Reportes, Activos, Asesoria Legal, Usuarios, Menu
+- 12 modulos: Dashboard, Inventario, Ventas (POS), Solicitudes, Cyber, Reportes, Activos, Asesoria Legal, Usuarios, Roles y Permisos
 - Theme toggle (oscuro/claro)
 - Cerrar sesion
 - Clase `active` en el item correspondiente segun `$pagina`
@@ -93,12 +106,12 @@ src/
 - Nav bar con titulo dinamico (`$pageTitle`)
 - Reloj digital (actualizado por JS)
 - Notificaciones con badge
-- Header extra opcional (`$headerExtra`)
+- Header extra opcional (`$headerExtra`) - ej: chips de estado en ciberControl
 - Nombre de usuario (Admin)
 
 ### Scripts Cargados
 - Siempre: materialize.min.js, app.core.js, app.init.js, app.tables.js, app.ui.js
-- Condicional: app.pos.js (ventas), app.cyber.js (ciberControl), app.legal.js (asesorias)
+- Condicional: app.pos.js (ventas), app.cyber.js (ciberControl), app.legal.js (asesorias), app.inventario.js (inventario), app.roles.js (roles), app.proveedores.js (proveedores)
 - Service Worker: navigator.serviceWorker.register('sw.js')
 
 ## JavaScript Modular
@@ -186,16 +199,14 @@ src/
 
 ## Base de Datos
 
-- **Nombre**: zwl
+- **Nombre**: zona_web_lara
 - **Motor**: InnoDB
 - **Charset**: utf8mb4
-- **Tablas**: 19
-- **Indices**: 26
-- **Vistas**: 3 (v_productos_stock, v_ventas_diarias, v_sesiones_activas)
-- **Funciones**: 1 (fn_estado_stock)
-- **Procedimientos**: 2 (sp_registrar_movimiento_stock, sp_cerrar_sesion_cyber)
-- **Triggers**: 2 (trg_actualizar_totales_venta, trg_auditar_precio_producto)
-- **Eventos**: 1 (ev_vencer_licencias)
+- **Collation**: utf8mb4_spanish_ci
+- **Tablas**: 27 (21 CREATE TABLE + vistas/relaciones)
+- **Indices**: Claves foraneas en todas las relaciones; UNIQUE en cedula, user_name, codigo, rif
+- **Vistas**: No hay vistas definidas en el esquema actual (los calculos se hacen via consultas SQL directas en los modelos)
+- **Objetos**: No hay SP, funciones, triggers ni eventos definidos actualmente (toda la logica transaccional se maneja desde PHP con PDO)
 
 ### Tablas
 roles, categorias, marcas, tipos_activo, tarifas_cyber, tipos_pago, usuarios, productos, proveedores, producto_proveedor, ventas, detalle_ventas, solicitudes, detalle_solicitudes, activos, estaciones_cyber, sesiones_cyber, movimientos_stock, asesorias

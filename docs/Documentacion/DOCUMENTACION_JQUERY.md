@@ -17,7 +17,7 @@ La integracion incluyo:
 
 ## 2. Archivos del Proyecto
 
-### JavaScript (8 modulos)
+### JavaScript (10 modulos)
 
 | Archivo | Proposito | Carga |
 |---------|-----------|-------|
@@ -29,6 +29,8 @@ La integracion incluyo:
 | `Public/js/app.cyber.js` | Gestion de estaciones Cyber | Solo en pagina ciberControl |
 | `Public/js/app.legal.js` | Validacion de documentos de asesoria legal | Solo en pagina asesorias |
 | `Public/js/app.inventario.js` | CRUD de inventario via AJAX | Solo en pagina inventario |
+| `Public/js/app.roles.js` | CRUD de roles y permisos via AJAX | Solo en pagina roles |
+| `Public/js/app.proveedores.js` | CRUD de proveedores y ordenes via AJAX | Solo en pagina proveedores |
 
 ### Librerias (locales)
 
@@ -69,10 +71,12 @@ La integracion incluyo:
     app.ui.js         (Notificaciones, botones, reportes)
 
     <!-- Condicional por pagina -->
-    app.pos.js        (solo en ventas)
-    app.cyber.js      (solo en ciberControl)
-    app.legal.js      (solo en asesorias)
-    app.inventario.js (solo en inventario)
+    app.pos.js         (solo en ventas)
+    app.cyber.js       (solo en ciberControl)
+    app.legal.js       (solo en asesorias)
+    app.inventario.js  (solo en inventario)
+    app.roles.js       (solo en roles)
+    app.proveedores.js (solo en proveedores)
 
     Service Worker registration
 </body>

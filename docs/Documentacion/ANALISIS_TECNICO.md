@@ -1,9 +1,9 @@
 # ANÁLISIS TÉCNICO — EIS System (Zona Web Lara)
 
-**Arquitectura:** MVC con POO y PDO estricto  
-**Base de datos:** MySQL 8+ (InnoDB, utf8mb4)  
-**Frontend:** Vanilla JS + CSS3 (Grid/Flexbox)  
-**Namespace:** `Carlospez\Clase\` (PSR-4)
+**Arquitectura:** MVC con POO, Router OOP, Database Singleton, PDO estricto  
+**Base de datos:** MySQL 8+ (InnoDB, utf8mb4_spanish_ci)  
+**Frontend:** Materialize CSS 1.0.0 + jQuery 3.7.1 + JS modular  
+**Namespace:** `App\Core`, `App\Models`, `App\Controllers` (PSR-4)
 
 ---
 
@@ -27,39 +27,76 @@
 
 ```
 eis_zona_web_lara/
-├── composer.json                        # PSR-4 autoloading
+├── composer.json                        # PSR-4 autoloading ("App\\": "src/app/")
 ├── src/                                 # Document root
-│   ├── .htaccess                        # Apache Rewrite Rules
-│   ├── index.php                        # Front Controller (entry point)
+│   ├── .htaccess                        # Apache Rewrite Rules (URLs limpias)
+│   ├── index.php                        # Front Controller (autoloader + Router OOP)
+│   ├── manifest.json                    # Manifiesto PWA
+│   ├── sw.js                            # Service Worker
+│   ├── offline.php                      # Página offline fallback
 │   ├── Config/
-│   │   └── database.php                 # Conexión PDO
+│   │   └── database.php                 # Conexión PDO (legacy)
 │   ├── Database/
-│   │   ├── mian.sql                     # Esquema completo (10 tablas)
-│   │   └── seed.sql                     # Datos de prueba
+│   │   ├── estructura.sql               # Esquema completo (27 tablas, v3.0)
+│   │   ├── seed_data.sql                # Datos de prueba
+│   │   └── seed_data_masivo.sql         # Datos masivos de prueba
 │   ├── app/
 │   │   ├── core/
-│   │   │   └── router.php               # Enrutador / Front Controller
+│   │   │   ├── Database.php             # Conexión PDO Singleton (moderna)
+│   │   │   ├── Model.php                # Clase base abstracta para modelos
+│   │   │   └── router.php               # Enrutador OOP (clase Router, 385 líneas)
+│   │   ├── Controllers/
+│   │   │   ├── AuthController.php       # Login/logout con sesiones
+│   │   │   ├── inventarioController.php # CRUD inventario AJAX
+│   │   │   ├── RolController.php        # CRUD roles/permisos AJAX
+│   │   │   └── ProveedorController.php  # CRUD proveedores AJAX
 │   │   ├── Models/
-│   │   │   └── crud.php                 # Operaciones CRUD base
+│   │   │   ├── Inventario.php           # Modelo POO inventario (namespace)
+│   │   │   ├── Usuario.php              # Modelo POO usuarios
+│   │   │   ├── Proveedor.php            # Modelo POO proveedores
+│   │   │   ├── Rol.php                  # Modelo POO roles/permisos
+│   │   │   ├── Asesoria.php             # Modelo POO asesorías
+│   │   │   ├── crud_users.php           # CRUD usuarios legacy
+│   │   │   └── crud_asesorias.php       # CRUD asesorías legacy
+│   │   ├── template/
+│   │   │   └── layout.php               # Layout maestro (12 módulos, 10 JS)
 │   │   └── Views/
 │   │       ├── login.php                # Autenticación
-│   │       ├── login_validate.php       # Validación de credenciales
+│   │       ├── login_validate.php       # Validación de credenciales (legacy)
 │   │       ├── dashboard.php            # Panel principal
 │   │       ├── menu.php                 # Menú de navegación
-│   │       ├── inventario.php           # Gestión de inventario
+│   │       ├── inventario.php           # Gestión de inventario (conectado a BD)
 │   │       ├── ventas.php               # Punto de venta (POS)
-│   │       ├── proveedores.php          # Solicitudes a proveedores
+│   │       ├── proveedores.php          # Solicitudes (conectado a BD)
 │   │       ├── reportes.php             # Reportes y estadísticas
 │   │       ├── activos.php              # Activos fijos
-│   │       └── ciberControl.php         # Control de cybercafé
+│   │       ├── ciberControl.php         # Control de cybercafé
+│   │       ├── asesorias.php            # Asesoría legal
+│   │       ├── usuarios.php             # Gestión de usuarios (conectado a BD)
+│   │       └── roles.php                # Roles y permisos (conectado a BD)
 │   └── Public/
-│       └── css/
-│           ├── styles.css               # Estilos generales (796 líneas)
-│           └── login.css                # Estilos de login (306 líneas)
+│       ├── css/
+│       │   ├── styles.css               # Estilos generales
+│       │   ├── login.css                # Estilos de login
+│       │   ├── materialize.min.css      # Materialize CSS (local)
+│       │   └── material-icons.css       # Material Icons (local)
+│       ├── js/
+│       │   ├── jquery-3.7.1.min.js      # jQuery (local)
+│       │   ├── materialize.min.js       # Materialize JS (local)
+│       │   ├── app.core.js              # Utilidades compartidas
+│       │   ├── app.init.js              # Inicialización Materialize
+│       │   ├── app.tables.js            # Búsqueda y filtros
+│       │   ├── app.ui.js                # UI notificaciones
+│       │   ├── app.pos.js               # Sistema POS
+│       │   ├── app.cyber.js             # Estaciones cyber
+│       │   ├── app.legal.js             # Asesoría legal
+│       │   ├── app.inventario.js        # CRUD inventario AJAX
+│       │   ├── app.roles.js             # CRUD roles AJAX
+│       │   └── app.proveedores.js       # CRUD proveedores AJAX
+│       └── fonts/
+│           └── MaterialIcons-Regular.ttf # Material Icons (local)
 ├── docs/
-│   ├── database-conceptual-design.md    # Diseño conceptual
-│   ├── database-logical-design.md       # Diseño lógico
-│   └── database-physical-design.md      # Diseño físico
+│   └── Documentacion/                   # Documentación detallada
 └── vendor/                              # Composer dependencies
 ```
 
@@ -67,11 +104,11 @@ eis_zona_web_lara/
 
 | Capa | Ubicación | Responsabilidad |
 |------|-----------|-----------------|
-| **Model** | `src/app/Models/crud.php` + clases de entidad | Lógica de negocio, acceso a datos con PDO prepared statements |
-| **View** | `src/app/Views/*.php` | Presentación HTML, recepción de datos del controlador |
-| **Controller** | `src/app/Controlers/` | Orquestación: recibe request, llama a modelos, retorna vista |
-| **Core** | `src/app/core/router.php` | Enrutamiento, sesión, carga de vistas |
-| **Config** | `src/Config/database.php` | Conexión PDO con configuración estricta |
+| **Model** | `src/app/Models/*.php` (5 POO con namespace + 2 legacy) | Lógica de negocio, acceso a datos con PDO prepared statements |
+| **View** | `src/app/Views/*.php` | Presentación HTML, datos del modelo |
+| **Controller** | `src/app/Controllers/*.php` (4 clases) | Orquestación: recibe request AJAX, llama a modelos, retorna JSON |
+| **Core** | `src/app/core/` (Database.php, Model.php, router.php) | Conexión Singleton, clase base, enrutamiento OOP |
+| **Config** | `src/Config/database.php` | Conexión PDO legacy |
 
 ### 1.3 Principios PDO Estricto
 
