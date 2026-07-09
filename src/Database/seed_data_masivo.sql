@@ -1,4 +1,6 @@
-﻿USE zona_web_lara;
+USE zona_web_lara;
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
 
 -- ============================================================
 -- MASSIVE SEED DATA - DATOS DE PRUEBA MASIVOS
@@ -7,6 +9,8 @@
 -- ============================================================
 
 -- ============================================================
+START TRANSACTION;
+
 -- ROLES (8 registros)
 -- ============================================================
 INSERT INTO roles (nombre_rol) VALUES
@@ -728,11 +732,11 @@ INSERT INTO usuarios (nombre, apellido, user_name, password_hash, email, estatus
 ('Ana', 'Mendoza', 'anamen', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'anamen@zonaweb.com', '1', 4),
 ('Pedro', 'García', 'pedgar', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'pedgar@zonaweb.com', '1', 5),
 ('Luis', 'Marcano', 'luimar', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'luimar@zonaweb.com', '1', 2),
-('Carmen', 'Suárez', 'carsuá', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'carsuá@zonaweb.com', '1', 3),
+('Carmen', 'Suárez', 'carsua', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'carsua@zonaweb.com', '1', 3),
 ('José', 'Blanco', 'josbla', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'josbla@zonaweb.com', '1', 4),
-('Rosa', 'Márquez', 'rosmár', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'rosmár@zonaweb.com', '1', 5),
+('Rosa', 'Márquez', 'rosmar', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'rosmar@zonaweb.com', '1', 5),
 ('David', 'Contreras', 'davcon', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'davcon@zonaweb.com', '1', 2),
-('Elena', 'Vásquez', 'elevás', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'elevás@zonaweb.com', '1', 6),
+('Elena', 'Vásquez', 'elevas', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'elevas@zonaweb.com', '1', 6),
 ('Francisco', 'Torrealba', 'frator', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'frator@zonaweb.com', '1', 7),
 ('Isabel', 'Cedeño', 'isaced', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'isaced@zonaweb.com', '1', 8),
 ('Gabriel', 'Paredes', 'gabpar', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'gabpar@zonaweb.com', '1', 2),
@@ -741,24 +745,24 @@ INSERT INTO usuarios (nombre, apellido, user_name, password_hash, email, estatus
 ('Mariela', 'Oropeza', 'maroro', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'maroro@zonaweb.com', '1', 4),
 ('Andrés', 'Palacios', 'andpal', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'andpal@zonaweb.com', '1', 5),
 ('Katherine', 'Rondón', 'katron', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'katron@zonaweb.com', '1', 3),
-('Nelson', 'Cárdenas', 'nelcár', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'nelcár@zonaweb.com', '1', 2),
+('Nelson', 'Cárdenas', 'nelcar', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'nelcar@zonaweb.com', '1', 2),
 ('Yuliana', 'Bermúdez', 'yulber', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'yulber@zonaweb.com', '1', 6),
 ('Jesús', 'Moreno', 'jesmor', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'jesmor@zonaweb.com', '1', 7),
-('Génesis', 'Carrillo', 'géncar', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'géncar@zonaweb.com', '1', 8),
+('Génesis', 'Carrillo', 'gencar', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'gencar@zonaweb.com', '1', 8),
 ('Oscar', 'Salazar', 'oscsal', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'oscsal@zonaweb.com', '1', 2),
 ('Marina', 'Rivas2', 'marriv', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'marriv@zonaweb.com', '1', 3),
-('Alexis', 'Pérez', 'alepér', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'alepér@zonaweb.com', '1', 4),
+('Alexis', 'Pérez', 'aleper', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'aleper@zonaweb.com', '1', 4),
 ('Luisana', 'Chacón', 'luicha', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'luicha@zonaweb.com', '1', 5),
 ('Rafael', 'Contreras2', 'rafcon', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'rafcon@zonaweb.com', '1', 2),
 ('Diana', 'Escalona', 'diaesc', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'diaesc@zonaweb.com', '1', 6),
 ('Jorge', 'Montoya', 'jormon', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'jormon@zonaweb.com', '1', 7),
 ('Sandra', 'García2', 'sangar', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'sangar@zonaweb.com', '1', 3),
-('Ramón', 'López', 'ramlóp', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'ramlóp@zonaweb.com', '1', 2),
+('Ramón', 'López', 'ramlop', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'ramlop@zonaweb.com', '1', 2),
 ('Tatiana', 'Parra', 'tatpar', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'tatpar@zonaweb.com', '1', 4),
 ('Manuel', 'Aguilera', 'managu', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'managu@zonaweb.com', '1', 5),
 ('Verónica', 'Cedeño2', 'verced', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'verced@zonaweb.com', '1', 2),
 ('Henry', 'Molina', 'henmol', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'henmol@zonaweb.com', '1', 3),
-('Yolimar', 'Sánchez', 'yolsán', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'yolsán@zonaweb.com', '1', 8),
+('Yolimar', 'Sánchez', 'yolsan', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'yolsan@zonaweb.com', '1', 8),
 ('Felipe', 'Guerra', 'felgue', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'felgue@zonaweb.com', '1', 2),
 ('Elizabeth', 'Moreno2', 'elimor', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'elimor@zonaweb.com', '1', 4),
 ('Freddy', 'Ramos', 'freram', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'freram@zonaweb.com', '1', 5),
@@ -768,26 +772,26 @@ INSERT INTO usuarios (nombre, apellido, user_name, password_hash, email, estatus
 ('Oswaldo', 'Martínez', 'oswmar', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'oswmar@zonaweb.com', '1', 7),
 ('Xiomara', 'Cordero', 'xiocor', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'xiocor@zonaweb.com', '1', 8),
 ('Alberto', 'Castillo', 'albcas', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'albcas@zonaweb.com', '1', 2),
-('Marilyn', 'López2', 'marlóp', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'marlóp@zonaweb.com', '1', 4),
+('Marilyn', 'López2', 'marlop', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'marlop@zonaweb.com', '1', 4),
 ('Jhonny', 'Briceño', 'jhobri', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'jhobri@zonaweb.com', '1', 5),
 ('Zoraida', 'Arias', 'zorari', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'zorari@zonaweb.com', '1', 2),
-('Pedro2', 'Suárez2', 'pedsuá', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'pedsuá@zonaweb.com', '1', 3),
+('Pedro2', 'Suárez2', 'pedsua', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'pedsua@zonaweb.com', '1', 3),
 ('Nataly', 'Vargas', 'natvar', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'natvar@zonaweb.com', '1', 6),
 ('Eduardo', 'Carrero', 'educar', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'educar@zonaweb.com', '1', 7),
 ('Lorena', 'Velasco', 'lorvel', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'lorvel@zonaweb.com', '1', 2),
 ('Alexander', 'Rojas', 'aleroj', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'aleroj@zonaweb.com', '1', 4),
-('Mariana', 'Peña', 'marpeñ', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'marpeñ@zonaweb.com', '1', 5),
+('Mariana', 'Peña', 'marpen', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'marpen@zonaweb.com', '1', 5),
 ('Jonathan', 'Reyes', 'jonrey', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'jonrey@zonaweb.com', '1', 2),
 ('Carol', 'Torres', 'cartor', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'cartor@zonaweb.com', '1', 3),
-('Williams', 'Núñez', 'wilnúñ', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'wilnúñ@zonaweb.com', '1', 8),
+('Williams', 'Núñez', 'wilnun', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'wilnun@zonaweb.com', '1', 8),
 ('Daniela', 'Serrano', 'danser', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'danser@zonaweb.com', '1', 2),
-('Víctor', 'León', 'vícleó', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'vícleó@zonaweb.com', '1', 4),
-('Mileidi', 'Córdova', 'milcór', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'milcór@zonaweb.com', '1', 5),
-('Renny', 'Pérez2', 'renpér', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'renpér@zonaweb.com', '1', 2),
+('Víctor', 'León', 'vicleo', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'vicleo@zonaweb.com', '1', 4),
+('Mileidi', 'Córdova', 'milcor', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'milcor@zonaweb.com', '1', 5),
+('Renny', 'Pérez2', 'renper', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'renper@zonaweb.com', '1', 2),
 ('Yuraima', 'Sifontes', 'yursif', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'yursif@zonaweb.com', '1', 3),
 ('Junior', 'Martínez2', 'junmar', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'junmar@zonaweb.com', '1', 6),
 ('Mariangel', 'Hernández', 'marher', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'marher@zonaweb.com', '1', 7),
-('Carlos2', 'Sánchez2', 'carsán', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'carsán@zonaweb.com', '1', 2),
+('Carlos2', 'Sánchez2', 'carsan', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'carsan@zonaweb.com', '1', 2),
 ('Ruth', 'Castellano', 'rutcas', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'rutcas@zonaweb.com', '1', 4),
 ('Anthony', 'Zerpa', 'antzer', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'antzer@zonaweb.com', '1', 5),
 ('Yenny', 'Castellanos2', 'yencas', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'yencas@zonaweb.com', '1', 2),
@@ -1033,7 +1037,7 @@ INSERT INTO productos (codigo, nombre, descripcion, stock, stock_minimo, precio_
 ('JAR-209', 'Bomba Agua sumergible', 'Producto Bomba Agua sumergible de alta calidad, ideal para uso profesional y personal', 46, 9, 8501274.21, 13602039, '2025-03-15', '2026-05-20', 18),
 ('JAR-210', 'Mesa Jardín plegable', 'Producto Mesa Jardín plegable de alta calidad, ideal para uso profesional y personal', 9, 2, 5207463.31, 8331941, '2025-04-01', '2026-01-05', 18),
 ('JAR-211', 'Riego Goteo kit 20m', 'Producto Riego Goteo kit 20m de alta calidad, ideal para uso profesional y personal', 78, 16, 2641698.81, 4226718, '2025-04-15', '2026-01-20', 18),
-('JAR-212', 'Set Herramientas Jardinería 5pz', 'Producto Set Herramientas Jardinería 5pz de alta calidad, ideal para uso profesional y personal', 27, 5, 19997346.13, 31995754, '2025-05-01', '2026-02-05', 18),
+('JAR-212', 'Set Herramientas Jardinería 5pz', 'Producto Set Herramientas Jardinería 5pz de alta calidad, ideal para uso profesional y personal', 27, 5, 19997346.13, 31995754, '2025-05-01', '2026-02-05', 18);
 
 
 -- ============================================================
@@ -3217,7 +3221,7 @@ INSERT INTO lineas_venta (cantidad, precio, fk_orden, fk_producto) VALUES
 (1, 6963401.94, 499, 237),
 (4, 16931300.39, 500, 119),
 (12, 16209575.88, 500, 296),
-(10, 20047924.41, 500, 38),
+(10, 20047924.41, 500, 38);
 
 -- ============================================================
 -- ORDEN_ABASTECIMIENTO (200 registros)
@@ -4026,7 +4030,7 @@ INSERT INTO lineas_abastecimiento (cantidad, precio, fk_orden_abastecimiento, fk
 (15, 21084885.64, 198, 264),
 (47, 18879961.71, 199, 68),
 (36, 12228822, 200, 89),
-(39, 949721.57, 200, 241),
+(39, 949721.57, 200, 241);
 
 -- ============================================================
 -- ASESORIA (150 registros)
@@ -4617,3 +4621,6 @@ INSERT INTO sesion_ciber (tiempo_uso, fk_cliente, fk_tarifa, fk_activo) VALUES
 -- activos: 100
 -- sesion_ciber: 300
 -- ============================================================
+
+COMMIT;
+SET FOREIGN_KEY_CHECKS = 1;
