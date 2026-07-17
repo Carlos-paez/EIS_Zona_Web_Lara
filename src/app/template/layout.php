@@ -24,6 +24,35 @@
     <link rel="stylesheet" href="Public/css/materialize.min.css">
     <!-- Estilos personalizados de la aplicación -->
     <link rel="stylesheet" href="Public/css/styles.css">
+    <!-- Estilos del submenú de Solicitudes -->
+    <style>
+        .has-submenu .submenu-list {
+            display: none;
+            padding: 0 0 0 1rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        .has-submenu.open .submenu-list {
+            display: block;
+            max-height: 200px;
+            padding: 0.25rem 0 0.25rem 1rem;
+        }
+        .has-submenu .submenu-arrow {
+            transition: transform 0.25s ease;
+        }
+        .has-submenu.open .submenu-arrow {
+            transform: rotate(90deg);
+        }
+        .has-submenu .submenu-list li a {
+            padding: 0 1rem;
+            font-size: 0.9rem;
+            line-height: 2.5rem;
+        }
+        .has-submenu .submenu-parent {
+            position: relative;
+        }
+    </style>
     <!-- jQuery 3.7.1 (local) - Biblioteca JS para manipulación del DOM y peticiones AJAX -->
     <script src="Public/js/jquery-3.7.1.min.js"></script>
 </head>
@@ -51,14 +80,18 @@
         <!-- Ventas (POS) - Punto de venta -->
         <li><a href="?pagina=ventas" class="sidenav-link<?php echo $pagina === 'ventas' ? ' active' : ''; ?>"><i
                     class="material-icons left">shopping_cart</i>Ventas (POS)</a></li>
-        <!-- Proveedores - Solicitudes y órdenes de compra -->
-        <li><a href="?pagina=proveedores"
-                class="sidenav-link<?php echo $pagina === 'proveedores' ? ' active' : ''; ?>"><i
-                    class="material-icons left">request_quote</i>Solicitudes</a></li>
-        <!-- Gestión de Proveedores - Alta, baja y edición de proveedores -->
-        <li><a href="?pagina=proveedores-gestion"
-                class="sidenav-link<?php echo $pagina === 'proveedores-gestion' ? ' active' : ''; ?>"><i
-                    class="material-icons left">store</i>Proveedores</a></li>
+        <!-- Solicitudes - Menú desplegable con submódulos -->
+        <li class="has-submenu<?php echo in_array($pagina, ['proveedores', 'proveedores-gestion']) ? ' open' : ''; ?>">
+            <a href="#!" class="sidenav-link submenu-parent">
+                <i class="material-icons left">request_quote</i>
+                <span>Solicitudes</span>
+                <i class="material-icons submenu-arrow" style="position:absolute;right:1rem;transition:transform 0.25s;">arrow_right</i>
+            </a>
+            <ul class="submenu-list">
+                <li><a href="?pagina=proveedores" class="sidenav-link<?php echo $pagina === 'proveedores' ? ' active' : ''; ?>">Órdenes de Compra</a></li>
+                <li><a href="?pagina=proveedores-gestion" class="sidenav-link<?php echo $pagina === 'proveedores-gestion' ? ' active' : ''; ?>">Proveedores</a></li>
+            </ul>
+        </li>
         <!-- Cyber - Control de estaciones de cybercafé -->
         <li><a href="?pagina=ciberControl"
                 class="sidenav-link<?php echo $pagina === 'ciberControl' ? ' active' : ''; ?>"><i
@@ -196,6 +229,14 @@
     <?php if ($pagina === 'proveedores-gestion'): ?>
     <script src="Public/js/app.proveedores-gestion.js"></script>
     <?php endif; ?>
+
+    <!-- Toggle del submenú de Solicitudes -->
+    <script>
+    $(document).on('click', '.submenu-parent', function(e) {
+        e.preventDefault();
+        $(this).closest('.has-submenu').toggleClass('open');
+    });
+    </script>
 
     <!-- Registrar Service Worker para funcionamiento offline (PWA) -->
     <script>
