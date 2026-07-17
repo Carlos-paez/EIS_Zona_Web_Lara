@@ -45,6 +45,8 @@ CREATE TABLE cliente_asesoria
     rif              varchar(50)          default 'N/A',
     tipo             varchar(80)          default 'civil',
     foreign key (fk_cliente) references clientes (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -101,6 +103,8 @@ CREATE TABLE rol_usuarios
     fk_rol INT,
     rol    VARCHAR(50) not null,
     FOREIGN KEY (fk_rol) REFERENCES roles (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -116,6 +120,8 @@ CREATE TABLE usuarios
     estatus        VARCHAR(20)        not null default '0',
     fk_rol_usuario INT,
     FOREIGN KEY (fk_rol_usuario) REFERENCES rol_usuarios (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -125,8 +131,12 @@ CREATE TABLE permisos_rol
     id         INT PRIMARY KEY AUTO_INCREMENT,
     fk_rol     INT,
     fk_permiso INT,
-    FOREIGN KEY (fk_rol) REFERENCES roles (id),
+    FOREIGN KEY (fk_rol) REFERENCES roles (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
     FOREIGN KEY (fk_permiso) REFERENCES permisos (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -145,6 +155,8 @@ CREATE TABLE productos
     fecha_actualizacion DATE           not null,
     fk_categoria        INT,
     FOREIGN KEY (fk_categoria) REFERENCES categoria (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -156,8 +168,12 @@ CREATE TABLE orden_de_venta
     fecha           DATE        not null,
     fk_usuario      INT,
     fk_cliente      INT,
-    FOREIGN KEY (fk_usuario) REFERENCES usuarios (id),
+    FOREIGN KEY (fk_usuario) REFERENCES usuarios (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
     FOREIGN KEY (fk_cliente) REFERENCES clientes (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -169,8 +185,12 @@ CREATE TABLE lineas_venta
     precio      DECIMAL(10, 2) not null,
     fk_orden    INT,
     fk_producto INT,
-    FOREIGN KEY (fk_orden) REFERENCES orden_de_venta (id),
+    FOREIGN KEY (fk_orden) REFERENCES orden_de_venta (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
     FOREIGN KEY (fk_producto) REFERENCES productos (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -182,8 +202,12 @@ CREATE TABLE orden_abastecimiento
     fecha           DATE        not null,
     fk_proveedor    INT,
     fk_status       INT,
-    FOREIGN KEY (fk_proveedor) REFERENCES proveedores (id),
+    FOREIGN KEY (fk_proveedor) REFERENCES proveedores (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
     FOREIGN KEY (fk_status) REFERENCES status_seguimiento (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -195,8 +219,12 @@ CREATE TABLE lineas_abastecimiento
     precio                  DECIMAL(10, 2) not null,
     fk_orden_abastecimiento INT,
     fk_producto             INT,
-    FOREIGN KEY (fk_orden_abastecimiento) REFERENCES orden_abastecimiento (id),
+    FOREIGN KEY (fk_orden_abastecimiento) REFERENCES orden_abastecimiento (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
     FOREIGN KEY (fk_producto) REFERENCES productos (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -209,8 +237,12 @@ CREATE TABLE asesoria
     fecha               DATE         not null,
     fk_cliente_asesoria INT,
     fk_tipo_asesoria    INT,
-    FOREIGN KEY (fk_cliente_asesoria) REFERENCES cliente_asesoria (id),
+    FOREIGN KEY (fk_cliente_asesoria) REFERENCES cliente_asesoria (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
     FOREIGN KEY (fk_tipo_asesoria) REFERENCES tipo_asesoria (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -224,6 +256,8 @@ CREATE TABLE activos
     activa         BOOLEAN               DEFAULT TRUE,
     fk_tipo_activo INT,
     FOREIGN KEY (fk_tipo_activo) REFERENCES tipo_activo (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -235,9 +269,15 @@ CREATE TABLE sesion_ciber
     fk_cliente INT,
     fk_tarifa  INT,
     fk_activo  INT,
-    FOREIGN KEY (fk_cliente) REFERENCES clientes (id),
-    FOREIGN KEY (fk_tarifa) REFERENCES tarifas (id),
+    FOREIGN KEY (fk_cliente) REFERENCES clientes (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    FOREIGN KEY (fk_tarifa) REFERENCES tarifas (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
     FOREIGN KEY (fk_activo) REFERENCES activos (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
