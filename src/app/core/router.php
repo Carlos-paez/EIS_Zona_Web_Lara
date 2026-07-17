@@ -68,7 +68,13 @@ class Router
             return;
         }
 
-        // Si es una petición AJAX de proveedores (tiene ?action=...), deriva al controlador
+        // Si es una petición AJAX de gestión de proveedores, deriva al controlador
+        if ($this->isAjaxProveedorGestion()) {
+            $this->runProveedorGestionController();
+            return;
+        }
+
+        // Si es una petición AJAX de proveedores/solicitudes (tiene ?action=...), deriva al controlador
         if ($this->isAjaxProveedores()) {
             $this->runProveedorController();
             return;
@@ -141,6 +147,16 @@ class Router
     {
         // Debe ser página 'roles' Y tener el parámetro 'action' en la URL
         return $this->pagina === 'roles' && isset($_GET['action']);
+    }
+
+    /**
+     * Verifica si la solicitud actual es una petición AJAX del módulo de gestión de proveedores.
+     *
+     * @return bool True si es una petición AJAX de gestión de proveedores, false en caso contrario
+     */
+    private function isAjaxProveedorGestion(): bool
+    {
+        return $this->pagina === 'proveedores-gestion' && isset($_GET['action']);
     }
 
     /**
@@ -233,6 +249,19 @@ class Router
         // Ejecuta el método handle del controlador (procesa la acción AJAX)
         $controller->handle();
         // Termina la ejecución para evitar que se renderice cualquier vista
+        exit;
+    }
+
+    /**
+     * Ejecuta el controlador de gestión de proveedores para peticiones AJAX.
+     *
+     * @return void
+     */
+    private function runProveedorGestionController(): void
+    {
+        $this->requireAuth();
+        $controller = new \App\Controllers\ProveedorGestionController();
+        $controller->handle();
         exit;
     }
 
@@ -361,6 +390,7 @@ class Router
             'ventas'       => 'Punto de Venta (POS)',
             'ciberControl' => 'Control de Cybercafé',
             'proveedores'  => 'Solicitudes a Proveedores',
+            'proveedores-gestion' => 'Gestión de Proveedores',
             'reportes'     => 'Reportes y Estadísticas',
             'activos'      => 'Gestión de Activos',
             'asesorias'    => 'Asesoría Legal',

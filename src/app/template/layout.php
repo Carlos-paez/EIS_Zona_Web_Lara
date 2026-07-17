@@ -55,6 +55,10 @@
         <li><a href="?pagina=proveedores"
                 class="sidenav-link<?php echo $pagina === 'proveedores' ? ' active' : ''; ?>"><i
                     class="material-icons left">request_quote</i>Solicitudes</a></li>
+        <!-- Gestión de Proveedores - Alta, baja y edición de proveedores -->
+        <li><a href="?pagina=proveedores-gestion"
+                class="sidenav-link<?php echo $pagina === 'proveedores-gestion' ? ' active' : ''; ?>"><i
+                    class="material-icons left">store</i>Proveedores</a></li>
         <!-- Cyber - Control de estaciones de cybercafé -->
         <li><a href="?pagina=ciberControl"
                 class="sidenav-link<?php echo $pagina === 'ciberControl' ? ' active' : ''; ?>"><i
@@ -186,6 +190,11 @@
     <!-- Módulo de Proveedores/Solicitudes -->
     <?php if ($pagina === 'proveedores'): ?>
     <script src="Public/js/app.proveedores.js"></script>
+    <?php endif; ?>
+
+    <!-- Módulo de Gestión de Proveedores -->
+    <?php if ($pagina === 'proveedores-gestion'): ?>
+    <script src="Public/js/app.proveedores-gestion.js"></script>
     <?php endif; ?>
 
     <!-- Registrar Service Worker para funcionamiento offline (PWA) -->
