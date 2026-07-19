@@ -32,8 +32,6 @@ $bajo           = $inventarioModel->stockBajo();
 $valor          = $inventarioModel->valorTotalInventario();
 // Calculo el total de productos contando el array de productos
 $totalProductos = count($productos);
-// Obtengo la lista de categorias para el select del modal
-$categorias     = $inventarioModel->obtenerCategorias();
 // Fin del bloque PHP, paso a la vista HTML
 ?>
 
@@ -158,6 +156,11 @@ $categorias     = $inventarioModel->obtenerCategorias();
             <!-- Abre el modal para crear un nuevo producto -->
             <!-- ---------------------------------------------------------------- -->
             <div class="col s6 m4 l4 right-align" style="padding:0.5rem 0 0;">
+                <button class="btn waves-effect waves-light grey btn-gestionar-categorias" data-tipo="categoria" style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;padding:0 1.25rem;margin-right:0.5rem;">
+                    <i class="material-icons left" style="margin:0;">category</i>
+                    <span class="hide-on-small-only">Categorías</span>
+                    <span class="hide-on-med-and-up">Cat.</span>
+                </button>
                 <!-- Boton con forma de pildora (border-radius:24px) -->
                 <button class="btn waves-effect waves-light indigo btn-nuevo" data-tipo="producto" style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;padding:0 1.25rem;">
                     <!-- Icono de "+" (agregar) -->
@@ -449,10 +452,6 @@ $categorias     = $inventarioModel->obtenerCategorias();
                 <div class="input-field col s12 m6">
                     <select name="categoria_id" id="producto-categoria" required>
                         <option value="" disabled selected>Seleccione</option>
-                        <!-- Recorro las categorias obtenidas desde PHP y las muestro como opciones -->
-                        <?php foreach ($categorias as $cat): ?>
-                            <option value="<?php echo $cat['id']; ?>"><?php echo htmlspecialchars($cat['nombre']); ?></option>
-                        <?php endforeach; ?>
                     </select>
                     <label>Categoría</label>
                 </div>
@@ -489,6 +488,47 @@ $categorias     = $inventarioModel->obtenerCategorias();
         <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cancelar</a>
         <!-- Boton de tipo submit asociado al formulario via atributo form="form-producto" -->
         <button type="submit" form="form-producto" class="waves-effect waves-green btn indigo" id="btn-guardar-producto">Guardar</button>
+    </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- MODAL: GESTIONAR CATEGORIAS -->
+<!-- Ventana emergente para crear, editar y eliminar categorias        -->
+<!-- ================================================================ -->
+<div id="modal-categorias" class="modal modal-fixed-footer">
+    <div class="modal-content">
+        <h4><i class="material-icons" style="vertical-align:middle;margin-right:0.25rem;">category</i> Gestionar Categorías</h4>
+
+        <div class="card-panel grey lighten-4" style="padding:1rem;">
+            <form id="form-categoria" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:flex-end;">
+                <input type="hidden" name="id" id="categoria-id" value="">
+                <div class="input-field" style="flex:2;min-width:150px;margin:0;">
+                    <input type="text" name="nombre" id="categoria-nombre" required>
+                    <label for="categoria-nombre">Nombre de la categoría</label>
+                </div>
+                <button type="submit" class="btn waves-effect waves-light green" style="height:44px;border-radius:24px;padding:0 1rem;">
+                    <i class="material-icons">save</i>
+                </button>
+                <button type="button" class="btn waves-effect waves-light grey btn-cancelar-cat" style="height:44px;border-radius:24px;padding:0 1rem;">
+                    <i class="material-icons">cancel</i>
+                </button>
+            </form>
+        </div>
+
+        <table class="striped" id="tabla-categorias" style="margin-top:1rem;">
+            <thead>
+                <tr style="background:var(--surface-hover);">
+                    <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;">Categoría</th>
+                    <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;text-align:right;">Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="2" style="text-align:center;padding:2rem;color:var(--text-muted);">Cargando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cerrar</a>
     </div>
 </div>
 

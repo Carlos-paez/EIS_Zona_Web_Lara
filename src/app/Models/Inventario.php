@@ -196,9 +196,38 @@ class Inventario extends Model
      */
     public function obtenerCategorias(): array
     {
-        // Consulta todas las categorías ordenadas alfabéticamente
         $stmt = $this->db->query("SELECT id, nombre_categoria AS nombre FROM categoria ORDER BY nombre_categoria");
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Crea una nueva categoría de producto.
+     */
+    public function crearCategoria(string $nombre): bool
+    {
+        $sql = "INSERT INTO categoria (nombre_categoria) VALUES (?)";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$nombre]);
+    }
+
+    /**
+     * Actualiza el nombre de una categoría existente.
+     */
+    public function actualizarCategoria(int $id, string $nombre): bool
+    {
+        $sql = "UPDATE categoria SET nombre_categoria = ? WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$nombre, $id]);
+    }
+
+    /**
+     * Elimina una categoría por su ID.
+     */
+    public function eliminarCategoria(int $id): bool
+    {
+        $sql = "DELETE FROM categoria WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$id]);
     }
 
 }

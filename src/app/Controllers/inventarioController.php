@@ -83,6 +83,10 @@ class InventarioController
                 'actualizar'  => $this->actualizar(),
                 // Si action es 'eliminar', llama al método eliminar() para borrar un producto
                 'eliminar'    => $this->eliminar(),
+                // CRUD de categorías
+                'crearCategoria'       => $this->crearCategoria(),
+                'actualizarCategoria'  => $this->actualizarCategoria(),
+                'eliminarCategoria'    => $this->eliminarCategoria(),
                 // Si action no coincide con ningún valor conocido, devuelve un JSON con error
                 default       => $this->json(false, null, 'Acción no válida'),
             };
@@ -346,6 +350,61 @@ class InventarioController
                 ? ['success' => true, 'message' => 'Producto eliminado exitosamente']
                 // Si el resultado es false, mensaje de error
                 : ['success' => false, 'error' => 'Error al eliminar el producto']
+        );
+    }
+
+    /**
+     * Crea una nueva categoría
+     */
+    private function crearCategoria(): void
+    {
+        $nombre = trim($_POST['nombre'] ?? '');
+        if (empty($nombre)) {
+            echo json_encode(['success' => false, 'error' => 'El nombre es obligatorio']);
+            return;
+        }
+        $resultado = $this->model->crearCategoria($nombre);
+        echo json_encode(
+            $resultado
+                ? ['success' => true, 'message' => 'Categoría creada exitosamente']
+                : ['success' => false, 'error' => 'Error al crear la categoría']
+        );
+    }
+
+    /**
+     * Actualiza una categoría existente
+     */
+    private function actualizarCategoria(): void
+    {
+        $id = (int)($_POST['id'] ?? 0);
+        $nombre = trim($_POST['nombre'] ?? '');
+        if (!$id || empty($nombre)) {
+            echo json_encode(['success' => false, 'error' => 'ID y nombre son obligatorios']);
+            return;
+        }
+        $resultado = $this->model->actualizarCategoria($id, $nombre);
+        echo json_encode(
+            $resultado
+                ? ['success' => true, 'message' => 'Categoría actualizada exitosamente']
+                : ['success' => false, 'error' => 'Error al actualizar la categoría']
+        );
+    }
+
+    /**
+     * Elimina una categoría
+     */
+    private function eliminarCategoria(): void
+    {
+        $id = (int)($_POST['id'] ?? 0);
+        if (!$id) {
+            echo json_encode(['success' => false, 'error' => 'ID no válido']);
+            return;
+        }
+        $resultado = $this->model->eliminarCategoria($id);
+        echo json_encode(
+            $resultado
+                ? ['success' => true, 'message' => 'Categoría eliminada exitosamente']
+                : ['success' => false, 'error' => 'Error al eliminar la categoría']
         );
     }
 
