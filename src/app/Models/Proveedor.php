@@ -58,14 +58,14 @@ class Proveedor extends Model
      * @param string $fecha       Fecha de la orden.
      * @param int    $fk_proveedor ID del proveedor.
      * @param int    $fk_status    ID del estado inicial.
-     * @return bool  True si la inserción fue exitosa.
+     * @return int|false  ID insertado si fue exitoso, false si falló.
      */
-    public function crearOrden(string $numero, string $fecha, int $fk_proveedor, int $fk_status): bool
+    public function crearOrden(string $numero, string $fecha, int $fk_proveedor, int $fk_status): int|false
     {
-        // Inserta una nueva orden de abastecimiento con los datos proporcionados
         $sql = "INSERT INTO orden_abastecimiento (numero_de_orden, fecha, fk_proveedor, fk_status) VALUES (?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$numero, $fecha, $fk_proveedor, $fk_status]);
+        $stmt->execute([$numero, $fecha, $fk_proveedor, $fk_status]);
+        return $stmt->rowCount() ? (int) $this->db->lastInsertId() : false;
     }
 
     public function obtenerSiguienteNumeroOrden(): string

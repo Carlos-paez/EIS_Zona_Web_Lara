@@ -210,7 +210,7 @@ foreach ($kpis as $row) {
                             <!-- Botón flotante para editar la orden -->
                             <button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar-orden" data-id="<?php echo $o['id']; ?>" data-position="left" data-tooltip="Editar solicitud"><i class="material-icons">edit</i></button>
                             <!-- Botón flotante para ver detalles de la orden -->
-                            <button class="btn-floating waves-effect waves-light grey tooltipped btn-detalle-orden" data-id="<?php echo $o['id']; ?>" data-position="left" data-tooltip="Ver detalles" style="margin-left:4px;"><i class="material-icons">visibility</i></button>
+                            <button class="btn-floating waves-effect waves-light grey tooltipped btn-ver-orden" data-id="<?php echo $o['id']; ?>" data-position="left" data-tooltip="Ver detalles" style="margin-left:4px;"><i class="material-icons">visibility</i></button>
                             <!-- Botón flotante para eliminar la orden -->
                             <button class="btn-floating waves-effect waves-light red tooltipped btn-eliminar-orden" data-id="<?php echo $o['id']; ?>" data-numero="<?php echo htmlspecialchars($o['numero_de_orden']); ?>" data-position="left" data-tooltip="Eliminar" style="margin-left:4px;"><i class="material-icons">delete</i></button>
                         </td>
@@ -228,49 +228,37 @@ foreach ($kpis as $row) {
     </div>
 </div>
 
-<!-- ===== MODAL: NUEVA/EDITAR SOLICITUD DE COMPRA ===== -->
-<!-- Modal de Materialize con fixed footer -->
+<!-- ===== MODAL: NUEVA/EDITAR SOLICITUD DE COMPRA (con líneas de productos) ===== -->
 <div id="modal-orden" class="modal modal-fixed-footer">
     <div class="modal-content">
-        <!-- Título dinámico del modal (lo cambia JS entre Nuevo/Editar) -->
         <h4 id="modal-orden-title">Nueva Solicitud</h4>
+
         <!-- Formulario de la orden -->
         <form id="form-orden">
-            <!-- Campo oculto para almacenar el ID de la orden (vacío en creación) -->
             <input type="hidden" name="id" id="orden-id" value="">
-            <!-- Primera fila: número de orden y fecha -->
             <div class="row">
                 <div class="input-field col s12 m6">
-                    <!-- Número de orden (requerido) -->
                     <input type="text" name="numero" id="orden-numero" required>
                     <label for="orden-numero">Número de Orden</label>
                 </div>
                 <div class="input-field col s12 m6">
-                    <!-- Fecha de la orden (requerido, tipo date) -->
                     <input type="date" name="fecha" id="orden-fecha" required>
-                    <!-- Etiqueta activa por defecto porque el campo type=date tiene valor -->
                     <label for="orden-fecha" class="active">Fecha</label>
                 </div>
             </div>
-            <!-- Segunda fila: proveedor y estado -->
             <div class="row">
                 <div class="input-field col s12 m6">
-                    <!-- Select de proveedores (requerido) -->
                     <select name="fk_proveedor" id="orden-proveedor" required>
                         <option value="" disabled selected>Seleccione</option>
-                        <!-- Itera sobre la lista de proveedores -->
                         <?php foreach ($proveedores as $p): ?>
-                        <!-- Cada opción muestra nombre y RIF del proveedor -->
                         <option value="<?php echo $p['id']; ?>"><?php echo htmlspecialchars($p['nombre'] . ' (' . $p['rif'] . ')'); ?></option>
                         <?php endforeach; ?>
                     </select>
                     <label>Proveedor</label>
                 </div>
                 <div class="input-field col s12 m6">
-                    <!-- Select de estados (requerido) -->
                     <select name="fk_status" id="orden-status" required>
                         <option value="" disabled selected>Seleccione</option>
-                        <!-- Itera sobre los status disponibles -->
                         <?php foreach ($statuses as $s): ?>
                         <option value="<?php echo $s['id']; ?>"><?php echo htmlspecialchars($s['status']); ?></option>
                         <?php endforeach; ?>
@@ -279,97 +267,71 @@ foreach ($kpis as $row) {
                 </div>
             </div>
         </form>
+
+        <!-- ===== SECCIÓN DE LÍNEAS DE PRODUCTOS (oculta al crear) ===== -->
+        <div id="orden-lineas-section" style="display:none;">
+            <hr style="border:0;border-top:1px solid var(--border-light);margin:1.5rem 0;">
+
+            <div style="overflow-x:auto;">
+                <table class="striped" id="tabla-lineas">
+                    <thead>
+                        <tr style="background:var(--surface-hover);">
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
+                            <th>Subtotal</th>
+                            <th class="right-align">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Cargando...</td></tr>
+                    </tbody>
+                    <tfoot>
+                        <tr style="font-weight:700;">
+                            <td colspan="3" style="text-align:right;padding:0.75rem 1rem;">Total:</td>
+                            <td id="detalle-total" style="padding:0.75rem 1rem;">$0.00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="card-panel grey lighten-4" style="margin-top:1rem;padding:1rem;">
+                <span style="font-weight:600;font-size:0.9rem;"><i class="material-icons left" style="font-size:1.1rem;">add_circle</i> Agregar Producto</span>
+                <form id="form-linea" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;">
+                    <input type="hidden" name="orden_id" id="linea-orden-id" value="">
+                    <div class="input-field" style="flex:2;min-width:120px;margin:0;">
+                        <select name="producto_id" id="linea-producto" required>
+                            <option value="" disabled selected>Producto</option>
+                            <?php foreach ($productos as $pr): ?>
+                            <option value="<?php echo $pr['id']; ?>" data-precio="<?php echo $pr['precio_compra']; ?>"><?php echo htmlspecialchars($pr['nombre'] . ' (' . $pr['codigo'] . ')'); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="input-field" style="flex:1;min-width:60px;margin:0;">
+                        <input type="number" name="cantidad" id="linea-cantidad" min="1" value="1" required>
+                    </div>
+                    <div class="input-field" style="flex:1;min-width:80px;margin:0;">
+                        <input type="number" name="precio" id="linea-precio" min="0" step="0.01" required>
+                    </div>
+                    <button type="submit" class="btn waves-effect waves-light green" style="height:44px;line-height:44px;padding:0 1rem;border-radius:24px;"><i class="material-icons">add</i></button>
+                </form>
+            </div>
+        </div>
     </div>
-    <!-- Footer del modal con botones de acción -->
+
     <div class="modal-footer">
-        <!-- Botón para cancelar y cerrar el modal -->
         <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cancelar</a>
-        <!-- Botón de submit asociado al formulario vía atributo form -->
         <button type="submit" form="form-orden" class="waves-effect waves-green btn indigo" id="btn-guardar-orden">Guardar</button>
-    </div>
-</div>
-
-<!-- ===== MODAL: DETALLE DE SOLICITUD CON LÍNEAS DE PRODUCTOS ===== -->
-<div id="modal-detalle" class="modal modal-fixed-footer">
-    <div class="modal-content">
-        <!-- Título dinámico del modal -->
-        <h4 id="modal-detalle-title">Detalle de Solicitud</h4>
-        <!-- Párrafo para información adicional de la orden -->
-        <p id="modal-detalle-info" style="color:var(--text-muted);"></p>
-
-        <!-- Tabla de líneas (productos) de la orden -->
-        <div style="overflow-x:auto;">
-            <table class="striped" id="tabla-lineas">
-                <thead>
-                    <tr style="background:var(--surface-hover);">
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Precio</th>
-                        <th>Subtotal</th>
-                        <th class="right-align">Acción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Mensaje de carga mientras se obtienen los datos vía AJAX -->
-                    <tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Cargando...</td></tr>
-                </tbody>
-                <tfoot>
-                    <!-- Fila de total general -->
-                    <tr style="font-weight:700;">
-                        <td colspan="3" style="text-align:right;padding:0.75rem 1rem;">Total:</td>
-                        <!-- Celda donde se muestra el total calculado -->
-                        <td id="detalle-total" style="padding:0.75rem 1rem;">$0.00</td>
-                        <td></td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-
-        <!-- Formulario para agregar un producto a la orden -->
-        <div class="card-panel grey lighten-4" style="margin-top:1rem;padding:1rem;">
-            <span style="font-weight:600;font-size:0.9rem;"><i class="material-icons left" style="font-size:1.1rem;">add_circle</i> Agregar Producto</span>
-            <form id="form-linea" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;">
-                <!-- ID de la orden asociada a esta línea -->
-                <input type="hidden" name="orden_id" id="linea-orden-id" value="">
-                <!-- Select de productos -->
-                <div class="input-field" style="flex:2;min-width:120px;margin:0;">
-                    <select name="producto_id" id="linea-producto" required>
-                        <option value="" disabled selected>Producto</option>
-                        <!-- Itera sobre productos, incluye data-precio para auto-completar -->
-                        <?php foreach ($productos as $pr): ?>
-                        <option value="<?php echo $pr['id']; ?>" data-precio="<?php echo $pr['precio_compra']; ?>"><?php echo htmlspecialchars($pr['nombre'] . ' (' . $pr['codigo'] . ')'); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <!-- Input de cantidad -->
-                <div class="input-field" style="flex:1;min-width:60px;margin:0;">
-                    <input type="number" name="cantidad" id="linea-cantidad" min="1" value="1" required>
-                </div>
-                <!-- Input de precio unitario -->
-                <div class="input-field" style="flex:1;min-width:80px;margin:0;">
-                    <input type="number" name="precio" id="linea-precio" min="0" step="0.01" required>
-                </div>
-                <!-- Botón para agregar la línea -->
-                <button type="submit" class="btn waves-effect waves-light green" style="height:44px;line-height:44px;padding:0 1rem;border-radius:24px;"><i class="material-icons">add</i></button>
-            </form>
-        </div>
-    </div>
-    <!-- Footer del modal de detalle -->
-    <div class="modal-footer">
-        <a href="#!" class="modal-close waves-effect waves-green btn-flat">Cerrar</a>
     </div>
 </div>
 
 <!-- ===== ESTILOS CSS EMBEBIDOS ===== -->
 <style>
-/* Ajuste de padding para tablas dentro del modal de detalle */
-#modal-detalle td, #modal-detalle th { padding: 0.5rem 0.75rem; }
-/* Altura fija para los inputs del formulario de líneas */
+#orden-lineas-section td, #orden-lineas-section th { padding: 0.5rem 0.75rem; }
 #form-linea .input-field input { margin: 0; height: 2.5rem; }
-/* Elimina el margen superior de los contenedores de inputs dentro del formulario de líneas */
 #form-linea .input-field { margin-top: 0; }
-/* Media query para pantallas pequeñas (máx. 600px): reduce el padding de los modales */
 @media only screen and (max-width: 600px) {
-    #modal-orden .modal-content, #modal-detalle .modal-content { padding: 1.25rem !important; }
+    #modal-orden .modal-content { padding: 1.25rem !important; }
 }
 </style>

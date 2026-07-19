@@ -255,14 +255,10 @@ class ProveedorController
             return;
         }
 
-        // Llama al método crearOrden() del modelo para insertar la orden en la base de datos
         $resultado = $this->model->crearOrden($numero, $fecha, $fk_proveedor, $fk_status);
-        // Evalúa el resultado y devuelve un JSON con mensaje de éxito o error
         echo json_encode(
             $resultado
-                // Si el resultado es true, mensaje de éxito
-                ? ['success' => true, 'message' => 'Solicitud creada exitosamente']
-                // Si el resultado es false, mensaje de error
+                ? ['success' => true, 'message' => 'Solicitud creada exitosamente', 'data' => ['id' => $resultado]]
                 : ['success' => false, 'error' => 'Error al crear la solicitud']
         );
     }
