@@ -201,16 +201,23 @@ $(function () {
     // ================================================================
 
     // Botón "Nuevo" - Abre modal para crear nueva solicitud
-    $(document).on('click', '.btn-nuevo', function () {
-        $('#orden-id').val(''); // Limpio el ID (nueva solicitud)
-        $('#form-orden')[0].reset(); // Reseteo el formulario
-        $('#orden-fecha').val(new Date().toISOString().slice(0, 10)); // Fecha actual en formato YYYY-MM-DD
-        $('#modal-orden-title').text('Nueva Solicitud'); // Título del modal
-        $('#modal-orden').modal('open'); // Abro el modal
-        M.updateTextFields(); // Actualizo labels flotantes
-        $('#orden-proveedor').formSelect(); // Inicializo select de proveedor
-        $('#orden-status').formSelect(); // Inicializo select de estado
+$(document).on('click', '.btn-nuevo', function () {
+    $('#orden-id').val('');
+    $('#form-orden')[0].reset();
+    $('#orden-fecha').val(new Date().toISOString().slice(0, 10));
+    $('#modal-orden-title').text('Nueva Solicitud');
+    // --- AQUÍ VA LA LLAMADA AJAX ---
+    $.getJSON(API + 'siguienteNumero', function (r) {
+        if (r.success) {
+            $('#orden-numero').val(r.data.numero);  // Auto-rellena el campo
+            $('#orden-numero').attr('readonly', true);
+        }
     });
+    $('#modal-orden').modal('open');
+    M.updateTextFields();
+    $('#orden-proveedor').formSelect();
+    $('#orden-status').formSelect();
+});
 
     // Botón "Editar" en cada fila - Carga datos y abre modal de edición
     $(document).on('click', '.btn-editar-orden', function () {
@@ -222,6 +229,7 @@ $(function () {
             // Lleno los campos del formulario
             $('#orden-id').val(o.id);                     // ID de la orden
             $('#orden-numero').val(o.numero_de_orden);    // Número de orden
+            $('#orden-numero').removeAttr('readonly');
             $('#orden-fecha').val(o.fecha);               // Fecha
             $('#orden-proveedor').val(o.fk_proveedor);    // Proveedor (FK)
             $('#orden-status').val(o.fk_status);          // Estado (FK)

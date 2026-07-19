@@ -90,6 +90,8 @@ class ProveedorController
                 'agregarLinea'      => $this->agregarLinea(),
                 // Elimina una línea de detalle de una orden
                 'eliminarLinea'     => $this->eliminarLinea(),
+                //Obtener y procesar el siguiente numero de orden de compra
+                'siguienteNumero'    => $this->siguienteNumero(),
                 // Si la acción no coincide con ninguna, devuelve error JSON
                 default             => $this->json(false, null, 'Acción no válida'),
             };
@@ -437,6 +439,12 @@ class ProveedorController
                 // Si el resultado es false, mensaje de error
                 : ['success' => false, 'error' => 'Error al eliminar línea']
         );
+    }
+
+    private function siguienteNumero(): void
+    {
+        $numero = $this->model->obtenerSiguienteNumeroOrden();
+        echo json_encode(['success' => true, 'data' => ['numero' => $numero]]);
     }
 
     /**

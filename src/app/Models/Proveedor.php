@@ -68,6 +68,24 @@ class Proveedor extends Model
         return $stmt->execute([$numero, $fecha, $fk_proveedor, $fk_status]);
     }
 
+    public function obtenerSiguienteNumeroOrden(): string
+    {
+        $stmt = $this->db->query(
+            "SELECT numero_de_orden FROM orden_abastecimiento
+            ORDER BY id DESC LIMIT 1"
+        );
+        
+        $row = $stmt->fetch();
+
+        if (!$row){
+            return 'OC-0001';
+        }
+
+        $ultimo = (int) str_replace('OC-', '', $row['numero_de_orden']);
+
+        return 'OC-'. str_pad($ultimo + 1, 4, '0', STR_PAD_LEFT);
+    }
+    
     /**
      * Actualiza los datos de una orden de abastecimiento existente.
      *
