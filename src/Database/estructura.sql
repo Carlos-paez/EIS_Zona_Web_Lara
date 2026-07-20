@@ -189,7 +189,7 @@ CREATE TABLE lineas_venta
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (fk_producto) REFERENCES productos (id)
-        ON DELETE RESTRICT
+        ON DELETE CASCADE
         ON UPDATE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -223,7 +223,7 @@ CREATE TABLE lineas_abastecimiento
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (fk_producto) REFERENCES productos (id)
-        ON DELETE RESTRICT
+        ON DELETE CASCADE
         ON UPDATE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4

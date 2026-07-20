@@ -27,7 +27,7 @@ class Inventario extends Model
     public function crearProducto(string $codigo, string $nombre, int $fk_categoria, int $stock, int $stock_minimo, float $precio_compra, float $precio_venta, string $descripcion = ''): bool
     {
         // Inserta el producto con la fecha actual usando CURDATE()
-        $sql = "INSERT INTO productos (codigo, nombre, descripcion, stock, stock_minimo, precio_compra, precio_venta, fk_categoria, fecha_creacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURDATE())";
+        $sql = "INSERT INTO productos (codigo, nombre, descripcion, stock, stock_minimo, precio_compra, precio_venta, fk_categoria, fecha_creacion, fecha_actualizacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), CURDATE())";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([$codigo, $nombre, $descripcion, $stock, $stock_minimo, $precio_compra, $precio_venta, $fk_categoria]);
     }
