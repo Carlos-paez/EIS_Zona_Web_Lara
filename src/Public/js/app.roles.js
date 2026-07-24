@@ -340,6 +340,11 @@ $(function () {
             return;
         }
 
+        if (data.nombre.trim().length < 2 || data.nombre.trim().length > 50) {
+            EIS.toast('El nombre del rol debe tener entre 2 y 50 caracteres', 'red', 'error');
+            return;
+        }
+
         // POST request para crear o actualizar el rol
         $.post(API + accion, data, function (r) {
             if (r.success) {

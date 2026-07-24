@@ -430,26 +430,70 @@ $(function () {
     // campo oculto #producto-id tiene un valor.
     // ================================================================
     $('#form-producto').on('submit', function (e) {
-        e.preventDefault(); // Evito que el formulario se envíe de forma tradicional
+        e.preventDefault();
 
-        var id = $('#producto-id').val();       // Si tiene ID, es edición; si no, es nuevo
-        var accion = id ? 'actualizar' : 'crear'; // Elijo la acción según corresponda
-        var data = $(this).serialize();         // Convierto el formulario a string clave=valor&...
+        var codigo       = $('#producto-codigo').val().trim();
+        var nombre       = $('#producto-nombre').val().trim();
+        var categoria_id = parseInt($('#producto-categoria').val()) || 0;
+        var stock        = parseInt($('#producto-stock').val()) || 0;
+        var stock_minimo = parseInt($('#producto-stock-minimo').val()) || 0;
+        var costo_compra = parseFloat($('#producto-costo').val()) || 0;
+        var precio_venta = parseFloat($('#producto-precio').val()) || 0;
 
-        // POST request para crear o actualizar el producto
+        if (!codigo || !nombre || !categoria_id) {
+            EIS.toast('Código, nombre y categoría son obligatorios', 'red', 'error');
+            return;
+        }
+
+        if (codigo.length < 1 || codigo.length > 50) {
+            EIS.toast('El código debe tener entre 1 y 50 caracteres', 'red', 'error');
+            return;
+        }
+
+        if (nombre.length < 2 || nombre.length > 100) {
+            EIS.toast('El nombre debe tener entre 2 y 100 caracteres', 'red', 'error');
+            return;
+        }
+
+        if (stock < 0) {
+            EIS.toast('El stock no puede ser negativo', 'red', 'error');
+            return;
+        }
+
+        if (stock_minimo < 1) {
+            EIS.toast('El stock mínimo debe ser al menos 1', 'red', 'error');
+            return;
+        }
+
+        if (costo_compra < 0) {
+            EIS.toast('El costo de compra no puede ser negativo', 'red', 'error');
+            return;
+        }
+
+        if (precio_venta < 0) {
+            EIS.toast('El precio de venta no puede ser negativo', 'red', 'error');
+            return;
+        }
+
+        if (precio_venta > 0 && costo_compra > 0 && precio_venta < costo_compra) {
+            EIS.toast('El precio de venta no puede ser menor al costo de compra', 'red', 'error');
+            return;
+        }
+
+        var id = $('#producto-id').val();
+        var accion = id ? 'actualizar' : 'crear';
+        var data = $(this).serialize();
+
         $.post(API + accion, data, function (r) {
             if (r.success) {
-                // Si la operación es exitosa, muestro toast, cierro modal y refresco
                 EIS.toast(r.message, 'green', 'check_circle');
-                $('#modal-producto').modal('close'); // Cierro el modal
-                refrescarTabla(); // Recargo la tabla
-                refrescarKPI();   // Actualizo los indicadores
+                $('#modal-producto').modal('close');
+                refrescarTabla();
+                refrescarKPI();
             } else {
-                // Si hay error, muestro el mensaje del servidor
                 EIS.toast(r.error || 'Error al guardar', 'red', 'error');
             }
         }, 'json').fail(function () {
-            // Si hay error de conexión, muestro toast de error
             EIS.toast('Error de conexión al guardar', 'red', 'error');
         });
     });

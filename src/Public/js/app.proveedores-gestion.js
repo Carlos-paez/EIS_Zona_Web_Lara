@@ -124,6 +124,42 @@ $(function () {
     // Submit del formulario (crear o actualizar)
     $('#form-proveedor').on('submit', function (e) {
         e.preventDefault();
+
+        var rif      = $('#proveedor-rif').val().trim();
+        var nombre   = $('#proveedor-nombre').val().trim();
+        var email    = $('#proveedor-email').val().trim();
+        var telefono = $('#proveedor-telefono').val().trim();
+
+        if (!rif || !nombre) {
+            EIS.toast('RIF y Nombre son obligatorios', 'red', 'error');
+            return;
+        }
+
+        if (rif.length < 5 || rif.length > 20) {
+            EIS.toast('El RIF debe tener entre 5 y 20 caracteres', 'red', 'error');
+            return;
+        }
+
+        if (nombre.length < 2 || nombre.length > 100) {
+            EIS.toast('El nombre debe tener entre 2 y 100 caracteres', 'red', 'error');
+            return;
+        }
+
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            EIS.toast('El formato del email no es válido', 'red', 'error');
+            return;
+        }
+
+        if (email.length > 100) {
+            EIS.toast('El email no puede exceder 100 caracteres', 'red', 'error');
+            return;
+        }
+
+        if (telefono && telefono.length > 20) {
+            EIS.toast('El teléfono no puede exceder 20 caracteres', 'red', 'error');
+            return;
+        }
+
         var id = $('#proveedor-id').val();
         var accion = id ? 'actualizar' : 'crear';
         $.post(API + accion, $(this).serialize(), function (r) {

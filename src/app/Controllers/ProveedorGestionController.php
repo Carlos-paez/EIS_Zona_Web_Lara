@@ -87,6 +87,11 @@ class ProveedorGestionController
             return;
         }
 
+        if ($this->model->existeRif($rif)) {
+            echo json_encode(['success' => false, 'error' => 'Ya existe un proveedor con ese RIF']);
+            return;
+        }
+
         $resultado = $this->model->crearProveedor($rif, $nombre, $email, $telefono);
         echo json_encode(
             $resultado
@@ -110,6 +115,11 @@ class ProveedorGestionController
 
         if (!$id || empty($rif) || empty($nombre)) {
             echo json_encode(['success' => false, 'error' => 'ID, RIF y Nombre son obligatorios']);
+            return;
+        }
+
+        if ($this->model->existeRif($rif, $id)) {
+            echo json_encode(['success' => false, 'error' => 'Ya existe otro proveedor con ese RIF']);
             return;
         }
 

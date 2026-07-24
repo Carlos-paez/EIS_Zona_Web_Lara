@@ -151,4 +151,17 @@ class ProveedorGestion extends Model
         $stmt = $this->db->query("SELECT COUNT(*) AS total FROM proveedores");
         return (int)$stmt->fetch()['total'];
     }
+
+    public function existeRif(string $rif, int $excludeId = 0): bool
+    {
+        $rif = $this->sanitizeString($rif);
+        if ($excludeId > 0) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM proveedores WHERE rif = ? AND id != ?");
+            $stmt->execute([$rif, $excludeId]);
+        } else {
+            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM proveedores WHERE rif = ?");
+            $stmt->execute([$rif]);
+        }
+        return (int)$stmt->fetch()['total'] > 0;
+    }
 }

@@ -177,6 +177,21 @@ $(function () {
             return; // Detengo el envío
         }
 
+        if (ciudadano.length < 2 || ciudadano.length > 100) {
+            EIS.toast('El nombre del ciudadano debe tener entre 2 y 100 caracteres', 'red', 'error');
+            return;
+        }
+
+        if (cedula.length < 5 || cedula.length > 20) {
+            EIS.toast('La cédula debe tener entre 5 y 20 caracteres', 'red', 'error');
+            return;
+        }
+
+        if (documento.length > 100) {
+            EIS.toast('El tipo de documento no puede exceder 100 caracteres', 'red', 'error');
+            return;
+        }
+
         // Verifico si el tipo de documento está permitido
         var permitido = documentoPermitido(documento);
 

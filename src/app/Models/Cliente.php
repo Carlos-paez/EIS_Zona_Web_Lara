@@ -179,4 +179,17 @@ class Cliente extends Model
         $stmt = $this->db->query("SELECT COUNT(*) AS total FROM clientes");
         return (int)$stmt->fetch()['total'];
     }
+
+    public function existeCedula(string $cedula, int $excludeId = 0): bool
+    {
+        $cedula = $this->sanitizeString($cedula);
+        if ($excludeId > 0) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM clientes WHERE cedula = ? AND id != ?");
+            $stmt->execute([$cedula, $excludeId]);
+        } else {
+            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM clientes WHERE cedula = ?");
+            $stmt->execute([$cedula]);
+        }
+        return (int)$stmt->fetch()['total'] > 0;
+    }
 }

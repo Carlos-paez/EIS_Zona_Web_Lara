@@ -93,6 +93,11 @@ class ClienteController
             return;
         }
 
+        if ($this->model->existeCedula($cedula)) {
+            echo json_encode(['success' => false, 'error' => 'Ya existe un cliente con esa cédula']);
+            return;
+        }
+
         $resultado = $this->model->crearCliente($cedula, $nombre, $apellido, $direccion, $telefono);
         echo json_encode(
             $resultado
@@ -117,6 +122,11 @@ class ClienteController
 
         if (!$id || empty($cedula) || empty($nombre) || empty($apellido) || empty($direccion) || empty($telefono)) {
             echo json_encode(['success' => false, 'error' => 'Todos los campos son obligatorios']);
+            return;
+        }
+
+        if ($this->model->existeCedula($cedula, $id)) {
+            echo json_encode(['success' => false, 'error' => 'Ya existe otro cliente con esa cédula']);
             return;
         }
 

@@ -238,7 +238,7 @@ foreach ($kpis as $row) {
             <input type="hidden" name="id" id="orden-id" value="">
             <div class="row">
                 <div class="input-field col s12 m6">
-                    <input type="text" name="numero" id="orden-numero" required>
+                    <input type="text" name="numero" id="orden-numero" required maxlength="20" readonly>
                     <label for="orden-numero">Número de Orden</label>
                 </div>
                 <div class="input-field col s12 m6">
@@ -309,10 +309,10 @@ foreach ($kpis as $row) {
                         </select>
                     </div>
                     <div class="input-field" style="flex:1;min-width:60px;margin:0;">
-                        <input type="number" name="cantidad" id="linea-cantidad" min="1" value="1" required>
+                        <input type="number" name="cantidad" id="linea-cantidad" min="1" max="99999" value="1" required>
                     </div>
                     <div class="input-field" style="flex:1;min-width:80px;margin:0;">
-                        <input type="number" name="precio" id="linea-precio" min="0" step="0.01" required>
+                        <input type="number" name="precio" id="linea-precio" min="0.01" step="0.01" required>
                     </div>
                     <button type="submit" class="btn waves-effect waves-light green" style="height:44px;line-height:44px;padding:0 1rem;border-radius:24px;"><i class="material-icons">add</i></button>
                 </form>

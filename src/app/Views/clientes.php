@@ -87,28 +87,28 @@ $totalClientes = $clienteModel->totalClientes();
             <input type="hidden" name="id" id="cliente-id" value="">
             <div class="input-field">
                 <i class="material-icons prefix">badge</i>
-                <input type="text" name="cedula" id="cliente-cedula" required>
+                <input type="text" name="cedula" id="cliente-cedula" required maxlength="20" pattern=".{5,20}" title="Entre 5 y 20 caracteres">
                 <label for="cliente-cedula">Cédula</label>
             </div>
             <div class="row" style="margin-bottom:0;">
                 <div class="col s6 input-field" style="margin-bottom:0;">
                     <i class="material-icons prefix">person</i>
-                    <input type="text" name="nombre" id="cliente-nombre" required>
+                    <input type="text" name="nombre" id="cliente-nombre" required maxlength="100" pattern=".{2,100}" title="Entre 2 y 100 caracteres">
                     <label for="cliente-nombre">Nombre</label>
                 </div>
                 <div class="col s6 input-field" style="margin-bottom:0;">
-                    <input type="text" name="apellido" id="cliente-apellido" required>
+                    <input type="text" name="apellido" id="cliente-apellido" required maxlength="100" pattern=".{2,100}" title="Entre 2 y 100 caracteres">
                     <label for="cliente-apellido">Apellido</label>
                 </div>
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">location_on</i>
-                <input type="text" name="direccion" id="cliente-direccion" required>
+                <input type="text" name="direccion" id="cliente-direccion" required maxlength="500">
                 <label for="cliente-direccion">Dirección</label>
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">phone</i>
-                <input type="text" name="telefono" id="cliente-telefono" required>
+                <input type="text" name="telefono" id="cliente-telefono" maxlength="20">
                 <label for="cliente-telefono">Teléfono</label>
             </div>
         </form>

@@ -47,20 +47,20 @@
                         <!-- Campo: Nombre del ciudadano -->
                         <div class="input-field col s12">
                             <i class="material-icons prefix">person</i>
-                            <input type="text" id="ciudadano" name="ciudadano" required>
+                            <input type="text" id="ciudadano" name="ciudadano" required maxlength="100" pattern=".{2,100}" title="Entre 2 y 100 caracteres">
                             <label for="ciudadano">Nombre del Ciudadano</label>
                         </div>
                         <!-- Campo: Cédula de identidad -->
                         <div class="input-field col s12">
                             <i class="material-icons prefix">badge</i>
-                            <input type="text" id="cedula" name="cedula" required>
+                            <input type="text" id="cedula" name="cedula" required maxlength="20" pattern=".{5,20}" title="Entre 5 y 20 caracteres">
                             <label for="cedula">Cédula de Identidad</label>
                         </div>
                         <!-- Campo: Tipo de documento con sugerencias autocompletables (datalist) -->
                         <div class="input-field col s12">
                             <i class="material-icons prefix">description</i>
                             <!-- Input con datalist para sugerencias de tipos de documentos -->
-                            <input type="text" id="documento" name="documento" list="documentSuggestions" required placeholder="Ej: Consulta Laboral">
+                            <input type="text" id="documento" name="documento" list="documentSuggestions" required placeholder="Ej: Consulta Laboral" maxlength="100">
                             <label for="documento">Tipo de Documento / Asesoría</label>
                             <!-- Lista de sugerencias de documentos para autocompletado -->
                             <datalist id="documentSuggestions">

@@ -95,6 +95,37 @@ $(function () {
 
     $('#form-cliente').on('submit', function (e) {
         e.preventDefault();
+
+        var cedula   = $('#cliente-cedula').val().trim();
+        var nombre   = $('#cliente-nombre').val().trim();
+        var apellido = $('#cliente-apellido').val().trim();
+        var telefono = $('#cliente-telefono').val().trim();
+
+        if (!cedula || !nombre || !apellido) {
+            EIS.toast('Cédula, nombre y apellido son obligatorios', 'red', 'error');
+            return;
+        }
+
+        if (cedula.length < 5 || cedula.length > 20) {
+            EIS.toast('La cédula debe tener entre 5 y 20 caracteres', 'red', 'error');
+            return;
+        }
+
+        if (nombre.length < 2 || nombre.length > 100) {
+            EIS.toast('El nombre debe tener entre 2 y 100 caracteres', 'red', 'error');
+            return;
+        }
+
+        if (apellido.length < 2 || apellido.length > 100) {
+            EIS.toast('El apellido debe tener entre 2 y 100 caracteres', 'red', 'error');
+            return;
+        }
+
+        if (telefono && telefono.length > 20) {
+            EIS.toast('El teléfono no puede exceder 20 caracteres', 'red', 'error');
+            return;
+        }
+
         var id = $('#cliente-id').val();
         var accion = id ? 'actualizar' : 'crear';
         $.post(API + accion, $(this).serialize(), function (r) {

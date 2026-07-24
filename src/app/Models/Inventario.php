@@ -303,4 +303,17 @@ class Inventario extends Model
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([$id]);
     }
+
+    public function existeCodigo(string $codigo, int $excludeId = 0): bool
+    {
+        $codigo = $this->sanitizeString($codigo);
+        if ($excludeId > 0) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM productos WHERE codigo = ? AND id != ?");
+            $stmt->execute([$codigo, $excludeId]);
+        } else {
+            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM productos WHERE codigo = ?");
+            $stmt->execute([$codigo]);
+        }
+        return (int)$stmt->fetch()['total'] > 0;
+    }
 }

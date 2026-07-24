@@ -116,6 +116,16 @@ class InventarioController
             return;
         }
 
+        if ($precio_venta <= 0) {
+            echo json_encode(['success' => false, 'error' => 'El precio de venta debe ser mayor a 0']);
+            return;
+        }
+
+        if ($this->model->existeCodigo($codigo)) {
+            echo json_encode(['success' => false, 'error' => 'Ya existe un producto con ese código']);
+            return;
+        }
+
         $resultado = $this->model->crearProducto($codigo, $nombre, $categoria_id, $stock, $stock_minimo, $costo_compra, $precio_venta, $descripcion);
         echo json_encode(
             $resultado
@@ -143,6 +153,16 @@ class InventarioController
 
         if (!$id || empty($codigo) || empty($nombre) || !$categoria_id) {
             echo json_encode(['success' => false, 'error' => 'Complete todos los campos obligatorios']);
+            return;
+        }
+
+        if ($precio_venta <= 0) {
+            echo json_encode(['success' => false, 'error' => 'El precio de venta debe ser mayor a 0']);
+            return;
+        }
+
+        if ($this->model->existeCodigo($codigo, $id)) {
+            echo json_encode(['success' => false, 'error' => 'Ya existe otro producto con ese código']);
             return;
         }
 
