@@ -82,11 +82,11 @@ class ClienteController
             return;
         }
 
-        $cedula    = htmlspecialchars(trim($_POST['cedula'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $nombre    = htmlspecialchars(trim($_POST['nombre'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $apellido  = htmlspecialchars(trim($_POST['apellido'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $direccion = htmlspecialchars(trim($_POST['direccion'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $telefono  = htmlspecialchars(trim($_POST['telefono'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $cedula    = trim($_POST['cedula'] ?? '');
+        $nombre    = trim($_POST['nombre'] ?? '');
+        $apellido  = trim($_POST['apellido'] ?? '');
+        $direccion = trim($_POST['direccion'] ?? '');
+        $telefono  = trim($_POST['telefono'] ?? '');
 
         if (empty($cedula) || empty($nombre) || empty($apellido) || empty($direccion) || empty($telefono)) {
             echo json_encode(['success' => false, 'error' => 'Todos los campos son obligatorios']);
@@ -114,11 +114,11 @@ class ClienteController
         }
 
         $id        = (int)($_POST['id'] ?? 0);
-        $cedula    = htmlspecialchars(trim($_POST['cedula'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $nombre    = htmlspecialchars(trim($_POST['nombre'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $apellido  = htmlspecialchars(trim($_POST['apellido'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $direccion = htmlspecialchars(trim($_POST['direccion'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $telefono  = htmlspecialchars(trim($_POST['telefono'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $cedula    = trim($_POST['cedula'] ?? '');
+        $nombre    = trim($_POST['nombre'] ?? '');
+        $apellido  = trim($_POST['apellido'] ?? '');
+        $direccion = trim($_POST['direccion'] ?? '');
+        $telefono  = trim($_POST['telefono'] ?? '');
 
         if (!$id || empty($cedula) || empty($nombre) || empty($apellido) || empty($direccion) || empty($telefono)) {
             echo json_encode(['success' => false, 'error' => 'Todos los campos son obligatorios']);

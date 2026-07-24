@@ -26,8 +26,21 @@ class AuthController
             exit;
         }
 
-        $username = htmlspecialchars(trim($_POST['username'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $username = trim($_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
+
+        if (empty($username) || empty($password)) {
+            header('Location: ?pagina=login&error=1');
+            exit;
+        }
+        if (mb_strlen($username) < 3) {
+            header('Location: ?pagina=login&error=1');
+            exit;
+        }
+        if (mb_strlen($password) < 6) {
+            header('Location: ?pagina=login&error=1');
+            exit;
+        }
 
         $usuario = $this->model->autenticar($username, $password);
 

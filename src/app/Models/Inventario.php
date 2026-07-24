@@ -16,7 +16,9 @@ class Inventario extends Model
     private float $precioVenta = 0.0;
     private int $fkCategoria = 0;
 
+    private const MIN_CODIGO      = 1;
     private const MAX_CODIGO      = 50;
+    private const MIN_NOMBRE      = 2;
     private const MAX_NOMBRE      = 100;
     private const MAX_DESCRIPCION = 1000;
 
@@ -38,6 +40,8 @@ class Inventario extends Model
     public function setCodigo(string $codigo): void
     {
         $codigo = $this->sanitizeString($codigo);
+        $this->validateNotEmpty($codigo, 'código');
+        $this->validateMinLength($codigo, 'código', self::MIN_CODIGO);
         $this->validateLength($codigo, 'código', self::MAX_CODIGO);
         $this->codigo = $codigo;
     }
@@ -50,6 +54,8 @@ class Inventario extends Model
     public function setNombre(string $nombre): void
     {
         $nombre = $this->sanitizeString($nombre);
+        $this->validateNotEmpty($nombre, 'nombre');
+        $this->validateMinLength($nombre, 'nombre', self::MIN_NOMBRE);
         $this->validateLength($nombre, 'nombre', self::MAX_NOMBRE);
         $this->nombre = $nombre;
     }
@@ -103,7 +109,8 @@ class Inventario extends Model
 
     public function setPrecioVenta(float $precioVenta): void
     {
-        $this->precioVenta = max(0.0, $this->sanitizeFloat($precioVenta));
+        $this->validatePositive($precioVenta, 'precio de venta');
+        $this->precioVenta = $this->sanitizeFloat($precioVenta);
     }
 
     public function getFkCategoria(): int
@@ -156,6 +163,10 @@ class Inventario extends Model
         $this->setPrecioCompra($precio_compra);
         $this->setPrecioVenta($precio_venta);
         $this->setDescripcion($descripcion);
+
+        if (!$this->existeCategoria($this->fkCategoria)) {
+            throw new \InvalidArgumentException('La categoría seleccionada no existe');
+        }
 
         $sql = "INSERT INTO productos (codigo, nombre, descripcion, stock, stock_minimo, precio_compra, precio_venta, fk_categoria, fecha_creacion, fecha_actualizacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), CURDATE())";
         $stmt = $this->db->prepare($sql);
@@ -229,6 +240,10 @@ class Inventario extends Model
         $this->setPrecioVenta($precio_venta);
         $this->setDescripcion($descripcion);
 
+        if (!$this->existeCategoria($this->fkCategoria)) {
+            throw new \InvalidArgumentException('La categoría seleccionada no existe');
+        }
+
         $sql = "UPDATE productos SET codigo = ?, nombre = ?, descripcion = ?, stock = ?, stock_minimo = ?, precio_compra = ?, precio_venta = ?, fk_categoria = ?, fecha_actualizacion = CURDATE() WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
@@ -280,6 +295,7 @@ class Inventario extends Model
     public function crearCategoria(string $nombre): bool
     {
         $nombre = $this->sanitizeString($nombre);
+        $this->validateNotEmpty($nombre, 'nombre de categoría');
         $this->validateLength($nombre, 'nombre de categoría', self::MAX_NOMBRE);
         $sql = "INSERT INTO categoria (nombre_categoria) VALUES (?)";
         $stmt = $this->db->prepare($sql);
@@ -290,6 +306,7 @@ class Inventario extends Model
     {
         $id = $this->sanitizeInt($id);
         $nombre = $this->sanitizeString($nombre);
+        $this->validateNotEmpty($nombre, 'nombre de categoría');
         $this->validateLength($nombre, 'nombre de categoría', self::MAX_NOMBRE);
         $sql = "UPDATE categoria SET nombre_categoria = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
@@ -314,6 +331,14 @@ class Inventario extends Model
             $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM productos WHERE codigo = ?");
             $stmt->execute([$codigo]);
         }
+        return (int)$stmt->fetch()['total'] > 0;
+    }
+
+    public function existeCategoria(int $id): bool
+    {
+        $id = $this->sanitizeInt($id);
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM categoria WHERE id = ?");
+        $stmt->execute([$id]);
         return (int)$stmt->fetch()['total'] > 0;
     }
 }

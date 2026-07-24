@@ -77,13 +77,18 @@ class ProveedorGestionController
             return;
         }
 
-        $rif      = htmlspecialchars(trim($_POST['rif'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $nombre   = htmlspecialchars(trim($_POST['nombre'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $email    = htmlspecialchars(trim($_POST['email'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $telefono = htmlspecialchars(trim($_POST['telefono'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $rif      = trim($_POST['rif'] ?? '');
+        $nombre   = trim($_POST['nombre'] ?? '');
+        $email    = trim($_POST['email'] ?? '');
+        $telefono = trim($_POST['telefono'] ?? '');
 
         if (empty($rif) || empty($nombre)) {
             echo json_encode(['success' => false, 'error' => 'RIF y Nombre son obligatorios']);
+            return;
+        }
+
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            echo json_encode(['success' => false, 'error' => 'El formato del email no es válido']);
             return;
         }
 
@@ -108,13 +113,18 @@ class ProveedorGestionController
         }
 
         $id       = (int)($_POST['id'] ?? 0);
-        $rif      = htmlspecialchars(trim($_POST['rif'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $nombre   = htmlspecialchars(trim($_POST['nombre'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $email    = htmlspecialchars(trim($_POST['email'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $telefono = htmlspecialchars(trim($_POST['telefono'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $rif      = trim($_POST['rif'] ?? '');
+        $nombre   = trim($_POST['nombre'] ?? '');
+        $email    = trim($_POST['email'] ?? '');
+        $telefono = trim($_POST['telefono'] ?? '');
 
         if (!$id || empty($rif) || empty($nombre)) {
             echo json_encode(['success' => false, 'error' => 'ID, RIF y Nombre son obligatorios']);
+            return;
+        }
+
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            echo json_encode(['success' => false, 'error' => 'El formato del email no es válido']);
             return;
         }
 

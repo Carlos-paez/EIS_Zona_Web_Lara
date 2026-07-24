@@ -86,7 +86,7 @@ class InventarioController
 
     private function buscar(): void
     {
-        $termino = htmlspecialchars(trim($_POST['termino'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $termino = trim($_POST['termino'] ?? '');
         if ($termino === '') {
             $productos = $this->model->obtenerProductos();
         } else {
@@ -102,9 +102,9 @@ class InventarioController
             return;
         }
 
-        $codigo       = htmlspecialchars(trim($_POST['codigo'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $nombre       = htmlspecialchars(trim($_POST['nombre'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $descripcion  = htmlspecialchars(trim($_POST['descripcion'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $codigo       = trim($_POST['codigo'] ?? '');
+        $nombre       = trim($_POST['nombre'] ?? '');
+        $descripcion  = trim($_POST['descripcion'] ?? '');
         $categoria_id = (int)($_POST['categoria_id'] ?? 0);
         $stock        = (int)($_POST['stock'] ?? 0);
         $stock_minimo = (int)($_POST['stock_minimo'] ?? 5);
@@ -116,8 +116,24 @@ class InventarioController
             return;
         }
 
+        if ($stock < 0) {
+            echo json_encode(['success' => false, 'error' => 'El stock no puede ser negativo']);
+            return;
+        }
+        if ($stock_minimo < 1) {
+            echo json_encode(['success' => false, 'error' => 'El stock mínimo debe ser al menos 1']);
+            return;
+        }
+        if ($costo_compra < 0) {
+            echo json_encode(['success' => false, 'error' => 'El costo de compra no puede ser negativo']);
+            return;
+        }
         if ($precio_venta <= 0) {
             echo json_encode(['success' => false, 'error' => 'El precio de venta debe ser mayor a 0']);
+            return;
+        }
+        if ($costo_compra > 0 && $precio_venta < $costo_compra) {
+            echo json_encode(['success' => false, 'error' => 'El precio de venta no puede ser menor al costo de compra']);
             return;
         }
 
@@ -142,9 +158,9 @@ class InventarioController
         }
 
         $id           = (int)($_POST['id'] ?? 0);
-        $codigo       = htmlspecialchars(trim($_POST['codigo'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $nombre       = htmlspecialchars(trim($_POST['nombre'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $descripcion  = htmlspecialchars(trim($_POST['descripcion'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $codigo       = trim($_POST['codigo'] ?? '');
+        $nombre       = trim($_POST['nombre'] ?? '');
+        $descripcion  = trim($_POST['descripcion'] ?? '');
         $categoria_id = (int)($_POST['categoria_id'] ?? 0);
         $stock        = (int)($_POST['stock'] ?? 0);
         $stock_minimo = (int)($_POST['stock_minimo'] ?? 5);
@@ -156,8 +172,24 @@ class InventarioController
             return;
         }
 
+        if ($stock < 0) {
+            echo json_encode(['success' => false, 'error' => 'El stock no puede ser negativo']);
+            return;
+        }
+        if ($stock_minimo < 1) {
+            echo json_encode(['success' => false, 'error' => 'El stock mínimo debe ser al menos 1']);
+            return;
+        }
+        if ($costo_compra < 0) {
+            echo json_encode(['success' => false, 'error' => 'El costo de compra no puede ser negativo']);
+            return;
+        }
         if ($precio_venta <= 0) {
             echo json_encode(['success' => false, 'error' => 'El precio de venta debe ser mayor a 0']);
+            return;
+        }
+        if ($costo_compra > 0 && $precio_venta < $costo_compra) {
+            echo json_encode(['success' => false, 'error' => 'El precio de venta no puede ser menor al costo de compra']);
             return;
         }
 
@@ -201,7 +233,7 @@ class InventarioController
             return;
         }
 
-        $nombre = htmlspecialchars(trim($_POST['nombre'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $nombre = trim($_POST['nombre'] ?? '');
         if (empty($nombre)) {
             echo json_encode(['success' => false, 'error' => 'El nombre es obligatorio']);
             return;
@@ -222,7 +254,7 @@ class InventarioController
         }
 
         $id = (int)($_POST['id'] ?? 0);
-        $nombre = htmlspecialchars(trim($_POST['nombre'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $nombre = trim($_POST['nombre'] ?? '');
         if (!$id || empty($nombre)) {
             echo json_encode(['success' => false, 'error' => 'ID y nombre son obligatorios']);
             return;

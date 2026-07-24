@@ -9,6 +9,7 @@ class Rol extends Model
     private int $id = 0;
     private string $nombreRol = '';
 
+    private const MIN_NOMBRE_ROL = 2;
     private const MAX_NOMBRE_ROL = 50;
 
     public function getId(): int
@@ -29,6 +30,8 @@ class Rol extends Model
     public function setNombreRol(string $nombreRol): void
     {
         $nombreRol = $this->sanitizeString($nombreRol);
+        $this->validateNotEmpty($nombreRol, 'nombre de rol');
+        $this->validateMinLength($nombreRol, 'nombre de rol', self::MIN_NOMBRE_ROL);
         $this->validateLength($nombreRol, 'nombre de rol', self::MAX_NOMBRE_ROL);
         $this->nombreRol = $nombreRol;
     }
@@ -161,6 +164,19 @@ class Rol extends Model
         $rol_id = $this->sanitizeInt($rol_id);
         $stmt = $this->db->prepare("UPDATE usuarios SET fk_rol_usuario = ? WHERE id = ?");
         return $stmt->execute([$rol_id, $usuario_id]);
+    }
+
+    public function existeNombreRol(string $nombre, int $excludeId = 0): bool
+    {
+        $nombre = $this->sanitizeString($nombre);
+        if ($excludeId > 0) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM roles WHERE nombre_rol = ? AND id != ?");
+            $stmt->execute([$nombre, $excludeId]);
+        } else {
+            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM roles WHERE nombre_rol = ?");
+            $stmt->execute([$nombre]);
+        }
+        return (int)$stmt->fetch()['total'] > 0;
     }
 
     public function totalRoles(): int

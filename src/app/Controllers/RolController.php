@@ -71,16 +71,22 @@ class RolController
             return;
         }
 
-        $nombre_rol = htmlspecialchars(trim($_POST['nombre'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $nombre_rol = trim($_POST['nombre'] ?? '');
         if (empty($nombre_rol)) {
             echo json_encode(['success' => false, 'error' => 'El nombre del rol es obligatorio']);
             return;
         }
+
+        if ($this->model->existeNombreRol($nombre_rol)) {
+            echo json_encode(['success' => false, 'error' => 'Ya existe un rol con ese nombre']);
+            return;
+        }
+
         $resultado = $this->model->crearRol($nombre_rol);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Rol creado exitosamente']
-                : ['success' => false, 'error' => 'Error al crear el rol (posible nombre duplicado)']
+                : ['success' => false, 'error' => 'Error al crear el rol']
         );
     }
 
@@ -92,11 +98,17 @@ class RolController
         }
 
         $id = (int)($_POST['id'] ?? 0);
-        $nombre_rol = htmlspecialchars(trim($_POST['nombre'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $nombre_rol = trim($_POST['nombre'] ?? '');
         if (!$id || empty($nombre_rol)) {
             echo json_encode(['success' => false, 'error' => 'Complete todos los campos obligatorios']);
             return;
         }
+
+        if ($this->model->existeNombreRol($nombre_rol, $id)) {
+            echo json_encode(['success' => false, 'error' => 'Ya existe otro rol con ese nombre']);
+            return;
+        }
+
         $resultado = $this->model->actualizarRol($id, $nombre_rol);
         echo json_encode(
             $resultado
@@ -192,6 +204,10 @@ class RolController
         $rol_id = (int)($_POST['rol_id'] ?? 0);
         if (!$usuario_id || !$rol_id) {
             echo json_encode(['success' => false, 'error' => 'Datos no válidos']);
+            return;
+        }
+        if ($rol_id === 1) {
+            echo json_encode(['success' => false, 'error' => 'No se puede asignar el rol de Administrador directamente']);
             return;
         }
         $resultado = $this->model->asignarRolAUsuario($usuario_id, $rol_id);

@@ -13,8 +13,11 @@ class Cliente extends Model
     private string $direccion = '';
     private string $telefono = '';
 
+    private const MIN_CEDULA    = 5;
     private const MAX_CEDULA    = 20;
+    private const MIN_NOMBRE    = 2;
     private const MAX_NOMBRE    = 100;
+    private const MIN_APELLIDO  = 2;
     private const MAX_APELLIDO  = 100;
     private const MAX_DIRECCION = 500;
     private const MAX_TELEFONO  = 20;
@@ -37,6 +40,8 @@ class Cliente extends Model
     public function setCedula(string $cedula): void
     {
         $cedula = $this->sanitizeString($cedula);
+        $this->validateNotEmpty($cedula, 'cédula');
+        $this->validateMinLength($cedula, 'cédula', self::MIN_CEDULA);
         $this->validateLength($cedula, 'cédula', self::MAX_CEDULA);
         $this->cedula = $cedula;
     }
@@ -49,6 +54,8 @@ class Cliente extends Model
     public function setNombre(string $nombre): void
     {
         $nombre = $this->sanitizeString($nombre);
+        $this->validateNotEmpty($nombre, 'nombre');
+        $this->validateMinLength($nombre, 'nombre', self::MIN_NOMBRE);
         $this->validateLength($nombre, 'nombre', self::MAX_NOMBRE);
         $this->nombre = $nombre;
     }
@@ -61,6 +68,8 @@ class Cliente extends Model
     public function setApellido(string $apellido): void
     {
         $apellido = $this->sanitizeString($apellido);
+        $this->validateNotEmpty($apellido, 'apellido');
+        $this->validateMinLength($apellido, 'apellido', self::MIN_APELLIDO);
         $this->validateLength($apellido, 'apellido', self::MAX_APELLIDO);
         $this->apellido = $apellido;
     }
@@ -73,6 +82,7 @@ class Cliente extends Model
     public function setDireccion(string $direccion): void
     {
         $direccion = $this->sanitizeString($direccion);
+        $this->validateNotEmpty($direccion, 'dirección');
         $this->validateLength($direccion, 'dirección', self::MAX_DIRECCION);
         $this->direccion = $direccion;
     }
@@ -85,6 +95,7 @@ class Cliente extends Model
     public function setTelefono(string $telefono): void
     {
         $telefono = $this->sanitizeString($telefono);
+        $this->validateNotEmpty($telefono, 'teléfono');
         $this->validateLength($telefono, 'teléfono', self::MAX_TELEFONO);
         $this->telefono = $telefono;
     }

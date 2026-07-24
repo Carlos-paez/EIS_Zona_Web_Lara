@@ -18,14 +18,30 @@ abstract class Model
         return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
     }
 
-    protected function sanitizeInt(int $input): int
+    protected function sanitizeInt(mixed $input): int
     {
-        return filter_var($input, FILTER_VALIDATE_INT) !== false ? $input : 0;
+        $filtered = filter_var($input, FILTER_VALIDATE_INT);
+        return $filtered !== false ? $filtered : 0;
     }
 
-    protected function sanitizeFloat(float $input): float
+    protected function sanitizeFloat(mixed $input): float
     {
-        return filter_var($input, FILTER_VALIDATE_FLOAT) !== false ? $input : 0.0;
+        $filtered = filter_var($input, FILTER_VALIDATE_FLOAT);
+        return $filtered !== false ? $filtered : 0.0;
+    }
+
+    protected function validateNotEmpty(string $value, string $field): void
+    {
+        if (trim($value) === '') {
+            throw new \InvalidArgumentException("El campo '$field' es obligatorio");
+        }
+    }
+
+    protected function validateMinLength(string $value, string $field, int $min): void
+    {
+        if (mb_strlen(trim($value)) < $min) {
+            throw new \InvalidArgumentException("El campo '$field' debe tener al menos $min caracteres");
+        }
     }
 
     protected function validateLength(string $value, string $field, int $max): void
@@ -35,17 +51,29 @@ abstract class Model
         }
     }
 
+    protected function validatePattern(string $value, string $pattern, string $message): void
+    {
+        if (!preg_match($pattern, $value)) {
+            throw new \InvalidArgumentException($message);
+        }
+    }
+
+    protected function validatePositive(float $value, string $field): void
+    {
+        if ($value <= 0) {
+            throw new \InvalidArgumentException("El campo '$field' debe ser mayor a 0");
+        }
+    }
+
+    protected function validateGreaterOrEqual(float $value, string $field, float $min): void
+    {
+        if ($value < $min) {
+            throw new \InvalidArgumentException("El campo '$field' debe ser mayor o igual a $min");
+        }
+    }
+
     protected function validateEmail(string $email): bool
     {
         return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
-    }
-
-    protected function validateRequired(array $fields, array $data): void
-    {
-        foreach ($fields as $field) {
-            if (!isset($data[$field]) || trim((string)$data[$field]) === '') {
-                throw new \InvalidArgumentException("El campo '$field' es obligatorio");
-            }
-        }
     }
 }

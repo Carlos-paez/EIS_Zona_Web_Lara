@@ -12,7 +12,9 @@ class ProveedorGestion extends Model
     private string $email = '';
     private string $telefono = '';
 
+    private const MIN_RIF      = 5;
     private const MAX_RIF      = 20;
+    private const MIN_NOMBRE   = 2;
     private const MAX_NOMBRE   = 100;
     private const MAX_EMAIL    = 100;
     private const MAX_TELEFONO = 20;
@@ -35,6 +37,8 @@ class ProveedorGestion extends Model
     public function setRif(string $rif): void
     {
         $rif = $this->sanitizeString($rif);
+        $this->validateNotEmpty($rif, 'RIF');
+        $this->validateMinLength($rif, 'RIF', self::MIN_RIF);
         $this->validateLength($rif, 'RIF', self::MAX_RIF);
         $this->rif = $rif;
     }
@@ -47,6 +51,8 @@ class ProveedorGestion extends Model
     public function setNombre(string $nombre): void
     {
         $nombre = $this->sanitizeString($nombre);
+        $this->validateNotEmpty($nombre, 'nombre');
+        $this->validateMinLength($nombre, 'nombre', self::MIN_NOMBRE);
         $this->validateLength($nombre, 'nombre', self::MAX_NOMBRE);
         $this->nombre = $nombre;
     }
@@ -59,10 +65,12 @@ class ProveedorGestion extends Model
     public function setEmail(string $email): void
     {
         $email = $this->sanitizeString($email);
-        if ($email !== '' && !$this->validateEmail($email)) {
-            throw new \InvalidArgumentException('El formato del email no es válido');
+        if ($email !== '') {
+            if (!$this->validateEmail($email)) {
+                throw new \InvalidArgumentException('El formato del email no es válido');
+            }
+            $this->validateLength($email, 'email', self::MAX_EMAIL);
         }
-        $this->validateLength($email, 'email', self::MAX_EMAIL);
         $this->email = $email;
     }
 
@@ -74,6 +82,7 @@ class ProveedorGestion extends Model
     public function setTelefono(string $telefono): void
     {
         $telefono = $this->sanitizeString($telefono);
+        $this->validateNotEmpty($telefono, 'teléfono');
         $this->validateLength($telefono, 'teléfono', self::MAX_TELEFONO);
         $this->telefono = $telefono;
     }

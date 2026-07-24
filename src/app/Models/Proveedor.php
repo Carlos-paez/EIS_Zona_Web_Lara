@@ -62,10 +62,27 @@ class Proveedor extends Model
      */
     public function crearOrden(string $numero, string $fecha, int $fk_proveedor, int $fk_status): int|false
     {
-        $numero = htmlspecialchars(trim($numero), ENT_QUOTES, 'UTF-8');
+        $this->validateNotEmpty($numero, 'número de orden');
+        $this->validateNotEmpty($fecha, 'fecha');
         $fecha = $this->validarFecha($fecha);
-        $fk_proveedor = filter_var($fk_proveedor, FILTER_VALIDATE_INT) ? $fk_proveedor : 0;
-        $fk_status = filter_var($fk_status, FILTER_VALIDATE_INT) ? $fk_status : 0;
+
+        $fk_proveedor = $this->sanitizeInt($fk_proveedor);
+        $fk_status = $this->sanitizeInt($fk_status);
+
+        if (!$fk_proveedor) {
+            throw new \InvalidArgumentException('El proveedor es obligatorio');
+        }
+        if (!$fk_status) {
+            throw new \InvalidArgumentException('El estado es obligatorio');
+        }
+        if (!$this->existeProveedor($fk_proveedor)) {
+            throw new \InvalidArgumentException('El proveedor seleccionado no existe');
+        }
+        if (!$this->existeStatus($fk_status)) {
+            throw new \InvalidArgumentException('El estado seleccionado no existe');
+        }
+
+        $numero = $this->sanitizeString($numero);
 
         $sql = "INSERT INTO orden_abastecimiento (numero_de_orden, fecha, fk_proveedor, fk_status) VALUES (?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
@@ -103,11 +120,28 @@ class Proveedor extends Model
      */
     public function actualizarOrden(int $id, string $numero, string $fecha, int $fk_proveedor, int $fk_status): bool
     {
-        $id = filter_var($id, FILTER_VALIDATE_INT) ? $id : 0;
-        $numero = htmlspecialchars(trim($numero), ENT_QUOTES, 'UTF-8');
+        $this->validateNotEmpty($numero, 'número de orden');
+        $this->validateNotEmpty($fecha, 'fecha');
         $fecha = $this->validarFecha($fecha);
-        $fk_proveedor = filter_var($fk_proveedor, FILTER_VALIDATE_INT) ? $fk_proveedor : 0;
-        $fk_status = filter_var($fk_status, FILTER_VALIDATE_INT) ? $fk_status : 0;
+
+        $id = $this->sanitizeInt($id);
+        $fk_proveedor = $this->sanitizeInt($fk_proveedor);
+        $fk_status = $this->sanitizeInt($fk_status);
+
+        if (!$fk_proveedor) {
+            throw new \InvalidArgumentException('El proveedor es obligatorio');
+        }
+        if (!$fk_status) {
+            throw new \InvalidArgumentException('El estado es obligatorio');
+        }
+        if (!$this->existeProveedor($fk_proveedor)) {
+            throw new \InvalidArgumentException('El proveedor seleccionado no existe');
+        }
+        if (!$this->existeStatus($fk_status)) {
+            throw new \InvalidArgumentException('El estado seleccionado no existe');
+        }
+
+        $numero = $this->sanitizeString($numero);
 
         $sql = "UPDATE orden_abastecimiento SET numero_de_orden = ?, fecha = ?, fk_proveedor = ?, fk_status = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
@@ -211,7 +245,11 @@ class Proveedor extends Model
      */
     public function agregarLinea(int $orden_id, int $producto_id, int $cantidad, float $precio): bool
     {
-        // Inserta una nueva línea de abastecimiento en la orden
+        $orden_id = $this->sanitizeInt($orden_id);
+        $producto_id = $this->sanitizeInt($producto_id);
+        $this->validateGreaterOrEqual((float)$cantidad, 'cantidad', 1);
+        $this->validatePositive($precio, 'precio');
+
         $sql = "INSERT INTO lineas_abastecimiento (cantidad, precio, fk_orden_abastecimiento, fk_producto) VALUES (?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([$cantidad, $precio, $orden_id, $producto_id]);
@@ -257,9 +295,25 @@ class Proveedor extends Model
         return $stmt->fetchAll();
     }
 
+    public function existeProveedor(int $id): bool
+    {
+        $id = $this->sanitizeInt($id);
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM proveedores WHERE id = ?");
+        $stmt->execute([$id]);
+        return (int)$stmt->fetch()['total'] > 0;
+    }
+
+    public function existeStatus(int $id): bool
+    {
+        $id = $this->sanitizeInt($id);
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM status_seguimiento WHERE id = ?");
+        $stmt->execute([$id]);
+        return (int)$stmt->fetch()['total'] > 0;
+    }
+
     private function validarFecha(string $fecha): string
     {
-        $fecha = htmlspecialchars(trim($fecha), ENT_QUOTES, 'UTF-8');
+        $fecha = trim($fecha);
         if ($fecha !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
             throw new \InvalidArgumentException('Formato de fecha inválido (use YYYY-MM-DD)');
         }

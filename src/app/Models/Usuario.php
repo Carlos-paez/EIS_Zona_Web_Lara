@@ -15,6 +15,7 @@ class Usuario extends Model
     private string $estatus = '1';
     private ?int $fkRolUsuario = null;
 
+    private const MIN_USERNAME = 3;
     private const MAX_USERNAME = 50;
     private const MAX_NOMBRE   = 100;
     private const MAX_APELLIDO = 100;
@@ -39,6 +40,8 @@ class Usuario extends Model
     public function setUserName(string $userName): void
     {
         $userName = $this->sanitizeString($userName);
+        $this->validateNotEmpty($userName, 'nombre de usuario');
+        $this->validateMinLength($userName, 'nombre de usuario', self::MIN_USERNAME);
         $this->validateLength($userName, 'nombre de usuario', self::MAX_USERNAME);
         $this->userName = $userName;
     }

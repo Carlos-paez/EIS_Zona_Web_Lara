@@ -105,13 +105,27 @@ class ProveedorController
             return;
         }
 
-        $numero       = htmlspecialchars(trim($_POST['numero'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $fecha        = htmlspecialchars(trim($_POST['fecha'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $numero       = trim($_POST['numero'] ?? '');
+        $fecha        = trim($_POST['fecha'] ?? '');
         $fk_proveedor = (int)($_POST['fk_proveedor'] ?? 0);
         $fk_status    = (int)($_POST['fk_status'] ?? 0);
 
-        if (empty($numero) || !$fk_proveedor || !$fk_status) {
+        if (empty($numero) || empty($fecha) || !$fk_proveedor || !$fk_status) {
             echo json_encode(['success' => false, 'error' => 'Complete todos los campos obligatorios']);
+            return;
+        }
+
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+            echo json_encode(['success' => false, 'error' => 'Formato de fecha inválido (use YYYY-MM-DD)']);
+            return;
+        }
+
+        if (!$this->model->existeProveedor($fk_proveedor)) {
+            echo json_encode(['success' => false, 'error' => 'El proveedor seleccionado no existe']);
+            return;
+        }
+        if (!$this->model->existeStatus($fk_status)) {
+            echo json_encode(['success' => false, 'error' => 'El estado seleccionado no existe']);
             return;
         }
 
@@ -131,13 +145,27 @@ class ProveedorController
         }
 
         $id           = (int)($_POST['id'] ?? 0);
-        $numero       = htmlspecialchars(trim($_POST['numero'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $fecha        = htmlspecialchars(trim($_POST['fecha'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $numero       = trim($_POST['numero'] ?? '');
+        $fecha        = trim($_POST['fecha'] ?? '');
         $fk_proveedor = (int)($_POST['fk_proveedor'] ?? 0);
         $fk_status    = (int)($_POST['fk_status'] ?? 0);
 
-        if (!$id || empty($numero) || !$fk_proveedor || !$fk_status) {
+        if (!$id || empty($numero) || empty($fecha) || !$fk_proveedor || !$fk_status) {
             echo json_encode(['success' => false, 'error' => 'Complete todos los campos obligatorios']);
+            return;
+        }
+
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+            echo json_encode(['success' => false, 'error' => 'Formato de fecha inválido (use YYYY-MM-DD)']);
+            return;
+        }
+
+        if (!$this->model->existeProveedor($fk_proveedor)) {
+            echo json_encode(['success' => false, 'error' => 'El proveedor seleccionado no existe']);
+            return;
+        }
+        if (!$this->model->existeStatus($fk_status)) {
+            echo json_encode(['success' => false, 'error' => 'El estado seleccionado no existe']);
             return;
         }
 
