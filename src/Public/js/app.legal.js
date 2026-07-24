@@ -9,6 +9,10 @@
 // Espero a que el DOM esté listo para ejecutar el código
 $(function () {
 
+    function escHtml(str) {
+        return $('<span>').text(str).html();
+    }
+
     // ================================================================
     // CONFIGURACIÓN INICIAL
     // ================================================================
@@ -89,9 +93,9 @@ $(function () {
             // Construyo la fila HTML con los datos de la asesoría
             html += '<tr>'
                 + '<td class="hide-on-small-only">' + (i + 1) + '</td>'                         // Columna: N° (oculto en móvil)
-                + '<td><strong>' + a.ciudadano + '</strong></td>'                                // Columna: Nombre del ciudadano
-                + '<td class="hide-on-small-only">' + a.cedula + '</td>'                         // Columna: Cédula (oculto en móvil)
-                + '<td>' + a.documento + '</td>'                                                 // Columna: Tipo de documento
+                + '<td><strong>' + escHtml(a.ciudadano) + '</strong></td>'                                // Columna: Nombre del ciudadano
+                + '<td class="hide-on-small-only">' + escHtml(a.cedula) + '</td>'                         // Columna: Cédula (oculto en móvil)
+                + '<td>' + escHtml(a.documento) + '</td>'                                                 // Columna: Tipo de documento
                 + '<td><span class="' + estadoClass + '" style="white-space:nowrap;"><i class="material-icons left" style="font-size:0.85rem;margin:0;">' + icono + '</i>' + a.estado + '</span></td>' // Columna: Estado con ícono y color
                 + '<td class="hide-on-small-only" style="font-size:0.8rem;color:var(--text-muted);">' + a.fecha + '</td>' // Columna: Fecha (oculto en móvil)
                 // Botón eliminar para desktop
@@ -180,7 +184,7 @@ $(function () {
             // CASO: Documento permitido - se atiende directamente
             mostrarValidacion(
                 'DOCUMENTO PERMITIDO',
-                'El documento <strong>"' + documento + '"</strong> está dentro de los tipos de asesoría que podemos atender. Se ha registrado el servicio exitosamente.',
+                'El documento <strong>"' + escHtml(documento) + '"</strong> está dentro de los tipos de asesoría que podemos atender. Se ha registrado el servicio exitosamente.',
                 true
             );
             // Agrego la asesoría al inicio del arreglo (más reciente primero)
@@ -198,7 +202,7 @@ $(function () {
             // CASO: Documento NO permitido - se debe derivar a oficina oficial
             mostrarValidacion(
                 'DOCUMENTO NO PERMITIDO',
-                'El documento <strong>"' + documento + '"</strong> no corresponde a los tipos de asesoría que podemos atender. <strong>Este caso debe ser derivado a una Oficina de Atención Legal Oficial.</strong>',
+                'El documento <strong>"' + escHtml(documento) + '"</strong> no corresponde a los tipos de asesoría que podemos atender. <strong>Este caso debe ser derivado a una Oficina de Atención Legal Oficial.</strong>',
                 false
             );
             // Agrego la asesoría como "Denegado" (derivado)

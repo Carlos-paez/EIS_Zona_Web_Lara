@@ -62,6 +62,11 @@ class Proveedor extends Model
      */
     public function crearOrden(string $numero, string $fecha, int $fk_proveedor, int $fk_status): int|false
     {
+        $numero = htmlspecialchars(trim($numero), ENT_QUOTES, 'UTF-8');
+        $fecha = $this->validarFecha($fecha);
+        $fk_proveedor = filter_var($fk_proveedor, FILTER_VALIDATE_INT) ? $fk_proveedor : 0;
+        $fk_status = filter_var($fk_status, FILTER_VALIDATE_INT) ? $fk_status : 0;
+
         $sql = "INSERT INTO orden_abastecimiento (numero_de_orden, fecha, fk_proveedor, fk_status) VALUES (?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$numero, $fecha, $fk_proveedor, $fk_status]);
@@ -98,7 +103,12 @@ class Proveedor extends Model
      */
     public function actualizarOrden(int $id, string $numero, string $fecha, int $fk_proveedor, int $fk_status): bool
     {
-        // Actualiza todos los campos de la orden identificada por ID
+        $id = filter_var($id, FILTER_VALIDATE_INT) ? $id : 0;
+        $numero = htmlspecialchars(trim($numero), ENT_QUOTES, 'UTF-8');
+        $fecha = $this->validarFecha($fecha);
+        $fk_proveedor = filter_var($fk_proveedor, FILTER_VALIDATE_INT) ? $fk_proveedor : 0;
+        $fk_status = filter_var($fk_status, FILTER_VALIDATE_INT) ? $fk_status : 0;
+
         $sql = "UPDATE orden_abastecimiento SET numero_de_orden = ?, fecha = ?, fk_proveedor = ?, fk_status = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([$numero, $fecha, $fk_proveedor, $fk_status, $id]);
@@ -238,7 +248,6 @@ class Proveedor extends Model
      */
     public function contarPorEstado(): array
     {
-        // Agrupa las órdenes por status y las cuenta
         $stmt = $this->db->query("
             SELECT ss.status AS estado, COUNT(*) AS total
             FROM orden_abastecimiento oa
@@ -246,5 +255,14 @@ class Proveedor extends Model
             GROUP BY ss.status
         ");
         return $stmt->fetchAll();
+    }
+
+    private function validarFecha(string $fecha): string
+    {
+        $fecha = htmlspecialchars(trim($fecha), ENT_QUOTES, 'UTF-8');
+        if ($fecha !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+            throw new \InvalidArgumentException('Formato de fecha inválido (use YYYY-MM-DD)');
+        }
+        return $fecha;
     }
 }

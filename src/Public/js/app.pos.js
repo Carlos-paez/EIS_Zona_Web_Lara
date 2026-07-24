@@ -14,6 +14,10 @@
 // Espero a que el DOM esté listo para ejecutar el código
 $(function () {
 
+    function escHtml(str) {
+        return $('<span>').text(str).html();
+    }
+
     // ================================================================
     // ESTADO DEL CARRITO
     // ================================================================
@@ -40,7 +44,7 @@ $(function () {
         setTimeout(function () { $('.pos-product.selected').removeClass('selected'); }, 400);
 
         // Muestro toast confirmando la adición al carrito
-        EIS.toast(name + ' agregado al carrito', 'green', 'add_shopping_cart');
+        EIS.toast(escHtml(name) + ' agregado al carrito', 'green', 'add_shopping_cart');
     });
 
     // ================================================================
@@ -93,7 +97,7 @@ $(function () {
                 // Chip circular con el número de orden
                 + '<span class="chip indigo white-text" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;padding:0;font-size:0.8rem;">' + (i + 1) + '</span>'
                 // Nombre y precio del producto
-                + '<div><div style="font-weight:600;font-size:0.9rem;">' + item.name + '</div>'
+                + '<div><div style="font-weight:600;font-size:0.9rem;">' + escHtml(item.name) + '</div>'
                 + '<div style="color:var(--text-muted);font-size:0.85rem;">$' + item.price.toFixed(2) + '</div></div></div>'
                 // Botón "X" para eliminar el producto
                 + '<span class="cart-item-remove" data-index="' + i + '" title="Eliminar"><i class="material-icons" style="font-size:1.2rem;">close</i></span>'

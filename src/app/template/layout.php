@@ -195,6 +195,23 @@
     <!-- UI: notificaciones, botones de acción, reportes, tooltips -->
     <script src="Public/js/app.ui.js"></script>
 
+    <!-- CSRF Token global para peticiones AJAX -->
+    <script>
+    window.EIS = window.EIS || {};
+    window.EIS.csrfToken = '<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>';
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (settings.type === 'POST' || settings.type === 'post') {
+                if (typeof settings.data === 'string') {
+                    settings.data += '&csrf_token=' + encodeURIComponent(window.EIS.csrfToken);
+                } else if (typeof settings.data === 'object' && settings.data !== null) {
+                    settings.data.csrf_token = window.EIS.csrfToken;
+                }
+            }
+        }
+    });
+    </script>
+
     <!-- ========== SCRIPTS ESPECÍFICOS POR PÁGINA (CARGA CONDICIONAL) ========== -->
     <!-- Solo se cargan si la página actual coincide con el módulo correspondiente -->
 

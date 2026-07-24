@@ -38,10 +38,26 @@ class Router
      */
     public function __construct()
     {
-        // Inicia o reanuda la sesión del usuario para acceder a $_SESSION
         session_start();
-        // Determina qué página se pidió mediante el método resolvePage()
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
         $this->pagina = $this->resolvePage();
+    }
+
+    public function getCsrfToken(): string
+    {
+        return $_SESSION['csrf_token'] ?? '';
+    }
+
+    public static function verifyCsrfToken(?string $token): bool
+    {
+        if (empty($token) || empty($_SESSION['csrf_token'])) {
+            return false;
+        }
+        return hash_equals($_SESSION['csrf_token'], $token);
     }
 
     /**

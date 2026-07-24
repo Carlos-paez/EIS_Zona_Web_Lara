@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Router;
 use App\Models\Cliente;
 
 class ClienteController
@@ -32,12 +33,14 @@ class ClienteController
         } catch (\PDOException $e) {
             $msg = $e->getMessage();
             if (str_contains($msg, 'foreign key constraint') || str_contains($msg, 'a foreign key constraint fails')) {
-                echo json_encode(['success' => false, 'error' => 'No se puede eliminar: el cliente tiene registros asociados (asesorías, ventas o sesiones).']);
+                echo json_encode(['success' => false, 'error' => 'No se puede eliminar: el cliente tiene registros asociados.']);
             } else {
-                echo json_encode(['success' => false, 'error' => 'Error de base de datos: ' . $msg]);
+                echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
             }
+        } catch (\InvalidArgumentException $e) {
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         } catch (\Exception $e) {
-            echo json_encode(['success' => false, 'error' => 'Error: ' . $e->getMessage()]);
+            echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
         }
     }
 
@@ -74,11 +77,16 @@ class ClienteController
 
     private function crear(): void
     {
-        $cedula    = trim($_POST['cedula'] ?? '');
-        $nombre    = trim($_POST['nombre'] ?? '');
-        $apellido  = trim($_POST['apellido'] ?? '');
-        $direccion = trim($_POST['direccion'] ?? '');
-        $telefono  = trim($_POST['telefono'] ?? '');
+        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $cedula    = htmlspecialchars(trim($_POST['cedula'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $nombre    = htmlspecialchars(trim($_POST['nombre'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $apellido  = htmlspecialchars(trim($_POST['apellido'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $direccion = htmlspecialchars(trim($_POST['direccion'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $telefono  = htmlspecialchars(trim($_POST['telefono'] ?? ''), ENT_QUOTES, 'UTF-8');
 
         if (empty($cedula) || empty($nombre) || empty($apellido) || empty($direccion) || empty($telefono)) {
             echo json_encode(['success' => false, 'error' => 'Todos los campos son obligatorios']);
@@ -95,12 +103,17 @@ class ClienteController
 
     private function actualizar(): void
     {
+        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
         $id        = (int)($_POST['id'] ?? 0);
-        $cedula    = trim($_POST['cedula'] ?? '');
-        $nombre    = trim($_POST['nombre'] ?? '');
-        $apellido  = trim($_POST['apellido'] ?? '');
-        $direccion = trim($_POST['direccion'] ?? '');
-        $telefono  = trim($_POST['telefono'] ?? '');
+        $cedula    = htmlspecialchars(trim($_POST['cedula'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $nombre    = htmlspecialchars(trim($_POST['nombre'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $apellido  = htmlspecialchars(trim($_POST['apellido'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $direccion = htmlspecialchars(trim($_POST['direccion'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $telefono  = htmlspecialchars(trim($_POST['telefono'] ?? ''), ENT_QUOTES, 'UTF-8');
 
         if (!$id || empty($cedula) || empty($nombre) || empty($apellido) || empty($direccion) || empty($telefono)) {
             echo json_encode(['success' => false, 'error' => 'Todos los campos son obligatorios']);
@@ -117,6 +130,11 @@ class ClienteController
 
     private function eliminar(): void
     {
+        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
         $id = (int)($_POST['id'] ?? 0);
         if (!$id) {
             echo json_encode(['success' => false, 'error' => 'ID no válido']);
