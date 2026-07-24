@@ -3,7 +3,8 @@
 **Arquitectura:** MVC con POO, Router OOP, Database Singleton, PDO estricto  
 **Base de datos:** MySQL 8+ (InnoDB, utf8mb4_spanish_ci)  
 **Frontend:** Materialize CSS 1.0.0 + jQuery 3.7.1 + JS modular  
-**Namespace:** `App\Core`, `App\Models`, `App\Controllers` (PSR-4)
+**Namespace:** `App\Core`, `App\Models`, `App\Controllers` (PSR-4)  
+**Seguridad:** CSRF tokens, XSS sanitización, session hardening, validación backend completa
 
 ---
 
@@ -15,9 +16,10 @@
 4. [Módulo Inventario](#4-módulo-inventario)
 5. [Módulo Ventas (POS)](#5-módulo-ventas-pos)
 6. [Módulo Proveedores / Solicitudes](#6-módulo-proveedores--solicitudes)
-7. [Módulo Reportes](#7-módulo-reportes)
-8. [Módulo Activos Fijos](#8-módulo-activos-fijos)
-9. [Módulo Cybercafé](#9-módulo-cybercafé)
+7. [Módulo Clientes](#7-módulo-clientes)
+8. [Módulo Reportes](#8-módulo-reportes)
+9. [Módulo Activos Fijos](#9-módulo-activos-fijos)
+10. [Módulo Cybercafé](#10-módulo-cybercafé)
 
 ---
 
@@ -46,14 +48,18 @@ eis_zona_web_lara/
 │   │   │   ├── Model.php                # Clase base abstracta para modelos
 │   │   │   └── router.php               # Enrutador OOP (clase Router, 385 líneas)
 │   │   ├── Controllers/
-│   │   │   ├── AuthController.php       # Login/logout con sesiones
+│   │   │   ├── AuthController.php       # Login/logout con sesiones + CSRF + session_regenerate_id
+│   │   │   ├── ClienteController.php    # CRUD clientes AJAX
 │   │   │   ├── inventarioController.php # CRUD inventario AJAX
 │   │   │   ├── RolController.php        # CRUD roles/permisos AJAX
-│   │   │   └── ProveedorController.php  # CRUD proveedores AJAX
+│   │   │   ├── ProveedorController.php  # CRUD proveedores AJAX (solicitudes)
+│   │   │   └── ProveedorGestionController.php # CRUD proveedores AJAX (gestión)
 │   │   ├── Models/
+│   │   │   ├── Cliente.php              # Modelo POO clientes
 │   │   │   ├── Inventario.php           # Modelo POO inventario (namespace)
 │   │   │   ├── Usuario.php              # Modelo POO usuarios
-│   │   │   ├── Proveedor.php            # Modelo POO proveedores
+│   │   │   ├── Proveedor.php            # Modelo POO proveedores (solicitudes)
+│   │   │   ├── ProveedorGestion.php     # Modelo POO proveedores (gestión)
 │   │   │   ├── Rol.php                  # Modelo POO roles/permisos
 │   │   │   ├── Asesoria.php             # Modelo POO asesorías
 │   │   │   ├── crud_users.php           # CRUD usuarios legacy
@@ -67,7 +73,8 @@ eis_zona_web_lara/
 │   │       ├── menu.php                 # Menú de navegación
 │   │       ├── inventario.php           # Gestión de inventario (conectado a BD)
 │   │       ├── ventas.php               # Punto de venta (POS)
-│   │       ├── proveedores.php          # Solicitudes (conectado a BD)
+│   │       ├── proveedores.php          # Solicitudes a proveedores (conectado a BD)
+│   │       ├── clientes.php             # Gestión de clientes (conectado a BD)
 │   │       ├── reportes.php             # Reportes y estadísticas
 │   │       ├── activos.php              # Activos fijos
 │   │       ├── ciberControl.php         # Control de cybercafé
@@ -104,10 +111,10 @@ eis_zona_web_lara/
 
 | Capa | Ubicación | Responsabilidad |
 |------|-----------|-----------------|
-| **Model** | `src/app/Models/*.php` (5 POO con namespace + 2 legacy) | Lógica de negocio, acceso a datos con PDO prepared statements |
+| **Model** | `src/app/Models/*.php` (7 POO con namespace + 2 legacy) | Lógica de negocio, acceso a datos con PDO prepared statements, validación con helpers reutilizables |
 | **View** | `src/app/Views/*.php` | Presentación HTML, datos del modelo |
-| **Controller** | `src/app/Controllers/*.php` (4 clases) | Orquestación: recibe request AJAX, llama a modelos, retorna JSON |
-| **Core** | `src/app/core/` (Database.php, Model.php, router.php) | Conexión Singleton, clase base, enrutamiento OOP |
+| **Controller** | `src/app/Controllers/*.php` (6 clases) | Orquestación: recibe request AJAX, valida datos, llama a modelos, retorna JSON |
+| **Core** | `src/app/core/` (Database.php, Model.php, router.php) | Conexión Singleton, clase base con helpers de validación, enrutamiento OOP con CSRF |
 | **Config** | `src/Config/database.php` | Conexión PDO legacy |
 
 ### 1.3 Principios PDO Estricto
@@ -162,19 +169,28 @@ PDO::ATTR_EMULATE_PREPARES   → false  (prepared statements reales)
 | Archivo | Ruta | Función |
 |---------|------|---------|
 | `login.php` | `src/app/Views/login.php` | Formulario de inicio de sesión |
-| `login_validate.php` | `src/app/Views/login_validate.php` | Procesa credenciales y gestiona sesión |
+| `login_validate.php` | `src/app/Views/login_validate.php` | Procesa credenciales y gestiona sesión (legacy) |
+| `AuthController.php` | `src/app/Controllers/AuthController.php` | Login/logout con sesiones + CSRF + session_regenerate_id |
 
 ### 2.2 Diseño y Estructura
 
-**Controlador implícito:** `router.php` (enruta a la vista correspondiente)
+**Controlador:** `AuthController.php` — maneja login/logout con CSRF y session hardening
 
 **Modelos relacionados:**
-- `crud.php` → funciones `crearUsuario()`, `obtenerUsuarios()`, `obtenerUsuarioPorId()`, `actualizarUsuario()`, `eliminarUsuario()` — todas con PDO prepared statements
-- `database.php` → conexión PDO con configuración estricta
+- `Usuario.php` → `validarUsuario()` — validación de credenciales con prepared statements
+- `crud_users.php` → funciones legacy `crearUsuario()`, `obtenerUsuarios()`, etc.
 
 **Vistas:**
-- `login.php`: standalone (sin sidebar), con glassmorphism, tema oscuro/claro
-- `login_validate.php`: lógica de validación POST, gestión de sesión
+- `login.php`: standalone (sin sidebar), con glassmorphism, tema oscuro/claro, campo CSRF oculto
+- `login_validate.php`: lógica de validación POST, gestión de sesión (legacy)
+
+**Seguridad implementada:**
+- CSRF token: `bin2hex(random_bytes(32))` en `Router::__construct()`, inyectado en `window.EIS.csrfToken` y en `<input name="csrf_token">`
+- `session_regenerate_id(true)` en login exitoso
+- `session_regenerate_id(true)` en logout
+- Prepared statements con `PDO::ATTR_EMULATE_PREPARES => false`
+- Sin `echo` de debug en respuestas JSON
+- Credenciales en constantes (pendiente migración a .env)
 
 ### 2.3 Flujo de Trabajo
 
@@ -633,7 +649,99 @@ Consultas PDO asociadas:
 
 ---
 
-## 7. Módulo Reportes
+## 7. Módulo Clientes
+
+### 7.1 Archivos
+
+| Archivo | Ruta | Función |
+|---------|------|---------|
+| `clientes.php` | `src/app/Views/clientes.php` | Vista de gestión de clientes |
+| `ClienteController.php` | `src/app/Controllers/ClienteController.php` | Controlador AJAX CRUD |
+| `Cliente.php` | `src/app/Models/Cliente.php` | Modelo POO con validación |
+
+### 7.2 Diseño y Estructura
+
+**Layout:** Sidebar + Main Content
+
+**Secciones:**
+1. **Barra de filtros** — búsqueda por nombre/cédula + botón "Nuevo Cliente"
+2. **Tabla de clientes** — columnas: ID, Cédula, Nombre, Apellido, Dirección, Teléfono, Acciones
+3. **Paginación** — controles de navegación
+
+### 7.3 Esquema de la Interfaz
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  ☰ Gestión de Clientes                    🌙  👤 Admin      │
+├──────────────────────────────────────────────────────────────┤
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ 🔍 [Buscar por nombre o cédula...]  [+ Nuevo Cliente] │  │
+│  └────────────────────────────────────────────────────────┘  │
+│                                                               │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ 👤 Lista de Clientes              Mostrando 3 de 45   │  │
+│  ├──────┬──────────┬────────┬─────────┬──────────┬────────┤  │
+│  │ ID   │ Cédula   │ Nombre │ Apellido│ Direcc.  │ Acc.   │  │
+│  ├──────┼──────────┼────────┼─────────┼──────────┼────────┤  │
+│  │ #1   │ V-12345  │ Carlos │ García  │ Calle 5  │ ✏️ 🗑️ │  │
+│  │ #2   │ V-67890  │ María  │ López   │ Av. 8    │ ✏️ 🗑️ │  │
+│  │ #3   │ V-11111  │ Pedro  │ Martínez│ Urb. 3   │ ✏️ 🗑️ │  │
+│  └──────┴──────────┴────────┴─────────┴──────────┴────────┘  │
+│                                                               │
+│   Mostrando 1-3 de 45    [← Ant] [1] [2] [3] [Sig →]        │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### 7.4 Validación Backend
+
+| Campo | Regla | Mensaje |
+|-------|-------|---------|
+| cedula | No vacío, mín. 5 caracteres, formato V-XXXXX o E-XXXXX | "La cédula debe tener al menos 5 caracteres" |
+| nombre | No vacío, mín. 2 caracteres | "El nombre debe tener al menos 2 caracteres" |
+| apellido | No vacío, mín. 2 caracteres | "El apellido debe tener al menos 2 caracteres" |
+| direccion | No vacío | "La dirección es obligatoria" |
+| telefono | No vacío | "El teléfono es obligatorio" |
+
+**Verificaciones adicionales:**
+- `existeCedula(excludeId)` — verifica unicidad de cédula excluyendo registro actual en edición
+
+### 7.5 Flujo de Trabajo
+
+```
+1. Usuario visita ?pagina=clientes
+2. router.php verifica autenticación
+3. Carga views/clientes.php
+4. JS: app.proveedores.js maneja eventos del módulo
+5. AJAX: CRUD completo vía ClienteController
+6. Backend: Cliente.php valida todos los campos antes de DB
+7. Respuesta: JSON con éxito/error, frontend muestra toast
+```
+
+### 7.6 Modelo de Datos
+
+```
+┌─────────────────────────┐
+│        clientes         │
+├─────────────────────────┤
+│ id (PK)                 │
+│ cedula (VARCHAR, UNQ)   │
+│ nombre (VARCHAR)        │
+│ apellido (VARCHAR)      │
+│ direccion (VARCHAR)     │
+│ telefono (VARCHAR)      │
+│ created_at              │
+│ updated_at              │
+└─────────────────────────┘
+```
+
+**Relaciones:**
+- `cliente_asesoria.cliente_id` → `clientes.id`
+- `orden_de_venta.cliente_id` → `clientes.id`
+- `sesion_ciber.cliente_id` → `clientes.id`
+
+---
+
+## 8. Módulo Reportes
 
 ### 7.1 Archivo
 
@@ -718,15 +826,15 @@ Consultas PDO asociadas:
 
 ---
 
-## 8. Módulo Activos Fijos
+## 9. Módulo Activos Fijos
 
-### 8.1 Archivo
+### 9.1 Archivo
 
 | Archivo | Ruta |
 |---------|------|
 | `activos.php` | `src/app/Views/activos.php` |
 
-### 8.2 Diseño y Estructura
+### 9.2 Diseño y Estructura
 
 **Layout:** Sidebar + Main Content
 
@@ -739,7 +847,7 @@ Consultas PDO asociadas:
    - Resumen (totales)
 3. Cada tarjeta contiene tabla con items y botón de acción
 
-### 8.3 Esquema de la Interfaz
+### 9.3 Esquema de la Interfaz
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -769,7 +877,7 @@ Consultas PDO asociadas:
 └──────────────────────────────────────────────────────────────┘
 ```
 
-### 8.4 Flujo de Trabajo
+### 9.4 Flujo de Trabajo
 
 ```
 1. Usuario visita ?pagina=activos
@@ -795,7 +903,7 @@ Consultas PDO asociadas:
    FROM activos
 ```
 
-### 8.5 Categorías de Activos
+### 9.5 Categorías de Activos
 
 | Tipo | Ejemplos | Estados posibles |
 |------|----------|------------------|
@@ -805,15 +913,15 @@ Consultas PDO asociadas:
 
 ---
 
-## 9. Módulo Cybercafé
+## 10. Módulo Cybercafé
 
-### 9.1 Archivo
+### 10.1 Archivo
 
 | Archivo | Ruta |
 |---------|------|
 | `ciberControl.php` | `src/app/Views/ciberControl.php` |
 
-### 9.2 Diseño y Estructura
+### 10.2 Diseño y Estructura
 
 **Layout:** Sidebar + Main Content
 
@@ -825,7 +933,7 @@ Consultas PDO asociadas:
 - `toggleStation(element)` — cambia estado entre Disponible/Ocupada con confirmación
 - `filterStations(filter)` — muestra/oculta estaciones por data-status
 
-### 9.3 Esquema de la Interfaz
+### 10.3 Esquema de la Interfaz
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -855,7 +963,7 @@ Consultas PDO asociadas:
 └──────────────────────────────────────────────────────────────┘
 ```
 
-### 9.4 Flujo de Trabajo
+### 10.4 Flujo de Trabajo
 
 ```
 1. Usuario visita ?pagina=ciberControl
@@ -889,7 +997,7 @@ Consultas PDO asociadas:
    └─────────────────────────────────────────────────────────┘
 ```
 
-### 9.5 Estados de Estación
+### 10.5 Estados de Estación
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -917,7 +1025,7 @@ Consultas PDO asociadas:
 | Ocupada | 🟡 Ámbar (`--warning`) | Finalizar sesión |
 | Mantenimiento | 🔴 Rojo (`--danger`) | Mostrar alerta informativa |
 
-### 9.6 Consultas PDO Asociadas
+### 10.6 Consultas PDO Asociadas
 
 ```php
 // Listar estaciones con sesión activa
@@ -945,7 +1053,7 @@ $stmt->execute([$sesionId]);
 $pdo->commit();
 ```
 
-### 9.7 Modelo de Datos: Estaciones + Sesiones
+### 10.7 Modelo de Datos: Estaciones + Sesiones
 
 ```
 ┌─────────────────────────┐       ┌─────────────────────────┐
@@ -1021,6 +1129,7 @@ Queries GET:
   ?pagina=inventario      → views/inventario.php      (protegida)
   ?pagina=ventas          → views/ventas.php          (protegida)
   ?pagina=proveedores     → views/proveedores.php     (protegida)
+  ?pagina=clientes        → views/clientes.php        (protegida)
   ?pagina=reportes        → views/reportes.php        (protegida)
   ?pagina=activos         → views/activos.php         (protegida)
   ?pagina=ciberControl    → views/ciberControl.php    (protegida)
@@ -1058,4 +1167,5 @@ El sistema implementa un sistema de temas persistente vía `localStorage`:
 ---
 
 *Documento de análisis técnico generado el 7 de mayo de 2026 — EIS System (Zona Web Lara)*  
+*Última actualización: julio 2026 — Módulo Clientes, ProveedorGestion, seguridad completa*  
 *Arquitectura: MVC + POO + PDO estricto | Base de datos: MySQL 8+ / InnoDB / utf8mb4*

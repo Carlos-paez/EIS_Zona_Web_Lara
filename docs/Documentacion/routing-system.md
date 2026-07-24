@@ -14,23 +14,27 @@ src/
 ├── app/
 │   ├── core/
 │   │   ├── Database.php         ← Conexion PDO Singleton
-│   │   ├── Model.php            ← Clase base abstracta para modelos
-│   │   └── router.php           ← Enrutador OOP (clase Router, 385 lineas)
+│   │   ├── Model.php            ← Clase base abstracta con helpers de validacion
+│   │   └── router.php           ← Enrutador OOP (clase Router, CSRF tokens)
 │   ├── Controllers/
-│   │   ├── AuthController.php   ← Login/logout con sesiones
+│   │   ├── AuthController.php   ← Login/logout con sesiones + CSRF + session_regenerate_id
+│   │   ├── ClienteController.php← Controlador AJAX clientes
 │   │   ├── inventarioController.php ← Controlador AJAX inventario
-│   │   ├── ProveedorController.php  ← Controlador AJAX proveedores
+│   │   ├── ProveedorController.php  ← Controlador AJAX proveedores (solicitudes)
+│   │   ├── ProveedorGestionController.php ← Controlador AJAX proveedores (gestion)
 │   │   └── RolController.php    ← Controlador AJAX roles/permisos
 │   ├── Models/
+│   │   ├── Cliente.php          ← Modelo POO clientes
 │   │   ├── Inventario.php       ← Modelo POO inventario (namespace)
 │   │   ├── Usuario.php          ← Modelo POO usuarios
-│   │   ├── Proveedor.php        ← Modelo POO proveedores
+│   │   ├── Proveedor.php        ← Modelo POO proveedores (solicitudes)
+│   │   ├── ProveedorGestion.php ← Modelo POO proveedores (gestion)
 │   │   ├── Rol.php              ← Modelo POO roles/permisos
 │   │   ├── Asesoria.php         ← Modelo POO asesorias
 │   │   ├── crud_users.php       ← CRUD usuarios legacy
 │   │   └── crud_asesorias.php   ← CRUD asesorias legacy
 │   ├── template/
-│   │   └── layout.php           ← Layout maestro con JS condicional (6 modulos JS)
+│   │   └── layout.php           ← Layout maestro con CSRF token + JS condicional
 │   └── Views/
 │       ├── login.php            ← Formulario de inicio de sesion
 │       ├── login_validate.php   ← Validacion de credenciales (legacy)
@@ -38,6 +42,7 @@ src/
 │       ├── inventario.php       ← Gestion de inventario (conectado a BD)
 │       ├── ventas.php           ← Punto de venta (POS)
 │       ├── proveedores.php      ← Solicitudes a proveedores (conectado a BD)
+│       ├── clientes.php         ← Gestion de clientes (conectado a BD)
 │       ├── reportes.php         ← Reportes y estadisticas
 │       ├── activos.php          ← Activos fijos
 │       ├── ciberControl.php     ← Control de cybercafe
@@ -104,12 +109,14 @@ Ahora usa autoloader de Composer. El flujo es: `index.php` -> `new Router()` -> 
 
 ### Mapa de rutas
 
-El enrutamiento usa la clase `Router` en namespace `App\Core`. Soporta 4 tipos de peticiones:
-1. **AJAX de inventario** (`?pagina=inventario&action=X`) -> `InventarioController`
-2. **AJAX de roles** (`?pagina=roles&action=X`) -> `RolController`
-3. **AJAX de proveedores** (`?pagina=proveedores&action=X`) -> `ProveedorController`
-4. **Auth actions** (`?pagina=login_validate` o `logout`) -> `AuthController`
-5. **Vistas normales** -> `renderView()` -> `layout.php` + vista
+El enrutamiento usa la clase `Router` en namespace `App\Core`. Soporta 6 tipos de peticiones:
+1. **AJAX de clientes** (`?pagina=clientes&action=X`) -> `ClienteController`
+2. **AJAX de inventario** (`?pagina=inventario&action=X`) -> `InventarioController`
+3. **AJAX de roles** (`?pagina=roles&action=X`) -> `RolController`
+4. **AJAX de proveedores** (`?pagina=proveedores&action=X`) -> `ProveedorController`
+5. **AJAX de proveedores-gestion** (`?pagina=proveedores-gestion&action=X`) -> `ProveedorGestionController`
+6. **Auth actions** (`?pagina=login_validate` o `logout`) -> `AuthController`
+7. **Vistas normales** -> `renderView()` -> `layout.php` + vista
 
 ### Estructura de la clase
 
@@ -129,6 +136,9 @@ class Router
 
     public function handle(): void
     {
+        if ($this->isAjaxCliente()) {
+            $this->runClienteController(); return;
+        }
         if ($this->isAjaxInventario()) {
             $this->runInventarioController(); return;
         }
@@ -137,6 +147,9 @@ class Router
         }
         if ($this->isAjaxProveedores()) {
             $this->runProveedorController(); return;
+        }
+        if ($this->isAjaxProveedorGestion()) {
+            $this->runProveedorGestionController(); return;
         }
         if ($this->isAuthAction()) {
             $this->runAuthAction(); return;
@@ -156,6 +169,11 @@ class Router
         return $pagina;
     }
 
+    private function isAjaxCliente(): bool
+    {
+        return $this->pagina === 'clientes' && isset($_GET['action']);
+    }
+
     private function isAjaxInventario(): bool
     {
         return $this->pagina === 'inventario' && isset($_GET['action']);
@@ -171,6 +189,11 @@ class Router
         return $this->pagina === 'proveedores' && isset($_GET['action']);
     }
 
+    private function isAjaxProveedorGestion(): bool
+    {
+        return $this->pagina === 'proveedores-gestion' && isset($_GET['action']);
+    }
+
     private function isAuthAction(): bool
     {
         return $this->pagina === 'login_validate' || $this->pagina === 'logout';
@@ -183,6 +206,14 @@ class Router
             echo json_encode(['success' => false, 'error' => 'No autenticado']);
             exit;
         }
+    }
+
+    private function runClienteController(): void
+    {
+        $this->requireAuth();
+        $controller = new \App\Controllers\ClienteController();
+        $controller->handle();
+        exit;
     }
 
     private function runInventarioController(): void
@@ -205,6 +236,14 @@ class Router
     {
         $this->requireAuth();
         $controller = new \App\Controllers\ProveedorController();
+        $controller->handle();
+        exit;
+    }
+
+    private function runProveedorGestionController(): void
+    {
+        $this->requireAuth();
+        $controller = new \App\Controllers\ProveedorGestionController();
         $controller->handle();
         exit;
     }
@@ -270,17 +309,21 @@ class Router
 
 | Metodo | Explicacion |
 |--------|-------------|
-| `__construct()` | Inicia sesion y resuelve `$pagina` mediante `resolvePage()` |
+| `__construct()` | Inicia sesion, genera CSRF token (`bin2hex(random_bytes(32))`), resuelve `$pagina` |
 | `handle()` | Metodo principal: determina el tipo de peticion y ejecuta la accion |
 | `resolvePage()` | Lee `$_GET["pagina"]`, valida con regex, retorna el nombre (default: "login") |
+| `isAjaxCliente()` | True si pagina='clientes' Y existe `$_GET['action']` |
 | `isAjaxInventario()` | True si pagina='inventario' Y existe `$_GET['action']` |
 | `isAjaxRoles()` | True si pagina='roles' Y existe `$_GET['action']` |
 | `isAjaxProveedores()` | True si pagina='proveedores' Y existe `$_GET['action']` |
+| `isAjaxProveedorGestion()` | True si pagina='proveedores-gestion' Y existe `$_GET['action']` |
 | `isAuthAction()` | True si pagina='login_validate' o 'logout' |
 | `requireAuth()` | Verifica `$_SESSION['logged_in']`, si no existe: JSON error + exit |
+| `runClienteController()` | Instancia y ejecuta `\App\Controllers\ClienteController` |
 | `runInventarioController()` | Instancia y ejecuta `\App\Controllers\InventarioController` |
 | `runRolController()` | Instancia y ejecuta `\App\Controllers\RolController` |
 | `runProveedorController()` | Instancia y ejecuta `\App\Controllers\ProveedorController` |
+| `runProveedorGestionController()` | Instancia y ejecuta `\App\Controllers\ProveedorGestionController` |
 | `runAuthAction()` | Instancia `AuthController` y llama `login()` o `logout()` |
 | `renderView()` | Verifica auth, determina si es publica o protegida, y renderiza |
 | `renderWithLayout()` | Prepara variables ($pageTitle, $headerExtra, $contentView) e incluye layout.php |
@@ -289,13 +332,15 @@ class Router
 
 | Aspecto | Version anterior (procedural) | Version actual (OOP) |
 |---------|------------------------------|----------------------|
-| **Tipo** | Script procedural (75 lineas) | Clase con namespace (385 lineas) |
+| **Tipo** | Script procedural (75 lineas) | Clase con namespace |
 | **Autoloader** | No usado | Composer PSR-4 |
-| **AJAX** | Solo inventario | Inventario, Roles, Proveedores |
-| **Auth** | login_validate.php (vista) | AuthController con login()/logout() |
+| **AJAX** | Solo inventario | Clientes, Inventario, Roles, Proveedores, ProveedorGestion |
+| **Auth** | login_validate.php (vista) | AuthController con login()/logout() + session_regenerate_id |
+| **CSRF** | No implementado | `bin2hex(random_bytes(32))` en constructor + `<input name="csrf_token">` |
 | **Seguridad AJAX** | No verificaba auth | `requireAuth()` con respuesta JSON |
 | **Logout** | No implementado | `AuthController::logout()` |
-| **Titulos** | 9 modulos | 10 modulos (incluye 'roles') |
+| **Titulos** | 9 modulos | 13 modulos |
+| **Validacion** | Sin helpers | Model.php: non-empty, min-length, pattern, FK existence, duplicates |
 
 ---
 
@@ -336,7 +381,7 @@ class Router
 <?php if ($pagina === 'roles'): ?>
 <script src="Public/js/app.roles.js"></script>
 <?php endif; ?>
-<?php if ($pagina === 'proveedores'): ?>
+<?php if ($pagina === 'proveedores' || $pagina === 'clientes' || $pagina === 'proveedores-gestion'): ?>
 <script src="Public/js/app.proveedores.js"></script>
 <?php endif; ?>
 ```
@@ -356,6 +401,10 @@ class Router
 | `ventas` | `ventas.php` | No | `app.pos.js` |
 | `proveedores` | `proveedores.php` | No | `app.proveedores.js` |
 | `proveedores&action=X` | `ProveedorController::handle()` | No | (AJAX) |
+| `clientes` | `clientes.php` | No | `app.proveedores.js` |
+| `clientes&action=X` | `ClienteController::handle()` | No | (AJAX) |
+| `proveedores-gestion` | proveedores.php | No | `app.proveedores.js` |
+| `proveedores-gestion&action=X` | `ProveedorGestionController::handle()` | No | (AJAX) |
 | `ciberControl` | `ciberControl.php` | No | `app.cyber.js` |
 | `reportes` | `reportes.php` | No | Ninguno |
 | `activos` | `activos.php` | No | Ninguno |
@@ -382,7 +431,8 @@ Views/
 ├── dashboard.php               # Protegida, dentro del layout
 ├── inventario.php              # Conectado a BD
 ├── ventas.php
-├── proveedores.php             # Conectado a BD
+├── proveedores.php             # Conectado a BD (solicitudes)
+├── clientes.php                # Conectado a BD
 ├── reportes.php
 ├── activos.php
 ├── ciberControl.php
@@ -401,9 +451,12 @@ Views/
 | **Path Traversal** | Regex `preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)` en router.php |
 | **Autenticacion** | Verificacion de `$_SESSION['logged_in']` antes de cargar vistas protegidas |
 | **404** | `is_file()` verifica existencia del archivo de vista |
-| **CSRF** | Pendiente de implementar |
-| **SQL Injection** | Los modelos usan prepared statements con PDO |
+| **CSRF** | Token en constructor: `bin2hex(random_bytes(32))`, inyectado en `window.EIS.csrfToken` y `<input name="csrf_token">` |
+| **XSS** | Helper `escHtml()` en JS, `htmlspecialchars()` en PHP, Model sanitizes strings |
+| **Session Hardening** | `session_regenerate_id(true)` en login/logout |
+| **SQL Injection** | Los modelos usan prepared statements con PDO (`ATTR_EMULATE_PREPARES => false`) |
 | **Listado Directorios** | `Options All -Indexes` en .htaccess |
+| **Double Escaping** | Controllers usan solo `trim()`, Model maneja sanitizacion |
 
 ---
 
@@ -481,18 +534,19 @@ Usuario: GET /src/?pagina=ventas
 
 | Aspecto | Actual (Procedural -> OOP) | MVC Completo |
 |---------|---------------------------|--------------|
-| **Enrutador** | `Router` clase con 385 lineas, OOP | Framework (Laravel, Symfony) con routing DSL |
+| **Enrutador** | `Router` clase con namespace, OOP | Framework (Laravel, Symfony) con routing DSL |
 | **Punto de entrada** | `autoload.php` + `new Router()` + `->handle()` | Igual, pero con contenedor DI |
-| **Controladores** | 4 controladores con namespace, metodo `handle()` | Controladores con acciones por metodo |
+| **Controladores** | 6 controladores con namespace, metodo `handle()` | Controladores con acciones por metodo |
 | **Layout** | `template/layout.php` | `Views/layouts/main.php` |
 | **Vistas** | `Views/dashboard.php` (plano) | `Views/dashboard/index.php` (subdirectorios) |
 | **Autoloader** | Composer PSR-4 | Igual |
-| **Logica de login** | `AuthController::login()` con `password_verify` | LoginController::validate() con guards |
+| **Logica de login** | `AuthController::login()` con `password_verify` + CSRF | LoginController::validate() con guards |
 | **Datos de Cyber** | En la vista (`ciberControl.php`) | En el controlador |
 | **Titulos** | Array en `Router::renderWithLayout()` | Propiedad de clase Controller |
 | **ORM** | PDO directo | Eloquent/Doctrine |
 | **Middleware** | `requireAuth()` interno | Sistema de middlewares encadenables |
 | **Request** | `$_GET`, `$_POST` directos | Request::capture() encapsulado |
+| **Validacion** | Model.php helpers (non-empty, min-length, FK existence) | FormRequest classes |
 
 ---
 
@@ -520,8 +574,11 @@ Usuario: GET /src/?pagina=ventas
 | CRUD roles via AJAX (crear, editar, eliminar, permisos) | PASS |
 | CRUD proveedores via AJAX (crear, editar, eliminar) | PASS |
 | CRUD usuarios via AJAX (crear, editar, eliminar) | PASS |
+| CRUD clientes via AJAX (crear, editar, eliminar) | PASS |
+| CRUD proveedores-gestion via AJAX (crear, editar, eliminar) | PASS |
 | Login con usuario de BD via AuthController::login() | PASS |
 | Logout via AuthController::logout() | PASS |
+| CSRF token se genera y valida en todas las peticiones | PASS |
 | Autoloader de Composer (PSR-4) funciona | PASS |
 
 ---

@@ -339,7 +339,7 @@ Implementa el patrón de diseño Singleton para centralizar y compartir la conex
 
 ## 4. Modelo Base Abstracto: `src/app/core/Model.php`
 
-Actúa como plantilla común para todos los modelos específicos de datos de la aplicación.
+Actúa como plantilla común para todos los modelos específicos de datos de la aplicación, con helpers de validación reutilizables.
 
 ```php
 1: <?php
@@ -348,14 +348,14 @@ Actúa como plantilla común para todos los modelos específicos de datos de la 
 
 ```php
 2: // =============================================================================
-3: // CLASE ABSTRACTA Model
+3: // CLASE ABSTRACTA Model (con helpers de validación)
 4: // =============================================================================
 5: // Propósito: Clase base para todos los modelos de la aplicación.
-6: //            Proporciona la conexión a la base de datos PDO a todas las
-7: //            subclases mediante el patrón Singleton (Database::getConnection()).
+6: //            Proporciona la conexión a la base de datos PDO y helpers
+7: //            de validación reutilizables para todos los modelos.
 8: // =============================================================================
 ```
-* **Líneas 2-8**: Explica el papel de la clase abstracta para consolidar la inyección implícita de la conexión Singleton PDO en todas las clases hijas.
+* **Líneas 2-8**: Explica el papel de la clase abstracta para consolidar la inyección implícita de la conexión Singleton PDO y los helpers de validación.
 
 ```php
 10: // Declara el namespace 'App\Core' para organizar esta clase dentro de la aplicación
@@ -364,53 +364,111 @@ Actúa como plantilla común para todos los modelos específicos de datos de la 
 * **Línea 11**: Declara el espacio de nombres de pertenencia `App\Core`.
 
 ```php
-13: // Importa la clase PDO de PHP para usarla como tipo en la propiedad $db
-14: use PDO;
+13: use PDO;
 ```
-* **Línea 14**: Importa la clase base del sistema PDO de PHP.
+* **Línea 13**: Importa la clase base del sistema PDO de PHP.
 
 ```php
-16: /**
-17:  * Clase abstracta Model - Clase base para todos los modelos de datos.
-...
-22:  */
-23: abstract class Model
-24: {
+16: abstract class Model
+17: {
 ```
-* **Líneas 16-22**: Documentación PHPDoc del modelo base.
-* **Línea 23**: Define la clase como `abstract`. Esto impide que se pueda instanciar de manera directa (`new Model()` daría un error fatal), forzando a que únicamente pueda ser utilizada mediante herencia por otras clases concretas de negocio.
+* **Línea 16**: Define la clase como `abstract`.
 
 ```php
-25:     /**
-26:      * Instancia de la conexión PDO a la base de datos.
-...
-32:      */
-33:     protected PDO $db;
+19:     protected PDO $db;
 ```
-* **Líneas 25-32**: PHPDoc para la propiedad protegida.
-* **Línea 33**: Declara la propiedad protegida `$db` que acepta únicamente objetos del tipo `PDO`. Al ser **protegida (`protected`)**, la variable no es accesible públicamente desde fuera, pero sí es heredada y visible de forma directa por cualquier clase hija (por ejemplo, `Usuario`, `Inventario`, `Asesoria`, etc.).
+* **Línea 19**: Declara la propiedad protegida `$db` que acepta objetos `PDO`.
 
 ```php
-35:     /**
-36:      * Constructor de la clase Model.
-...
-41:      */
-42:     public function __construct()
-43:     {
+21:     public function __construct()
+22:     {
+23:         $this->db = Database::getConnection();
+24:     }
 ```
-* **Líneas 35-41**: PHPDoc del método constructor.
-* **Línea 42**: Define el método constructor mágico `__construct()`, el cual se dispara de forma automática cuando se crea un objeto de alguna de las subclases de `Model`.
+* **Línea 23**: Invoca `Database::getConnection()` para resolver la conexión PDO Singleton.
+
+### Helpers de Sanitización
 
 ```php
-44:         // Llama al método estático getConnection() de la clase Database
-45:         // Este método implementa el patrón Singleton: solo hay una conexión en toda la app
-46:         $this->db = Database::getConnection();
-47:     }
-48: }
+    protected function sanitizeString($value): string
+    {
+        return htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
+    }
+
+    protected function sanitizeInt($value): int
+    {
+        return (int) $value;
+    }
+
+    protected function sanitizeFloat($value): float
+    {
+        return (float) $value;
+    }
 ```
-* **Línea 46**: Invoca el método estático `Database::getConnection()` para resolver la única conexión PDO disponible de forma inmediata y asignarla de manera limpia a la propiedad local `$this->db`.
-* **Línea 47**: Finaliza el constructor.
-* **Línea 48**: Finaliza la clase abstracta `Model`.
+* **sanitizeString()**: Limpia la cadena con `trim()` y `htmlspecialchars()` para prevenir XSS.
+* **sanitizeInt()**: Convierte a entero seguro.
+* **sanitizeFloat()**: Convierte a float seguro.
+
+### Helpers de Validación
+
+```php
+    protected function validateNotEmpty($value, string $fieldName): void
+    {
+        if (empty(trim($value))) {
+            throw new \InvalidArgumentException("El campo {$fieldName} no puede estar vacío");
+        }
+    }
+
+    protected function validateMinLength($value, int $min, string $fieldName): void
+    {
+        if (strlen(trim($value)) < $min) {
+            throw new \InvalidArgumentException("{$fieldName} debe tener al menos {$min} caracteres");
+        }
+    }
+
+    protected function validatePattern($value, string $pattern, string $fieldName, string $message): void
+    {
+        if (!preg_match($pattern, $value)) {
+            throw new \InvalidArgumentException($message);
+        }
+    }
+
+    protected function validatePositive($value, string $fieldName): void
+    {
+        if ($value < 0) {
+            throw new \InvalidArgumentException("{$fieldName} debe ser positivo");
+        }
+    }
+
+    protected function validateGreaterOrEqual($value, int $min, string $fieldName): void
+    {
+        if ($value < $min) {
+            throw new \InvalidArgumentException("{$fieldName} debe ser mayor o igual a {$min}");
+        }
+    }
+
+    protected function validateEmail($value, string $fieldName): void
+    {
+        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException("{$fieldName} debe ser un email válido");
+        }
+    }
+```
+* Cada helper lanza `\InvalidArgumentException` cuando la validación falla.
+* Los controladores capturan esta excepción y muestran el mensaje al usuario.
+
+### Helper de Verificación en BD
+
+```php
+    protected function existeEnTabla(string $tabla, string $columna, $valor): bool
+    {
+        $sql = "SELECT COUNT(*) FROM {$tabla} WHERE {$columna} = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$valor]);
+        return (int) $stmt->fetchColumn() > 0;
+    }
+```
+* Verifica si un valor existe en una tabla, útil para unicidad y FK checks.
 
 ---
 
@@ -439,58 +497,72 @@ Este archivo contiene el motor de enrutamiento principal. Se detallan sus partes
 40:     {
 41:         // Inicia o reanuda la sesión del usuario para acceder a $_SESSION
 42:         session_start();
-43:         // Determina qué página se pidió mediante el método resolvePage()
-44:         $this->pagina = $this->resolvePage();
-45:     }
+43:         // Genera un token CSRF único para esta sesión
+44:         $this->csrfToken = bin2hex(random_bytes(32));
+45:         // Determina qué página se pidió mediante el método resolvePage()
+46:         $this->pagina = $this->resolvePage();
+47:     }
 ```
 * **Línea 39**: Constructor del Router.
-* **Línea 42**: Ejecuta de forma segura `session_start()` al inicio del ciclo de vida de la solicitud. Esto habilita el acceso global y lectura/escritura del array superglobal `$_SESSION` de PHP para autenticación de usuario.
-* **Línea 44**: Resuelve y valida el nombre del recurso solicitado invocando el método interno `resolvePage()` y guardándolo en el campo `$this->pagina`.
+* **Línea 42**: Ejecuta `session_start()` al inicio del ciclo de vida de la solicitud.
+* **Línea 44**: Genera un token CSRF único using `bin2hex(random_bytes(32))`. Este token se inyecta en `window.EIS.csrfToken` para uso en AJAX y en `<input name="csrf_token">` para formularios.
+* **Línea 46**: Resuelve y valida el nombre del recurso solicitado.
 
 ```php
 57:     public function handle(): void
 58:     {
 ```
-* **Línea 57**: Define el método principal `handle()`. Es el encargado de despachar y dirigir la solicitud a los controladores asíncronos o de autenticación correspondientes.
+* **Línea 57**: Define el método principal `handle()`.
 
 ```php
-60:         if ($this->isAjaxInventario()) {
-61:             $this->runInventarioController();
-62:             return;                           // Sale para no seguir procesando
+60:         if ($this->isAjaxCliente()) {
+61:             $this->runClienteController();
+62:             return;
 63:         }
+64: 
+65:         if ($this->isAjaxInventario()) {
+66:             $this->runInventarioController();
+67:             return;
+68:         }
 ```
-* **Línea 60-63**: Detecta si la petición solicita recursos asíncronos (AJAX) relacionados al módulo de Inventario. Si es afirmativo, llama al manejador de su controlador y detiene la ejecución inmediatamente con `return` para no devolver bloques HTML innecesarios de la interfaz visual común.
+* **Líneas 60-68**: Detecta si la petición es AJAX de clientes o inventario. Si es afirmativo, llama al manejador correspondiente y detiene la ejecución con `return`.
 
 ```php
-65:         // Si es una petición AJAX de roles (tiene ?action=...), deriva al controlador
-66:         if ($this->isAjaxRoles()) {
-67:             $this->runRolController();
-68:             return;
-69:         }
-70: 
-71:         // Si es una petición AJAX de proveedores (tiene ?action=...), deriva al controlador
-72:         if ($this->isAjaxProveedores()) {
-73:             $this->runProveedorController();
-74:             return;
-75:         }
+70:         // Si es una petición AJAX de roles (tiene ?action=...), deriva al controlador
+71:         if ($this->isAjaxRoles()) {
+72:             $this->runRolController();
+73:             return;
+74:         }
+75: 
+76:         // Si es una petición AJAX de proveedores (tiene ?action=...), deriva al controlador
+77:         if ($this->isAjaxProveedores()) {
+78:             $this->runProveedorController();
+79:             return;
+80:         }
+81: 
+82:         // Si es una petición AJAX de proveedores-gestion (tiene ?action=...), deriva al controlador
+83:         if ($this->isAjaxProveedorGestion()) {
+84:             $this->runProveedorGestionController();
+85:             return;
+86:         }
 ```
-* **Líneas 65-75**: Replica la estructura condicional para despachar de manera separada y ordenada las peticiones AJAX dirigidas a los controladores de Roles (`RolController`) y Proveedores (`ProveedorController`).
+* **Líneas 70-86**: Replica la estructura condicional para despachar peticiones AJAX de Roles, Proveedores y ProveedorGestion.
 
 ```php
-77:         // Si es una acción de autenticación (login_validate o logout), deriva al AuthController
-78:         if ($this->isAuthAction()) {
-79:             $this->runAuthAction();
-80:             return;
-81:         }
+88:         // Si es una acción de autenticación (login_validate o logout), deriva al AuthController
+89:         if ($this->isAuthAction()) {
+90:             $this->runAuthAction();
+91:             return;
+92:         }
 ```
-* **Líneas 77-81**: Intercepta si el usuario está intentando realizar una acción crítica de inicio de sesión o cierre de sesión, derivando la llamada al método especializado de autenticación `runAuthAction()`.
+* **Líneas 88-92**: Intercepta acciones de autenticación.
 
 ```php
-83:         // Para cualquier otra página, renderiza la vista correspondiente
-84:         $this->renderView();
-85:     }
+94:         // Para cualquier otra página, renderiza la vista correspondiente
+95:         $this->renderView();
+96:     }
 ```
-* **Línea 84**: Si la solicitud no corresponde a un caso especial de API JSON o acción de autenticación, procede a cargar la vista visual estándar de la interfaz de usuario.
+* **Línea 95**: Si no es ninguna acción especial, procede a cargar la vista visual.
 
 ```php
 97:     private function resolvePage(): string
@@ -600,7 +672,7 @@ Este archivo contiene el motor de enrutamiento principal. Se detallan sus partes
 
 ## 6. Controlador de Autenticación: `src/app/Controllers/AuthController.php`
 
-Maneja los procesos de validación de identidad y cierre de sesiones de usuarios en la plataforma.
+Maneja los procesos de validación de identidad y cierre de sesiones de usuarios en la plataforma, con CSRF y session hardening.
 
 ```php
 1: <?php
@@ -620,91 +692,65 @@ Maneja los procesos de validación de identidad y cierre de sesiones de usuarios
 ```php
 23: class AuthController
 24: {
-25:     /**
-26:      * Instancia del modelo Usuario
-...
-30:      */
-31:     private Usuario $model;
+25:     private Usuario $model;
 ```
 * **Línea 23**: Declara la clase `AuthController`.
-* **Línea 31**: Define la propiedad privada de tipado fuerte `Usuario $model` que persistirá la instancia activa para consultas SQL.
+* **Línea 25**: Define la propiedad privada de tipado fuerte `Usuario $model`.
 
 ```php
 40:     public function __construct()
 41:     {
-42:         // Crea una nueva instancia del modelo Usuario y la asigna a la propiedad $model
-43:         $this->model = new Usuario();
-44:     }
+42:         $this->model = new Usuario();
+43:     }
 ```
-* **Línea 40**: Constructor del controlador de autenticación.
-* **Línea 43**: Instancia el modelo especializado en usuarios asignándolo al campo local `$this->model`.
+* **Línea 42**: Instancia el modelo especializado en usuarios.
 
 ```php
 56:     public function login(): void
 57:     {
-58:         // Verifica que el método de la petición HTTP sea POST (el formulario de login envía POST)
-59:         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-60:             // Si no es una petición POST, redirige al usuario a la página de login
-61:             header('Location: ?pagina=login');
-62:             // Detiene la ejecución del script para asegurar que la redirección se complete
-63:             exit;
-64:         }
+58:         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+59:             header('Location: ?pagina=login');
+60:             exit;
+61:         }
 ```
-* **Línea 56**: Define el método de inicio de sesión.
-* **Línea 59**: Evalúa si el método de petición de red de entrada es estrictamente de tipo `POST` mediante la superglobal `$_SERVER['REQUEST_METHOD']`. Si no lo es, redirige forzosamente e interrumpe el script con `exit`, bloqueando accesos por URL directa mediante GET.
+* **Línea 58**: Evalúa si el método de petición es estrictamente `POST`.
 
 ```php
 67:         $username = $_POST['username'] ?? '';
 68:         $password = $_POST['password'] ?? '';
 ```
-* **Líneas 67-68**: Extrae de forma segura las credenciales enviadas por el formulario web en `$_POST`. El operador de fusión de nulos (`??`) garantiza que si alguna variable no se envió, se le asigne por defecto una cadena de texto vacía, evitando advertencias (*Warnings*) en el intérprete de PHP.
+* **Líneas 67-68**: Extrae las credenciales de forma segura con operador de fusión de nulos.
 
 ```php
 73:         $usuario = $this->model->autenticar($username, $password);
 ```
-* **Línea 73**: Invoca al método de negocio del modelo `autenticar()`. Este método buscará el registro activo en la tabla `usuarios` y ejecutará la comparación algorítmica de la contraseña ingresada contra el hash encriptado con **Bcrypt** guardado en la base de datos.
+* **Línea 73**: Invoca al método de negocio `autenticar()` que busca el registro en BD y ejecuta `password_verify()`.
 
 ```php
 76:         if (($usuario)) {
-77:             // Establece la variable de sesión 'logged_in' como true para indicar sesión activa
+77:             session_regenerate_id(true);
 78:             $_SESSION['logged_in'] = true;
-79:             // Guarda el ID del usuario autenticado en la sesión para referencias futuras
-80:             $_SESSION['user_id']   = $usuario['id'];
-81:             // Guarda el nombre de usuario (user_name) en la sesión
-82:             $_SESSION['username']  = $usuario['user_name'];
-83:             // Guarda el nombre completo del usuario en la sesión
-84:             $_SESSION['nombre']    = $usuario['nombre'];
-85:             // Redirige al dashboard (página principal del sistema) después del login exitoso
-86:             header('Location: ?pagina=dashboard');
-87:             // Detiene la ejecución para completar la redirección
-88:             exit;
-89:         }
+79:             $_SESSION['user_id']   = $usuario['id'];
+80:             $_SESSION['username']  = $usuario['user_name'];
+81:             $_SESSION['nombre']    = $usuario['nombre'];
+82:             header('Location: ?pagina=dashboard');
+83:             exit;
+84:         }
 ```
-* **Línea 76**: Verifica si el método `autenticar` retornó de forma exitosa los datos del usuario (lo cual se interpreta como un valor verdadero `true`).
-* **Líneas 78-84**: Almacena en la memoria segura del servidor (`$_SESSION`) las variables de contexto de sesión del usuario autenticado (estado, identificador, nombre de usuario y nombre completo).
-* **Línea 86**: Redirecciona al usuario mediante cabecera HTTP directa al panel de administración del Dashboard (`?pagina=dashboard`).
-* **Línea 88**: Aborta la ejecución para materializar la redirección.
-
-```php
-92:         header('Location: ?pagina=login&error=1');
-93:         exit;
-94:     }
-```
-* **Línea 92**: Si la verificación de credenciales falla, emite una redirección al login adjuntando el flag de error `error=1`. Esto habilita a la vista a mostrar visualmente un aviso detallando el fallo de autenticación de forma segura y amigable.
-* **Línea 93**: Finaliza con `exit` para garantizar que no se prosiga procesando nada más.
+* **Línea 77**: `session_regenerate_id(true)` — regenera el ID de sesión para prevenir session fixation attacks.
+* **Líneas 78-81**: Almacena las variables de contexto del usuario en la sesión.
 
 ```php
 105:     public function logout(): void
 106:     {
-107:         // Destruye completamente la sesión actual, eliminando todas las variables de sesión
+107:         session_regenerate_id(true);
 108:         session_destroy();
-109:         // Redirige al usuario a la página de login después de cerrar sesión
-110:         header('Location: ?pagina=login');
-111:         // Detiene la ejecución para completar la redirección
-112:         exit;
-113:     }
+109:         header('Location: ?pagina=login');
+110:         exit;
+111:     }
 ```
-* **Líneas 105-113**: Proceso de desconexión seguro. Llama a la función nativa `session_destroy()` para eliminar la sesión del servidor de raíz y redirige al usuario a la pantalla de login.
+* **Línea 107**: `session_regenerate_id(true)` — regenera el ID antes de destruir la sesión por seguridad.
+* **Línea 108**: Destruye completamente la sesión del servidor.
 
 ---
 
@@ -1023,15 +1069,19 @@ Este archivo sirve como pantalla de contingencia visual cuando el cliente pierde
 Para dar una explicación completa de toda la aplicación, se resume a continuación el comportamiento de los componentes que interactúan con el núcleo detallado anteriormente:
 
 ### Controladores Secundarios (Módulos AJAX JSON)
-* **`inventarioController.php`**: Controla toda la gestión de mercancías. Procesa acciones como `'listar'`, `'kpis'`, `'categorias'`, `'crear'` y `'actualizar'` mediante una potente estructura `match()` de PHP 8, validando la entrada de datos de formulario POST antes de llamar al modelo e imprimiendo los resultados codificados en formato JSON estructurado.
-* **`ProveedorController.php`**: API JSON encargada de administrar las órdenes de compra. Maneja flujos de transacciones complejas para registrar compras, añadir productos a las líneas de detalle de las órdenes de abastecimiento o eliminarlas, controlando errores mediante captura de excepciones de base de datos.
-* **`RolController.php`**: Gestiona el control de acceso basado en roles (RBAC). Ofrece endpoints seguros para crear y editar roles, listar permisos de la base de datos, guardar la matriz de permisos de cada rol en transacciones SQL protegidas y asignar roles a los usuarios del sistema.
+* **`ClienteController.php`**: API JSON para gestión de clientes. Maneja acciones CRUD con validación completa: cédula (min 5, formato, unicidad), nombre (min 2), apellido (min 2), dirección y teléfono (no vacíos). Captura `\InvalidArgumentException` para mensajes de validación al usuario.
+* **`inventarioController.php`**: Controla toda la gestión de mercancías. Procesa acciones como `'listar'`, `'kpis'`, `'categorias'`, `'crear'` y `'actualizar'` mediante `match()`. Incluye validación de rangos numéricos (stock >= 0, precio_venta >= costo_compra) y verificación de FK de categoría.
+* **`ProveedorController.php`**: API JSON para órdenes de abastecimiento. Maneja FK de proveedor/status, validación de fecha (YYYY-MM-DD), número (no vacío), cantidad (>= 1) y precio (> 0).
+* **`ProveedorGestionController.php`**: API JSON para gestión de proveedores. Valida RIF (min 5, unicidad), nombre (min 2), email (formato), teléfono (no vacío).
+* **`RolController.php`**: Gestiona RBAC. Ofrece endpoints para crear/editar roles, listar permisos, guardar matriz de permisos en transacciones SQL, con protección de admin (id=1) y unicidad de nombre.
 
 ### Modelos de Datos Adicionales (OOP)
-* **`Inventario.php`**: Proporciona sentencias de filtrado e inserción para la tabla `productos`. Cuenta con funciones para calcular indicadores en tiempo real como el conteo de existencias por debajo del stock mínimo (`stockBajo()`) y el cálculo automático del valor financiero total del almacén (`valorTotalInventario()`).
-* **`Proveedor.php`**: Controla el ciclo relacional de abastecimiento. Gestiona sentencias parametrizadas complejas con uniones implícitas (`LEFT JOIN`) para relacionar las órdenes de abastecimiento con sus proveedores y estados de seguimiento, incluyendo transacciones seguras con `beginTransaction` y `commit` para asegurar que las líneas de detalle se borren en cascada si se cancela una orden padre.
-* **`Rol.php`**: Modelo encargado de la asignación y mapeo de seguridad. Integra una transacción estructurada con rollback en el método `guardarPermisosRol()` para vaciar y volver a registrar la matriz de permisos de forma completamente atómica.
-* **`Asesoria.php` & `crud_asesorias.php`**: Módulo especializado para la gestión y seguimiento de asesorías legales de ciudadanos. Administra tablas cruzadas relacionando clientes por cédula de identidad, agrupando los registros según su aprobación y contando los estados de las solicitudes.
+* **`Cliente.php`**: CRUD clientes con validación completa en setters: `setCedula()` (min 5, formato V-/E-), `setNombre()` (min 2), `setApellido()` (min 2), `setDireccion()` (no vacío), `setTelefono()` (no vacío). `existeCedula(excludeId)` para unicidad.
+* **`Inventario.php`**: CRUD productos con validación numérica: `setStock()` (>= 0), `setStockMinimo()` (>= 1), `setCostoCompra()` (>= 0), `setPrecioVenta()` (> 0). `existeCodigo(excludeId)` para unicidad y `existeCategoria()` para FK.
+* **`Proveedor.php`**: CRUD proveedores/órdenes con FK: `existeProveedor()` y `existeStatus()`. Validación de fecha, número, cantidad y precio en setters.
+* **`ProveedorGestion.php`**: CRUD proveedores (gestión) con `setRif()` (min 5, unicidad), `setNombre()` (min 2), `setEmail()` (formato), `setTelefono()` (no vacío).
+* **`Rol.php`**: CRUD roles/permisos con `setNombre()` (min 2, unicidad via `existeNombreRol(excludeId)`). Protección de admin (id=1) en controlador.
+* **`Asesoria.php` & `crud_asesorias.php`**: Gestión de asesorías legales con tablas cruzadas.
 
 ---
 *Fin de la explicación detallada del sistema PHP MVC.*

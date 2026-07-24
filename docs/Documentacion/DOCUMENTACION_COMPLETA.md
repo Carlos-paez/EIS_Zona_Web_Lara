@@ -4,21 +4,33 @@
 
 EIS System es una aplicacion web de gestion empresarial desarrollada en **PHP vanilla** con **Materialize CSS 1.0.0** y **jQuery 3.7.1**. Utiliza un patron Front Controller con enrutador OOP (clase `Router`), arquitectura MVC con namespaces PSR-4, layout maestro y JavaScript modular (10 archivos). Todos los assets son locales (sin CDN) y cuenta con Service Worker para funcionamiento offline.
 
+## Seguridad
+
+### Protecciones Implementadas
+- **CSRF Tokens**: `bin2hex(random_bytes(32))` en `Router::__construct()`, inyectado en `window.EIS.csrfToken` y en `<input name="csrf_token">`
+- **XSS Sanitizacion**: Helper `escHtml()` en JS, `htmlspecialchars()` en PHP
+- **Session Hardening**: `session_regenerate_id(true)` en login/logout
+- **Prepared Statements**: PDO con `ATTR_EMULATE_PREPARES => false`
+- **Validacion Backend**: Helpers reutilizables en `Model.php` (non-empty, min-length, pattern, positive, FK existence)
+- **Validacion Frontend**: HTML5 attributes (`required`, `maxlength`, `pattern`, `title`)
+- **Double Escaping Removido**: Controllers solo usan `trim()`, Model maneja sanitizacion
+
 ## Arquitectura
 
 ### Patron: Front Controller + MVC OOP
 - `index.php` es el unico punto de entrada (carga autoloader + instancia Router)
-- `Router` clase en `App\Core` gestiona enrutamiento, autenticacion, rutas AJAX y vistas
-- 3 tipos de peticiones AJAX: InventarioController, RolController, ProveedorController
-- Acciones de auth: AuthController::login() y AuthController::logout()
+- `Router` clase en `App\Core` gestiona enrutamiento, autenticacion, CSRF tokens, rutas AJAX y vistas
+- 5 tipos de peticiones AJAX: ClienteController, InventarioController, RolController, ProveedorController, ProveedorGestionController
+- Acciones de auth: AuthController::login() y AuthController::logout() con session_regenerate_id
 - Las vistas publicas se cargan directamente; las protegidas dentro del layout maestro
 
 ### Flujo de Peticion
 ```
 Navegador -> .htaccess -> index.php -> new Router() -> Router::handle()
     -> session_start() + resolvePage()
+    -> CSRF token: bin2hex(random_bytes(32))
     -> leer ?pagina= de la URL + validar regex
-    -> ¿Es AJAX? (inventario/roles/proveedores + action) -> controlador
+    -> ¿Es AJAX? (clientes/inventario/roles/proveedores/proveedores-gestion + action) -> controlador
     -> ¿Es auth? (login_validate/logout) -> AuthController
     -> ¿Es vista? -> renderView():
         -> verificar autenticacion
@@ -28,10 +40,10 @@ Navegador -> .htaccess -> index.php -> new Router() -> Router::handle()
 ### Enrutador (router.php - Clase Router)
 - Propiedad `$pagina` resuelta por `resolvePage()` con validacion regex
 - `handle()`: metodo principal que deriva segun el tipo de peticion
-- `isAjaxInventario()`, `isAjaxRoles()`, `isAjaxProveedores()`: detectan rutas AJAX
+- `isAjaxCliente()`, `isAjaxInventario()`, `isAjaxRoles()`, `isAjaxProveedores()`, `isAjaxProveedorGestion()`: detectan rutas AJAX
 - `isAuthAction()`: detecta login_validate y logout
 - `requireAuth()`: verifica sesion, retorna JSON error si no autenticado
-- `renderWithLayout()`: prepara `$titulos` (10 modulos) + `$extraHeaders` + incluye layout.php
+- `renderWithLayout()`: prepara `$titulos` (13 modulos) + `$extraHeaders` + incluye layout.php
 
 ## Estructura de Directorios
 
@@ -50,18 +62,22 @@ src/
 │   │   ├── Model.php            # Clase base abstracta para modelos
 │   │   └── router.php           # Enrutador OOP (clase Router, 385 lineas)
 │   ├── Controllers/
-│   │   ├── AuthController.php   # Login/logout con sesiones
+│   │   ├── AuthController.php       # Login/logout con sesiones + CSRF + session_regenerate_id
+│   │   ├── ClienteController.php    # CRUD clientes AJAX
 │   │   ├── inventarioController.php # Controlador AJAX inventario
-│   │   ├── RolController.php    # Controlador AJAX roles/permisos
-│   │   └── ProveedorController.php  # Controlador AJAX proveedores
+│   │   ├── RolController.php        # Controlador AJAX roles/permisos
+│   │   ├── ProveedorController.php  # Controlador AJAX proveedores (solicitudes)
+│   │   └── ProveedorGestionController.php # Controlador AJAX proveedores (gestion)
 │   ├── Models/
-│   │   ├── Inventario.php       # Modelo POO inventario (namespace)
-│   │   ├── Usuario.php          # Modelo POO usuarios
-│   │   ├── Proveedor.php        # Modelo POO proveedores
-│   │   ├── Rol.php              # Modelo POO roles/permisos
-│   │   ├── Asesoria.php         # Modelo POO asesorias
-│   │   ├── crud_users.php       # CRUD usuarios legacy (8 funciones)
-│   │   └── crud_asesorias.php   # CRUD asesorias legacy (8 funciones)
+│   │   ├── Cliente.php              # Modelo POO clientes
+│   │   ├── Inventario.php           # Modelo POO inventario (namespace)
+│   │   ├── Usuario.php              # Modelo POO usuarios
+│   │   ├── Proveedor.php            # Modelo POO proveedores (solicitudes)
+│   │   ├── ProveedorGestion.php     # Modelo POO proveedores (gestion)
+│   │   ├── Rol.php                  # Modelo POO roles/permisos
+│   │   ├── Asesoria.php             # Modelo POO asesorias
+│   │   ├── crud_users.php           # CRUD usuarios legacy (8 funciones)
+│   │   └── crud_asesorias.php       # CRUD asesorias legacy (8 funciones)
 │   ├── template/
 │   │   └── layout.php           # Layout maestro (12 modulos, 6 JS condicionales)
 │   └── Views/
@@ -70,7 +86,8 @@ src/
 │       ├── dashboard.php        # Panel de control
 │       ├── inventario.php       # Inventario (conectado a BD)
 │       ├── ventas.php           # POS
-│       ├── proveedores.php      # Solicitudes (conectado a BD)
+│       ├── proveedores.php      # Solicitudes a proveedores (conectado a BD)
+│       ├── clientes.php         # Gestion de clientes (conectado a BD)
 │       ├── reportes.php         # Reportes
 │       ├── activos.php          # Activos fijos
 │       ├── ciberControl.php     # Cybercafe
@@ -97,7 +114,7 @@ src/
 - JS: jquery-3.7.1.min.js (en head para disponibilidad inmediata)
 
 ### Sidebar (Materialize Sidenav)
-- 12 modulos: Dashboard, Inventario, Ventas (POS), Solicitudes, Cyber, Reportes, Activos, Asesoria Legal, Usuarios, Roles y Permisos
+- 13 modulos: Dashboard, Inventario, Ventas (POS), Solicitudes, Clientes, Cyber, Reportes, Activos, Asesoria Legal, Usuarios, Roles y Permisos
 - Theme toggle (oscuro/claro)
 - Cerrar sesion
 - Clase `active` en el item correspondiente segun `$pagina`
@@ -111,7 +128,7 @@ src/
 
 ### Scripts Cargados
 - Siempre: materialize.min.js, app.core.js, app.init.js, app.tables.js, app.ui.js
-- Condicional: app.pos.js (ventas), app.cyber.js (ciberControl), app.legal.js (asesorias), app.inventario.js (inventario), app.roles.js (roles), app.proveedores.js (proveedores)
+- Condicional: app.pos.js (ventas), app.cyber.js (ciberControl), app.legal.js (asesorias), app.inventario.js (inventario), app.roles.js (roles), app.proveedores.js (proveedores/clientes)
 - Service Worker: navigator.serviceWorker.register('sw.js')
 
 ## JavaScript Modular
@@ -221,19 +238,23 @@ roles, categorias, marcas, tipos_activo, tarifas_cyber, tipos_pago, usuarios, pr
 | inventario | inventario.php | tables | Protegida |
 | ventas | ventas.php | pos | Protegida |
 | proveedores | proveedores.php | tables | Protegida |
+| clientes | clientes.php | tables | Protegida |
 | ciberControl | ciberControl.php | cyber | Protegida |
 | reportes | reportes.php | ui | Protegida |
 | activos | activos.php | tables | Protegida |
 | asesorias | asesorias.php | legal | Protegida |
 | menu | menu.php | init, ui | Protegida |
 | usuarios | usuarios.php | - | Protegida |
+| roles | roles.php | - | Protegida |
 
 ## Tecnologias
 
 ### Backend
-- PHP 7.4+ (vanilla, procedural)
+- PHP 7.4+ (vanilla, MVC OOP con namespaces PSR-4)
 - PDO MySQL (prepared statements, utf8mb4)
 - Composer (autoloading PSR-4)
+- Model.php: Base abstracta con helpers de validacion (non-empty, min-length, pattern, FK existence, duplicates)
+- Database.php: Singleton PDO con constantes de configuracion
 
 ### Frontend
 - Materialize CSS 1.0.0 (local)
@@ -248,6 +269,6 @@ roles, categorias, marcas, tipos_activo, tarifas_cyber, tipos_pago, usuarios, pr
 
 ---
 
-**Version**: 2.2
-**Junio 2026**
+**Version**: 3.0
+**Julio 2026**
 
