@@ -68,6 +68,12 @@ class Router
             return;
         }
 
+        // Si es una petición AJAX de clientes, deriva al controlador
+        if ($this->isAjaxCliente()) {
+            $this->runClienteController();
+            return;
+        }
+
         // Si es una petición AJAX de gestión de proveedores, deriva al controlador
         if ($this->isAjaxProveedorGestion()) {
             $this->runProveedorGestionController();
@@ -147,6 +153,16 @@ class Router
     {
         // Debe ser página 'roles' Y tener el parámetro 'action' en la URL
         return $this->pagina === 'roles' && isset($_GET['action']);
+    }
+
+    /**
+     * Verifica si la solicitud actual es una petición AJAX del módulo de clientes.
+     *
+     * @return bool True si es una petición AJAX de clientes, false en caso contrario
+     */
+    private function isAjaxCliente(): bool
+    {
+        return $this->pagina === 'clientes' && isset($_GET['action']);
     }
 
     /**
@@ -249,6 +265,19 @@ class Router
         // Ejecuta el método handle del controlador (procesa la acción AJAX)
         $controller->handle();
         // Termina la ejecución para evitar que se renderice cualquier vista
+        exit;
+    }
+
+    /**
+     * Ejecuta el controlador de clientes para peticiones AJAX.
+     *
+     * @return void
+     */
+    private function runClienteController(): void
+    {
+        $this->requireAuth();
+        $controller = new \App\Controllers\ClienteController();
+        $controller->handle();
         exit;
     }
 
@@ -391,6 +420,7 @@ class Router
             'ciberControl' => 'Control de Cybercafé',
             'proveedores'  => 'Solicitudes a Proveedores',
             'proveedores-gestion' => 'Gestión de Proveedores',
+            'clientes'            => 'Gestión de Clientes',
             'reportes'     => 'Reportes y Estadísticas',
             'activos'      => 'Gestión de Activos',
             'asesorias'    => 'Asesoría Legal',

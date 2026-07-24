@@ -80,6 +80,9 @@
         <!-- Ventas (POS) - Punto de venta -->
         <li><a href="?pagina=ventas" class="sidenav-link<?php echo $pagina === 'ventas' ? ' active' : ''; ?>"><i
                     class="material-icons left">shopping_cart</i>Ventas (POS)</a></li>
+        <!-- Clientes - Gestión de información de clientes -->
+        <li><a href="?pagina=clientes" class="sidenav-link<?php echo $pagina === 'clientes' ? ' active' : ''; ?>"><i
+                    class="material-icons left">badge</i>Clientes</a></li>
         <!-- Solicitudes - Menú desplegable con submódulos -->
         <li class="has-submenu<?php echo in_array($pagina, ['proveedores', 'proveedores-gestion']) ? ' open' : ''; ?>">
             <a href="#!" class="sidenav-link submenu-parent">
@@ -228,6 +231,11 @@
     <!-- Módulo de Gestión de Proveedores -->
     <?php if ($pagina === 'proveedores-gestion'): ?>
     <script src="Public/js/app.proveedores-gestion.js"></script>
+    <?php endif; ?>
+
+    <!-- Módulo de Clientes -->
+    <?php if ($pagina === 'clientes'): ?>
+    <script src="Public/js/app.clientes.js"></script>
     <?php endif; ?>
 
     <!-- Toggle del submenú de Solicitudes -->
