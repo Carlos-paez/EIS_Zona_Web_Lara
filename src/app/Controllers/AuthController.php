@@ -37,10 +37,6 @@ class AuthController
             header('Location: ?pagina=login&error=1');
             exit;
         }
-        if (mb_strlen($password) < 6) {
-            header('Location: ?pagina=login&error=1');
-            exit;
-        }
 
         $usuario = $this->model->autenticar($username, $password);
 

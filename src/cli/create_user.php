@@ -73,7 +73,7 @@ if ($check->fetch()) {
 // Genera un hash seguro de la contraseña usando el algoritmo Bcrypt
 $hash = password_hash($password, PASSWORD_BCRYPT);
 // Prepara la consulta SQL para insertar el nuevo usuario en la tabla 'usuarios'
-$stmt = $db->prepare("INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email) VALUES (?, ?, ?, ?, ?)");
+$stmt = $db->prepare("INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email, estatus) VALUES (?, ?, ?, ?, ?, '1')");
 // Ejecuta la inserción pasando todos los valores como parámetros (seguro contra inyección SQL)
 $stmt->execute([$username, $hash, $nombre, $apellido, $email]);
 
