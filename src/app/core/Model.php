@@ -13,6 +13,16 @@ abstract class Model
         $this->db = Database::getConnection();
     }
 
+    public function getDb(): PDO
+    {
+        return $this->db;
+    }
+
+    public function setDb(PDO $db): void
+    {
+        $this->db = $db;
+    }
+
     protected function sanitizeString(string $input): string
     {
         return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');

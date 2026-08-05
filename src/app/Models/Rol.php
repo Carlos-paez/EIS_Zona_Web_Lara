@@ -66,7 +66,8 @@ class Rol extends Model
     {
         $id = $this->sanitizeInt($id);
         $stmt = $this->db->prepare("SELECT id, nombre_rol AS nombre FROM roles WHERE id = ?");
-        $stmt->execute([$id]);
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetch();
     }
 
@@ -75,7 +76,8 @@ class Rol extends Model
         $this->setNombreRol($nombre_rol);
         $sql = "INSERT INTO roles (nombre_rol) VALUES (?)";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$this->nombreRol]);
+        $stmt->bindParam(1, $this->nombreRol, PDO::PARAM_STR);
+        return $stmt->execute();
     }
 
     public function actualizarRol(int $id, string $nombre_rol): bool
@@ -84,7 +86,9 @@ class Rol extends Model
         $this->setNombreRol($nombre_rol);
         $sql = "UPDATE roles SET nombre_rol = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$this->nombreRol, $this->id]);
+        $stmt->bindParam(1, $this->nombreRol, PDO::PARAM_STR);
+        $stmt->bindParam(2, $this->id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function eliminarRol(int $id): bool
@@ -92,11 +96,13 @@ class Rol extends Model
         $id = $this->sanitizeInt($id);
         $sql = "SELECT COUNT(*) AS total FROM rol_usuarios WHERE fk_rol = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$id]);
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
         $fila = $stmt->fetch();
         if ((int)$fila['total'] > 0) return false;
         $stmt = $this->db->prepare("DELETE FROM roles WHERE id = ?");
-        return $stmt->execute([$id]);
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function obtenerPermisos(): array
@@ -110,7 +116,8 @@ class Rol extends Model
         $rol_id = $this->sanitizeInt($rol_id);
         $sql = "SELECT fk_permiso AS permiso_id FROM permisos_rol WHERE fk_rol = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$rol_id]);
+        $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
+        $stmt->execute();
         $rows = $stmt->fetchAll();
         return array_column($rows, 'permiso_id');
     }
@@ -123,12 +130,15 @@ class Rol extends Model
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare("DELETE FROM permisos_rol WHERE fk_rol = ?");
-            $stmt->execute([$rol_id]);
+            $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
+            $stmt->execute();
             if (!empty($permiso_ids)) {
                 $sql = "INSERT INTO permisos_rol (fk_rol, fk_permiso) VALUES (?, ?)";
                 $stmt = $this->db->prepare($sql);
+                $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
+                $stmt->bindParam(2, $pid, PDO::PARAM_INT);
                 foreach ($permiso_ids as $pid) {
-                    $stmt->execute([$rol_id, $pid]);
+                    $stmt->execute();
                 }
             }
             $this->db->commit();
@@ -163,7 +173,9 @@ class Rol extends Model
         $usuario_id = $this->sanitizeInt($usuario_id);
         $rol_id = $this->sanitizeInt($rol_id);
         $stmt = $this->db->prepare("UPDATE usuarios SET fk_rol_usuario = ? WHERE id = ?");
-        return $stmt->execute([$rol_id, $usuario_id]);
+        $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
+        $stmt->bindParam(2, $usuario_id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function existeNombreRol(string $nombre, int $excludeId = 0): bool
@@ -171,10 +183,13 @@ class Rol extends Model
         $nombre = $this->sanitizeString($nombre);
         if ($excludeId > 0) {
             $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM roles WHERE nombre_rol = ? AND id != ?");
-            $stmt->execute([$nombre, $excludeId]);
+            $stmt->bindParam(1, $nombre, PDO::PARAM_STR);
+            $stmt->bindParam(2, $excludeId, PDO::PARAM_INT);
+            $stmt->execute();
         } else {
             $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM roles WHERE nombre_rol = ?");
-            $stmt->execute([$nombre]);
+            $stmt->bindParam(1, $nombre, PDO::PARAM_STR);
+            $stmt->execute();
         }
         return (int)$stmt->fetch()['total'] > 0;
     }

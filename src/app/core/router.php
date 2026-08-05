@@ -44,12 +44,25 @@ class Router
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
 
-        $this->pagina = $this->resolvePage();
+        $this->setPagina($this->resolvePage());
     }
 
     public function getCsrfToken(): string
     {
         return $_SESSION['csrf_token'] ?? '';
+    }
+
+    public function getPagina(): string
+    {
+        return $this->pagina;
+    }
+
+    public function setPagina(string $pagina): void
+    {
+        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)) {
+            $pagina = 'login';
+        }
+        $this->pagina = $pagina;
     }
 
     public static function verifyCsrfToken(?string $token): bool

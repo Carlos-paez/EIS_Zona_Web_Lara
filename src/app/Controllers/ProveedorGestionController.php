@@ -14,6 +14,16 @@ class ProveedorGestionController
         $this->model = new ProveedorGestion();
     }
 
+    public function getModel(): ProveedorGestion
+    {
+        return $this->model;
+    }
+
+    public function setModel(ProveedorGestion $model): void
+    {
+        $this->model = $model;
+    }
+
     public function handle(): void
     {
         header('Content-Type: application/json');

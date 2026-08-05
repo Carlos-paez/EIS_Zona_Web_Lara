@@ -14,6 +14,16 @@ class AuthController
         $this->model = new Usuario();
     }
 
+    public function getModel(): Usuario
+    {
+        return $this->model;
+    }
+
+    public function setModel(Usuario $model): void
+    {
+        $this->model = $model;
+    }
+
     public function login(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

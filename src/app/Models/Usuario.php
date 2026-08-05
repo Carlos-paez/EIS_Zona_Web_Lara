@@ -161,7 +161,12 @@ class Usuario extends Model
 
         $sql = "INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email, estatus) VALUES (?, ?, ?, ?, ?, '1')";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$this->userName, $hash, $this->nombre, $this->apellido, $this->email]);
+        $stmt->bindParam(1, $this->userName, PDO::PARAM_STR);
+        $stmt->bindParam(2, $hash, PDO::PARAM_STR);
+        $stmt->bindParam(3, $this->nombre, PDO::PARAM_STR);
+        $stmt->bindParam(4, $this->apellido, PDO::PARAM_STR);
+        $stmt->bindParam(5, $this->email, PDO::PARAM_STR);
+        return $stmt->execute();
     }
 
     public function obtenerTodos(): array
@@ -187,7 +192,8 @@ class Usuario extends Model
             LEFT JOIN roles r ON ru.fk_rol = r.id
             WHERE u.id = ?
         ");
-        $stmt->execute([$id]);
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetch();
     }
 
@@ -201,7 +207,8 @@ class Usuario extends Model
             LEFT JOIN roles r ON ru.fk_rol = r.id
             WHERE u.user_name = ? AND u.estatus = '1'
         ");
-        $stmt->execute([$username]);
+        $stmt->bindParam(1, $username, PDO::PARAM_STR);
+        $stmt->execute();
         return $stmt->fetch();
     }
 
@@ -225,7 +232,13 @@ class Usuario extends Model
 
         $sql = "UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, fk_rol_usuario = COALESCE(?, fk_rol_usuario), estatus = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$this->nombre, $this->apellido, $this->email, $this->fkRolUsuario, $this->estatus, $this->id]);
+        $stmt->bindParam(1, $this->nombre, PDO::PARAM_STR);
+        $stmt->bindParam(2, $this->apellido, PDO::PARAM_STR);
+        $stmt->bindParam(3, $this->email, PDO::PARAM_STR);
+        $stmt->bindParam(4, $this->fkRolUsuario, PDO::PARAM_INT);
+        $stmt->bindParam(5, $this->estatus, PDO::PARAM_STR);
+        $stmt->bindParam(6, $this->id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function actualizarPassword(int $id, string $password): bool
@@ -233,13 +246,16 @@ class Usuario extends Model
         $id = $this->sanitizeInt($id);
         $hash = $this->hashPassword($password);
         $stmt = $this->db->prepare("UPDATE usuarios SET password_hash = ? WHERE id = ?");
-        return $stmt->execute([$hash, $id]);
+        $stmt->bindParam(1, $hash, PDO::PARAM_STR);
+        $stmt->bindParam(2, $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function eliminar(int $id): bool
     {
         $id = $this->sanitizeInt($id);
         $stmt = $this->db->prepare("DELETE FROM usuarios WHERE id = ?");
-        return $stmt->execute([$id]);
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 }

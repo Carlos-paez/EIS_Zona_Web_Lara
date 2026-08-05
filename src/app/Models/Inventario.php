@@ -170,11 +170,15 @@ class Inventario extends Model
 
         $sql = "INSERT INTO productos (codigo, nombre, descripcion, stock, stock_minimo, precio_compra, precio_venta, fk_categoria, fecha_creacion, fecha_actualizacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), CURDATE())";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
-            $this->codigo, $this->nombre, $this->descripcion,
-            $this->stock, $this->stockMinimo,
-            $this->precioCompra, $this->precioVenta, $this->fkCategoria,
-        ]);
+        $stmt->bindParam(1, $this->codigo, PDO::PARAM_STR);
+        $stmt->bindParam(2, $this->nombre, PDO::PARAM_STR);
+        $stmt->bindParam(3, $this->descripcion, PDO::PARAM_STR);
+        $stmt->bindParam(4, $this->stock, PDO::PARAM_INT);
+        $stmt->bindParam(5, $this->stockMinimo, PDO::PARAM_INT);
+        $stmt->bindParam(6, $this->precioCompra, PDO::PARAM_STR);
+        $stmt->bindParam(7, $this->precioVenta, PDO::PARAM_STR);
+        $stmt->bindParam(8, $this->fkCategoria, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function obtenerProductos(): array
@@ -205,7 +209,8 @@ class Inventario extends Model
             WHERE p.id = ?
         ";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$id]);
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetch();
     }
 
@@ -224,7 +229,9 @@ class Inventario extends Model
         ";
         $stmt = $this->db->prepare($sql);
         $buscar = "%$termino%";
-        $stmt->execute([$buscar, $buscar]);
+        $stmt->bindParam(1, $buscar, PDO::PARAM_STR);
+        $stmt->bindParam(2, $buscar, PDO::PARAM_STR);
+        $stmt->execute();
         return $stmt->fetchAll();
     }
 
@@ -246,11 +253,16 @@ class Inventario extends Model
 
         $sql = "UPDATE productos SET codigo = ?, nombre = ?, descripcion = ?, stock = ?, stock_minimo = ?, precio_compra = ?, precio_venta = ?, fk_categoria = ?, fecha_actualizacion = CURDATE() WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
-            $this->codigo, $this->nombre, $this->descripcion,
-            $this->stock, $this->stockMinimo,
-            $this->precioCompra, $this->precioVenta, $this->fkCategoria, $this->id,
-        ]);
+        $stmt->bindParam(1, $this->codigo, PDO::PARAM_STR);
+        $stmt->bindParam(2, $this->nombre, PDO::PARAM_STR);
+        $stmt->bindParam(3, $this->descripcion, PDO::PARAM_STR);
+        $stmt->bindParam(4, $this->stock, PDO::PARAM_INT);
+        $stmt->bindParam(5, $this->stockMinimo, PDO::PARAM_INT);
+        $stmt->bindParam(6, $this->precioCompra, PDO::PARAM_STR);
+        $stmt->bindParam(7, $this->precioVenta, PDO::PARAM_STR);
+        $stmt->bindParam(8, $this->fkCategoria, PDO::PARAM_INT);
+        $stmt->bindParam(9, $this->id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function eliminarProducto(int $id): bool
@@ -258,7 +270,8 @@ class Inventario extends Model
         $id = $this->sanitizeInt($id);
         $sql = "DELETE FROM productos WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$id]);
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function totalProductos(): int
@@ -299,7 +312,8 @@ class Inventario extends Model
         $this->validateLength($nombre, 'nombre de categoría', self::MAX_NOMBRE);
         $sql = "INSERT INTO categoria (nombre_categoria) VALUES (?)";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$nombre]);
+        $stmt->bindParam(1, $nombre, PDO::PARAM_STR);
+        return $stmt->execute();
     }
 
     public function actualizarCategoria(int $id, string $nombre): bool
@@ -310,7 +324,9 @@ class Inventario extends Model
         $this->validateLength($nombre, 'nombre de categoría', self::MAX_NOMBRE);
         $sql = "UPDATE categoria SET nombre_categoria = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$nombre, $id]);
+        $stmt->bindParam(1, $nombre, PDO::PARAM_STR);
+        $stmt->bindParam(2, $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function eliminarCategoria(int $id): bool
@@ -318,7 +334,8 @@ class Inventario extends Model
         $id = $this->sanitizeInt($id);
         $sql = "DELETE FROM categoria WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$id]);
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function existeCodigo(string $codigo, int $excludeId = 0): bool
@@ -326,10 +343,13 @@ class Inventario extends Model
         $codigo = $this->sanitizeString($codigo);
         if ($excludeId > 0) {
             $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM productos WHERE codigo = ? AND id != ?");
-            $stmt->execute([$codigo, $excludeId]);
+            $stmt->bindParam(1, $codigo, PDO::PARAM_STR);
+            $stmt->bindParam(2, $excludeId, PDO::PARAM_INT);
+            $stmt->execute();
         } else {
             $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM productos WHERE codigo = ?");
-            $stmt->execute([$codigo]);
+            $stmt->bindParam(1, $codigo, PDO::PARAM_STR);
+            $stmt->execute();
         }
         return (int)$stmt->fetch()['total'] > 0;
     }
@@ -338,7 +358,8 @@ class Inventario extends Model
     {
         $id = $this->sanitizeInt($id);
         $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM categoria WHERE id = ?");
-        $stmt->execute([$id]);
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
         return (int)$stmt->fetch()['total'] > 0;
     }
 }

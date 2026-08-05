@@ -14,6 +14,16 @@ class InventarioController
         $this->model = new Inventario();
     }
 
+    public function getModel(): Inventario
+    {
+        return $this->model;
+    }
+
+    public function setModel(Inventario $model): void
+    {
+        $this->model = $model;
+    }
+
     public function handle(): void
     {
         header('Content-Type: application/json');

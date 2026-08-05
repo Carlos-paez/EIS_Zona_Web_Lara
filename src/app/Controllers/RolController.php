@@ -14,6 +14,16 @@ class RolController
         $this->model = new Rol();
     }
 
+    public function getModel(): Rol
+    {
+        return $this->model;
+    }
+
+    public function setModel(Rol $model): void
+    {
+        $this->model = $model;
+    }
+
     public function handle(): void
     {
         header('Content-Type: application/json');

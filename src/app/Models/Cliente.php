@@ -134,7 +134,8 @@ class Cliente extends Model
     {
         $id = $this->sanitizeInt($id);
         $stmt = $this->db->prepare("SELECT * FROM clientes WHERE id = ?");
-        $stmt->execute([$id]);
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetch();
     }
 
@@ -148,13 +149,12 @@ class Cliente extends Model
 
         $sql = "INSERT INTO clientes (cedula, nombre, apellido, direccion, telefono) VALUES (?, ?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
-            $this->cedula,
-            $this->nombre,
-            $this->apellido,
-            $this->direccion,
-            $this->telefono,
-        ]);
+        $stmt->bindParam(1, $this->cedula, PDO::PARAM_STR);
+        $stmt->bindParam(2, $this->nombre, PDO::PARAM_STR);
+        $stmt->bindParam(3, $this->apellido, PDO::PARAM_STR);
+        $stmt->bindParam(4, $this->direccion, PDO::PARAM_STR);
+        $stmt->bindParam(5, $this->telefono, PDO::PARAM_STR);
+        return $stmt->execute();
     }
 
     public function actualizarCliente(int $id, string $cedula, string $nombre, string $apellido, string $direccion, string $telefono): bool
@@ -168,21 +168,21 @@ class Cliente extends Model
 
         $sql = "UPDATE clientes SET cedula = ?, nombre = ?, apellido = ?, direccion = ?, telefono = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
-            $this->cedula,
-            $this->nombre,
-            $this->apellido,
-            $this->direccion,
-            $this->telefono,
-            $this->id,
-        ]);
+        $stmt->bindParam(1, $this->cedula, PDO::PARAM_STR);
+        $stmt->bindParam(2, $this->nombre, PDO::PARAM_STR);
+        $stmt->bindParam(3, $this->apellido, PDO::PARAM_STR);
+        $stmt->bindParam(4, $this->direccion, PDO::PARAM_STR);
+        $stmt->bindParam(5, $this->telefono, PDO::PARAM_STR);
+        $stmt->bindParam(6, $this->id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function eliminarCliente(int $id): bool
     {
         $id = $this->sanitizeInt($id);
         $stmt = $this->db->prepare("DELETE FROM clientes WHERE id = ?");
-        return $stmt->execute([$id]);
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function totalClientes(): int
@@ -196,10 +196,13 @@ class Cliente extends Model
         $cedula = $this->sanitizeString($cedula);
         if ($excludeId > 0) {
             $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM clientes WHERE cedula = ? AND id != ?");
-            $stmt->execute([$cedula, $excludeId]);
+            $stmt->bindParam(1, $cedula, PDO::PARAM_STR);
+            $stmt->bindParam(2, $excludeId, PDO::PARAM_INT);
+            $stmt->execute();
         } else {
             $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM clientes WHERE cedula = ?");
-            $stmt->execute([$cedula]);
+            $stmt->bindParam(1, $cedula, PDO::PARAM_STR);
+            $stmt->execute();
         }
         return (int)$stmt->fetch()['total'] > 0;
     }

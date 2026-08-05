@@ -14,6 +14,16 @@ class ClienteController
         $this->model = new Cliente();
     }
 
+    public function getModel(): Cliente
+    {
+        return $this->model;
+    }
+
+    public function setModel(Cliente $model): void
+    {
+        $this->model = $model;
+    }
+
     public function handle(): void
     {
         header('Content-Type: application/json');
