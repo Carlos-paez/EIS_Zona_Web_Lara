@@ -2,12 +2,15 @@
 // ARCHIVO: app.legal.js
 // FUNCIÓN: Maneja la interactividad del módulo de Asesoría Legal.
 //          Permite validar tipos de documentos legales, registrar
-//          asesorías (permitidas o derivadas), visualizar el historial
-//          y filtrar/buscar registros.
+//          asesorías (permitidas o derivadas) creando/actualizando el
+//          cliente asociado, editar, eliminar y visualizar el historial
+//          filtrable. Toda la persistencia se realiza vía AJAX.
 // =====================================================================
 
-// Espero a que el DOM esté listo para ejecutar el código
 $(function () {
+
+    // URL base de la API del módulo de asesorías
+    var API = '?pagina=asesorias&action=';
 
     function escHtml(str) {
         return $('<span>').text(str).html();
@@ -19,29 +22,26 @@ $(function () {
 
     // Lista de tipos de documento que la asesoría puede atender directamente
     var allowedDocs = [
-        'consulta laboral',        // Consultas sobre derecho laboral
-        'consulta civil',          // Consultas sobre derecho civil
-        'consulta familiar',       // Consultas sobre derecho familiar
-        'orientación legal general', // Orientación legal general (con tilde)
-        'orientacion legal general', // Orientación legal general (sin tilde)
-        'revisión de contrato',    // Revisión de contratos (con tilde)
-        'revision de contrato',    // Revisión de contratos (sin tilde)
-        'elaboración de documento simple',   // Elaboración de documentos (con tilde)
-        'elaboracion de documento simple',   // Elaboración de documentos (sin tilde)
-        'asesoría prevencional',   // Asesoría prevencional (con tilde)
-        'asesoria prevencional'    // Asesoría prevencional (sin tilde)
+        'consulta laboral',
+        'consulta civil',
+        'consulta familiar',
+        'orientación legal general',
+        'orientacion legal general',
+        'revisión de contrato',
+        'revision de contrato',
+        'elaboración de documento simple',
+        'elaboracion de documento simple',
+        'asesoría prevencional',
+        'asesoria prevencional'
     ];
 
-    // Arreglo que almacena todas las asesorías registradas en la sesión actual
+    // Arreglo que almacena todas las asesorías cargadas desde el backend
     var asesoriasRegistradas = [];
 
     // ================================================================
     // FUNCIÓN: normalizarDoc(texto)
     // PROPÓSITO: Normaliza un texto eliminando espacios extra y
     //            convirtiendo a minúsculas para comparación.
-    // PARÁMETROS:
-    //   texto - String a normalizar
-    // RETORNA: String normalizado (minúsculas, sin espacios múltiples, trim)
     // ================================================================
     function normalizarDoc(texto) {
         return texto.toLowerCase().replace(/\s+/g, ' ').trim();
@@ -50,108 +50,112 @@ $(function () {
     // ================================================================
     // FUNCIÓN: documentoPermitido(doc)
     // PROPÓSITO: Verifica si un tipo de documento está dentro de la
-    //            lista de permitidos.
-    // PARÁMETROS:
-    //   doc - String con el tipo de documento a verificar
-    // RETORNA: true si el documento está permitido, false si no
+    //            lista de permitidos (para feedback visual en tiempo real).
     // ================================================================
     function documentoPermitido(doc) {
-        // Busco el documento normalizado en el arreglo allowedDocs
         return allowedDocs.indexOf(normalizarDoc(doc)) !== -1;
     }
 
     // ================================================================
+    // FUNCIÓN: refrescarKPI()
+    // PROPÓSITO: Carga los indicadores del módulo desde el backend y
+    //            actualiza el chip del banner y el badge.
+    // ================================================================
+    function refrescarKPI() {
+        $.getJSON(API + 'kpis', function (r) {
+            if (!r.success) return;
+            var k = r.data;
+            $('#totalAsesoriasBadge').text(k.total);
+            var msg = k.total + ' registradas' + (k.derivadas > 0 ? ' (' + k.derivadas + ' derivadas)' : '');
+            $('#asesoriasCountChip span').text(msg);
+        }).fail(function () {
+            EIS.toast('Error al cargar indicadores', 'red', 'error');
+        });
+    }
+
+    // ================================================================
     // FUNCIÓN: actualizarHistorial()
-    // PROPÓSITO: Renderiza la tabla de historial de asesorías registradas
-    //            y actualiza los contadores (badge y chip). También
-    //            reinicia los tooltips para los nuevos botones.
+    // PROPÓSITO: Renderiza la tabla de historial a partir del arreglo
+    //            cargado desde el backend y actualiza contadores.
     // ================================================================
     function actualizarHistorial() {
-        var $tbody = $('#asesoriasTableBody'); // <tbody> de la tabla de historial
-        var $empty = $('#asesoriasEmpty');     // Mensaje de "sin registros"
+        var $tbody = $('#asesoriasTableBody');
+        var $empty = $('#asesoriasEmpty');
 
-        // Si no hay asesorías registradas, muestro el mensaje de vacío y reseteo contadores
         if (asesoriasRegistradas.length === 0) {
-            $tbody.html('');           // Limpio el cuerpo de la tabla
-            $empty.show();             // Muestro el mensaje de tabla vacía
-            $('#totalAsesoriasBadge').text('0'); // Badge en 0
-            $('#asesoriasCountChip').text('0 registradas hoy'); // Chip en 0
+            $tbody.html('');
+            $empty.show();
+            $('#totalAsesoriasBadge').text('0');
             return;
         }
 
-        // Oculto el mensaje de vacío porque hay registros
         $empty.hide();
-        var html = ''; // Acumulador del HTML de las filas
+        var html = '';
 
-        // Recorro cada asesoría registrada (unshift = las más recientes primero)
         asesoriasRegistradas.forEach(function (a, i) {
-            // Determino la clase CSS según el estado (Permitido o Denegado)
-            var estadoClass = a.estado === 'Permitido' ? 'legal-permitido' : 'legal-denegado';
-            // Determino el ícono según el estado
-            var icono = a.estado === 'Permitido' ? 'check_circle' : 'cancel';
+            // Estado derivado del campo permitido que envía el backend
+            var estado = a.permitido == 1 ? 'Permitido' : 'Denegado';
+            var estadoClass = estado === 'Permitido' ? 'legal-permitido' : 'legal-denegado';
+            var icono = estado === 'Permitido' ? 'check_circle' : 'cancel';
 
-            // Construyo la fila HTML con los datos de la asesoría
             html += '<tr>'
-                + '<td class="hide-on-small-only">' + (i + 1) + '</td>'                         // Columna: N° (oculto en móvil)
-                + '<td><strong>' + escHtml(a.ciudadano) + '</strong></td>'                                // Columna: Nombre del ciudadano
-                + '<td class="hide-on-small-only">' + escHtml(a.cedula) + '</td>'                         // Columna: Cédula (oculto en móvil)
-                + '<td>' + escHtml(a.documento) + '</td>'                                                 // Columna: Tipo de documento
-                + '<td><span class="' + estadoClass + '" style="white-space:nowrap;"><i class="material-icons left" style="font-size:0.85rem;margin:0;">' + icono + '</i>' + a.estado + '</span></td>' // Columna: Estado con ícono y color
-                + '<td class="hide-on-small-only" style="font-size:0.8rem;color:var(--text-muted);">' + a.fecha + '</td>' // Columna: Fecha (oculto en móvil)
-                // Botón eliminar para desktop
+                + '<td class="hide-on-small-only">' + (i + 1) + '</td>'
+                + '<td><strong>' + escHtml(a.ciudadano) + '</strong></td>'
+                + '<td class="hide-on-small-only">' + escHtml(a.cedula) + '</td>'
+                + '<td>' + escHtml(a.documento) + '</td>'
+                + '<td><span class="' + estadoClass + '" style="white-space:nowrap;"><i class="material-icons left" style="font-size:0.85rem;margin:0;">' + icono + '</i>' + estado + '</span></td>'
+                + '<td class="hide-on-small-only" style="font-size:0.8rem;color:var(--text-muted);">' + escHtml(a.fecha) + '</td>'
                 + '<td class="right-align hide-on-small-only" style="white-space:nowrap;">'
-                + '<button class="btn-floating waves-effect waves-light grey tooltipped btn-eliminar-asesoria" data-index="' + i + '" data-position="top" data-tooltip="Eliminar"><i class="material-icons">delete</i></button>'
+                + '<button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar-asesoria" data-id="' + a.id + '" data-position="top" data-tooltip="Editar"><i class="material-icons">edit</i></button>'
+                + '<button class="btn-floating waves-effect waves-light grey tooltipped btn-eliminar-asesoria" data-id="' + a.id + '" data-position="top" data-tooltip="Eliminar" style="margin-left:4px;"><i class="material-icons">delete</i></button>'
                 + '</td>'
-                // Botón eliminar para móvil (misma acción, otro contenedor responsive)
                 + '<td class="right-align hide-on-med-and-up">'
-                + '<button class="btn-floating waves-effect waves-light grey tooltipped btn-eliminar-asesoria" data-index="' + i + '" data-position="top" data-tooltip="Eliminar"><i class="material-icons">delete</i></button>'
+                + '<button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar-asesoria" data-id="' + a.id + '" data-position="top" data-tooltip="Editar"><i class="material-icons">edit</i></button>'
+                + '<button class="btn-floating waves-effect waves-light grey tooltipped btn-eliminar-asesoria" data-id="' + a.id + '" data-position="top" data-tooltip="Eliminar" style="margin-left:4px;"><i class="material-icons">delete</i></button>'
                 + '</td>'
                 + '</tr>';
         });
 
-        // Inserto todas las filas construidas en el <tbody>
         $tbody.html(html);
-        // Actualizo el badge con el total de asesorías registradas
         $('#totalAsesoriasBadge').text(asesoriasRegistradas.length);
 
-        // Calculo cuántas asesorías fueron denegadas (pendientes de derivación)
-        var pendientes = asesoriasRegistradas.filter(function (a) { return a.estado === 'Denegado'; }).length;
-        // Actualizo el chip informativo con total y (si hay) derivaciones
-        $('#asesoriasCountChip').text(asesoriasRegistradas.length + ' registradas' + (pendientes > 0 ? ' (' + pendientes + ' derivadas)' : ''));
-
-        // Reinicio los tooltips de Materialize para los nuevos botones agregados
+        // Reinicio los tooltips de Materialize para los nuevos botones
         $('.tooltipped').tooltip();
+        aplicarFiltro();
+    }
+
+    // ================================================================
+    // FUNCIÓN: cargarAsesorias()
+    // PROPÓSITO: Solicita al backend el listado completo de asesorías.
+    // ================================================================
+    function cargarAsesorias() {
+        $.getJSON(API + 'listar', function (r) {
+            if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
+            asesoriasRegistradas = r.data || [];
+            actualizarHistorial();
+        }).fail(function () {
+            EIS.toast('Error de conexión', 'red', 'error');
+        });
     }
 
     // ================================================================
     // FUNCIÓN: mostrarValidacion(tipo, mensaje, esPermitido)
     // PROPÓSITO: Muestra el resultado de la validación del documento
-    //            en un panel visual debajo del formulario. Si el
-    //            documento NO es permitido, muestra un toast adicional
-    //            indicando que se deriva a oficina oficial.
-    // PARÁMETROS:
-    //   tipo        - Título del resultado (ej: "DOCUMENTO PERMITIDO")
-    //   mensaje     - Descripción detallada del resultado
-    //   esPermitido - true si el documento puede ser atendido, false si no
+    //            en un panel visual debajo del formulario.
     // ================================================================
     function mostrarValidacion(tipo, mensaje, esPermitido) {
-        var $div = $('#documentValidationResult'); // Contenedor del resultado
-        var $msg = $('#validationMessage');        // Elemento del mensaje
+        var $div = $('#documentValidationResult');
+        var $msg = $('#validationMessage');
 
-        // Remuevo clases previas y agrego la clase correspondiente (success o error)
         $div.removeClass('success error').addClass(esPermitido ? 'success' : 'error');
 
-        // Elijo ícono y color según el resultado
         var icono = esPermitido ? 'check_circle' : 'warning';
         var color = esPermitido ? 'green-text' : 'red-text';
 
-        // Construyo el HTML del mensaje con ícono, título y descripción
         $msg.html('<i class="material-icons left ' + color + '" style="font-size:1.3rem;">' + icono + '</i><strong class="' + color + '">' + tipo + '</strong><br><span style="font-size:0.9rem;">' + mensaje + '</span>');
 
-        // Muestro el panel con una animación slideDown
         $div.slideDown(300);
 
-        // Si el documento NO es permitido, muestro un toast adicional informando la derivación
         if (!esPermitido) {
             M.toast({ html: '<i class="material-icons left" style="font-size:1.2rem;">gavel</i> Caso derivado a oficina oficial', classes: 'red rounded', displayLength: 4000 });
         }
@@ -159,22 +163,22 @@ $(function () {
 
     // ================================================================
     // EVENTO: Submit del formulario de asesoría (#asesoriaForm)
-    // Valida los campos obligatorios, verifica si el documento está
-    // permitido y registra la asesoría en el arreglo local.
+    // Valida los campos, envía la asesoría al backend (que crea o
+    // actualiza el cliente según la cédula) y refresca el historial.
     // ================================================================
     $(document).on('submit', '#asesoriaForm', function (e) {
-        e.preventDefault(); // Evito el envío tradicional del formulario
+        e.preventDefault();
 
-        // Obtengo los valores de los campos del formulario (trim para eliminar espacios)
-        var ciudadano = $('#ciudadano').val().trim();   // Nombre del ciudadano
-        var cedula = $('#cedula').val().trim();         // Cédula de identidad
-        var documento = $('#documento').val().trim();   // Tipo de documento legal
-        var descripcion = $('#descripcion').val().trim(); // Descripción del caso
+        var ciudadano   = $('#ciudadano').val().trim();
+        var cedula      = $('#cedula').val().trim();
+        var documento   = $('#documento').val().trim();
+        var descripcion = $('#descripcion').val().trim();
+        var telefono    = $('#telefono').val().trim();
+        var direccion   = $('#direccion').val().trim();
 
-        // Validación: los campos obligatorios no pueden estar vacíos
         if (!ciudadano || !cedula || !documento) {
             EIS.toast('Completa los campos obligatorios', 'red', 'error');
-            return; // Detengo el envío
+            return;
         }
 
         if (ciudadano.length < 2 || ciudadano.length > 100) {
@@ -192,108 +196,193 @@ $(function () {
             return;
         }
 
-        // Verifico si el tipo de documento está permitido
-        var permitido = documentoPermitido(documento);
+        if (telefono && telefono.length > 20) {
+            EIS.toast('El teléfono no puede exceder 20 caracteres', 'red', 'error');
+            return;
+        }
 
+        if (direccion && direccion.length > 500) {
+            EIS.toast('La dirección no puede exceder 500 caracteres', 'red', 'error');
+            return;
+        }
+
+        // Feedback visual previo según el tipo de documento
+        var permitido = documentoPermitido(documento);
         if (permitido) {
-            // CASO: Documento permitido - se atiende directamente
             mostrarValidacion(
                 'DOCUMENTO PERMITIDO',
-                'El documento <strong>"' + escHtml(documento) + '"</strong> está dentro de los tipos de asesoría que podemos atender. Se ha registrado el servicio exitosamente.',
+                'El documento <strong>"' + escHtml(documento) + '"</strong> está dentro de los tipos de asesoría que podemos atender.',
                 true
             );
-            // Agrego la asesoría al inicio del arreglo (más reciente primero)
-            asesoriasRegistradas.unshift({
-                ciudadano: ciudadano,
-                cedula: cedula,
-                documento: documento,
-                descripcion: descripcion,
-                estado: 'Permitido',
-                fecha: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-            });
-            actualizarHistorial(); // Refresco la tabla
-            EIS.toast('Asesoría registrada para ' + ciudadano, 'green', 'how_to_reg');
         } else {
-            // CASO: Documento NO permitido - se debe derivar a oficina oficial
             mostrarValidacion(
                 'DOCUMENTO NO PERMITIDO',
                 'El documento <strong>"' + escHtml(documento) + '"</strong> no corresponde a los tipos de asesoría que podemos atender. <strong>Este caso debe ser derivado a una Oficina de Atención Legal Oficial.</strong>',
                 false
             );
-            // Agrego la asesoría como "Denegado" (derivado)
-            asesoriasRegistradas.unshift({
-                ciudadano: ciudadano,
-                cedula: cedula,
-                documento: documento,
-                descripcion: descripcion,
-                estado: 'Denegado',
-                fecha: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-            });
-            actualizarHistorial(); // Refresco la tabla
         }
 
-        // Limpieza del formulario después del registro
-        this.reset();                          // Reseteo los campos del formulario
-        $('#btnRegistrar').prop('disabled', true); // Deshabilito el botón de registro
-        $('label').removeClass('active');      // Restauro los labels flotantes
-        $('#documentValidationResult').delay(5000).slideUp(400); // Oculto el resultado después de 5s
+        // Se detecta si la cédula ya existe en el historial (cliente existente)
+        var existeCliente = asesoriasRegistradas.some(function (a) {
+            return a.cedula === cedula;
+        });
+
+        $.post(API + 'crear', $(this).serialize(), function (r) {
+            if (r.success) {
+                EIS.toast(
+                    existeCliente
+                        ? 'Asesoría registrada. Información del cliente actualizada'
+                        : 'Asesoría registrada para ' + ciudadano,
+                    'green',
+                    'how_to_reg'
+                );
+                this.reset();
+                $('#btnRegistrar').prop('disabled', true);
+                $('#btnRegistrar').removeClass('red').addClass('indigo').html('<i class="material-icons left">verified</i>Validar y Registrar');
+                $('label').removeClass('active');
+                cargarAsesorias();
+                refrescarKPI();
+            } else {
+                EIS.toast(r.error || 'Error al registrar la asesoría', 'red', 'error');
+            }
+        }, 'json').fail(function () {
+            EIS.toast('Error de conexión', 'red', 'error');
+        });
     });
 
     // ================================================================
     // EVENTO: Entrada de texto en el campo #documento
-    // Valida en tiempo real el tipo de documento mientras el usuario
-    // escribe. Cambia el color y texto del botón de registro según
-    // si el documento es permitido o no.
+    // Cambia el color y texto del botón de registro según si el
+    // documento es permitido o no.
     // ================================================================
     $(document).on('input', '#documento', function () {
-        var val = $(this).val().trim(); // Obtengo el valor actual
+        var val = $(this).val().trim();
 
         if (val.length > 0) {
-            // Si hay texto, verifico si es permitido
             var permitido = documentoPermitido(val);
-            $('#btnRegistrar').prop('disabled', false); // Habilito el botón
+            $('#btnRegistrar').prop('disabled', false);
 
             if (permitido) {
-                // Documento permitido: botón índigo con texto "Validar y Registrar"
                 $('#btnRegistrar').removeClass('red').addClass('indigo').html('<i class="material-icons left">verified</i>Validar y Registrar');
             } else {
-                // Documento no permitido: botón rojo con texto "Derivar a Oficina Oficial"
                 $('#btnRegistrar').removeClass('indigo').addClass('red').html('<i class="material-icons left">warning</i>Derivar a Oficina Oficial');
             }
-            // Oculto cualquier resultado de validación anterior
             $('#documentValidationResult').slideUp(200);
         } else {
-            // Si el campo está vacío, deshabilito el botón y restauro su aspecto original
             $('#btnRegistrar').prop('disabled', true);
             $('#btnRegistrar').removeClass('red').addClass('indigo').html('<i class="material-icons left">verified</i>Validar y Registrar');
         }
     });
 
     // ================================================================
+    // EVENTO: Blur del campo #cedula
+    // Si la cédula pertenece a un cliente ya registrado, muestra un
+    // aviso de que se actualizará su información de contacto.
+    // ================================================================
+    $(document).on('blur', '#cedula', function () {
+        var cedula = $(this).val().trim();
+        if (!cedula) return;
+
+        var previo = asesoriasRegistradas.filter(function (a) {
+            return a.cedula === cedula;
+        });
+
+        if (previo.length > 0) {
+            EIS.toast('Cliente ya registrado: se actualizará su información de contacto', 'indigo', 'person');
+        }
+    });
+
+    // ================================================================
+    // EVENTO: Click en botón editar asesoría (.btn-editar-asesoria)
+    // Carga el detalle y abre el modal para modificar documento y descripción.
+    // ================================================================
+    $(document).on('click', '.btn-editar-asesoria', function () {
+        var id = $(this).data('id');
+        var asesoria = asesoriasRegistradas.find(function (a) { return a.id == id; });
+
+        if (!asesoria) {
+            EIS.toast('No se encontró la asesoría', 'red', 'error');
+            return;
+        }
+
+        $('#asesoria-id').val(asesoria.id);
+        $('#asesoria-documento').val(asesoria.documento || '');
+        $('#asesoria-descripcion').val(asesoria.descripcion || '');
+        M.updateTextFields();
+        $('#modal-asesoria').modal('open');
+    });
+
+    // ================================================================
+    // EVENTO: Submit del formulario de edición (#form-asesoria)
+    // Envía la actualización al backend y refresca el historial.
+    // ================================================================
+    $(document).on('submit', '#form-asesoria', function (e) {
+        e.preventDefault();
+
+        var id = $('#asesoria-id').val();
+        var documento = $('#asesoria-documento').val().trim();
+        var descripcion = $('#asesoria-descripcion').val().trim();
+
+        if (!id || !documento) {
+            EIS.toast('ID y tipo de documento son obligatorios', 'red', 'error');
+            return;
+        }
+
+        $.post(API + 'actualizar', $(this).serialize(), function (r) {
+            if (r.success) {
+                EIS.toast(r.message, 'green', 'check_circle');
+                $('#modal-asesoria').modal('close');
+                cargarAsesorias();
+                refrescarKPI();
+            } else {
+                EIS.toast(r.error || 'Error al actualizar', 'red', 'error');
+            }
+        }, 'json').fail(function () {
+            EIS.toast('Error de conexión', 'red', 'error');
+        });
+    });
+
+    // ================================================================
     // EVENTO: Click en botón eliminar asesoría (.btn-eliminar-asesoria)
-    // Solicita confirmación y elimina la asesoría del arreglo local.
+    // Solicita confirmación y elimina la asesoría en el backend.
     // ================================================================
     $(document).on('click', '.btn-eliminar-asesoria', function () {
-        var idx = $(this).data('index'); // Obtengo el índice del registro
+        var id = $(this).data('id');
         if (confirm('¿Eliminar esta asesoría del registro?')) {
-            asesoriasRegistradas.splice(idx, 1); // Elimino del arreglo por índice
-            actualizarHistorial(); // Refresco la tabla
-            EIS.toast('Asesoría eliminada', 'orange', 'delete');
+            $.post(API + 'eliminar', { id: id }, function (r) {
+                if (r.success) {
+                    EIS.toast(r.message, 'green', 'check_circle');
+                    cargarAsesorias();
+                    refrescarKPI();
+                } else {
+                    EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                }
+            }, 'json').fail(function () {
+                EIS.toast('Error de conexión', 'red', 'error');
+            });
         }
     });
 
     // ================================================================
     // EVENTO: Búsqueda en tiempo real en el historial (#searchAsesoria)
-    // Filtra las filas de la tabla de historial según el texto ingresado.
+    // Filtra las filas de la tabla según el texto ingresado.
     // ================================================================
-    $(document).on('input', '#searchAsesoria', debounce(function () {
-        var q = $(this).val().toLowerCase(); // Texto de búsqueda en minúsculas
-        var $rows = $('#asesoriasTableBody tr'); // Todas las filas de la tabla
-        // Recorro cada fila y verifico si contiene el texto buscado
-        $rows.each(function () {
-            var text = $(this).text().toLowerCase(); // Texto completo de la fila
-            $(this).toggle(text.indexOf(q) !== -1); // Muestro/oculto según coincidencia
+    function aplicarFiltro() {
+        var q = $('#searchAsesoria').val().toLowerCase();
+        $('#asesoriasTableBody tr').each(function () {
+            var text = $(this).text().toLowerCase();
+            $(this).toggle(text.indexOf(q) !== -1);
         });
-    }, 300)); // Debounce de 300ms para no sobrecargar
+    }
 
+    $(document).on('input', '#searchAsesoria', debounce(function () {
+        aplicarFiltro();
+    }, 300));
+
+    // ================================================================
+    // INICIALIZACIÓN
+    // ================================================================
+    $('.modal').modal();
+    cargarAsesorias();
+    refrescarKPI();
 });

@@ -184,32 +184,22 @@ class Asesoria extends Model
 
     /**
      * Obtiene o crea un cliente de asesoría basado en su cédula.
-     * Busca en la tabla clientes por cédula; si no existe, lo crea.
+     * Delega la creación/actualización del registro en la tabla clientes
+     * al modelo Cliente (validación y encapsulación centralizadas).
      * Luego busca o crea el registro en cliente_asesoria vinculado al cliente.
      *
      * @param string $cedula   Cédula de identidad del cliente.
      * @param string $nombre   Nombre del cliente.
      * @param string $apellido Apellido del cliente (opcional).
+     * @param string $direccion Dirección del cliente (opcional).
+     * @param string $telefono  Teléfono del cliente (opcional).
      * @return int             ID del registro en cliente_asesoria.
      */
-    private function obtenerOcrearCliente(string $cedula, string $nombre, string $apellido = ''): int
+    private function obtenerOcrearCliente(string $cedula, string $nombre, string $apellido = '', string $direccion = '', string $telefono = ''): int
     {
-        // 1. Buscar o crear en la tabla clientes
-        $stmt = $this->db->prepare("SELECT id FROM clientes WHERE cedula = ?");
-        $stmt->bindParam(1, $cedula, PDO::PARAM_STR);
-        $stmt->execute();
-        $cliente = $stmt->fetch();
-
-        if ($cliente) {
-            $cliente_id = (int)$cliente['id'];
-        } else {
-            $stmt = $this->db->prepare("INSERT INTO clientes (cedula, nombre, apellido, direccion, telefono) VALUES (?, ?, ?, '', '')");
-            $stmt->bindParam(1, $cedula, PDO::PARAM_STR);
-            $stmt->bindParam(2, $nombre, PDO::PARAM_STR);
-            $stmt->bindParam(3, $apellido, PDO::PARAM_STR);
-            $stmt->execute();
-            $cliente_id = (int)$this->db->lastInsertId();
-        }
+        // 1. Obtener o crear en la tabla clientes mediante el modelo Cliente
+        $cliente = new Cliente();
+        $cliente_id = $cliente->obtenerOCrearPorCedula($cedula, $nombre, $apellido, $direccion, $telefono);
 
         // 2. Buscar o crear en cliente_asesoria vinculado al cliente
         $stmt = $this->db->prepare("SELECT id FROM cliente_asesoria WHERE fk_cliente = ?");
@@ -255,7 +245,7 @@ class Asesoria extends Model
      * @param string $descripcion Descripción detallada de la asesoría.
      * @return bool               True si la inserción fue exitosa.
      */
-    public function crear(string $ciudadano, string $cedula, string $documento, string $descripcion): bool
+    public function crear(string $ciudadano, string $cedula, string $documento, string $descripcion, string $direccion = '', string $telefono = ''): bool
     {
         // Separa el nombre completo en nombre y apellido (máximo 2 partes)
         $nombre_partes = explode(' ', $ciudadano, 2);
@@ -267,19 +257,30 @@ class Asesoria extends Model
         $this->setDocumento($documento);
         $this->setDescripcion($descripcion);
 
-        // Obtiene o crea el cliente y obtiene su ID
-        $fk_cliente = $this->obtenerOcrearCliente($this->cedula, $this->nombre, $this->apellido);
-        // Obtiene el ID del tipo de asesoría
-        $fk_tipo_asesoria = $this->obtenerTipoAsesoria($this->documento);
+        try {
+            // Transacción: cliente + cliente_asesoria + asesoria se registran o revierten juntos
+            $this->db->beginTransaction();
 
-        // Inserta la asesoría con la fecha actual (CURDATE) y las claves foráneas
-        $sql = "INSERT INTO asesoria (documento, descripcion, fecha, fk_cliente_asesoria, fk_tipo_asesoria) VALUES (?, ?, CURDATE(), ?, ?)";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(1, $this->documento, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->descripcion, PDO::PARAM_STR);
-        $stmt->bindParam(3, $fk_cliente, PDO::PARAM_INT);
-        $stmt->bindParam(4, $fk_tipo_asesoria, PDO::PARAM_INT);
-        return $stmt->execute();
+            // Obtiene o crea el cliente (crea o actualiza su data según lo enviado) y obtiene su ID
+            $fk_cliente = $this->obtenerOcrearCliente($this->cedula, $this->nombre, $this->apellido, $direccion, $telefono);
+            // Obtiene el ID del tipo de asesoría
+            $fk_tipo_asesoria = $this->obtenerTipoAsesoria($this->documento);
+
+            // Inserta la asesoría con la fecha actual (CURDATE) y las claves foráneas
+            $sql = "INSERT INTO asesoria (documento, descripcion, fecha, fk_cliente_asesoria, fk_tipo_asesoria) VALUES (?, ?, CURDATE(), ?, ?)";
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindParam(1, $this->documento, PDO::PARAM_STR);
+            $stmt->bindParam(2, $this->descripcion, PDO::PARAM_STR);
+            $stmt->bindParam(3, $fk_cliente, PDO::PARAM_INT);
+            $stmt->bindParam(4, $fk_tipo_asesoria, PDO::PARAM_INT);
+            $resultado = $stmt->execute();
+
+            $this->db->commit();
+            return $resultado;
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
 
     /**

@@ -140,6 +140,93 @@ class Cliente extends Model
         return $stmt->fetch();
     }
 
+    public function obtenerClientePorCedula(string $cedula): array|false
+    {
+        $cedula = $this->sanitizeString($cedula);
+        $stmt = $this->db->prepare("SELECT * FROM clientes WHERE cedula = ?");
+        $stmt->bindParam(1, $cedula, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
+    /**
+     * Obtiene o crea un cliente por su cédula de forma segura y validada.
+     * Pensado para que los módulos relacionados (asesorías, ventas, cybercafé)
+     * reutilicen la data de clientes sin duplicar lógica ni saltarse la validación.
+     *
+     * - Si el cliente ya existe, actualiza únicamente los campos no vacíos
+     *   recibidos (nombre, apellido, dirección, teléfono).
+     * - Si no existe, lo crea y retorna su ID.
+     *
+     * @param string $cedula    Cédula del cliente (obligatoria, 5-20 caracteres).
+     * @param string $nombre    Nombre del cliente (obligatorio, 2-100 caracteres).
+     * @param string $apellido  Apellido del cliente (opcional).
+     * @param string $direccion Dirección del cliente (opcional).
+     * @param string $telefono  Teléfono del cliente (opcional).
+     * @return int              ID del cliente existente o recién creado.
+     */
+    public function obtenerOCrearPorCedula(string $cedula, string $nombre, string $apellido = '', string $direccion = '', string $telefono = ''): int
+    {
+        // Encapsulación: se cargan los valores mediante setters con validación.
+        // Se reinician los campos opcionales para no heredar estado de llamadas anteriores.
+        $this->setCedula($cedula);
+        $this->setNombre($nombre);
+        $this->apellido = '';
+        $this->direccion = '';
+        $this->telefono = '';
+        if ($apellido !== '') {
+            $this->setApellido($apellido);
+        }
+        if ($direccion !== '') {
+            $this->setDireccion($direccion);
+        }
+        if ($telefono !== '') {
+            $this->setTelefono($telefono);
+        }
+
+        $stmt = $this->db->prepare("SELECT id, nombre, apellido, direccion, telefono FROM clientes WHERE cedula = ?");
+        $stmt->bindParam(1, $this->cedula, PDO::PARAM_STR);
+        $stmt->execute();
+        $cliente = $stmt->fetch();
+
+        if ($cliente) {
+            $id = (int)$cliente['id'];
+
+            // Solo modifica los campos que el módulo relacionado envía no vacíos
+            $nuevoNombre    = $this->nombre;
+            $nuevoApellido  = $this->apellido !== '' ? $this->apellido : (string)$cliente['apellido'];
+            $nuevaDireccion = $this->direccion !== '' ? $this->direccion : (string)$cliente['direccion'];
+            $nuevoTelefono  = $this->telefono !== '' ? $this->telefono : (string)$cliente['telefono'];
+
+            if (
+                $nuevoNombre !== $cliente['nombre']
+                || $nuevoApellido !== $cliente['apellido']
+                || $nuevaDireccion !== $cliente['direccion']
+                || $nuevoTelefono !== $cliente['telefono']
+            ) {
+                $stmt = $this->db->prepare("UPDATE clientes SET nombre = ?, apellido = ?, direccion = ?, telefono = ? WHERE id = ?");
+                $stmt->bindParam(1, $nuevoNombre, PDO::PARAM_STR);
+                $stmt->bindParam(2, $nuevoApellido, PDO::PARAM_STR);
+                $stmt->bindParam(3, $nuevaDireccion, PDO::PARAM_STR);
+                $stmt->bindParam(4, $nuevoTelefono, PDO::PARAM_STR);
+                $stmt->bindParam(5, $id, PDO::PARAM_INT);
+                $stmt->execute();
+            }
+
+            return $id;
+        }
+
+        $sql = "INSERT INTO clientes (cedula, nombre, apellido, direccion, telefono) VALUES (?, ?, ?, ?, ?)";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(1, $this->cedula, PDO::PARAM_STR);
+        $stmt->bindParam(2, $this->nombre, PDO::PARAM_STR);
+        $stmt->bindParam(3, $this->apellido, PDO::PARAM_STR);
+        $stmt->bindParam(4, $this->direccion, PDO::PARAM_STR);
+        $stmt->bindParam(5, $this->telefono, PDO::PARAM_STR);
+        $stmt->execute();
+        return (int)$this->db->lastInsertId();
+    }
+
     public function crearCliente(string $cedula, string $nombre, string $apellido, string $direccion, string $telefono): bool
     {
         $this->setCedula($cedula);

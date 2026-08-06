@@ -103,6 +103,24 @@ class Router
             return;
         }
 
+        // Si es una petición AJAX de asesorías, deriva al controlador
+        if ($this->isAjaxAsesorias()) {
+            $this->runAsesoriaController();
+            return;
+        }
+
+        // Si es una petición AJAX del punto de venta (POS), deriva al controlador
+        if ($this->isAjaxVentas()) {
+            $this->runVentaController();
+            return;
+        }
+
+        // Si es una petición AJAX del control de cybercafé, deriva al controlador
+        if ($this->isAjaxCiber()) {
+            $this->runCiberController();
+            return;
+        }
+
         // Si es una petición AJAX de gestión de proveedores, deriva al controlador
         if ($this->isAjaxProveedorGestion()) {
             $this->runProveedorGestionController();
@@ -192,6 +210,36 @@ class Router
     private function isAjaxCliente(): bool
     {
         return $this->pagina === 'clientes' && isset($_GET['action']);
+    }
+
+    /**
+     * Verifica si la solicitud actual es una petición AJAX del módulo de asesorías.
+     *
+     * @return bool True si es una petición AJAX de asesorías, false en caso contrario
+     */
+    private function isAjaxAsesorias(): bool
+    {
+        return $this->pagina === 'asesorias' && isset($_GET['action']);
+    }
+
+    /**
+     * Verifica si la solicitud actual es una petición AJAX del módulo de punto de venta.
+     *
+     * @return bool True si es una petición AJAX de ventas, false en caso contrario
+     */
+    private function isAjaxVentas(): bool
+    {
+        return $this->pagina === 'ventas' && isset($_GET['action']);
+    }
+
+    /**
+     * Verifica si la solicitud actual es una petición AJAX del módulo de control de cybercafé.
+     *
+     * @return bool True si es una petición AJAX de cybercafé, false en caso contrario
+     */
+    private function isAjaxCiber(): bool
+    {
+        return $this->pagina === 'ciberControl' && isset($_GET['action']);
     }
 
     /**
@@ -306,6 +354,45 @@ class Router
     {
         $this->requireAuth();
         $controller = new \App\Controllers\ClienteController();
+        $controller->handle();
+        exit;
+    }
+
+    /**
+     * Ejecuta el controlador de asesorías para peticiones AJAX.
+     *
+     * @return void
+     */
+    private function runAsesoriaController(): void
+    {
+        $this->requireAuth();
+        $controller = new \App\Controllers\AsesoriaController();
+        $controller->handle();
+        exit;
+    }
+
+    /**
+     * Ejecuta el controlador de ventas para peticiones AJAX.
+     *
+     * @return void
+     */
+    private function runVentaController(): void
+    {
+        $this->requireAuth();
+        $controller = new \App\Controllers\VentaController();
+        $controller->handle();
+        exit;
+    }
+
+    /**
+     * Ejecuta el controlador de cybercafé para peticiones AJAX.
+     *
+     * @return void
+     */
+    private function runCiberController(): void
+    {
+        $this->requireAuth();
+        $controller = new \App\Controllers\CiberController();
         $controller->handle();
         exit;
     }
@@ -459,8 +546,8 @@ class Router
 
         // Cabeceras adicionales específicas por página (ej: chips de estado para ciberControl)
         $extraHeaders = [
-            // Para ciberControl muestra un chip verde con "5 Disponibles" y uno naranja con "4 Ocupadas"
-            'ciberControl' => '<span class="chip green white-text" style="border-radius:4px;height:auto;padding:0.1rem 0.5rem;line-height:1.5;font-size:0.75rem;">5 Disponibles</span><span class="chip orange white-text" style="border-radius:4px;height:auto;padding:0.1rem 0.5rem;line-height:1.5;font-size:0.75rem;">4 Ocupadas</span>',
+            // Para ciberControl muestra chips con conteos actualizados dinámicamente por JS
+            'ciberControl' => '<span class="chip green white-text" id="hdrDisponibles" style="border-radius:4px;height:auto;padding:0.1rem 0.5rem;line-height:1.5;font-size:0.75rem;">0 Disponibles</span><span class="chip orange white-text" id="hdrOcupadas" style="border-radius:4px;height:auto;padding:0.1rem 0.5rem;line-height:1.5;font-size:0.75rem;">0 Ocupadas</span>',
         ];
 
         // Obtiene el título de la página desde el mapa, o usa 'EIS System' como valor por defecto
