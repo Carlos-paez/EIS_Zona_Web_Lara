@@ -4,6 +4,7 @@ namespace App\Models;
 
 // Se importa la clase Model del núcleo de la aplicación
 use App\Core\Model;
+use PDO;
 
 /**
  * Clase Asesoria que extiende de Model.
