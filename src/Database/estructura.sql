@@ -266,6 +266,7 @@ CREATE TABLE sesion_ciber
 (
     id         INT PRIMARY KEY AUTO_INCREMENT,
     tiempo_uso VARCHAR(50) not null,
+    finalizada TINYINT(1) not null default 0,
     fk_cliente INT,
     fk_tarifa  INT,
     fk_activo  INT,

@@ -2,9 +2,10 @@
      VISTA: PUNTO DE VENTA (POS)
      Interfaz tipo catálogo con productos seleccionables que se
      agregan a un carrito de compras modal. Incluye búsqueda
-     en tiempo real y total acumulado.
+     en tiempo real, total acumulado y registro de la venta con
+     datos del cliente.
      NOTA: Lógica del carrito manejada por JS en app.pos.js.
-     Los productos y precios son estáticos (UI prototype).
+     Los productos se cargan dinámicamente desde el backend.
      ============================================================ -->
 
 <!-- ================================================================ -->
@@ -15,7 +16,6 @@
 
     <!-- ---------------------------------------------------------------- -->
     <!-- COLUMNA IZQUIERDA: TÍTULO DEL MÓDULO -->
-    <!-- Muestra "Punto de Venta" con descripción -->
     <!-- ---------------------------------------------------------------- -->
     <div class="col s12 m7">
         <div class="card" style="margin:0;padding:1.25rem;">
@@ -51,9 +51,7 @@
             <div style="display:flex;gap:0.5rem;">
                 <!-- Boton que abre el modal del carrito (id="openCartBtn") -->
                 <button id="openCartBtn" class="btn waves-effect waves-light indigo" style="border-radius:20px;height:3rem;display:flex;align-items:center;">
-                    <!-- Icono de carrito de compras -->
                     <i class="material-icons left" style="margin-right:0.25rem;">shopping_cart</i>
-                    <!-- Texto "Carrito" solo en pantallas no-movil -->
                     <span class="hide-on-small-only">Carrito</span>
                     <!-- Badge circular con el contador de productos (actualizado por JS) -->
                     <span class="new badge white indigo-text" id="cartCountBadge" style="margin-left:0.25rem;border-radius:50%;font-weight:700;min-width:22px;height:22px;line-height:22px;">0</span>
@@ -76,103 +74,83 @@
         <!-- Input de busqueda que filtra los productos en tiempo real (JS) -->
         <!-- ---------------------------------------------------------------- -->
         <div class="input-field" style="margin-top:0;">
-            <!-- Icono de lupa -->
             <i class="material-icons prefix">search</i>
-            <!-- Input de busqueda, el JS filtra por nombre -->
             <input type="text" id="posSearch" placeholder="Buscar producto por nombre...">
             <label for="posSearch">Buscar producto</label>
         </div>
 
         <!-- ---------------------------------------------------------------- -->
         <!-- GRID DE PRODUCTOS DISPONIBLES -->
-        <!-- Cada producto tiene data-name y data-price para el JS del carrito -->
+        <!-- Los productos se cargan dinámicamente desde el backend via JS -->
         <!-- ---------------------------------------------------------------- -->
         <div id="posProducts" class="row" style="margin-top:1rem;">
-
-            <!-- PRODUCTO 1: Teclado Mecánico - $45.00 -->
-            <div class="col s6 m4 l3">
-                <div class="card-panel pos-product" data-name="Teclado Mecánico" data-price="45.00">
-                    <!-- Icono representativo del producto (teclado) -->
-                    <i class="material-icons" style="font-size:2.5rem;color:var(--text-muted);">keyboard</i>
-                    <!-- Nombre del producto -->
-                    <h6 style="font-size:0.9rem;margin:0.5rem 0 0.25rem;">Teclado Mecánico</h6>
-                    <!-- Precio del producto en color primario -->
-                    <span style="color:var(--primary);font-weight:700;font-size:1.1rem;">$45.00</span>
-                    <!-- Boton "+" que agrega el producto al carrito -->
-                    <div class="pos-add-btn"><i class="material-icons">add</i></div>
-                </div>
+            <!-- Mensaje de carga inicial (reemplazado por JS) -->
+            <div class="col s12 center-align" id="posLoading" style="color:var(--text-muted);padding:2rem 0;">
+                <i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">inventory_2</i>
+                Cargando productos...
             </div>
-
-            <!-- PRODUCTO 2: Mouse USB - $12.50 -->
-            <div class="col s6 m4 l3">
-                <div class="card-panel pos-product" data-name="Mouse USB" data-price="12.50">
-                    <i class="material-icons" style="font-size:2.5rem;color:var(--text-muted);">mouse</i>
-                    <h6 style="font-size:0.9rem;margin:0.5rem 0 0.25rem;">Mouse USB</h6>
-                    <span style="color:var(--primary);font-weight:700;font-size:1.1rem;">$12.50</span>
-                    <div class="pos-add-btn"><i class="material-icons">add</i></div>
-                </div>
-            </div>
-
-            <!-- PRODUCTO 3: Auriculares - $35.00 -->
-            <div class="col s6 m4 l3">
-                <div class="card-panel pos-product" data-name="Auriculares" data-price="35.00">
-                    <i class="material-icons" style="font-size:2.5rem;color:var(--text-muted);">headphones</i>
-                    <h6 style="font-size:0.9rem;margin:0.5rem 0 0.25rem;">Auriculares</h6>
-                    <span style="color:var(--primary);font-weight:700;font-size:1.1rem;">$35.00</span>
-                    <div class="pos-add-btn"><i class="material-icons">add</i></div>
-                </div>
-            </div>
-
-            <!-- PRODUCTO 4: Monitor 24" - $189.00 -->
-            <div class="col s6 m4 l3">
-                <div class="card-panel pos-product" data-name="Monitor 24" data-price="189.00">
-                    <i class="material-icons" style="font-size:2.5rem;color:var(--text-muted);">desktop_windows</i>
-                    <h6 style="font-size:0.9rem;margin:0.5rem 0 0.25rem;">Monitor 24"</h6>
-                    <span style="color:var(--primary);font-weight:700;font-size:1.1rem;">$189.00</span>
-                    <div class="pos-add-btn"><i class="material-icons">add</i></div>
-                </div>
-            </div>
-
-            <!-- PRODUCTO 5: Cable USB-C - $8.00 -->
-            <div class="col s6 m4 l3">
-                <div class="card-panel pos-product" data-name="Cable USB-C" data-price="8.00">
-                    <i class="material-icons" style="font-size:2.5rem;color:var(--text-muted);">usb</i>
-                    <h6 style="font-size:0.9rem;margin:0.5rem 0 0.25rem;">Cable USB-C</h6>
-                    <span style="color:var(--primary);font-weight:700;font-size:1.1rem;">$8.00</span>
-                    <div class="pos-add-btn"><i class="material-icons">add</i></div>
-                </div>
-            </div>
-
         </div>
     </div>
 </div>
 
 <!-- ================================================================ -->
 <!-- MODAL: CARRITO DE COMPRAS -->
-<!-- Ventana emergente que muestra los productos agregados, cantidades, -->
-<!-- total acumulado y botones para vaciar o procesar la venta -->
+<!-- Muestra los productos agregados con cantidades, el total acumulado -->
+<!-- y el formulario de datos del cliente para procesar la venta -->
 <!-- ================================================================ -->
-<div id="posCartModal" class="modal modal-fixed-footer" style="max-height:90%;">
+<div id="posCartModal" class="modal modal-fixed-footer" style="max-height:92%;">
     <div class="modal-content">
 
         <!-- Título del modal con icono de recibo -->
-        <h4 class="modal-title" style="font-weight:700;margin-bottom:1.5rem;">
+        <h4 class="modal-title" style="font-weight:700;margin-bottom:1rem;">
             <i class="material-icons left">receipt</i>Carrito de Compras
             <!-- Contador de productos en el carrito (actualizado por JS) -->
             <span class="result-count" style="font-size:0.85rem;color:var(--text-muted);float:right;font-weight:400;margin-top:0.3rem;" id="cartCountLabel">0 productos</span>
         </h4>
 
         <!-- Contenedor donde JavaScript renderiza dinamicamente los items del carrito -->
-        <div id="posCartItems" style="min-height:250px;">
+        <div id="posCartItems" style="min-height:150px;">
             <!-- Mensaje de carrito vacío (se muestra por defecto, JS lo reemplaza cuando hay items) -->
-            <p style="color:var(--text-muted);text-align:center;margin-top:4rem;">
-                <!-- Icono grande de carrito tachado (vacío) -->
+            <p style="color:var(--text-muted);text-align:center;margin-top:2rem;">
                 <i class="material-icons" style="font-size:3.5rem;display:block;margin-bottom:0.5rem;opacity:0.25;">remove_shopping_cart</i>
                 El carrito está vacío<br>
-                <!-- Texto secundario de ayuda -->
                 <small>Agrega productos desde el catálogo</small>
             </p>
         </div>
+
+        <!-- Formulario de datos del cliente -->
+        <div class="divider" style="margin:1rem 0;"></div>
+        <span style="font-weight:600;font-size:0.95rem;display:flex;align-items:center;gap:0.35rem;margin-bottom:0.25rem;">
+            <i class="material-icons" style="font-size:1.2rem;color:var(--primary);">person</i> Datos del Cliente
+        </span>
+        <form id="posClienteForm">
+            <div class="row" style="margin-bottom:0;">
+                <!-- Nombre completo del cliente -->
+                <div class="input-field col s12 m6">
+                    <i class="material-icons prefix">badge</i>
+                    <input type="text" id="posCiudadano" name="ciudadano" maxlength="100" placeholder="Nombre y apellido">
+                    <label for="posCiudadano">Cliente *</label>
+                </div>
+                <!-- Cédula de identidad -->
+                <div class="input-field col s12 m6">
+                    <i class="material-icons prefix">person_pin</i>
+                    <input type="text" id="posCedula" name="cedula" maxlength="20" placeholder="Ej: 12345678">
+                    <label for="posCedula">Cédula *</label>
+                </div>
+                <!-- Dirección del cliente -->
+                <div class="input-field col s12 m6">
+                    <i class="material-icons prefix">location_on</i>
+                    <input type="text" id="posDireccion" name="direccion" maxlength="500" placeholder="Opcional">
+                    <label for="posDireccion">Dirección</label>
+                </div>
+                <!-- Teléfono del cliente -->
+                <div class="input-field col s12 m6">
+                    <i class="material-icons prefix">phone</i>
+                    <input type="text" id="posTelefono" name="telefono" maxlength="20" placeholder="Opcional">
+                    <label for="posTelefono">Teléfono</label>
+                </div>
+            </div>
+        </form>
     </div>
 
     <!-- Pie del modal: total acumulado y botones de accion -->
@@ -185,7 +163,6 @@
             <!-- ---------------------------------------------------------------- -->
             <div>
                 <span style="color:var(--text-muted);font-size:0.85rem;">TOTAL</span>
-                <!-- Total actualizado dinamicamente por JavaScript (id="posTotal") -->
                 <span style="font-size:2rem;font-weight:800;color:var(--primary);display:block;" id="posTotal">$0.00</span>
             </div>
 
@@ -195,16 +172,11 @@
             <!-- ---------------------------------------------------------------- -->
             <div style="display:flex;gap:0.75rem;">
 
-                <!-- Boton: Vaciar carrito (rojo claro) -->
-                <!-- modal-close cierra el modal despues de vaciar -->
                 <button class="btn waves-effect waves-light red lighten-1 modal-close" id="vaciarCarrito" style="border-radius:20px;display:inline-flex;align-items:center;">
-                    <!-- Icono de barrer/eliminar -->
                     <i class="material-icons left" style="margin-right:0.35rem;">delete_sweep</i>Vaciar
                 </button>
 
-                <!-- Boton: Procesar venta (verde) -->
                 <button class="btn waves-effect waves-light green" id="procesarVenta" style="border-radius:20px;white-space:normal;line-height:1.2;height:auto;min-height:2.75rem;padding:0.5rem 0.75rem;display:inline-flex;align-items:center;">
-                    <!-- Icono de pago/dinero -->
                     <i class="material-icons left" style="margin-right:0.35rem;">paid</i><span>Procesar</span>
                 </button>
 
