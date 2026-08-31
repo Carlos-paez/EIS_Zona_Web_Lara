@@ -10,16 +10,11 @@
 
 // Configuración de la conexión a la base de datos MySQL usando PDO
 
-// Dirección del servidor de base de datos (localhost = misma máquina)
-$host = "localhost";
-// Nombre de la base de datos a la que se conectará la aplicación
-$db = "zona_web_lara";
-// Usuario de MySQL con permisos sobre la base de datos
-$user = "root";
-// Contraseña del usuario de MySQL (vacía en entorno de desarrollo local)
-$pass = "";
-// Juego de caracteres UTF-8 que soporta emojis y caracteres especiales
-$charset = 'utf8mb4';
+    $host = "localhost";          // Dirección del servidor de base de datos
+    $db = "zona_web_lara";        // Nombre de la base de datos
+    $user = "root";              // Usuario de MySQL
+    $pass = "";                  // Contraseña de MySQL (vacía en desarrollo local)
+    $charset = 'utf8mb4';        // Juego de caracteres UTF-8 (soporta emojis y caracteres especiales)
 
 // Cadena de conexión (DSN - Data Source Name) que PDO necesita para conectarse
 $dns = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -34,9 +29,10 @@ $options = [
     PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 
-try {
-    // Intenta crear la conexión PDO con los parámetros definidos anteriormente
-    $pdo = new PDO($dns, $user, $pass, $options);
+    try {
+        // Intenta crear la conexión PDO con los parámetros definidos
+        $pdo = new PDO($dns, $user, $pass, $options);
+        // echo "Conexión exitosa"; // Mensaje de depuración (idealmente debería eliminarse en producción)
 
 }catch (\PDOException $e) {
     // Captura cualquier error de conexión a la base de datos
