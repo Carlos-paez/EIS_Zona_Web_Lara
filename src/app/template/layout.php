@@ -255,6 +255,11 @@
     <script src="Public/js/app.clientes.js"></script>
     <?php endif; ?>
 
+    <!-- Módulo de Gestión de Activos -->
+    <?php if ($pagina === 'activos'): ?>
+    <script src="Public/js/app.activos.js"></script>
+    <?php endif; ?>
+
     <!-- Toggle del submenú de Solicitudes -->
     <script>
     $(document).on('click', '.submenu-parent', function(e) {
