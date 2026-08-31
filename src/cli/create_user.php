@@ -60,8 +60,10 @@ try {
 
 // Prepara una consulta SQL para verificar si ya existe un usuario con el mismo username o email
 $check = $db->prepare("SELECT id FROM usuarios WHERE user_name = ? OR email = ?");
-// Ejecuta la consulta pasando el username y email como parámetros (previene inyección SQL)
-$check->execute([$username, $email]);
+// Enlaza el username y email como parámetros (previene inyección SQL)
+$check->bindParam(1, $username, PDO::PARAM_STR);
+$check->bindParam(2, $email, PDO::PARAM_STR);
+$check->execute();
 // Si la consulta devuelve algún resultado, significa que ya existe un usuario duplicado
 if ($check->fetch()) {
     // Muestra mensaje de error indicando que el usuario o email ya están registrados
@@ -73,9 +75,14 @@ if ($check->fetch()) {
 // Genera un hash seguro de la contraseña usando el algoritmo Bcrypt
 $hash = password_hash($password, PASSWORD_BCRYPT);
 // Prepara la consulta SQL para insertar el nuevo usuario en la tabla 'usuarios'
-$stmt = $db->prepare("INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email) VALUES (?, ?, ?, ?, ?)");
-// Ejecuta la inserción pasando todos los valores como parámetros (seguro contra inyección SQL)
-$stmt->execute([$username, $hash, $nombre, $apellido, $email]);
+$stmt = $db->prepare("INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email, estatus) VALUES (?, ?, ?, ?, ?, '1')");
+// Enlaza todos los valores como parámetros (seguro contra inyección SQL)
+$stmt->bindParam(1, $username, PDO::PARAM_STR);
+$stmt->bindParam(2, $hash, PDO::PARAM_STR);
+$stmt->bindParam(3, $nombre, PDO::PARAM_STR);
+$stmt->bindParam(4, $apellido, PDO::PARAM_STR);
+$stmt->bindParam(5, $email, PDO::PARAM_STR);
+$stmt->execute();
 
 // Obtiene el ID autoincremental asignado al nuevo registro
 $userId = $db->lastInsertId();

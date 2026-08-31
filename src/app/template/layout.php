@@ -80,6 +80,9 @@
         <!-- Ventas (POS) - Punto de venta -->
         <li><a href="?pagina=ventas" class="sidenav-link<?php echo $pagina === 'ventas' ? ' active' : ''; ?>"><i
                     class="material-icons left">shopping_cart</i>Ventas (POS)</a></li>
+        <!-- Clientes - Gestión de información de clientes -->
+        <li><a href="?pagina=clientes" class="sidenav-link<?php echo $pagina === 'clientes' ? ' active' : ''; ?>"><i
+                    class="material-icons left">badge</i>Clientes</a></li>
         <!-- Solicitudes - Menú desplegable con submódulos -->
         <li class="has-submenu<?php echo in_array($pagina, ['proveedores', 'proveedores-gestion']) ? ' open' : ''; ?>">
             <a href="#!" class="sidenav-link submenu-parent">
@@ -192,6 +195,23 @@
     <!-- UI: notificaciones, botones de acción, reportes, tooltips -->
     <script src="Public/js/app.ui.js"></script>
 
+    <!-- CSRF Token global para peticiones AJAX -->
+    <script>
+    window.EIS = window.EIS || {};
+    window.EIS.csrfToken = '<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>';
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (settings.type === 'POST' || settings.type === 'post') {
+                if (typeof settings.data === 'string') {
+                    settings.data += '&csrf_token=' + encodeURIComponent(window.EIS.csrfToken);
+                } else if (typeof settings.data === 'object' && settings.data !== null) {
+                    settings.data.csrf_token = window.EIS.csrfToken;
+                }
+            }
+        }
+    });
+    </script>
+
     <!-- ========== SCRIPTS ESPECÍFICOS POR PÁGINA (CARGA CONDICIONAL) ========== -->
     <!-- Solo se cargan si la página actual coincide con el módulo correspondiente -->
 
@@ -228,6 +248,16 @@
     <!-- Módulo de Gestión de Proveedores -->
     <?php if ($pagina === 'proveedores-gestion'): ?>
     <script src="Public/js/app.proveedores-gestion.js"></script>
+    <?php endif; ?>
+
+    <!-- Módulo de Clientes -->
+    <?php if ($pagina === 'clientes'): ?>
+    <script src="Public/js/app.clientes.js"></script>
+    <?php endif; ?>
+
+    <!-- Módulo de Gestión de Activos -->
+    <?php if ($pagina === 'activos'): ?>
+    <script src="Public/js/app.activos.js"></script>
     <?php endif; ?>
 
     <!-- Toggle del submenú de Solicitudes -->

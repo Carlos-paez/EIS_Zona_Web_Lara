@@ -1,206 +1,297 @@
 <?php
-// =============================================================================
-// VISTA: CONTROL DE CYBERCAFÉ (ciberControl.php)
-// =============================================================================
-// Propósito: Muestra el estado de las estaciones de cybercafé organizadas
-//            por zonas, con indicadores de disponibles, ocupadas y en
-//            mantenimiento. Incluye filtros rápidos para visualización.
-// =============================================================================
+// ============================================================
+// VISTA: Control de Cybercafé
+// La grilla y toda la interactividad se renderizan con
+// app.cyber.js (Public/js/app.cyber.js) vía el API AJAX
+// ?pagina=ciberControl&action=...
+// ============================================================
 
-// Datos estáticos (simulados) de las estaciones organizadas por zonas
-$zonas = [
-    // Zona A: 4 estaciones (PCs)
-    'Zona A' => [
-        // Estación 1: disponible (PC Gaming)
-        ['num' => 1,  'status' => 'disponible',   'icono' => 'check_circle', 'desc' => 'PC Gaming'],
-        // Estación 2: ocupada, con precio y tiempo restante
-        ['num' => 2,  'status' => 'ocupada',      'icono' => 'timelapse',   'desc' => '45 min restantes',  'precio' => 2.50],
-        // Estación 3: disponible (PC Estándar)
-        ['num' => 3,  'status' => 'disponible',   'icono' => 'check_circle', 'desc' => 'PC Estándar'],
-        // Estación 4: en mantenimiento por teclado dañado
-        ['num' => 4,  'status' => 'mantenimiento', 'icono' => 'build',       'desc' => 'Teclado dañado'],
-    ],
-    // Zona B: 3 estaciones
-    'Zona B' => [
-        // Estación 5: ocupada con tiempo restante
-        ['num' => 5,  'status' => 'ocupada',      'icono' => 'timelapse',   'desc' => '1h 20 min restantes', 'precio' => 4.50],
-        // Estación 6: disponible (PC Gaming)
-        ['num' => 6,  'status' => 'disponible',   'icono' => 'check_circle', 'desc' => 'PC Gaming'],
-        // Estación 7: ocupada con tiempo restante
-        ['num' => 7,  'status' => 'ocupada',      'icono' => 'timelapse',   'desc' => '30 min restantes',   'precio' => 1.50],
-    ],
-    // Zona C: 3 estaciones
-    'Zona C' => [
-        // Estación 8: disponible (PC Estándar)
-        ['num' => 8,  'status' => 'disponible',   'icono' => 'check_circle', 'desc' => 'PC Estándar'],
-        // Estación 9: disponible (PC Gaming)
-        ['num' => 9,  'status' => 'disponible',   'icono' => 'check_circle', 'desc' => 'PC Gaming'],
-        // Estación 10: ocupada con precio
-        ['num' => 10, 'status' => 'ocupada',      'icono' => 'timelapse',   'desc' => '2h restantes',       'precio' => 6.00],
-    ],
-];
+use App\Models\CiberControl;
 
-// Aplana el array multidimensional a un solo nivel para hacer cálculos
-// array_values($zonas) obtiene solo los arrays internos, array_merge los combina en uno solo
-$todasEstaciones = array_merge(...array_values($zonas));
-// Cuenta cuántas estaciones están en estado 'disponible'
-$countDisponibles  = count(array_filter($todasEstaciones, fn($e) => $e['status'] === 'disponible'));
-// Cuenta cuántas estaciones están en estado 'ocupada'
-$countOcupadas     = count(array_filter($todasEstaciones, fn($e) => $e['status'] === 'ocupada'));
-// Cuenta cuántas estaciones están en estado 'mantenimiento'
-$countMantenimiento = count(array_filter($todasEstaciones, fn($e) => $e['status'] === 'mantenimiento'));
-// Total general de estaciones
-$totalEstaciones   = count($todasEstaciones);
+$ciberModel = new CiberControl();
 
-// Mapa de estados a etiquetas legibles para mostrar en la UI
-$statusLabels = [
-    'disponible'   => 'Disponible',
-    'ocupada'      => 'Ocupada',
-    'mantenimiento' => 'Mantenimiento',
-];
+$totalEstaciones = 0;
+try {
+    $totalEstaciones = count($ciberModel->listarEstaciones());
+} catch (\Throwable $e) {
+    $totalEstaciones = 0;
+}
+
+$tiposActivo = [];
+try {
+    $tiposActivo = $ciberModel->listarTiposActivo();
+} catch (\Throwable $e) {
+    $tiposActivo = [];
+}
 ?>
 
-<!-- ===== TARJETAS KPI (MÉTRICAS DEL CYBERCAFÉ) ===== -->
-<!-- Fila con margen inferior -->
+<!-- Tarjetas de métricas -->
 <div class="row" style="margin-bottom:1.5rem;">
     <!-- Columna: Estaciones disponibles -->
-    <div class="col s12 m6 l3">
-        <!-- Tarjeta con estilo de éxito -->
+    <div class="col s6 m6 l3">
         <div class="metric-card success" style="margin:0;">
             <div class="metric-icon"><i class="material-icons">check_circle</i></div>
             <div class="metric-label">Disponibles</div>
-            <!-- Valor numérico en color success, con ID para actualizar via JS -->
-            <div class="metric-value" style="color:var(--success);" id="countDisponibles"><?= $countDisponibles ?></div>
+            <div class="metric-value" style="color:var(--success);" id="countDisponibles">0</div>
         </div>
     </div>
     <!-- Columna: Estaciones ocupadas -->
-    <div class="col s12 m6 l3">
-        <!-- Tarjeta con estilo de advertencia -->
+    <div class="col s6 m6 l3">
         <div class="metric-card warning" style="margin:0;">
             <div class="metric-icon"><i class="material-icons">timelapse</i></div>
             <div class="metric-label">Ocupadas</div>
-            <div class="metric-value" style="color:var(--warning);" id="countOcupadas"><?= $countOcupadas ?></div>
+            <div class="metric-value" style="color:var(--warning);" id="countOcupadas">0</div>
         </div>
     </div>
-    <!-- Columna: Estaciones en mantenimiento -->
-    <div class="col s12 m6 l3">
-        <!-- Tarjeta con estilo de peligro -->
+    <!-- Columna: Estaciones en mantenimiento (desactivadas) -->
+    <div class="col s6 m6 l3">
         <div class="metric-card danger" style="margin:0;">
             <div class="metric-icon"><i class="material-icons">build</i></div>
             <div class="metric-label">Mantenimiento</div>
-            <div class="metric-value" style="color:var(--danger);" id="countMantenimiento"><?= $countMantenimiento ?></div>
+            <div class="metric-value" style="color:var(--danger);" id="countMantenimiento">0</div>
         </div>
     </div>
-    <!-- Columna: Total de estaciones -->
     <div class="col s12 m6 l3">
-        <div class="metric-card" style="margin:0;">
+        <div class="metric-card info" style="margin:0;">
             <div class="metric-icon"><i class="material-icons">dns</i></div>
-            <div class="metric-label">Total Estaciones</div>
-            <div class="metric-value" id="countTotal"><?= $totalEstaciones ?></div>
+            <div class="metric-label">Total PCs</div>
+            <div class="metric-value" id="countTotal"><?= (int)$totalEstaciones ?></div>
         </div>
     </div>
 </div>
 
-<!-- ===== BARRA DE HERRAMIENTAS (FILTROS Y BOTONES DE ACCIÓN) ===== -->
+<!-- Barra de filtros y acciones -->
 <div class="card" style="margin-bottom:1.5rem;">
     <div class="card-content" style="padding:0.75rem 1.25rem;">
         <div class="row" style="margin-bottom:0;">
             <!-- Botones de filtro rápido por estado -->
             <div class="col s12 m7" style="display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap;padding-top:0.25rem;padding-bottom:0.25rem;">
-                <!-- Etiqueta "FILTRAR" visible solo en pantallas grandes -->
                 <span class="hide-on-small-only" style="font-weight:600;color:var(--text-muted);font-size:0.85rem;margin-right:0.35rem;">FILTRAR:</span>
-                <!-- Botón para mostrar todas las estaciones (activo por defecto) -->
                 <a class="btn-small waves-effect waves-light green filter-btn active" data-filter="all" style="border-radius:20px;padding:0 0.75rem;font-size:0.7rem;">Todas</a>
-                <!-- Botón para filtrar solo disponibles -->
                 <a class="btn-small waves-effect waves-light green filter-btn" data-filter="disponible" style="border-radius:20px;padding:0 0.75rem;font-size:0.7rem;">Disponibles</a>
-                <!-- Botón para filtrar solo ocupadas -->
                 <a class="btn-small waves-effect waves-light orange filter-btn" data-filter="ocupada" style="border-radius:20px;padding:0 0.75rem;font-size:0.7rem;">Ocupadas</a>
-                <!-- Botón para filtrar solo en mantenimiento -->
-                <a class="btn-small waves-effect waves-light red filter-btn" data-filter="mantenimiento" style="border-radius:20px;padding:0 0.75rem;font-size:0.7rem;">Mantenimiento</a>
             </div>
-            <!-- Botones de acción: Nueva estación e Historial -->
+            <!-- Botones de acción -->
             <div class="col s12 m5 right-align" style="padding-top:0.25rem;padding-bottom:0.25rem;">
-                <!-- Botón para agregar nueva estación -->
-                <button class="btn-small waves-effect waves-light indigo" id="btnNuevaEstacion" style="border-radius:20px;">
-                    <i class="material-icons left" style="font-size:1rem;">add</i>Nueva
+                <button class="btn-small waves-effect waves-light indigo" id="btnNuevaPC" style="border-radius:20px;">
+                    <i class="material-icons left" style="font-size:1rem;">add</i>Nueva PC
                 </button>
-                <!-- Botón para ver historial (visible en pantallas grandes) -->
+                <button class="btn-small waves-effect waves-light indigo" id="btnNuevaSesion" style="border-radius:20px;">
+                    <i class="material-icons left" style="font-size:1rem;">play_arrow</i>Nueva Sesión
+                </button>
                 <button class="btn-small waves-effect waves-light grey darken-1 hide-on-small-only" id="btnHistorialCyber" style="border-radius:20px;margin-left:0.25rem;">
                     <i class="material-icons left" style="font-size:1rem;">history</i>Historial
                 </button>
-                <!-- Botón para ver historial (visible solo en móviles, solo ícono) -->
                 <button class="btn-small waves-effect waves-light grey darken-1 hide-on-med-and-up" id="btnHistorialCyberMobile" style="border-radius:20px;" title="Historial">
                     <i class="material-icons" style="font-size:1rem;">history</i>
+                </button>
+                <button class="btn-small waves-effect waves-light green darken-1 hide-on-small-only" id="btnRefrescar" style="border-radius:20px;margin-left:0.25rem;">
+                    <i class="material-icons left" style="font-size:1rem;">refresh</i>Actualizar
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ===== GRILLA DE ESTACIONES ORGANIZADAS POR ZONAS ===== -->
+<!-- Grid de estaciones (renderizado por app.cyber.js) -->
 <div id="cyberGrid">
-    <!-- Itera sobre cada zona (Zona A, Zona B, Zona C) -->
-    <?php foreach ($zonas as $nombreZona => $estaciones): ?>
-    <!-- Divisor de zona con el nombre de la zona -->
-    <div class="zone-divider">
-        <div class="zone-title"><?= $nombreZona ?></div>
-    </div>
-    <!-- Fila contenedora de las estaciones de esta zona -->
-    <div class="row">
-        <!-- Itera sobre cada estación dentro de la zona actual -->
-        <?php foreach ($estaciones as $e): ?>
-        <!-- Cada estación ocupa columnas responsivas (6/4/3/2 según pantalla) -->
-        <div class="col s6 m4 l3 xl2">
-            <!-- Tarjeta de estación: la clase CSS se define según el status -->
-            <div class="station-card <?= $e['status'] ?>" data-status="<?= $e['status'] ?>">
-                <div class="station-inner">
-                    <!-- Encabezado de la tarjeta: número y etiqueta -->
-                    <div class="station-header">
-                        <span class="station-badge"><?= $e['num'] ?></span>
-                        <span class="station-header-label">Estación</span>
-                    </div>
-                    <!-- Cuerpo de la tarjeta: ícono, estado y descripción -->
-                    <div class="station-body">
-                        <!-- Ícono dinámico según el estado -->
-                        <div class="station-icon"><i class="material-icons"><?= $e['icono'] ?></i></div>
-                        <!-- Etiqueta legible del estado -->
-                        <div class="station-status"><?= $statusLabels[$e['status']] ?></div>
-                        <!-- Descripción adicional (ej: tiempo restante, detalle) -->
-                        <div class="station-desc"><?= $e['desc'] ?></div>
-                    </div>
-                    <!-- Si la estación tiene un precio definido, muestra el footer con el costo -->
-                    <?php if (!empty($e['precio'])): ?>
-                    <div class="station-footer">
-                        <div class="station-price">$<?= number_format($e['precio'], 2) ?></div>
-                    </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-        <?php endforeach; ?>
-    </div>
-    <?php endforeach; ?>
+    <div class="row"><div class="col s12 center-align" style="color:var(--text-muted);padding:2rem 0;"><i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">hourglass_empty</i>Cargando estaciones...</div></div>
 </div>
 
-<!-- Mensaje informativo sobre la interacción con las estaciones -->
-<p style="color:var(--text-muted);font-size:0.85rem;text-align:center;margin-top:0.5rem;">
-    <i class="material-icons left" style="font-size:1rem;">info</i> Haz clic en una estación para cambiar su estado
-</p>
+<!-- Modal: Iniciar Sesión -->
+<div id="cyberModal" class="modal" style="max-width:480px;">
+    <div class="modal-content">
+        <h4 style="font-weight:700;margin-bottom:1.5rem;">
+            <i class="material-icons left" style="color:var(--success);">play_circle</i>
+            Iniciar Sesión
+        </h4>
+        <form id="cyberForm">
+            <div class="input-field">
+                <i class="material-icons prefix">person</i>
+                <input type="text" id="cyberCiudadano" name="ciudadano" class="form-control" placeholder="Nombre completo del cliente" required>
+                <label for="cyberCiudadano" class="active">Cliente</label>
+            </div>
+            <div class="input-field">
+                <i class="material-icons prefix">badge</i>
+                <input type="text" id="cyberCedula" name="cedula" class="form-control" placeholder="Ej: V-12345678" required>
+                <label for="cyberCedula" class="active">Cédula</label>
+                <span class="helper-text" style="font-size:0.8rem;color:var(--text-muted);">Al salir de este campo se precargan los datos del cliente</span>
+            </div>
+            <div class="input-field">
+                <i class="material-icons prefix">phone</i>
+                <input type="text" id="cyberTelefono" name="telefono" class="form-control" placeholder="Opcional">
+                <label for="cyberTelefono" class="active">Teléfono</label>
+            </div>
+            <div class="input-field">
+                <i class="material-icons prefix">place</i>
+                <input type="text" id="cyberDireccion" name="direccion" class="form-control" placeholder="Opcional">
+                <label for="cyberDireccion" class="active">Dirección</label>
+            </div>
+            <div class="input-field">
+                <i class="material-icons prefix">dns</i>
+                <select id="cyberActivo" required>
+                    <option value="" disabled selected>Cargando estaciones...</option>
+                </select>
+                <label for="cyberActivo">Estación</label>
+            </div>
+            <div class="input-field">
+                <i class="material-icons prefix">attach_money</i>
+                <select id="cyberTarifa" required>
+                    <option value="" disabled selected>Cargando tarifas...</option>
+                </select>
+                <label for="cyberTarifa">Tarifa</label>
+            </div>
+            <div class="input-field">
+                <i class="material-icons prefix">timer</i>
+                <input type="text" id="cyberTiempo" name="tiempo_uso" value="01:00:00" class="form-control" required>
+                <label for="cyberTiempo" class="active">Tiempo (HH:MM:SS)</label>
+                <span class="helper-text" style="font-size:0.8rem;color:var(--text-muted);">Ej: 01:30:00 = 1 hora 30 minutos</span>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer" style="padding:1rem 1.5rem;display:flex;gap:0.75rem;justify-content:flex-end;border-top:1px solid var(--border-light);">
+        <button class="btn waves-effect waves-light grey lighten-1 modal-close" style="border-radius:24px;">Cancelar</button>
+        <button type="button" class="btn waves-effect waves-light green" id="btnIniciarSesion" style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;">
+            <i class="material-icons left" style="margin:0;">play_arrow</i> Iniciar
+        </button>
+    </div>
+</div>
 
-<!-- ===== SCRIPTS JAVASCRIPT ===== -->
-<script>
-// Ejecuta el código cuando el DOM esté listo (jQuery)
-$(function () {
-    // Manejador de clic para el botón "Nueva Estación"
-    $('#btnNuevaEstacion').on('click', function () {
-        // Muestra un toast de demostración (simulado)
-        EIS.toast('Formulario para nueva estación (demo)', 'indigo', 'add_circle');
-    });
+<!-- Modal: Crear/Editar PC -->
+<div id="modalPCForm" class="modal" style="max-width:550px;">
+    <div class="modal-content">
+        <h4 style="font-weight:700;margin-bottom:1.5rem;">
+            <i class="material-icons left" style="color:var(--primary);" id="modalPCTitleIcon">computer</i>
+            <span id="modalPCTitle">Nueva PC</span>
+        </h4>
+        <form id="formPC">
+            <input type="hidden" id="pcId" value="">
+            <div class="input-field">
+                <i class="material-icons prefix">branding_watermark</i>
+                <input type="text" id="pcMarca" name="marca" class="form-control" placeholder="Ej: HP, Dell, Lenovo" required>
+                <label for="pcMarca" class="active">Marca</label>
+            </div>
+            <div class="input-field">
+                <i class="material-icons prefix">description</i>
+                <input type="text" id="pcDescripcion" name="descripcion" class="form-control" placeholder="Ej: Intel i5, 8GB RAM, 256GB SSD" required>
+                <label for="pcDescripcion" class="active">Descripción</label>
+            </div>
+            <div class="input-field">
+                <i class="material-icons prefix">devices</i>
+                <select id="pcTipo" required>
+                    <option value="" disabled selected>Seleccionar tipo</option>
+                    <?php foreach ($tiposActivo as $tipo): ?>
+                        <option value="<?= (int)$tipo['id'] ?>"><?= htmlspecialchars($tipo['nombre_tipo']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <label for="pcTipo">Tipo de PC</label>
+            </div>
+            <div class="input-field" style="margin-top:1.5rem;">
+                <div style="display:flex;gap:2rem;align-items:center;">
+                    <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                        <input type="radio" name="pcEstado" value="1" checked>
+                        <span>Activa</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                        <input type="radio" name="pcEstado" value="0">
+                        <span>Mantenimiento</span>
+                    </label>
+                </div>
+                <label style="color:var(--text-muted);font-size:0.8rem;margin-top:0.5rem;display:block;">Estado de la PC</label>
+            </div>
+            <div id="pcFormError" class="card-panel red lighten-4 red-text text-darken-4" style="display:none;border-radius:8px;padding:0.75rem;margin-top:1rem;">
+                <i class="material-icons left" style="font-size:1.2rem;">error</i>
+                <span id="pcFormErrorMessage">Error al guardar</span>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer" style="padding:1rem 1.5rem;display:flex;gap:0.75rem;justify-content:flex-end;border-top:1px solid var(--border-light);">
+        <button class="btn waves-effect waves-light grey lighten-1 modal-close" style="border-radius:24px;">Cancelar</button>
+        <button type="button" class="btn waves-effect waves-light indigo" id="btnGuardarPC" style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;">
+            <i class="material-icons left" style="margin:0;">save</i> Guardar PC
+        </button>
+    </div>
+</div>
 
-    // Manejador de clic para ambos botones de historial (escritorio y móvil)
-    $('#btnHistorialCyber, #btnHistorialCyberMobile').on('click', function () {
-        // Muestra un toast de demostración
-        EIS.toast('Abriendo historial de sesiones (demo)', 'indigo', 'history');
-    });
-});
-</script>
+<!-- Modal: Confirmar Eliminación -->
+<div id="modalConfirmarEliminar" class="modal" style="max-width:450px;">
+    <div class="modal-content">
+        <h4 style="font-weight:700;margin-bottom:1rem;color:var(--danger);">
+            <i class="material-icons left" style="color:var(--danger);">warning</i>
+            Confirmar Eliminación
+        </h4>
+        <p style="font-size:1.05rem;margin-bottom:0.5rem;">
+            ¿Estás seguro de eliminar la PC <strong id="confirmarPcNombre"></strong>?
+        </p>
+        <p style="color:var(--text-muted);font-size:0.9rem;">
+            <i class="material-icons left" style="font-size:1rem;">info</i>
+            Esta acción eliminará la PC permanentemente.
+            <strong>Solo se permite si no tiene sesiones registradas.</strong>
+        </p>
+        <input type="hidden" id="confirmarPcId" value="">
+    </div>
+    <div class="modal-footer" style="padding:1rem 1.5rem;display:flex;gap:0.75rem;justify-content:flex-end;border-top:1px solid var(--border-light);">
+        <button class="btn waves-effect waves-light grey lighten-1 modal-close" style="border-radius:24px;">Cancelar</button>
+        <button type="button" class="btn waves-effect waves-light red" id="btnConfirmarEliminar" style="border-radius:24px;">
+            <i class="material-icons left">delete_forever</i> Eliminar
+        </button>
+    </div>
+</div>
+
+<!-- Modal: Historial -->
+<div id="modalHistorial" class="modal" style="max-width:800px;">
+    <div class="modal-content">
+        <h4 style="font-weight:700;margin-bottom:1.5rem;">
+            <i class="material-icons left" style="color:var(--primary);">history</i>
+            Historial de Sesiones
+        </h4>
+        <div id="historialContenido">
+            <div class="center-align" style="padding:2rem 0;">
+                <div class="preloader-wrapper small active">
+                    <div class="spinner-layer spinner-green-only">
+                        <div class="circle-clipper left"><div class="circle"></div></div>
+                        <div class="gap-patch"><div class="circle"></div></div>
+                        <div class="circle-clipper right"><div class="circle"></div></div>
+                    </div>
+                </div>
+                <p style="color:var(--text-muted);margin-top:1rem;">Cargando estaciones...</p>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer" style="padding:0.75rem 1.5rem;border-top:1px solid var(--border-light);">
+        <button class="btn waves-effect waves-light grey lighten-1 modal-close" style="border-radius:24px;">Cerrar</button>
+    </div>
+</div>
+
+<style>
+.station-actions {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+    margin: 0.25rem 0;
+}
+.station-actions .btn-floating.btn-small {
+    width: 28px !important;
+    height: 28px !important;
+    line-height: 28px !important;
+    min-width: unset !important;
+    min-height: unset !important;
+}
+.station-actions .btn-floating.btn-small i {
+    font-size: 0.9rem !important;
+    line-height: 28px !important;
+}
+.station-card .station-footer .btn-small {
+    line-height: 28px;
+    height: 28px;
+    font-size: 0.65rem;
+}
+.station-card .station-footer .btn-small i {
+    font-size: 0.8rem;
+    line-height: 28px;
+}
+.station-price {
+    color: var(--warning);
+    font-weight: 700;
+}
+</style>

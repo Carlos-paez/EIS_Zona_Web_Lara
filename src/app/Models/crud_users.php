@@ -20,7 +20,12 @@ function crearUsuario($pdo, $user_name, $password, $nombre, $apellido, $email) {
     // Sentencia SQL para insertar un nuevo usuario
     $sql = "INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email, estatus) VALUES (?, ?, ?, ?, ?, '1')";
     $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$user_name, $hash, $nombre, $apellido, $email]);
+    $stmt->bindParam(1, $user_name, PDO::PARAM_STR);
+    $stmt->bindParam(2, $hash, PDO::PARAM_STR);
+    $stmt->bindParam(3, $nombre, PDO::PARAM_STR);
+    $stmt->bindParam(4, $apellido, PDO::PARAM_STR);
+    $stmt->bindParam(5, $email, PDO::PARAM_STR);
+    return $stmt->execute();
 }
 
 /**
@@ -58,7 +63,8 @@ function obtenerUsuarioPorId($pdo, $id) {
         LEFT JOIN roles r ON ru.fk_rol = r.id
         WHERE u.id = ?
     ");
-    $stmt->execute([$id]);
+    $stmt->bindParam(1, $id, PDO::PARAM_INT);
+    $stmt->execute();
     return $stmt->fetch();
 }
 
@@ -78,7 +84,8 @@ function obtenerUsuarioPorUsername($pdo, $username) {
         LEFT JOIN roles r ON ru.fk_rol = r.id
         WHERE u.user_name = ? AND u.estatus = '1'
     ");
-    $stmt->execute([$username]);
+    $stmt->bindParam(1, $username, PDO::PARAM_STR);
+    $stmt->execute();
     return $stmt->fetch();
 }
 
@@ -118,7 +125,13 @@ function actualizarUsuario($pdo, $id, $nombre, $apellido, $email, $fk_rol_usuari
     // SQL con COALESCE: si fk_rol_usuario es NULL, mantiene el valor actual
     $sql = "UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, fk_rol_usuario = COALESCE(?, fk_rol_usuario), estatus = ? WHERE id = ?";
     $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$nombre, $apellido, $email, $fk_rol_usuario, $estatus, $id]);
+    $stmt->bindParam(1, $nombre, PDO::PARAM_STR);
+    $stmt->bindParam(2, $apellido, PDO::PARAM_STR);
+    $stmt->bindParam(3, $email, PDO::PARAM_STR);
+    $stmt->bindParam(4, $fk_rol_usuario, PDO::PARAM_INT);
+    $stmt->bindParam(5, $estatus, PDO::PARAM_STR);
+    $stmt->bindParam(6, $id, PDO::PARAM_INT);
+    return $stmt->execute();
 }
 
 /**
@@ -133,7 +146,9 @@ function actualizarPassword($pdo, $id, $password) {
     // Genera el hash bcrypt de la nueva contraseña
     $hash = password_hash($password, PASSWORD_BCRYPT);
     $stmt = $pdo->prepare("UPDATE usuarios SET password_hash = ? WHERE id = ?");
-    return $stmt->execute([$hash, $id]);
+    $stmt->bindParam(1, $hash, PDO::PARAM_STR);
+    $stmt->bindParam(2, $id, PDO::PARAM_INT);
+    return $stmt->execute();
 }
 
 /**
@@ -145,5 +160,6 @@ function actualizarPassword($pdo, $id, $password) {
  */
 function eliminarUsuario($pdo, $id) {
     $stmt = $pdo->prepare("DELETE FROM usuarios WHERE id = ?");
-    return $stmt->execute([$id]);
+    $stmt->bindParam(1, $id, PDO::PARAM_INT);
+    return $stmt->execute();
 }

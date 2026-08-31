@@ -75,6 +75,7 @@
             <!-- Envía los datos por método POST al controlador login_validate -->
             <!-- ================================================================ -->
             <form action="?pagina=login_validate" method="post">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
 
                 <!-- ---------------------------------------------------------------- -->
                 <!-- CAMPO DE TEXTO: USUARIO -->

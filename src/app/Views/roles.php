@@ -134,7 +134,7 @@
                 <!-- Campo: Nombre del rol -->
                 <div class="col s12 input-field">
                     <i class="material-icons prefix">badge</i>
-                    <input type="text" id="rol-nombre" required>
+                    <input type="text" id="rol-nombre" required maxlength="50" pattern=".{2,50}" title="Entre 2 y 50 caracteres">
                     <label for="rol-nombre">Nombre del rol</label>
                 </div>
                 <!-- Campo: Descripción del rol -->

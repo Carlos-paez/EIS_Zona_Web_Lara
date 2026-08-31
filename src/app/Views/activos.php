@@ -1,223 +1,162 @@
-<!-- ============================================================
-     VISTA: GESTIÓN DE ACTIVOS
-     Muestra el inventario de activos fijos (equipos, licencias,
-     herramientas) con búsqueda, filtro por categoría, tablas
-     por tipo de activo y un resumen con totales.
-     NOTA: Todos los datos son estáticos (UI prototype).
-     ============================================================ -->
+<?php
 
-<!-- ===== BARRA DE HERRAMIENTAS: BÚSQUEDA, FILTRO Y BOTÓN NUEVO ACTIVO ===== -->
-<div class="card">
-    <div class="card-content" style="padding:1.25rem 1.5rem;">
-        <div class="row" style="margin-bottom:0;">
-            <!-- Buscador de activos por nombre o código -->
-            <div class="col s12 m6 l5">
-                <div class="input-field" style="margin-top:0;margin-bottom:0;">
+use App\Models\Activo;
+
+$activoModel = new Activo();
+$totalActivos = $activoModel->totalActivos();
+$tiposActivo = $activoModel->listarTiposActivo();
+?>
+
+<!-- ===== TARJETAS KPI ===== -->
+<div class="row" style="margin-bottom:1.25rem;">
+    <div class="col s12 m6 l3">
+        <div class="metric-card" style="margin:0;">
+            <div class="metric-icon"><i class="material-icons">devices_other</i></div>
+            <div class="metric-label">Total Activos</div>
+            <div class="metric-value" id="kpi-total"><?php echo $totalActivos; ?></div>
+            <div style="color:var(--text-muted);font-size:0.7rem;margin-top:0.25rem;">Registrados</div>
+        </div>
+    </div>
+    <div class="col s12 m6 l3">
+        <div class="metric-card" style="margin:0;">
+            <div class="metric-icon"><i class="material-icons">computer</i></div>
+            <div class="metric-label">Estaciones Cyber</div>
+            <div class="metric-value" id="kpi-ciber">0</div>
+            <div style="color:var(--text-muted);font-size:0.7rem;margin-top:0.25rem;">is_ciber = 1</div>
+        </div>
+    </div>
+    <div class="col s12 m6 l3">
+        <div class="metric-card" style="margin:0;">
+            <div class="metric-icon"><i class="material-icons">timer</i></div>
+            <div class="metric-label">Ocupadas Ahora</div>
+            <div class="metric-value" id="kpi-ocupados" style="color:#ef6c00;">0</div>
+            <div style="color:var(--text-muted);font-size:0.7rem;margin-top:0.25rem;">Sesiones abiertas</div>
+        </div>
+    </div>
+    <div class="col s12 m6 l3">
+        <div class="metric-card" style="margin:0;">
+            <div class="metric-icon"><i class="material-icons">toggle_off</i></div>
+            <div class="metric-label">Inactivos</div>
+            <div class="metric-value" id="kpi-inactivos" style="color:#c62828;">0</div>
+            <div style="color:var(--text-muted);font-size:0.7rem;margin-top:0.25rem;">Desactivados</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== BARRA DE HERRAMIENTAS ===== -->
+<div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-content" style="padding:1rem 1.25rem;">
+        <div class="row valign-wrapper" style="margin-bottom:0;flex-wrap:wrap;">
+            <div class="col s12 m7 l4" style="margin-bottom:0;">
+                <div class="input-field" style="margin:0;">
                     <i class="material-icons prefix">search</i>
-                    <input type="text" id="searchActivo" placeholder="Buscar activo por nombre o código...">
+                    <input type="text" id="searchActivo" placeholder="Buscar por marca, tipo o descripción...">
                     <label for="searchActivo">Buscar activo</label>
                 </div>
             </div>
-            <!-- Filtro por categoría de activo -->
-            <div class="col s6 m3 l3">
-                <div class="input-field" style="margin-top:0;margin-bottom:0;">
-                    <select>
-                        <!-- Opción por defecto: todos los activos -->
-                        <option value="" selected>Todos los activos</option>
-                        <option value="equipos">Equipos</option>
-                        <option value="herramientas">Herramientas</option>
-                        <option value="licencias">Licencias</option>
+            <div class="col s6 m3 l3" style="margin-bottom:0;">
+                <div class="input-field" style="margin:0;">
+                    <select id="filterTipo">
+                        <option value="" selected>Todos los tipos</option>
+                        <?php foreach ($tiposActivo as $tipo): ?>
+                            <option value="<?php echo htmlspecialchars($tipo['nombre_tipo'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($tipo['nombre_tipo'], ENT_QUOTES, 'UTF-8'); ?></option>
+                        <?php endforeach; ?>
                     </select>
-                    <label>Categoría</label>
+                    <label>Filtrar por tipo</label>
                 </div>
             </div>
-            <!-- Botón para agregar un nuevo activo -->
-            <div class="col s6 m3 l4 right-align" style="padding-top:0.75rem;">
-                <button class="btn waves-effect waves-light indigo btn-nuevo btn-mobile-full" data-tipo="activo"><i class="material-icons left">add</i><span class="hide-on-small-only">Nuevo Activo</span><span class="hide-on-med-and-up">Nuevo</span></button>
+            <div class="col s6 m2 l5 right-align" style="padding:0.5rem 0 0;display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap;">
+                <button class="btn waves-effect waves-light indigo btn-nuevo-activo"
+                    style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;padding:0 1.25rem;">
+                    <i class="material-icons left" style="margin:0;">add</i>
+                    <span class="hide-on-small-only">Nuevo Activo</span>
+                    <span class="hide-on-med-and-up">Nuevo</span>
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ===== TABLAS DE ACTIVOS AGRUPADOS POR CATEGORÍA ===== -->
-<div class="row">
-    <!-- ===== SECCIÓN: EQUIPOS ===== -->
-    <div class="col s12 l6">
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title">
-                    <i class="material-icons left">print</i>Equipos (3)
-                    <!-- Botón para ver todos los equipos -->
-                    <a class="btn-floating waves-effect waves-light grey right tooltipped" data-position="top" data-tooltip="Ver todos"><i class="material-icons">arrow_forward</i></a>
-                </span>
-                <table class="striped">
-                    <thead>
-                        <tr>
-                            <th>Equipo</th>
-                            <th>Estado</th>
-                            <th class="right-align">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Equipo 1: Impresora Láser HP -->
-                        <tr>
-                            <td>
-                                <div style="font-weight:600;">Impresora Láser HP</div>
-                                <!-- Número de serie -->
-                                <small style="color:var(--text-muted);">Serie: HP-2024-001</small>
-                            </td>
-                            <!-- Badge de estado: Activo (verde) -->
-                            <td><span class="new badge green" data-badge-caption="">Activo</span></td>
-                            <td class="right-align">
-                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Editar"><i class="material-icons">edit</i></button>
-                            </td>
-                        </tr>
-                        <!-- Equipo 2: Proyector Epson -->
-                        <tr>
-                            <td>
-                                <div style="font-weight:600;">Proyector Epson</div>
-                                <small style="color:var(--text-muted);">Serie: EPS-2023-045</small>
-                            </td>
-                            <!-- Badge de estado: Mantenimiento (naranja) -->
-                            <td><span class="new badge orange" data-badge-caption="">Mantenimiento</span></td>
-                            <td class="right-align">
-                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Editar"><i class="material-icons">edit</i></button>
-                            </td>
-                        </tr>
-                        <!-- Equipo 3: Router Cisco -->
-                        <tr>
-                            <td>
-                                <div style="font-weight:600;">Router Cisco</div>
-                                <small style="color:var(--text-muted);">Serie: CSC-2024-012</small>
-                            </td>
-                            <td><span class="new badge green" data-badge-caption="">Activo</span></td>
-                            <td class="right-align">
-                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Editar"><i class="material-icons">edit</i></button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+<!-- ===== TABLA DE ACTIVOS ===== -->
+<div class="card">
+    <div class="card-content" style="padding:0;">
+        <div style="padding:1.25rem 1.5rem 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+            <span style="font-size:1.1rem;font-weight:600;display:flex;align-items:center;gap:0.5rem;">
+                <i class="material-icons" style="color:var(--primary);">devices_other</i> Activos
+            </span>
+            <span class="result-count" style="color:var(--text-muted);font-size:0.85rem;"><?php echo $totalActivos; ?> resultados</span>
         </div>
-    </div>
 
-    <!-- ===== SECCIÓN: LICENCIAS ===== -->
-    <div class="col s12 l6">
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title">
-                    <i class="material-icons left">vpn_key</i>Licencias (2)
-                    <a class="btn-floating waves-effect waves-light grey right tooltipped" data-position="top" data-tooltip="Ver todos"><i class="material-icons">arrow_forward</i></a>
-                </span>
-                <table class="striped">
-                    <thead>
-                        <tr>
-                            <th>Licencia</th>
-                            <th>Estado</th>
-                            <th class="right-align">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Licencia 1: Windows 11 Pro (vencida) -->
-                        <tr>
-                            <td>
-                                <div style="font-weight:600;">Windows 11 Pro</div>
-                                <!-- Fecha de expiración -->
-                                <small style="color:var(--text-muted);">Expira: 2024-12-31</small>
-                            </td>
-                            <!-- Badge de estado: Vencida (rojo) -->
-                            <td><span class="new badge red" data-badge-caption="">Vencida</span></td>
-                            <td class="right-align">
-                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Renovar"><i class="material-icons">refresh</i></button>
-                            </td>
-                        </tr>
-                        <!-- Licencia 2: Office 365 (activa) -->
-                        <tr>
-                            <td>
-                                <div style="font-weight:600;">Office 365</div>
-                                <small style="color:var(--text-muted);">Expira: 2025-06-15</small>
-                            </td>
-                            <td><span class="new badge green" data-badge-caption="">Activa</span></td>
-                            <td class="right-align">
-                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Ver detalles"><i class="material-icons">visibility</i></button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div style="overflow-x:auto;margin-top:0.75rem;">
+            <table class="striped" id="tabla-activos" style="margin-bottom:0;border-collapse:collapse;width:100%;min-width:720px;">
+                <thead>
+                    <tr style="background:var(--surface-hover);">
+                        <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);">Marca</th>
+                        <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);">Descripci&oacute;n</th>
+                        <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);">Tipo</th>
+                        <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);">Estado</th>
+                        <th style="padding:0.75rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:700;border-bottom:2px solid var(--border);text-align:right;">Acci&oacute;n</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="padding:0.85rem 1.25rem;border-top:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;">
+            <span class="result-count" style="color:var(--text-muted);font-size:0.85rem;"><?php echo $totalActivos; ?> resultados</span>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <!-- ===== SECCIÓN: HERRAMIENTAS ===== -->
-    <div class="col s12 l6">
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title">
-                    <i class="material-icons left">build</i>Herramientas (4)
-                    <a class="btn-floating waves-effect waves-light grey right tooltipped" data-position="top" data-tooltip="Ver todos"><i class="material-icons">arrow_forward</i></a>
-                </span>
-                <table class="striped">
-                    <thead>
-                        <tr>
-                            <th>Herramienta</th>
-                            <th>Estado</th>
-                            <th class="right-align">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Herramienta 1: Kit Destornilladores -->
-                        <tr>
-                            <td>
-                                <div style="font-weight:600;">Kit Destornilladores</div>
-                                <small style="color:var(--text-muted);">Completo</small>
-                            </td>
-                            <td><span class="new badge green" data-badge-caption="">Disponible</span></td>
-                            <td class="right-align">
-                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Ver detalles"><i class="material-icons">visibility</i></button>
-                            </td>
-                        </tr>
-                        <!-- Herramienta 2: Multímetro Digital -->
-                        <tr>
-                            <td>
-                                <div style="font-weight:600;">Multímetro Digital</div>
-                                <small style="color:var(--text-muted);">Precisión ±0.5%</small>
-                            </td>
-                            <td><span class="new badge green" data-badge-caption="">Disponible</span></td>
-                            <td class="right-align">
-                                <button class="btn-floating waves-effect waves-light grey tooltipped" data-position="top" data-tooltip="Ver detalles"><i class="material-icons">visibility</i></button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+<!-- ===== MODAL: NUEVO/EDITAR ACTIVO ===== -->
+<div id="modal-activo" class="modal" style="max-width:560px;">
+    <div class="modal-content" style="padding:2rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+            <h4 style="font-weight:700;margin:0;font-size:1.3rem;display:flex;align-items:center;gap:0.5rem;">
+                <i class="material-icons" style="color:var(--primary);">devices_other</i> <span id="modal-activo-title">Nuevo Activo</span>
+            </h4>
+            <a href="#!" class="modal-close btn-flat" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="material-icons">close</i></a>
         </div>
-    </div>
-
-    <!-- ===== SECCIÓN: RESUMEN DE ACTIVOS ===== -->
-    <div class="col s12 l6">
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title"><i class="material-icons left">assessment</i>Resumen</span>
-                <div style="display:flex;flex-direction:column;gap:0.75rem;">
-                    <!-- Indicador: Activos Totales (verde) -->
-                    <div class="card-panel green lighten-4" style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;margin:0;border-radius:8px;">
-                        <span style="font-weight:600;color:#2e7d32;">Activos Totales</span>
-                        <span style="font-weight:800;font-size:1.5rem;color:#2e7d32;">9</span>
-                    </div>
-                    <!-- Indicador: En Mantenimiento (azul) -->
-                    <div class="card-panel blue lighten-4" style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;margin:0;border-radius:8px;">
-                        <span style="font-weight:600;color:#1565c0;">En Mantenimiento</span>
-                        <span style="font-weight:800;font-size:1.5rem;color:#1565c0;">1</span>
-                    </div>
-                    <!-- Indicador: Requieren Atención (rojo) -->
-                    <div class="card-panel red lighten-4" style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;margin:0;border-radius:8px;">
-                        <span style="font-weight:600;color:#c62828;">Requieren Atención</span>
-                        <span style="font-weight:800;font-size:1.5rem;color:#c62828;">1</span>
-                    </div>
+        <form id="form-activo">
+            <input type="hidden" name="id" id="activo-id" value="">
+            <div class="row" style="margin-bottom:0;">
+                <div class="col s12 m6 input-field" style="margin-bottom:0;">
+                    <i class="material-icons prefix">branding_watermark</i>
+                    <input type="text" name="marca" id="activo-marca" required maxlength="100" pattern=".{2,100}" title="Entre 2 y 100 caracteres">
+                    <label for="activo-marca">Marca</label>
+                </div>
+                <div class="col s12 m6 input-field" style="margin-bottom:0;">
+                    <i class="material-icons prefix">category</i>
+                    <select name="tipo_activo_id" id="activo-tipo" required>
+                        <option value="" disabled selected>Selecciona un tipo...</option>
+                        <?php foreach ($tiposActivo as $tipo): ?>
+                            <option value="<?php echo (int)$tipo['id']; ?>"><?php echo htmlspecialchars($tipo['nombre_tipo'], ENT_QUOTES, 'UTF-8'); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <label>Tipo de activo</label>
                 </div>
             </div>
-        </div>
+            <div class="input-field">
+                <i class="material-icons prefix">notes</i>
+                <textarea name="descripcion" id="activo-descripcion" class="materialize-textarea" required maxlength="1000"></textarea>
+                <label for="activo-descripcion">Descripción</label>
+            </div>
+            <div style="display:flex;gap:2.5rem;margin-top:0.5rem;flex-wrap:wrap;">
+                <label>
+                    <input type="checkbox" name="activa" id="activo-activa" value="1" checked />
+                    <span>Activo</span>
+                </label>
+                <label>
+                    <input type="checkbox" name="is_ciber" id="activo-ciber" value="1" />
+                    <span style="font-size:0.9rem;">Estaci&oacute;n de Cybercaf&eacute;</span>
+                </label>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer" style="padding:1rem 2rem;display:flex;gap:0.75rem;justify-content:flex-end;border-top:1px solid var(--border-light);">
+        <button class="btn waves-effect waves-light grey lighten-1 modal-close" style="border-radius:24px;">Cancelar</button>
+        <button type="submit" form="form-activo" class="btn waves-effect waves-light indigo" style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;"><i class="material-icons left" style="margin:0;">save</i> Guardar</button>
     </div>
 </div>

@@ -1,13 +1,8 @@
 <?php
-// =============================================================================
-// CONTROLADOR ProveedorGestionController (API JSON para gestión de proveedores)
-// =============================================================================
-// Propósito: Manejar las peticiones AJAX del módulo de gestión de proveedores.
-//            Responde siempre en formato JSON. CRUD de proveedores.
-// =============================================================================
 
 namespace App\Controllers;
 
+use App\Core\Router;
 use App\Models\ProveedorGestion;
 
 class ProveedorGestionController
@@ -19,6 +14,16 @@ class ProveedorGestionController
         $this->model = new ProveedorGestion();
     }
 
+    public function getModel(): ProveedorGestion
+    {
+        return $this->model;
+    }
+
+    public function setModel(ProveedorGestion $model): void
+    {
+        $this->model = $model;
+    }
+
     public function handle(): void
     {
         header('Content-Type: application/json');
@@ -27,18 +32,20 @@ class ProveedorGestionController
 
         try {
             match ($action) {
-                'listar'       => $this->listar(),
-                'detalle'      => $this->detalle(),
-                'crear'        => $this->crear(),
-                'actualizar'   => $this->actualizar(),
-                'eliminar'     => $this->eliminar(),
-                'kpis'         => $this->kpis(),
-                default        => $this->json(false, null, 'Acción no válida'),
+                'listar'     => $this->listar(),
+                'detalle'    => $this->detalle(),
+                'crear'      => $this->crear(),
+                'actualizar' => $this->actualizar(),
+                'eliminar'   => $this->eliminar(),
+                'kpis'       => $this->kpis(),
+                default      => $this->json(false, null, 'Acción no válida'),
             };
         } catch (\PDOException $e) {
-            echo json_encode(['success' => false, 'error' => 'Error de base de datos: ' . $e->getMessage()]);
+            echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
+        } catch (\InvalidArgumentException $e) {
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         } catch (\Exception $e) {
-            echo json_encode(['success' => false, 'error' => 'Error: ' . $e->getMessage()]);
+            echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
         }
     }
 
@@ -75,13 +82,28 @@ class ProveedorGestionController
 
     private function crear(): void
     {
-        $rif      = $_POST['rif'] ?? '';
-        $nombre   = $_POST['nombre'] ?? '';
-        $email    = $_POST['email'] ?? '';
-        $telefono = $_POST['telefono'] ?? '';
+        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $rif      = trim($_POST['rif'] ?? '');
+        $nombre   = trim($_POST['nombre'] ?? '');
+        $email    = trim($_POST['email'] ?? '');
+        $telefono = trim($_POST['telefono'] ?? '');
 
         if (empty($rif) || empty($nombre)) {
             echo json_encode(['success' => false, 'error' => 'RIF y Nombre son obligatorios']);
+            return;
+        }
+
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            echo json_encode(['success' => false, 'error' => 'El formato del email no es válido']);
+            return;
+        }
+
+        if ($this->model->existeRif($rif)) {
+            echo json_encode(['success' => false, 'error' => 'Ya existe un proveedor con ese RIF']);
             return;
         }
 
@@ -95,14 +117,29 @@ class ProveedorGestionController
 
     private function actualizar(): void
     {
+        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
         $id       = (int)($_POST['id'] ?? 0);
-        $rif      = $_POST['rif'] ?? '';
-        $nombre   = $_POST['nombre'] ?? '';
-        $email    = $_POST['email'] ?? '';
-        $telefono = $_POST['telefono'] ?? '';
+        $rif      = trim($_POST['rif'] ?? '');
+        $nombre   = trim($_POST['nombre'] ?? '');
+        $email    = trim($_POST['email'] ?? '');
+        $telefono = trim($_POST['telefono'] ?? '');
 
         if (!$id || empty($rif) || empty($nombre)) {
             echo json_encode(['success' => false, 'error' => 'ID, RIF y Nombre son obligatorios']);
+            return;
+        }
+
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            echo json_encode(['success' => false, 'error' => 'El formato del email no es válido']);
+            return;
+        }
+
+        if ($this->model->existeRif($rif, $id)) {
+            echo json_encode(['success' => false, 'error' => 'Ya existe otro proveedor con ese RIF']);
             return;
         }
 
@@ -116,6 +153,11 @@ class ProveedorGestionController
 
     private function eliminar(): void
     {
+        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
         $id = (int)($_POST['id'] ?? 0);
         if (!$id) {
             echo json_encode(['success' => false, 'error' => 'ID no válido']);

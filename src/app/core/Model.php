@@ -1,48 +1,89 @@
 <?php
-// =============================================================================
-// CLASE ABSTRACTA Model
-// =============================================================================
-// Propósito: Clase base para todos los modelos de la aplicación.
-//            Proporciona la conexión a la base de datos PDO a todas las
-//            subclases mediante el patrón Singleton (Database::getConnection()).
-// =============================================================================
 
-// Declara el namespace 'App\Core' para organizar esta clase dentro de la aplicación
 namespace App\Core;
 
-// Importa la clase PDO de PHP para usarla como tipo en la propiedad $db
 use PDO;
 
-/**
- * Clase abstracta Model - Clase base para todos los modelos de datos.
- * 
- * Todos los modelos del negocio (Usuario, Producto, Venta, etc.) heredan
- * de esta clase para tener acceso automático a la conexión PDO a través
- * del patrón Singleton implementado en Database.
- */
 abstract class Model
 {
-    /**
-     * Instancia de la conexión PDO a la base de datos.
-     * 
-     * Es protegida para que las subclases puedan acceder directamente
-     * a la conexión y ejecutar sus consultas SQL.
-     *
-     * @var PDO Objeto de conexión PDO
-     */
     protected PDO $db;
 
-    /**
-     * Constructor de la clase Model.
-     * 
-     * Obtiene la instancia única de la conexión a la base de datos
-     * mediante el método estático Database::getConnection(). De esta
-     * forma, todos los modelos comparten la misma conexión PDO.
-     */
     public function __construct()
     {
-        // Llama al método estático getConnection() de la clase Database
-        // Este método implementa el patrón Singleton: solo hay una conexión en toda la app
         $this->db = Database::getConnection();
+    }
+
+    public function getDb(): PDO
+    {
+        return $this->db;
+    }
+
+    public function setDb(PDO $db): void
+    {
+        $this->db = $db;
+    }
+
+    protected function sanitizeString(string $input): string
+    {
+        return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
+    }
+
+    protected function sanitizeInt(mixed $input): int
+    {
+        $filtered = filter_var($input, FILTER_VALIDATE_INT);
+        return $filtered !== false ? $filtered : 0;
+    }
+
+    protected function sanitizeFloat(mixed $input): float
+    {
+        $filtered = filter_var($input, FILTER_VALIDATE_FLOAT);
+        return $filtered !== false ? $filtered : 0.0;
+    }
+
+    protected function validateNotEmpty(string $value, string $field): void
+    {
+        if (trim($value) === '') {
+            throw new \InvalidArgumentException("El campo '$field' es obligatorio");
+        }
+    }
+
+    protected function validateMinLength(string $value, string $field, int $min): void
+    {
+        if (mb_strlen(trim($value)) < $min) {
+            throw new \InvalidArgumentException("El campo '$field' debe tener al menos $min caracteres");
+        }
+    }
+
+    protected function validateLength(string $value, string $field, int $max): void
+    {
+        if (mb_strlen($value) > $max) {
+            throw new \InvalidArgumentException("El campo '$field' no puede exceder $max caracteres");
+        }
+    }
+
+    protected function validatePattern(string $value, string $pattern, string $message): void
+    {
+        if (!preg_match($pattern, $value)) {
+            throw new \InvalidArgumentException($message);
+        }
+    }
+
+    protected function validatePositive(float $value, string $field): void
+    {
+        if ($value <= 0) {
+            throw new \InvalidArgumentException("El campo '$field' debe ser mayor a 0");
+        }
+    }
+
+    protected function validateGreaterOrEqual(float $value, string $field, float $min): void
+    {
+        if ($value < $min) {
+            throw new \InvalidArgumentException("El campo '$field' debe ser mayor o igual a $min");
+        }
+    }
+
+    protected function validateEmail(string $email): bool
+    {
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
     }
 }

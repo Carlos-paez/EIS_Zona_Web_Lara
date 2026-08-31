@@ -227,9 +227,139 @@ $(function () {
         // Actualizo los labels flotantes de Materialize para que no se
         // superpongan con los valores cargados
         M.updateTextFields();
-        // Inicializo el select de categoría (Materialize lo requiere)
-        $('#producto-categoria').formSelect();
     }
+
+    // ================================================================
+    // FUNCIÓN: cargarSelectCategorias()
+    // PROPÓSITO: Carga las categorías en el <select> del modal de
+    //            producto via AJAX. Se llama antes de abrir el modal
+    //            de producto para que siempre tenga datos frescos.
+    // ================================================================
+    function cargarSelectCategorias(selectedId) {
+        $.getJSON(API + 'categorias', function (r) {
+            if (!r.success) return;
+            var sel = $('#producto-categoria');
+            sel.empty().append('<option value="" disabled selected>Seleccione</option>');
+            $.each(r.data, function (i, c) {
+                var opt = '<option value="' + c.id + '">' + $('<span>').text(c.nombre).html() + '</option>';
+                sel.append(opt);
+            });
+            if (selectedId) sel.val(selectedId);
+            sel.formSelect();
+        });
+    }
+
+    // ================================================================
+    // FUNCIÓN: cargarCategorias()
+    // PROPÓSITO: Carga la tabla de categorías dentro del modal de
+    //            gestión de categorías.
+    // ================================================================
+    function cargarCategorias() {
+        $.getJSON(API + 'categorias', function (r) {
+            if (!r.success) return;
+            var tbody = $('#tabla-categorias tbody');
+            tbody.empty();
+            if (!r.data.length) {
+                tbody.html('<tr><td colspan="2" style="text-align:center;padding:2rem;color:var(--text-muted);"><i class="material-icons" style="font-size:2.5rem;display:block;margin-bottom:0.5rem;">category</i>Sin categorías</td></tr>');
+                return;
+            }
+            $.each(r.data, function (i, c) {
+                var nombre = $('<span>').text(c.nombre).html();
+                var fila = '<tr>';
+                fila += '<td style="padding:0.85rem 1rem;font-weight:600;">' + nombre + '</td>';
+                fila += '<td style="padding:0.85rem 1rem;text-align:right;white-space:nowrap;">';
+                fila += '<button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar-cat" data-id="' + c.id + '" data-nombre="' + nombre + '" data-position="left" data-tooltip="Editar"><i class="material-icons">edit</i></button> ';
+                fila += '<button class="btn-floating waves-effect waves-light red tooltipped btn-eliminar-cat" data-id="' + c.id + '" data-nombre="' + nombre + '" data-position="left" data-tooltip="Eliminar"><i class="material-icons">delete</i></button>';
+                fila += '</td></tr>';
+                tbody.append(fila);
+            });
+            $('.tooltipped').tooltip();
+        });
+    }
+
+    // ================================================================
+    // EVENTO: Click en botón "Gestionar Categorías"
+    // Abre el modal de categorías y carga la lista.
+    // ================================================================
+    $(document).on('click', '.btn-gestionar-categorias', function () {
+        $('#form-categoria')[0].reset();
+        $('#categoria-id').val('');
+        M.updateTextFields();
+        cargarCategorias();
+        $('#modal-categorias').modal('open');
+    });
+
+    // ================================================================
+    // EVENTO: Submit del formulario de categoría (#form-categoria)
+    // Detecta si es creación o edición según #categoria-id.
+    // ================================================================
+    $('#form-categoria').on('submit', function (e) {
+        e.preventDefault();
+        var id = $('#categoria-id').val();
+        var nombre = $('#categoria-nombre').val().trim();
+        if (!nombre) {
+            EIS.toast('El nombre es obligatorio', 'red', 'error');
+            return;
+        }
+        var accion = id ? 'actualizarCategoria' : 'crearCategoria';
+        var data = id ? { id: id, nombre: nombre } : { nombre: nombre };
+        $.post(API + accion, data, function (r) {
+            if (r.success) {
+                EIS.toast(r.message, 'green', 'check_circle');
+                $('#form-categoria')[0].reset();
+                $('#categoria-id').val('');
+                M.updateTextFields();
+                cargarCategorias();
+            } else {
+                EIS.toast(r.error || 'Error al guardar', 'red', 'error');
+            }
+        }, 'json').fail(function () {
+            EIS.toast('Error de conexión', 'red', 'error');
+        });
+    });
+
+    // ================================================================
+    // EVENTO: Click en botón "Editar" categoría
+    // Rellena el formulario con el nombre para editar.
+    // ================================================================
+    $(document).on('click', '.btn-editar-cat', function () {
+        var id = $(this).data('id');
+        var nombre = $(this).data('nombre');
+        $('#categoria-id').val(id);
+        $('#categoria-nombre').val(nombre);
+        M.updateTextFields();
+    });
+
+    // ================================================================
+    // EVENTO: Click en botón "Eliminar" categoría
+    // Pide confirmación y elimina la categoría.
+    // ================================================================
+    $(document).on('click', '.btn-eliminar-cat', function () {
+        var id = $(this).data('id');
+        var nombre = $(this).data('nombre');
+        if (confirm('¿Está seguro de eliminar la categoría "' + nombre + '"?')) {
+            $.post(API + 'eliminarCategoria', { id: id }, function (r) {
+                if (r.success) {
+                    EIS.toast(r.message, 'green', 'check_circle');
+                    cargarCategorias();
+                } else {
+                    EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                }
+            }, 'json').fail(function () {
+                EIS.toast('Error de conexión', 'red', 'error');
+            });
+        }
+    });
+
+    // ================================================================
+    // EVENTO: Click en botón "Cancelar" del form de categoría
+    // Resetea el formulario de categoría.
+    // ================================================================
+    $(document).on('click', '.btn-cancelar-cat', function () {
+        $('#form-categoria')[0].reset();
+        $('#categoria-id').val('');
+        M.updateTextFields();
+    });
 
     // ================================================================
     // EVENTOS DE LOS BOTONES DE LA TABLA
@@ -240,6 +370,7 @@ $(function () {
     // Abre el modal de producto vacío para crear uno nuevo.
     // ================================================================
     $(document).on('click', '.btn-nuevo', function () {
+        cargarSelectCategorias();
         abrirModalProducto('Nuevo Producto', null); // null = sin datos = nuevo
     });
 
@@ -249,18 +380,15 @@ $(function () {
     // luego abre el modal con los campos pre-cargados.
     // ================================================================
     $(document).on('click', '.btn-editar', function () {
-        var id = $(this).data('id'); // Obtengo el ID del producto desde data-id
-        // Pido los datos completos del producto al servidor
+        var id = $(this).data('id');
         $.getJSON(API + 'detalle&id=' + id, function (r) {
             if (r.success) {
-                // Si la carga es exitosa, abro el modal en modo edición
+                cargarSelectCategorias(r.data.categoria_id);
                 abrirModalProducto('Editar Producto', r.data);
             } else {
-                // Si hay error del servidor, muestro el mensaje de error
                 EIS.toast(r.error || 'Error al cargar producto', 'red', 'error');
             }
         }).fail(function () {
-            // Si hay error de conexión, muestro toast de error
             EIS.toast('Error de conexión al cargar producto', 'red', 'error');
         });
     });
@@ -302,26 +430,70 @@ $(function () {
     // campo oculto #producto-id tiene un valor.
     // ================================================================
     $('#form-producto').on('submit', function (e) {
-        e.preventDefault(); // Evito que el formulario se envíe de forma tradicional
+        e.preventDefault();
 
-        var id = $('#producto-id').val();       // Si tiene ID, es edición; si no, es nuevo
-        var accion = id ? 'actualizar' : 'crear'; // Elijo la acción según corresponda
-        var data = $(this).serialize();         // Convierto el formulario a string clave=valor&...
+        var codigo       = $('#producto-codigo').val().trim();
+        var nombre       = $('#producto-nombre').val().trim();
+        var categoria_id = parseInt($('#producto-categoria').val()) || 0;
+        var stock        = parseInt($('#producto-stock').val()) || 0;
+        var stock_minimo = parseInt($('#producto-stock-minimo').val()) || 0;
+        var costo_compra = parseFloat($('#producto-costo').val()) || 0;
+        var precio_venta = parseFloat($('#producto-precio').val()) || 0;
 
-        // POST request para crear o actualizar el producto
+        if (!codigo || !nombre || !categoria_id) {
+            EIS.toast('Código, nombre y categoría son obligatorios', 'red', 'error');
+            return;
+        }
+
+        if (codigo.length < 1 || codigo.length > 50) {
+            EIS.toast('El código debe tener entre 1 y 50 caracteres', 'red', 'error');
+            return;
+        }
+
+        if (nombre.length < 2 || nombre.length > 100) {
+            EIS.toast('El nombre debe tener entre 2 y 100 caracteres', 'red', 'error');
+            return;
+        }
+
+        if (stock < 0) {
+            EIS.toast('El stock no puede ser negativo', 'red', 'error');
+            return;
+        }
+
+        if (stock_minimo < 1) {
+            EIS.toast('El stock mínimo debe ser al menos 1', 'red', 'error');
+            return;
+        }
+
+        if (costo_compra < 0) {
+            EIS.toast('El costo de compra no puede ser negativo', 'red', 'error');
+            return;
+        }
+
+        if (precio_venta < 0) {
+            EIS.toast('El precio de venta no puede ser negativo', 'red', 'error');
+            return;
+        }
+
+        if (precio_venta > 0 && costo_compra > 0 && precio_venta < costo_compra) {
+            EIS.toast('El precio de venta no puede ser menor al costo de compra', 'red', 'error');
+            return;
+        }
+
+        var id = $('#producto-id').val();
+        var accion = id ? 'actualizar' : 'crear';
+        var data = $(this).serialize();
+
         $.post(API + accion, data, function (r) {
             if (r.success) {
-                // Si la operación es exitosa, muestro toast, cierro modal y refresco
                 EIS.toast(r.message, 'green', 'check_circle');
-                $('#modal-producto').modal('close'); // Cierro el modal
-                refrescarTabla(); // Recargo la tabla
-                refrescarKPI();   // Actualizo los indicadores
+                $('#modal-producto').modal('close');
+                refrescarTabla();
+                refrescarKPI();
             } else {
-                // Si hay error, muestro el mensaje del servidor
                 EIS.toast(r.error || 'Error al guardar', 'red', 'error');
             }
         }, 'json').fail(function () {
-            // Si hay error de conexión, muestro toast de error
             EIS.toast('Error de conexión al guardar', 'red', 'error');
         });
     });
@@ -354,8 +526,6 @@ $(function () {
 
     // Activo los tooltips (globitos de ayuda al pasar el mouse)
     $('.tooltipped').tooltip();
-    // Inicializo el select de categorías (transforma <select> nativo en un selector visual)
-    $('#producto-categoria').formSelect();
     // Inicializo todos los modales de la página para que Materialize los maneje
     $('.modal').modal();
 

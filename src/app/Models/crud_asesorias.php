@@ -15,22 +15,28 @@ require_once __DIR__.'/../../Config/database.php';
 function obtenerOcrearCliente($pdo, $cedula, $nombre, $apellido = '') {
     // 1. Buscar o crear en la tabla clientes
     $stmt = $pdo->prepare("SELECT id FROM clientes WHERE cedula = ?");
-    $stmt->execute([$cedula]);
+    $stmt->bindParam(1, $cedula, PDO::PARAM_STR);
+    $stmt->execute();
     $cliente = $stmt->fetch();
     if ($cliente) {
         $cliente_id = (int)$cliente['id'];
     } else {
         $stmt = $pdo->prepare("INSERT INTO clientes (cedula, nombre, apellido, direccion, telefono) VALUES (?, ?, ?, '', '')");
-        $stmt->execute([$cedula, $nombre, $apellido]);
+        $stmt->bindParam(1, $cedula, PDO::PARAM_STR);
+        $stmt->bindParam(2, $nombre, PDO::PARAM_STR);
+        $stmt->bindParam(3, $apellido, PDO::PARAM_STR);
+        $stmt->execute();
         $cliente_id = (int)$pdo->lastInsertId();
     }
     // 2. Buscar o crear en cliente_asesoria vinculado al cliente
     $stmt = $pdo->prepare("SELECT id FROM cliente_asesoria WHERE fk_cliente = ?");
-    $stmt->execute([$cliente_id]);
+    $stmt->bindParam(1, $cliente_id, PDO::PARAM_INT);
+    $stmt->execute();
     $ca = $stmt->fetch();
     if ($ca) return (int)$ca['id'];
     $stmt = $pdo->prepare("INSERT INTO cliente_asesoria (fk_cliente, email, rif, tipo) VALUES (?, 'N/A', 'N/A', 'civil')");
-    $stmt->execute([$cliente_id]);
+    $stmt->bindParam(1, $cliente_id, PDO::PARAM_INT);
+    $stmt->execute();
     return (int)$pdo->lastInsertId();
 }
 
@@ -44,7 +50,8 @@ function obtenerOcrearCliente($pdo, $cedula, $nombre, $apellido = '') {
 function obtenerTipoAsesoria($pdo, $documento) {
     // Compara usando LOWER para ignorar mayúsculas/minúsculas
     $stmt = $pdo->prepare("SELECT id FROM tipo_asesoria WHERE LOWER(tipo) = LOWER(?)");
-    $stmt->execute([$documento]);
+    $stmt->bindParam(1, $documento, PDO::PARAM_STR);
+    $stmt->execute();
     $tipo = $stmt->fetch();
     // Retorna el ID si existe, null en caso contrario
     return $tipo ? (int)$tipo['id'] : null;
@@ -72,7 +79,11 @@ function crearAsesoria($pdo, $ciudadano, $cedula, $documento, $descripcion) {
     // Inserta la asesoría con fecha actual (CURDATE)
     $sql = "INSERT INTO asesoria (documento, descripcion, fecha, fk_cliente_asesoria, fk_tipo_asesoria) VALUES (?, ?, CURDATE(), ?, ?)";
     $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$documento, $descripcion, $fk_cliente, $fk_tipo_asesoria]);
+    $stmt->bindParam(1, $documento, PDO::PARAM_STR);
+    $stmt->bindParam(2, $descripcion, PDO::PARAM_STR);
+    $stmt->bindParam(3, $fk_cliente, PDO::PARAM_INT);
+    $stmt->bindParam(4, $fk_tipo_asesoria, PDO::PARAM_INT);
+    return $stmt->execute();
 }
 
 /**
@@ -118,7 +129,8 @@ function obtenerAsesoriasPorEstado($pdo, $estado) {
         WHERE ta.permitido = ?
         ORDER BY a.fecha DESC
     ");
-    $stmt->execute([$permitido]);
+    $stmt->bindParam(1, $permitido, PDO::PARAM_INT);
+    $stmt->execute();
     return $stmt->fetchAll();
 }
 
@@ -140,7 +152,8 @@ function obtenerAsesoriaPorId($pdo, $id) {
         LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
         WHERE a.id = ?
     ");
-    $stmt->execute([$id]);
+    $stmt->bindParam(1, $id, PDO::PARAM_INT);
+    $stmt->execute();
     return $stmt->fetch();
 }
 
@@ -165,7 +178,9 @@ function buscarAsesoriasPorCedula($pdo, $cedula) {
         ORDER BY a.fecha DESC
     ");
     // Agrega comodines % para búsqueda parcial
-    $stmt->execute(["%$cedula%"]);
+    $patron = "%$cedula%";
+    $stmt->bindParam(1, $patron, PDO::PARAM_STR);
+    $stmt->execute();
     return $stmt->fetchAll();
 }
 
@@ -185,7 +200,11 @@ function actualizarAsesoria($pdo, $id, $documento, $descripcion) {
     // Actualiza; COALESCE conserva el tipo anterior si no se encuentra el nuevo
     $sql = "UPDATE asesoria SET documento = ?, descripcion = ?, fk_tipo_asesoria = COALESCE(?, fk_tipo_asesoria) WHERE id = ?";
     $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$documento, $descripcion, $fk_tipo_asesoria, $id]);
+    $stmt->bindParam(1, $documento, PDO::PARAM_STR);
+    $stmt->bindParam(2, $descripcion, PDO::PARAM_STR);
+    $stmt->bindParam(3, $fk_tipo_asesoria, PDO::PARAM_INT);
+    $stmt->bindParam(4, $id, PDO::PARAM_INT);
+    return $stmt->execute();
 }
 
 /**
@@ -197,7 +216,8 @@ function actualizarAsesoria($pdo, $id, $documento, $descripcion) {
  */
 function eliminarAsesoria($pdo, $id) {
     $stmt = $pdo->prepare("DELETE FROM asesoria WHERE id = ?");
-    return $stmt->execute([$id]);
+    $stmt->bindParam(1, $id, PDO::PARAM_INT);
+    return $stmt->execute();
 }
 
 /**

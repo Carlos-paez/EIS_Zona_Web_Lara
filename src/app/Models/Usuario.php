@@ -1,46 +1,177 @@
 <?php
-// Namespace que organiza este modelo dentro de la carpeta App\Models
+
 namespace App\Models;
 
-// Se importa la clase Model del núcleo de la aplicación
 use App\Core\Model;
+use PDO;
 
-/**
- * Clase Usuario que extiende de Model.
- * Proporciona métodos CRUD y de autenticación para la tabla "usuarios".
- */
 class Usuario extends Model
 {
-    /**
-     * Crea un nuevo usuario en la base de datos.
-     *
-     * @param string $user_name  Nombre de usuario único.
-     * @param string $password   Contraseña en texto plano (se hashea con bcrypt).
-     * @param string $nombre     Nombre real del usuario.
-     * @param string $apellido   Apellido del usuario.
-     * @param string $email      Correo electrónico del usuario.
-     * @return bool              True si la inserción fue exitosa, false en caso contrario.
-     */
-    public function crear(string $user_name, string $password, string $nombre, string $apellido, string $email): bool
+    private int $id = 0;
+    private string $userName = '';
+    private string $passwordHash = '';
+    private string $nombre = '';
+    private string $apellido = '';
+    private string $email = '';
+    private string $estatus = '1';
+    private ?int $fkRolUsuario = null;
+
+    private const MIN_USERNAME = 3;
+    private const MAX_USERNAME = 50;
+    private const MAX_NOMBRE   = 100;
+    private const MAX_APELLIDO = 100;
+    private const MAX_EMAIL    = 100;
+    private const MIN_PASSWORD = 8;
+
+    public function getId(): int
     {
-        // Genera el hash bcrypt de la contraseña para almacenamiento seguro
-        $hash = password_hash($password, PASSWORD_BCRYPT);
-        // Sentencia SQL para insertar un nuevo usuario con los datos proporcionados
-        $sql = "INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email, estatus) VALUES (?, ?, ?, ?, ?, '1')";
-        // Prepara la sentencia SQL para evitar inyección SQL
-        $stmt = $this->db->prepare($sql);
-        // Ejecuta la consulta con los valores y retorna el resultado booleano
-        return $stmt->execute([$user_name, $hash, $nombre, $apellido, $email]);
+        return $this->id;
     }
 
-    /**
-     * Obtiene todos los usuarios con sus roles asociados.
-     *
-     * @return array Lista de usuarios (cada uno como arreglo asociativo).
-     */
+    public function setId(int $id): void
+    {
+        $this->id = $this->sanitizeInt($id);
+    }
+
+    public function getUserName(): string
+    {
+        return $this->userName;
+    }
+
+    public function setUserName(string $userName): void
+    {
+        $userName = $this->sanitizeString($userName);
+        $this->validateNotEmpty($userName, 'nombre de usuario');
+        $this->validateMinLength($userName, 'nombre de usuario', self::MIN_USERNAME);
+        $this->validateLength($userName, 'nombre de usuario', self::MAX_USERNAME);
+        $this->userName = $userName;
+    }
+
+    public function getPasswordHash(): string
+    {
+        return $this->passwordHash;
+    }
+
+    public function setPasswordHash(string $hash): void
+    {
+        $this->passwordHash = $hash;
+    }
+
+    public function getNombre(): string
+    {
+        return $this->nombre;
+    }
+
+    public function setNombre(string $nombre): void
+    {
+        $nombre = $this->sanitizeString($nombre);
+        $this->validateLength($nombre, 'nombre', self::MAX_NOMBRE);
+        $this->nombre = $nombre;
+    }
+
+    public function getApellido(): string
+    {
+        return $this->apellido;
+    }
+
+    public function setApellido(string $apellido): void
+    {
+        $apellido = $this->sanitizeString($apellido);
+        $this->validateLength($apellido, 'apellido', self::MAX_APELLIDO);
+        $this->apellido = $apellido;
+    }
+
+    public function getEmail(): string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(string $email): void
+    {
+        $email = $this->sanitizeString($email);
+        if ($email !== '' && !$this->validateEmail($email)) {
+            throw new \InvalidArgumentException('El formato del email no es válido');
+        }
+        $this->validateLength($email, 'email', self::MAX_EMAIL);
+        $this->email = $email;
+    }
+
+    public function getEstatus(): string
+    {
+        return $this->estatus;
+    }
+
+    public function setEstatus(string $estatus): void
+    {
+        $this->estatus = in_array($estatus, ['0', '1']) ? $estatus : '1';
+    }
+
+    public function getFkRolUsuario(): ?int
+    {
+        return $this->fkRolUsuario;
+    }
+
+    public function setFkRolUsuario(?int $fkRolUsuario): void
+    {
+        $this->fkRolUsuario = $fkRolUsuario !== null ? $this->sanitizeInt($fkRolUsuario) : null;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id'               => $this->id,
+            'user_name'        => $this->userName,
+            'password_hash'    => $this->passwordHash,
+            'nombre'           => $this->nombre,
+            'apellido'         => $this->apellido,
+            'email'            => $this->email,
+            'estatus'          => $this->estatus,
+            'fk_rol_usuario'   => $this->fkRolUsuario,
+        ];
+    }
+
+    public static function fromArray(array $data): self
+    {
+        $u = new self();
+        $u->setId((int)($data['id'] ?? 0));
+        $u->setUserName($data['user_name'] ?? '');
+        $u->setPasswordHash($data['password_hash'] ?? '');
+        $u->setNombre($data['nombre'] ?? '');
+        $u->setApellido($data['apellido'] ?? '');
+        $u->setEmail($data['email'] ?? '');
+        $u->setEstatus($data['estatus'] ?? '1');
+        $u->setFkRolUsuario(isset($data['fk_rol_usuario']) ? (int)$data['fk_rol_usuario'] : null);
+        return $u;
+    }
+
+    private function hashPassword(string $password): string
+    {
+        if (mb_strlen($password) < self::MIN_PASSWORD) {
+            throw new \InvalidArgumentException("La contraseña debe tener al menos " . self::MIN_PASSWORD . " caracteres");
+        }
+        return password_hash($password, PASSWORD_BCRYPT);
+    }
+
+    public function crear(string $user_name, string $password, string $nombre, string $apellido, string $email): bool
+    {
+        $this->setUserName($user_name);
+        $this->setNombre($nombre);
+        $this->setApellido($apellido);
+        $this->setEmail($email);
+        $hash = $this->hashPassword($password);
+
+        $sql = "INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email, estatus) VALUES (?, ?, ?, ?, ?, '1')";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(1, $this->userName, PDO::PARAM_STR);
+        $stmt->bindParam(2, $hash, PDO::PARAM_STR);
+        $stmt->bindParam(3, $this->nombre, PDO::PARAM_STR);
+        $stmt->bindParam(4, $this->apellido, PDO::PARAM_STR);
+        $stmt->bindParam(5, $this->email, PDO::PARAM_STR);
+        return $stmt->execute();
+    }
+
     public function obtenerTodos(): array
     {
-        // Consulta SQL que obtiene todos los usuarios con JOIN a rol_usuarios y roles
         $stmt = $this->db->query("
             SELECT u.id, u.user_name AS username, u.nombre, u.apellido, u.email, u.estatus AS activo,
                    ru.rol, r.nombre_rol AS rol_nombre
@@ -49,19 +180,12 @@ class Usuario extends Model
             LEFT JOIN roles r ON ru.fk_rol = r.id
             ORDER BY u.nombre
         ");
-        // Retorna todas las filas como un arreglo asociativo
         return $stmt->fetchAll();
     }
 
-    /**
-     * Obtiene un usuario específico por su ID, incluyendo información del rol.
-     *
-     * @param int $id ID del usuario a buscar.
-     * @return array|false Arreglo con los datos del usuario o false si no se encuentra.
-     */
     public function obtenerPorId(int $id): array|false
     {
-        // Prepara la consulta con JOIN a tablas de roles, parametrizada por ID
+        $id = $this->sanitizeInt($id);
         $stmt = $this->db->prepare("
             SELECT u.*, ru.rol, r.nombre_rol AS rol_nombre
             FROM usuarios u
@@ -69,21 +193,14 @@ class Usuario extends Model
             LEFT JOIN roles r ON ru.fk_rol = r.id
             WHERE u.id = ?
         ");
-        // Ejecuta pasando el ID del usuario
-        $stmt->execute([$id]);
-        // Retorna una sola fila (o false si no existe)
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetch();
     }
 
-    /**
-     * Obtiene un usuario por su nombre de usuario, solo si está activo.
-     *
-     * @param string $username Nombre de usuario a buscar.
-     * @return array|false Arreglo con los datos del usuario o false si no se encuentra.
-     */
     public function obtenerPorUsername(string $username): array|false
     {
-        // Consulta parametrizada que filtra por user_name y estatus 'activo'
+        $username = $this->sanitizeString($username);
         $stmt = $this->db->prepare("
             SELECT u.*, ru.rol, r.nombre_rol AS rol_nombre
             FROM usuarios u
@@ -91,81 +208,55 @@ class Usuario extends Model
             LEFT JOIN roles r ON ru.fk_rol = r.id
             WHERE u.user_name = ? AND u.estatus = '1'
         ");
-        // Ejecuta pasando el nombre de usuario
-        $stmt->execute([$username]);
-        // Retorna la fila encontrada o false
+        $stmt->bindParam(1, $username, PDO::PARAM_STR);
+        $stmt->execute();
         return $stmt->fetch();
     }
 
-    /**
-     * Autentica un usuario verificando su contraseña contra el hash almacenado.
-     *
-     * @param string $username Nombre de usuario.
-     * @param string $password Contraseña en texto plano.
-     * @return array|false Datos del usuario si la autenticación es exitosa, false si falla.
-     */
     public function autenticar(string $username, string $password): array|false
     {
-        // Obtiene el usuario por su nombre de usuario
         $usuario = $this->obtenerPorUsername($username);
-        // Si el usuario existe y la contraseña coincide con el hash, retorna los datos
         if ($usuario && password_verify($password, $usuario['password_hash'])) {
             return $usuario;
         }
-        // Si no coincide o no existe, retorna false
         return false;
     }
 
-    /**
-     * Actualiza los datos de un usuario existente.
-     * El campo fk_rol_usuario solo se actualiza si se proporciona un valor no nulo.
-     *
-     * @param int      $id              ID del usuario a actualizar.
-     * @param string   $nombre          Nuevo nombre.
-     * @param string   $apellido        Nuevo apellido.
-     * @param string   $email           Nuevo correo electrónico.
-     * @param int|null $fk_rol_usuario  Nuevo ID de rol (opcional, si es null conserva el actual).
-     * @param string   $estatus         Nuevo estatus ('activo' por defecto).
-     * @return bool    True si la actualización fue exitosa.
-     */
     public function actualizar(int $id, string $nombre, string $apellido, string $email, ?int $fk_rol_usuario = null, string $estatus = '1'): bool
     {
-        // SQL de actualización; COALESCE mantiene el rol actual si se envía NULL
+        $this->setId($id);
+        $this->setNombre($nombre);
+        $this->setApellido($apellido);
+        $this->setEmail($email);
+        $this->setEstatus($estatus);
+        $this->setFkRolUsuario($fk_rol_usuario);
+
         $sql = "UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, fk_rol_usuario = COALESCE(?, fk_rol_usuario), estatus = ? WHERE id = ?";
-        // Prepara la sentencia
         $stmt = $this->db->prepare($sql);
-        // Ejecuta con los valores y retorna el resultado booleano
-        return $stmt->execute([$nombre, $apellido, $email, $fk_rol_usuario, $estatus, $id]);
+        $stmt->bindParam(1, $this->nombre, PDO::PARAM_STR);
+        $stmt->bindParam(2, $this->apellido, PDO::PARAM_STR);
+        $stmt->bindParam(3, $this->email, PDO::PARAM_STR);
+        $stmt->bindParam(4, $this->fkRolUsuario, PDO::PARAM_INT);
+        $stmt->bindParam(5, $this->estatus, PDO::PARAM_STR);
+        $stmt->bindParam(6, $this->id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
-    /**
-     * Actualiza únicamente la contraseña de un usuario.
-     *
-     * @param int    $id       ID del usuario.
-     * @param string $password Nueva contraseña en texto plano.
-     * @return bool  True si la actualización fue exitosa.
-     */
     public function actualizarPassword(int $id, string $password): bool
     {
-        // Genera el hash bcrypt de la nueva contraseña
-        $hash = password_hash($password, PASSWORD_BCRYPT);
-        // Prepara la sentencia de actualización de la contraseña
+        $id = $this->sanitizeInt($id);
+        $hash = $this->hashPassword($password);
         $stmt = $this->db->prepare("UPDATE usuarios SET password_hash = ? WHERE id = ?");
-        // Ejecuta y retorna el resultado
-        return $stmt->execute([$hash, $id]);
+        $stmt->bindParam(1, $hash, PDO::PARAM_STR);
+        $stmt->bindParam(2, $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
-    /**
-     * Elimina un usuario de la base de datos por su ID.
-     *
-     * @param int $id ID del usuario a eliminar.
-     * @return bool  True si la eliminación fue exitosa.
-     */
     public function eliminar(int $id): bool
     {
-        // Prepara la sentencia DELETE parametrizada
+        $id = $this->sanitizeInt($id);
         $stmt = $this->db->prepare("DELETE FROM usuarios WHERE id = ?");
-        // Ejecuta y retorna el resultado booleano
-        return $stmt->execute([$id]);
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 }

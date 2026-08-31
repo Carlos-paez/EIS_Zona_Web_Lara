@@ -47,20 +47,32 @@
                         <!-- Campo: Nombre del ciudadano -->
                         <div class="input-field col s12">
                             <i class="material-icons prefix">person</i>
-                            <input type="text" id="ciudadano" name="ciudadano" required>
+                            <input type="text" id="ciudadano" name="ciudadano" required maxlength="100" pattern=".{2,100}" title="Entre 2 y 100 caracteres">
                             <label for="ciudadano">Nombre del Ciudadano</label>
                         </div>
                         <!-- Campo: Cédula de identidad -->
                         <div class="input-field col s12">
                             <i class="material-icons prefix">badge</i>
-                            <input type="text" id="cedula" name="cedula" required>
+                            <input type="text" id="cedula" name="cedula" required maxlength="20" pattern=".{5,20}" title="Entre 5 y 20 caracteres">
                             <label for="cedula">Cédula de Identidad</label>
+                        </div>
+                        <!-- Campo: Teléfono de contacto del cliente -->
+                        <div class="input-field col s12">
+                            <i class="material-icons prefix">phone</i>
+                            <input type="text" id="telefono" name="telefono" maxlength="20">
+                            <label for="telefono">Teléfono de Contacto</label>
+                        </div>
+                        <!-- Campo: Dirección del cliente -->
+                        <div class="input-field col s12">
+                            <i class="material-icons prefix">location_on</i>
+                            <input type="text" id="direccion" name="direccion" maxlength="500">
+                            <label for="direccion">Dirección</label>
                         </div>
                         <!-- Campo: Tipo de documento con sugerencias autocompletables (datalist) -->
                         <div class="input-field col s12">
                             <i class="material-icons prefix">description</i>
                             <!-- Input con datalist para sugerencias de tipos de documentos -->
-                            <input type="text" id="documento" name="documento" list="documentSuggestions" required placeholder="Ej: Consulta Laboral">
+                            <input type="text" id="documento" name="documento" list="documentSuggestions" required placeholder="Ej: Consulta Laboral" maxlength="100">
                             <label for="documento">Tipo de Documento / Asesoría</label>
                             <!-- Lista de sugerencias de documentos para autocompletado -->
                             <datalist id="documentSuggestions">
@@ -92,9 +104,9 @@
                         <div class="col s12" style="margin-top:0.5rem;">
                             <button type="submit" class="btn waves-effect waves-light indigo" id="btnRegistrar" style="width:100%;" disabled>
                                 <i class="material-icons left">verified</i>Validar y Registrar
-                            </button>
-                        </div>
+                        </button>
                     </div>
+                </div>
                 </form>
             </div>
         </div>
@@ -165,5 +177,34 @@
                 <p class="grey-text" style="font-size:0.8rem;margin-top:0.75rem;"><i class="material-icons left" style="font-size:1rem;">lock</i>Documentos no listados (juicios, demandas, apelaciones, herencias, penal, etc.) requieren derivación a una oficina oficial de atención legal.</p>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: EDITAR ASESORÍA ===== -->
+<div id="modal-asesoria" class="modal" style="max-width:520px;">
+    <div class="modal-content" style="padding:2rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+            <h4 style="font-weight:700;margin:0;font-size:1.3rem;display:flex;align-items:center;gap:0.5rem;">
+                <i class="material-icons" style="color:var(--primary);">gavel</i> Editar Asesoría
+            </h4>
+            <a href="#!" class="modal-close btn-flat" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="material-icons">close</i></a>
+        </div>
+        <form id="form-asesoria">
+            <input type="hidden" name="id" id="asesoria-id" value="">
+            <div class="input-field">
+                <i class="material-icons prefix">description</i>
+                <input type="text" name="documento" id="asesoria-documento" list="documentSuggestions" required maxlength="100">
+                <label for="asesoria-documento">Tipo de Documento / Asesoría</label>
+            </div>
+            <div class="input-field">
+                <i class="material-icons prefix">notes</i>
+                <textarea id="asesoria-descripcion" name="descripcion" class="materialize-textarea"></textarea>
+                <label for="asesoria-descripcion">Descripción / Motivo de la Consulta</label>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer" style="padding:1rem 2rem;display:flex;gap:0.75rem;justify-content:flex-end;border-top:1px solid var(--border-light);">
+        <button class="btn waves-effect waves-light grey lighten-1 modal-close" style="border-radius:24px;">Cancelar</button>
+        <button type="submit" form="form-asesoria" class="btn waves-effect waves-light indigo" style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;"><i class="material-icons left" style="margin:0;">save</i> Guardar</button>
     </div>
 </div>
