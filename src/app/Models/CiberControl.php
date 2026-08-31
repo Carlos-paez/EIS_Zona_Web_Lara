@@ -178,6 +178,209 @@ class CiberControl extends Model
     }
 
     /**
+     * Tipos de activo disponibles para las PCs del cybercafé.
+     *
+     * @return array
+     */
+    public function listarTiposActivo(): array
+    {
+        $stmt = $this->db->query("
+            SELECT id, nombre_tipo
+            FROM tipo_activo
+            ORDER BY nombre_tipo
+        ");
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Obtiene una PC (activo de cybercafé) por su ID.
+     *
+     * @param int $id
+     * @return array|false
+     */
+    public function obtenerPC(int $id): array|false
+    {
+        $id = $this->sanitizeInt($id);
+        $stmt = $this->db->prepare("
+            SELECT a.id, a.marca, a.descripcion, a.activa, a.is_ciber,
+                   a.fk_tipo_activo AS tipo_activo_id, ta.nombre_tipo
+            FROM activos a
+            LEFT JOIN tipo_activo ta ON a.fk_tipo_activo = ta.id
+            WHERE a.id = ? AND a.is_ciber = 1
+        ");
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
+    /**
+     * Crea una PC (activo de cybercafé).
+     *
+     * @param string $marca
+     * @param string $descripcion
+     * @param int    $tipoActivoId
+     * @param int    $activa
+     * @return int|false ID del activo creado o false si falla.
+     */
+    public function crearPC(string $marca, string $descripcion, int $tipoActivoId, int $activa = 1): int|false
+    {
+        $marca       = $this->sanitizeString($marca);
+        $descripcion = $this->sanitizeString($descripcion);
+        $activa      = $activa ? 1 : 0;
+
+        $this->validateNotEmpty($marca, 'marca');
+        $this->validateNotEmpty($descripcion, 'descripción');
+
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) FROM activos
+            WHERE marca = ? AND descripcion = ? AND is_ciber = 1
+        ");
+        $stmt->bindParam(1, $marca, PDO::PARAM_STR);
+        $stmt->bindParam(2, $descripcion, PDO::PARAM_STR);
+        $stmt->execute();
+        if ((int)$stmt->fetchColumn() > 0) {
+            throw new \InvalidArgumentException('Ya existe una PC con esa marca y descripción');
+        }
+
+        $stmt = $this->db->prepare("
+            INSERT INTO activos (marca, descripcion, is_ciber, activa, fk_tipo_activo)
+            VALUES (?, ?, 1, ?, ?)
+        ");
+        $stmt->bindParam(1, $marca, PDO::PARAM_STR);
+        $stmt->bindParam(2, $descripcion, PDO::PARAM_STR);
+        $stmt->bindParam(3, $activa, PDO::PARAM_INT);
+        $stmt->bindParam(4, $tipoActivoId, PDO::PARAM_INT);
+        $stmt->execute();
+        return (int)$this->db->lastInsertId();
+    }
+
+    /**
+     * Actualiza una PC (activo de cybercafé).
+     *
+     * @param int    $id
+     * @param string $marca
+     * @param string $descripcion
+     * @param int    $tipoActivoId
+     * @param int    $activa
+     * @return bool
+     */
+    public function actualizarPC(int $id, string $marca, string $descripcion, int $tipoActivoId, int $activa = 1): bool
+    {
+        $id          = $this->sanitizeInt($id);
+        $marca       = $this->sanitizeString($marca);
+        $descripcion = $this->sanitizeString($descripcion);
+        $activa      = $activa ? 1 : 0;
+
+        $this->validateNotEmpty($marca, 'marca');
+        $this->validateNotEmpty($descripcion, 'descripción');
+
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) FROM activos
+            WHERE marca = ? AND descripcion = ? AND is_ciber = 1 AND id != ?
+        ");
+        $stmt->bindParam(1, $marca, PDO::PARAM_STR);
+        $stmt->bindParam(2, $descripcion, PDO::PARAM_STR);
+        $stmt->bindParam(3, $id, PDO::PARAM_INT);
+        $stmt->execute();
+        if ((int)$stmt->fetchColumn() > 0) {
+            throw new \InvalidArgumentException('Ya existe otra PC con esa marca y descripción');
+        }
+
+        $stmt = $this->db->prepare("
+            UPDATE activos SET marca = ?, descripcion = ?, activa = ?, fk_tipo_activo = ?
+            WHERE id = ? AND is_ciber = 1
+        ");
+        $stmt->bindParam(1, $marca, PDO::PARAM_STR);
+        $stmt->bindParam(2, $descripcion, PDO::PARAM_STR);
+        $stmt->bindParam(3, $activa, PDO::PARAM_INT);
+        $stmt->bindParam(4, $tipoActivoId, PDO::PARAM_INT);
+        $stmt->bindParam(5, $id, PDO::PARAM_INT);
+        return $stmt->execute() && $stmt->rowCount() >= 0;
+    }
+
+    /**
+     * Cambia el estado activa/inactiva de una PC.
+     *
+     * @param int $id
+     * @param int $activa
+     * @return bool
+     */
+    public function cambiarEstadoPC(int $id, int $activa): bool
+    {
+        $id     = $this->sanitizeInt($id);
+        $activa = $activa ? 1 : 0;
+        $stmt   = $this->db->prepare("UPDATE activos SET activa = ? WHERE id = ? AND is_ciber = 1");
+        $stmt->bindParam(1, $activa, PDO::PARAM_INT);
+        $stmt->bindParam(2, $id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    /**
+     * Verifica si una PC tiene sesiones registradas (activas o históricas).
+     *
+     * @param int $id
+     * @return bool
+     */
+    public function tieneSesiones(int $id): bool
+    {
+        $id   = $this->sanitizeInt($id);
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM sesion_ciber WHERE fk_activo = ?");
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    /**
+     * Elimina una PC (activo de cybercafé) solo si no tiene sesiones.
+     *
+     * @param int $id
+     * @return bool
+     */
+    public function eliminarPC(int $id): bool
+    {
+        $id = $this->sanitizeInt($id);
+        if ($this->tieneSesiones($id)) {
+            throw new \InvalidArgumentException('No se puede eliminar una PC con sesiones registradas. Desactívala en su lugar');
+        }
+        $stmt = $this->db->prepare("DELETE FROM activos WHERE id = ? AND is_ciber = 1");
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        return $stmt->execute() && $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Historial de sesiones de una estación (finalizadas y activas).
+     *
+     * @param int $activoId ID de la estación (activo).
+     * @param int $limit    Máximo de registros a devolver.
+     * @return array Lista de sesiones con datos del cliente y tarifa.
+     */
+    public function historialEstacion(int $activoId, int $limit = 20): array
+    {
+        $activoId = $this->sanitizeInt($activoId);
+        $limit    = $this->sanitizeInt($limit);
+        if ($limit <= 0) {
+            $limit = 20;
+        }
+
+        $stmt = $this->db->prepare("
+            SELECT sc.id AS sesion_id, sc.tiempo_uso,
+                   CASE WHEN sc.finalizada = 1 THEN 'cerrada' ELSE 'activa' END AS estado,
+                   CONCAT(cli.nombre, ' ', cli.apellido) AS cliente_nombre,
+                   tr.tarifa_hora, tr.precio_tiempo
+            FROM sesion_ciber sc
+            LEFT JOIN clientes cli ON sc.fk_cliente = cli.id
+            LEFT JOIN tarifas tr ON sc.fk_tarifa = tr.id
+            WHERE sc.fk_activo = ?
+            ORDER BY sc.id DESC
+            LIMIT ?
+        ");
+        $stmt->bindParam(1, $activoId, PDO::PARAM_INT);
+        $stmt->bindParam(2, $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Finaliza una sesión de cybercafé marcándola como finalizada.
      *
      * @param int $sesionId ID de la sesión a finalizar.

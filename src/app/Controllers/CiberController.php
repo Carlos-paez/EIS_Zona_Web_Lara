@@ -1,470 +1,405 @@
 <?php
-// ============================================================
-// CONTROLADOR: CiberController
-// Maneja las peticiones HTTP del módulo Cyber Control
-// ============================================================
 
-require_once __DIR__ . '/../Models/CiberModel.php';
+namespace App\Controllers;
 
+use App\Core\Router;
+use App\Models\CiberControl;
+
+/**
+ * Controlador del módulo Control de Cybercafé.
+ *
+ * Proporciona tanto el renderizado de la página (index) como el API
+ * AJAX (?pagina=ciberControl&action=...) consumido por app.cyber.js.
+ */
 class CiberController
 {
-    /** @var CiberModel */
-    private $model;
-
-    /** @var int|null ID del usuario logueado */
-    private $usuarioId;
+    private CiberControl $model;
 
     public function __construct()
     {
-        $this->model = new CiberModel();
-        
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        
-        // Usuario por defecto (admin)
-        $this->usuarioId = 1;
+        $this->model = new CiberControl();
+    }
+
+    public function getModel(): CiberControl
+    {
+        return $this->model;
+    }
+
+    public function setModel(CiberControl $model): void
+    {
+        $this->model = $model;
     }
 
     /**
-     * Página principal del módulo Cyber Control
+     * Despacha las peticiones AJAX del módulo.
+     */
+    public function handle(): void
+    {
+        header('Content-Type: application/json');
+
+        $action = $_GET['action'] ?? '';
+
+        try {
+            match ($action) {
+                'estaciones'    => $this->estaciones(),
+                'tarifas'       => $this->tarifas(),
+                'buscarCliente' => $this->buscarCliente(),
+                'iniciar'       => $this->iniciar(),
+                'finalizar'     => $this->finalizar(),
+                'estadisticas'  => $this->estadisticas(),
+                'historial'     => $this->historial(),
+                'tiposActivo'   => $this->tiposActivo(),
+                'obtenerPC'     => $this->obtenerPC(),
+                'crearPC'       => $this->crearPC(),
+                'actualizarPC'  => $this->actualizarPC(),
+                'eliminarPC'    => $this->eliminarPC(),
+                'cambiarEstadoPC' => $this->cambiarEstadoPC(),
+                default         => $this->json(false, null, 'Acción no válida'),
+            };
+        } catch (\PDOException $e) {
+            echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
+        } catch (\InvalidArgumentException $e) {
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        } catch (\Exception $e) {
+            echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
+        }
+    }
+
+    /**
+     * Página principal del módulo (renderizada en el layout).
      */
     public function index(): void
     {
-        $estaciones = $this->model->obtenerEstaciones();
-        $estadisticas = $this->model->obtenerEstadisticas();
+        try {
+            $estaciones = $this->model->listarEstaciones();
+        } catch (\Throwable $e) {
+            $estaciones = [];
+        }
 
+        $totalEstaciones = count($estaciones);
         $countDisponibles = 0;
         $countOcupadas = 0;
         $countMantenimiento = 0;
 
         foreach ($estaciones as $e) {
-            switch ($e['estado']) {
-                case 'Disponible':
-                    $countDisponibles++;
-                    break;
-                case 'Ocupada':
-                    $countOcupadas++;
-                    break;
-                case 'Mantenimiento':
-                    $countMantenimiento++;
-                    break;
+            if (($e['estado'] ?? '') === 'ocupada') {
+                $countOcupadas++;
+            } elseif (($e['estado'] ?? '') === 'disponible') {
+                $countDisponibles++;
+            } else {
+                $countMantenimiento++;
             }
         }
-        $totalEstaciones = count($estaciones);
 
-        // Obtener clientes y tarifas
-        $clientes = $this->model->obtenerClientes();
-        $tarifas = $this->model->obtenerTarifas();
+        $clientes = [];
+        try {
+            $clientes = $this->model->listarEstaciones();
+        } catch (\Throwable $e) {
+            $clientes = [];
+        }
+
+        $tarifas = [];
+        try {
+            $tarifas = $this->model->listarTarifas();
+        } catch (\Throwable $e) {
+            $tarifas = [];
+        }
+
         $tiposActivo = [];
-        if (method_exists($this->model, 'obtenerTiposActivo')) {
-            $tiposActivo = $this->model->obtenerTiposActivo();
+        try {
+            $tiposActivo = $this->model->listarTiposActivo();
+        } catch (\Throwable $e) {
+            $tiposActivo = [];
         }
 
-        // Funciones auxiliares
-        $getEstadoClase = function($estado) {
-            switch ($estado) {
-                case 'Disponible': return 'disponible';
-                case 'Ocupada': return 'ocupada';
-                case 'Mantenimiento': return 'mantenimiento';
-                default: return 'disponible';
-            }
-        };
-
-        $getEstadoTexto = function($estado) {
-            switch ($estado) {
-                case 'Disponible': return 'Disponible';
-                case 'Ocupada': return 'Ocupada';
-                case 'Mantenimiento': return 'Mantenimiento';
-                default: return $estado;
-            }
-        };
-
-        $getEstadoIcono = function($estado) {
-            switch ($estado) {
-                case 'Disponible': return 'check_circle';
-                case 'Ocupada': return 'timelapse';
-                case 'Mantenimiento': return 'build';
-                default: return 'help';
-            }
-        };
-
-        $pageTitle = 'Control de Cybercafé';
-        $headerExtra = '<span class="chip green white-text">' . $countDisponibles . ' Disponibles</span>
-                        <span class="chip orange white-text">' . $countOcupadas . ' Ocupadas</span>';
-        
-        $viewData = [
-            'estaciones' => $estaciones,
-            'estadisticas' => $estadisticas,
-            'countDisponibles' => $countDisponibles,
-            'countOcupadas' => $countOcupadas,
-            'countMantenimiento' => $countMantenimiento,
-            'totalEstaciones' => $totalEstaciones,
-            'usarZonas' => false,
-            'estacionesGaming' => [],
-            'estacionesOficina' => [],
-            'estacionesPremium' => [],
-            'getEstadoClase' => $getEstadoClase,
-            'getEstadoTexto' => $getEstadoTexto,
-            'getEstadoIcono' => $getEstadoIcono,
-            'clientes' => $clientes,
-            'tarifas' => $tarifas,
-            'tiposActivo' => $tiposActivo
-        ];
-        
-        extract($viewData);
-        
+        $pageTitle  = 'Control de Cybercafé';
+        $headerExtra = '<span class="chip green white-text">' . $countDisponibles . ' Disponibles</span>'
+                     . '<span class="chip orange white-text">' . $countOcupadas . ' Ocupadas</span>';
         $contentView = __DIR__ . '/../Views/ciberControl.php';
-        require_once __DIR__ . '/../template/layout.php';
+        $pagina      = 'ciberControl';
+
+        require __DIR__ . '/../template/layout.php';
     }
 
     /**
-     * API: Iniciar sesión
+     * API: Lista de estaciones (activas de cybercafé) con su estado.
      */
-    public function iniciarSesion(): void
+    private function estaciones(): void
     {
-        header('Content-Type: application/json');
-
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'message' => 'Método no permitido']);
-            return;
-        }
-
-        $activoId = isset($_POST['activo_id']) ? (int)$_POST['activo_id'] : 0;
-        $clienteNombre = isset($_POST['cliente_nombre']) ? trim($_POST['cliente_nombre']) : '';
-        $tarifaId = isset($_POST['tarifa_id']) ? (int)$_POST['tarifa_id'] : 0;
-        $tiempo = isset($_POST['tiempo']) ? trim($_POST['tiempo']) : '';
-
-        if ($activoId <= 0) {
-            echo json_encode(['success' => false, 'message' => 'ID de PC inválido']);
-            return;
-        }
-
-        if (empty($clienteNombre)) {
-            echo json_encode(['success' => false, 'message' => 'Debes escribir el nombre del cliente']);
-            return;
-        }
-
-        if ($tarifaId <= 0) {
-            echo json_encode(['success' => false, 'message' => 'Debes seleccionar una tarifa']);
-            return;
-        }
-
-        if (empty($tiempo) || !preg_match('/^\d{2}:\d{2}:\d{2}$/', $tiempo) || $tiempo === '00:00:00') {
-            echo json_encode(['success' => false, 'message' => 'Tiempo inválido. Usa HH:MM:SS']);
-            return;
-        }
-
-        $clienteId = $this->model->buscarClientePorNombre($clienteNombre);
-        if ($clienteId <= 0) {
-            $clienteId = $this->model->crearClientePorNombre($clienteNombre);
-            if ($clienteId <= 0) {
-                echo json_encode(['success' => false, 'message' => 'No se pudo registrar el cliente']);
-                return;
-            }
-        }
-
-        $resultado = $this->model->iniciarSesion($activoId, $clienteId, $tarifaId, $tiempo);
-        echo json_encode($resultado);
+        $estaciones = $this->model->listarEstaciones();
+        echo json_encode(['success' => true, 'data' => $estaciones]);
     }
 
     /**
-     * API: Finalizar sesión
+     * API: Tarifas disponibles.
      */
-    public function finalizarSesion(): void
+    private function tarifas(): void
     {
-        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'data' => $this->model->listarTarifas()]);
+    }
 
+    /**
+     * API: Busca un cliente por cédula para precargar el formulario.
+     */
+    private function buscarCliente(): void
+    {
+        $cedula = trim($_GET['cedula'] ?? '');
+        if ($cedula === '') {
+            echo json_encode(['success' => true, 'data' => null]);
+            return;
+        }
+        $cliente = $this->model->buscarCliente($cedula);
+        echo json_encode(['success' => true, 'data' => $cliente ?: null]);
+    }
+
+    /**
+     * API: Inicia una sesión de cybercafé.
+     */
+    private function iniciar(): void
+    {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'message' => 'Método no permitido']);
+            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            return;
+        }
+        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
             return;
         }
 
-        $sesionId = isset($_POST['sesion_id']) ? (int)$_POST['sesion_id'] : 0;
+        $ciudadano  = trim($_POST['ciudadano'] ?? '');
+        $cedula     = trim($_POST['cedula'] ?? '');
+        $direccion  = trim($_POST['direccion'] ?? '');
+        $telefono   = trim($_POST['telefono'] ?? '');
+        $activoId   = (int)($_POST['activo_id'] ?? 0);
+        $tarifaId   = (int)($_POST['tarifa_id'] ?? 0);
+        $tiempoUso  = trim($_POST['tiempo_uso'] ?? '');
 
+        $sesionId = $this->model->iniciarSesion($ciudadano, $cedula, $direccion, $telefono, $activoId, $tarifaId, $tiempoUso);
+
+        echo json_encode(
+            $sesionId
+                ? ['success' => true, 'message' => 'Sesión iniciada correctamente', 'data' => ['sesion_id' => $sesionId]]
+                : ['success' => false, 'error' => 'No se pudo iniciar la sesión']
+        );
+    }
+
+    /**
+     * API: Finaliza una sesión de cybercafé.
+     */
+    private function finalizar(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            return;
+        }
+        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $sesionId = (int)($_POST['sesion_id'] ?? 0);
         if ($sesionId <= 0) {
-            echo json_encode(['success' => false, 'message' => 'ID de sesión inválido']);
+            echo json_encode(['success' => false, 'error' => 'ID de sesión no válido']);
             return;
         }
 
         $resultado = $this->model->finalizarSesion($sesionId);
-        echo json_encode($resultado);
+        echo json_encode(
+            $resultado
+                ? ['success' => true, 'message' => 'Sesión finalizada correctamente']
+                : ['success' => false, 'error' => 'No se pudo finalizar la sesión']
+        );
     }
 
     /**
-     * API: Obtener historial
+     * API: Estadísticas del cyber.
      */
-    public function obtenerHistorial(): void
+    private function estadisticas(): void
     {
-        header('Content-Type: application/json');
+        $estaciones = $this->model->listarEstaciones();
+        $total = count($estaciones);
+        $ocupadas = count(array_filter($estaciones, fn($e) => ($e['estado'] ?? '') === 'ocupada'));
+        $disponibles = $total - $ocupadas;
 
-        $activoId = isset($_GET['activo_id']) ? (int)$_GET['activo_id'] : 0;
-        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'total'      => $total,
+                'disponibles' => $disponibles,
+                'ocupadas'   => $ocupadas,
+                'mantenimiento' => 0,
+            ]
+        ]);
+    }
 
+    /**
+     * API: Historial de sesiones de una estación.
+     */
+    private function historial(): void
+    {
+        $activoId = (int)($_GET['activo_id'] ?? 0);
         if ($activoId <= 0) {
-            echo json_encode(['success' => false, 'message' => 'ID de PC inválido']);
+            echo json_encode(['success' => false, 'data' => []]);
             return;
         }
-
-        $historial = $this->model->obtenerHistorialEstacion($activoId, $limit);
+        $historial = $this->model->historialEstacion($activoId);
         echo json_encode(['success' => true, 'data' => $historial]);
     }
 
     /**
-     * API: Obtener estadísticas
+     * API: Tipos de activo para el selector de PC.
      */
-    public function obtenerEstadisticas(): void
+    private function tiposActivo(): void
     {
-        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'data' => $this->model->listarTiposActivo()]);
+    }
 
-        $estadisticas = $this->model->obtenerEstadisticas();
-        echo json_encode(['success' => true, 'data' => $estadisticas]);
-    }
-/**
- * API: Obtener una PC para editar
- */
-public function obtenerPC(): void
-{
-    header('Content-Type: application/json');
-    
-    $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-    
-    if ($id <= 0) {
-        echo json_encode(['success' => false, 'message' => 'ID inválido']);
-        return;
-    }
-    
-    $pc = $this->model->obtenerPC($id);
-    
-    if ($pc) {
-        echo json_encode(['success' => true, 'data' => $pc]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'PC no encontrada']);
-    }
-}
-
-/**
- * API: Crear nueva PC
- */
-public function crearPC(): void
-{
-    header('Content-Type: application/json');
-    
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        echo json_encode(['success' => false, 'message' => 'Método no permitido']);
-        return;
-    }
-    
-    $marca = isset($_POST['marca']) ? trim($_POST['marca']) : '';
-    $descripcion = isset($_POST['descripcion']) ? trim($_POST['descripcion']) : '';
-    $tipo_activo_id = isset($_POST['tipo_activo_id']) ? (int)$_POST['tipo_activo_id'] : 0;
-    $activa = isset($_POST['activa']) ? (int)$_POST['activa'] : 1;
-    $is_ciber = 1; // Siempre es 1 para PCs de cyber
-    
-    // Validaciones
-    if (empty($marca)) {
-        echo json_encode(['success' => false, 'message' => 'La marca es obligatoria']);
-        return;
-    }
-    
-    if (empty($descripcion)) {
-        echo json_encode(['success' => false, 'message' => 'La descripción es obligatoria']);
-        return;
-    }
-    
-    if ($tipo_activo_id <= 0) {
-        echo json_encode(['success' => false, 'message' => 'Debes seleccionar un tipo de PC']);
-        return;
-    }
-    
-    $resultado = $this->model->crearPC([
-        'marca' => $marca,
-        'descripcion' => $descripcion,
-        'tipo_activo_id' => $tipo_activo_id,
-        'activa' => $activa,
-        'is_ciber' => $is_ciber
-    ]);
-    
-    if ($resultado['success']) {
-        // Obtener la PC recién creada para actualizar la UI
-        $pc = $this->model->obtenerPC($resultado['id']);
-        echo json_encode([
-            'success' => true,
-            'message' => 'PC creada exitosamente',
-            'data' => $pc
-        ]);
-    } else {
-        echo json_encode([
-            'success' => false,
-            'message' => $resultado['message']
-        ]);
-    }
-}
-
-/**
- * API: Actualizar PC
- */
-public function actualizarPC(): void
-{
-    header('Content-Type: application/json');
-    
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        echo json_encode(['success' => false, 'message' => 'Método no permitido']);
-        return;
-    }
-    
-    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-    $marca = isset($_POST['marca']) ? trim($_POST['marca']) : '';
-    $descripcion = isset($_POST['descripcion']) ? trim($_POST['descripcion']) : '';
-    $tipo_activo_id = isset($_POST['tipo_activo_id']) ? (int)$_POST['tipo_activo_id'] : 0;
-    $activa = isset($_POST['activa']) ? (int)$_POST['activa'] : 1;
-    
-    if ($id <= 0) {
-        echo json_encode(['success' => false, 'message' => 'ID inválido']);
-        return;
-    }
-    
-    if (empty($marca)) {
-        echo json_encode(['success' => false, 'message' => 'La marca es obligatoria']);
-        return;
-    }
-    
-    if (empty($descripcion)) {
-        echo json_encode(['success' => false, 'message' => 'La descripción es obligatoria']);
-        return;
-    }
-    
-    if ($tipo_activo_id <= 0) {
-        echo json_encode(['success' => false, 'message' => 'Debes seleccionar un tipo de PC']);
-        return;
-    }
-    
-    $resultado = $this->model->actualizarPC($id, [
-        'marca' => $marca,
-        'descripcion' => $descripcion,
-        'tipo_activo_id' => $tipo_activo_id,
-        'activa' => $activa
-    ]);
-    
-    if ($resultado['success']) {
-        // Obtener la PC actualizada
-        $pc = $this->model->obtenerPC($id);
-        echo json_encode([
-            'success' => true,
-            'message' => 'PC actualizada exitosamente',
-            'data' => $pc
-        ]);
-    } else {
-        echo json_encode([
-            'success' => false,
-            'message' => $resultado['message']
-        ]);
-    }
-}
-
-/**
- * API: Cambiar estado de PC (Activar/Desactivar)
- */
-public function cambiarEstadoPC(): void
-{
-    header('Content-Type: application/json');
-    
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        echo json_encode(['success' => false, 'message' => 'Método no permitido']);
-        return;
-    }
-    
-    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-    $activa = isset($_POST['activa']) ? (int)$_POST['activa'] : 0;
-    
-    if ($id <= 0) {
-        echo json_encode(['success' => false, 'message' => 'ID inválido']);
-        return;
-    }
-    
-    // Verificar si la PC tiene sesiones activas antes de desactivar
-    if ($activa == 0) {
-        $tieneSesionActiva = $this->model->tieneSesionActiva($id);
-        if ($tieneSesionActiva) {
-            echo json_encode([
-                'success' => false, 
-                'message' => 'No se puede desactivar una PC con sesiones activas'
-            ]);
+    /**
+     * API: Obtener una PC para editar.
+     */
+    private function obtenerPC(): void
+    {
+        $id = (int)($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            echo json_encode(['success' => false, 'error' => 'ID inválido']);
             return;
         }
-    }
-    
-    $resultado = $this->model->cambiarEstadoPC($id, $activa);
-    
-    if ($resultado['success']) {
         $pc = $this->model->obtenerPC($id);
-        echo json_encode([
-            'success' => true,
-            'message' => $activa ? 'PC activada' : 'PC desactivada',
-            'data' => $pc
-        ]);
-    } else {
-        echo json_encode([
-            'success' => false,
-            'message' => $resultado['message']
-        ]);
+        echo json_encode(
+            $pc
+                ? ['success' => true, 'data' => $pc]
+                : ['success' => false, 'error' => 'PC no encontrada']
+        );
     }
-}
 
-/**
- * API: Eliminar PC (solo si no tiene sesiones)
- */
-public function eliminarPC(): void
-{
-    header('Content-Type: application/json');
-    
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        echo json_encode(['success' => false, 'message' => 'Método no permitido']);
-        return;
-    }
-    
-    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-    
-    if ($id <= 0) {
-        echo json_encode(['success' => false, 'message' => 'ID inválido']);
-        return;
-    }
-    
-    // Verificar si la PC tiene sesiones (activas o históricas)
-    $tieneSesiones = $this->model->tieneSesiones($id);
-    if ($tieneSesiones) {
-        echo json_encode([
-            'success' => false, 
-            'message' => 'No se puede eliminar una PC con sesiones registradas. Desactívala en su lugar.'
-        ]);
-        return;
-    }
-    
-    $resultado = $this->model->eliminarPC($id);
-    
-    if ($resultado['success']) {
-        echo json_encode([
-            'success' => true,
-            'message' => 'PC eliminada exitosamente'
-        ]);
-    } else {
-        echo json_encode([
-            'success' => false,
-            'message' => $resultado['message']
-        ]);
-    }
-}
+    /**
+     * API: Crear una PC (activo de cybercafé).
+     */
+    private function crearPC(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            return;
+        }
+        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
 
-/**
- * API: Obtener tipos de activo para el selector
- */
-public function obtenerTiposActivo(): void
-{
-    header('Content-Type: application/json');
-    
-    $tipos = $this->model->obtenerTiposActivo();
-    echo json_encode(['success' => true, 'data' => $tipos]);
-}
-    
-}
+        $marca       = trim($_POST['marca'] ?? '');
+        $descripcion = trim($_POST['descripcion'] ?? '');
+        $tipoActivo  = (int)($_POST['tipo_activo_id'] ?? 0);
+        $activa      = (int)($_POST['activa'] ?? 1);
 
+        if ($tipoActivo <= 0) {
+            echo json_encode(['success' => false, 'error' => 'Debes seleccionar un tipo de PC']);
+            return;
+        }
+
+        $id = $this->model->crearPC($marca, $descripcion, $tipoActivo, $activa);
+        echo json_encode(
+            $id
+                ? ['success' => true, 'message' => 'PC creada exitosamente', 'data' => ['id' => $id]]
+                : ['success' => false, 'error' => 'Error al crear la PC']
+        );
+    }
+
+    /**
+     * API: Actualizar una PC.
+     */
+    private function actualizarPC(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            return;
+        }
+        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $id          = (int)($_POST['id'] ?? 0);
+        $marca       = trim($_POST['marca'] ?? '');
+        $descripcion = trim($_POST['descripcion'] ?? '');
+        $tipoActivo  = (int)($_POST['tipo_activo_id'] ?? 0);
+        $activa      = (int)($_POST['activa'] ?? 1);
+
+        if ($id <= 0 || $tipoActivo <= 0) {
+            echo json_encode(['success' => false, 'error' => 'Datos no válidos']);
+            return;
+        }
+
+        $resultado = $this->model->actualizarPC($id, $marca, $descripcion, $tipoActivo, $activa);
+        echo json_encode(
+            $resultado
+                ? ['success' => true, 'message' => 'PC actualizada exitosamente']
+                : ['success' => false, 'error' => 'Error al actualizar la PC']
+        );
+    }
+
+    /**
+     * API: Cambiar el estado activa/desactivada de una PC.
+     */
+    private function cambiarEstadoPC(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            return;
+        }
+        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $id     = (int)($_POST['id'] ?? 0);
+        $activa = (int)($_POST['activa'] ?? 0);
+
+        if ($id <= 0) {
+            echo json_encode(['success' => false, 'error' => 'ID inválido']);
+            return;
+        }
+
+        $resultado = $this->model->cambiarEstadoPC($id, $activa);
+        echo json_encode(
+            $resultado
+                ? ['success' => true, 'message' => $activa ? 'PC activada' : 'PC desactivada']
+                : ['success' => false, 'error' => 'Error al cambiar el estado']
+        );
+    }
+
+    /**
+     * API: Eliminar una PC (solo si no tiene sesiones).
+     */
+    private function eliminarPC(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            return;
+        }
+        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id <= 0) {
+            echo json_encode(['success' => false, 'error' => 'ID inválido']);
+            return;
+        }
+
+        $resultado = $this->model->eliminarPC($id);
+        echo json_encode(
+            $resultado
+                ? ['success' => true, 'message' => 'PC eliminada exitosamente']
+                : ['success' => false, 'error' => 'Error al eliminar la PC']
+        );
+    }
+
+    private function json(bool $success, mixed $data = null, string $error = ''): void
+    {
+        $result = ['success' => $success];
+        if ($data !== null) $result['data'] = $data;
+        if ($error) $result['error'] = $error;
+        echo json_encode($result);
+    }
+}

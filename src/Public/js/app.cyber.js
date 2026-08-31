@@ -75,6 +75,12 @@ $(function () {
         var icono = ocupada ? 'timelapse' : 'check_circle';
         var estadoLabel = ocupada ? 'Ocupada' : 'Disponible';
         var desc = (e.marca || '') + ((e.nombre_tipo || '') ? ' · ' + e.nombre_tipo : '');
+        var nombre = (e.marca || '') + ' ' + (e.descripcion || '');
+
+        var actionsHTML = '<div class="station-actions">'
+            + '<button class="btn-floating btn-small waves-effect waves-light blue tooltipped btn-editar-pc" data-id="' + e.id + '" data-position="top" data-tooltip="Editar PC" style="width:28px;height:28px;line-height:28px;"><i class="material-icons" style="font-size:0.9rem;line-height:28px;">edit</i></button>'
+            + '<button class="btn-floating btn-small waves-effect waves-light red tooltipped btn-eliminar-pc" data-id="' + e.id + '" data-nombre="' + escHtml(nombre) + '" data-position="top" data-tooltip="Eliminar PC" style="width:28px;height:28px;line-height:28px;"><i class="material-icons" style="font-size:0.9rem;line-height:28px;">delete</i></button>'
+            + '</div>';
 
         var footer = '';
         if (ocupada) {
@@ -98,6 +104,7 @@ $(function () {
             + '<div class="station-desc" style="font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">' + escHtml(desc) + '</div>'
             + '<div class="station-desc" style="font-size:0.7rem;color:var(--text-muted);">' + escHtml(truncar(e.descripcion, 40)) + '</div>'
             + '</div>'
+            + actionsHTML
             + footer
             + '</div>'
             + '</div>'
@@ -374,8 +381,224 @@ $(function () {
     });
 
     // ================================================================
+    // CRUD DE PC
+    // ================================================================
+
+    // EVENTO: Click en "Nueva PC" (#btnNuevaPC)
+    $(document).on('click', '#btnNuevaPC', function () {
+        $('#modalPCTitle').text('Nueva PC');
+        $('#modalPCTitleIcon').text('computer');
+        $('#pcId').val('');
+        $('#formPC')[0].reset();
+        $('#pcTipo').val('');
+        refrescarSelect($('#pcTipo'));
+        $('input[name="pcEstado"][value="1"]').prop('checked', true);
+        $('#pcFormError').hide();
+        $('#btnGuardarPC').removeClass('orange').addClass('indigo');
+        $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
+        M.updateTextFields();
+        $('#modalPCForm').modal('open');
+        setTimeout(function () { $('#pcMarca').focus(); }, 300);
+    });
+
+    // EVENTO: Click en "Editar PC" (.btn-editar-pc)
+    $(document).on('click', '.btn-editar-pc', function (e) {
+        e.stopPropagation();
+        var id = $(this).data('id');
+        $('#modalPCTitle').text('Editar PC');
+        $('#modalPCTitleIcon').text('edit');
+        $('#pcFormError').hide();
+        $('#btnGuardarPC').removeClass('indigo').addClass('orange');
+        $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Actualizar PC');
+
+        $.getJSON(API + 'obtenerPC&id=' + encodeURIComponent(id), function (r) {
+            if (!r.success || !r.data) {
+                EIS.toast((r.error) || 'Error al cargar la PC', 'red', 'error');
+                return;
+            }
+            var pc = r.data;
+            $('#pcId').val(pc.id);
+            $('#pcMarca').val(pc.marca || '');
+            $('#pcDescripcion').val(pc.descripcion || '');
+            $('#pcTipo').val(String(pc.tipo_activo_id || ''));
+            refrescarSelect($('#pcTipo'));
+            $('input[name="pcEstado"][value="' + (pc.activa ? 1 : 0) + '"]').prop('checked', true);
+            M.updateTextFields();
+            $('#modalPCForm').modal('open');
+        }).fail(function () {
+            EIS.toast('Error de conexión al cargar la PC', 'red', 'error');
+        });
+    });
+
+    // EVENTO: Click en "Eliminar PC" (.btn-eliminar-pc)
+    $(document).on('click', '.btn-eliminar-pc', function (e) {
+        e.stopPropagation();
+        var id = $(this).data('id');
+        var nombre = $(this).data('nombre') || 'PC-' + id;
+        $('#confirmarPcId').val(id);
+        $('#confirmarPcNombre').text(nombre);
+        $('#modalConfirmarEliminar').modal('open');
+    });
+
+    // EVENTO: Click en "Confirmar Eliminar" (#btnConfirmarEliminar)
+    $(document).on('click', '#btnConfirmarEliminar', function () {
+        var id = $('#confirmarPcId').val();
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="material-icons left">hourglass_top</i> Eliminando...');
+
+        $.post(API + 'eliminarPC', { id: id }, function (r) {
+            $btn.prop('disabled', false).html('<i class="material-icons left">delete_forever</i> Eliminar');
+            if (r.success) {
+                EIS.toast(r.message, 'green', 'delete');
+                $('#modalConfirmarEliminar').modal('close');
+                cargarEstado();
+            } else {
+                EIS.toast(r.error || 'Error al eliminar la PC', 'red', 'error');
+            }
+        }, 'json').fail(function () {
+            $btn.prop('disabled', false).html('<i class="material-icons left">delete_forever</i> Eliminar');
+            EIS.toast('Error de conexión', 'red', 'error');
+        });
+    });
+
+    // EVENTO: Click en "Guardar PC" (#btnGuardarPC) — crear o actualizar
+    $(document).on('click', '#btnGuardarPC', function () {
+        var id = $('#pcId').val();
+        var marca = $('#pcMarca').val().trim();
+        var descripcion = $('#pcDescripcion').val().trim();
+        var tipoActivo = $('#pcTipo').val();
+        var activa = $('input[name="pcEstado"]:checked').val() || 1;
+
+        if (!marca) {
+            EIS.toast('La marca es obligatoria', 'red', 'error');
+            $('#pcMarca').focus();
+            return;
+        }
+        if (!descripcion) {
+            EIS.toast('La descripción es obligatoria', 'red', 'error');
+            $('#pcDescripcion').focus();
+            return;
+        }
+        if (!tipoActivo) {
+            EIS.toast('Debes seleccionar un tipo de PC', 'red', 'error');
+            $('#pcTipo').focus();
+            return;
+        }
+
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="material-icons left" style="margin:0;">hourglass_top</i> Guardando...');
+        $('#pcFormError').hide();
+
+        var url = id ? API + 'actualizarPC' : API + 'crearPC';
+        var data = { marca: marca, descripcion: descripcion, tipo_activo_id: tipoActivo, activa: activa };
+        if (id) data.id = id;
+
+        $.post(url, data, function (r) {
+            $btn.prop('disabled', false);
+            $('#btnGuardarPC').removeClass('orange').addClass('indigo');
+            $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
+            if (r.success) {
+                EIS.toast(r.message, 'green', 'check_circle');
+                $('#modalPCForm').modal('close');
+                cargarEstado();
+            } else {
+                $('#pcFormErrorMessage').text(r.error || 'Error al guardar la PC');
+                $('#pcFormError').slideDown(300);
+            }
+        }, 'json').fail(function () {
+            $btn.prop('disabled', false);
+            $('#btnGuardarPC').removeClass('orange').addClass('indigo');
+            $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
+            $('#pcFormErrorMessage').text('Error de conexión al servidor');
+            $('#pcFormError').slideDown(300);
+        });
+    });
+
+    // ================================================================
+    // HISTORIAL
+    // ================================================================
+
+    // EVENTO: Click en "Historial" (#btnHistorialCyber y móvil)
+    $(document).on('click', '#btnHistorialCyber, #btnHistorialCyberMobile', function () {
+        $('#modalHistorial').modal('open');
+        mostrarSelectorEstaciones();
+    });
+
+    function mostrarSelectorEstaciones() {
+        var $contenido = $('#historialContenido');
+        var visibles = estaciones.filter(function (e) { return filtroActual === 'all' || e.estado === filtroActual; });
+
+        if (visibles.length === 0) {
+            $contenido.html('<div class="center-align" style="padding:2rem 0;"><i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">computer</i><p style="color:var(--text-muted);">No hay PCs registradas</p></div>');
+            return;
+        }
+
+        var html = '<div style="margin-bottom:1.5rem;">'
+            + '<p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:0.75rem;"><i class="material-icons left" style="font-size:1.1rem;">info</i>Selecciona una PC para ver su historial de sesiones</p>'
+            + '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;">';
+        visibles.forEach(function (e) {
+            var estadoClass = e.estado === 'disponible' ? 'green' : 'orange';
+            html += '<button class="btn-small waves-effect waves-light ' + estadoClass + ' btn-ver-historial" data-id="' + e.id + '" data-nombre="' + escHtml(e.marca + ' ' + (e.nombre_tipo || '')) + '" style="border-radius:16px;min-width:60px;text-transform:capitalize;display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block;"></span>' + escHtml(e.marca + ' · ' + (e.nombre_tipo || '')) + '</button>';
+        });
+        html += '</div></div><div id="historialResultados" style="margin-top:1.5rem;"></div>';
+        $contenido.html(html);
+    }
+
+    // EVENTO: Click en una PC del selector de historial (.btn-ver-historial)
+    $(document).on('click', '.btn-ver-historial', function () {
+        var activoId = $(this).data('id');
+        var nombre = $(this).data('nombre') || 'PC-' + activoId;
+        $('.btn-ver-historial').removeClass('active indigo darken-2');
+        $(this).addClass('active indigo darken-2');
+        cargarHistorialEstacion(activoId, nombre);
+    });
+
+    function cargarHistorialEstacion(activoId, nombre) {
+        var $resultados = $('#historialResultados');
+        $resultados.html('<div class="center-align" style="padding:2rem 0;"><div class="preloader-wrapper small active"><div class="spinner-layer spinner-green-only"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div><p style="color:var(--text-muted);margin-top:1rem;">Cargando historial de ' + escHtml(nombre) + '...</p></div>');
+
+        $.getJSON(API + 'historial&activo_id=' + encodeURIComponent(activoId), function (r) {
+            if (!r.success) {
+                $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>' + escHtml(r.error || 'Error al cargar el historial') + '</div>');
+                return;
+            }
+            var datos = r.data || [];
+            if (datos.length === 0) {
+                $resultados.html('<div class="center-align" style="padding:2rem 0;"><i class="material-icons" style="font-size:3.5rem;display:block;margin-bottom:0.5rem;opacity:0.3;">hourglass_empty</i><p style="color:var(--text-muted);font-size:1rem;"><strong>' + escHtml(nombre) + '</strong> no tiene sesiones registradas</p></div>');
+                return;
+            }
+            var html = '<div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border-light);"><table class="striped responsive-table" style="margin-bottom:0;font-size:0.9rem;"><thead><tr style="background:var(--surface-hover);"><th style="padding:0.6rem 0.8rem;">#</th><th style="padding:0.6rem 0.8rem;">Cliente</th><th style="padding:0.6rem 0.8rem;">Tiempo</th><th style="padding:0.6rem 0.8rem;text-align:right;">Precio</th><th style="padding:0.6rem 0.8rem;">Estado</th></tr></thead><tbody>';
+            datos.forEach(function (s, i) {
+                var precioT = (s.precio_tiempo !== null && s.precio_tiempo !== undefined) ? '$' + parseFloat(s.precio_tiempo).toFixed(2) : '-';
+                var estadoBadge = s.estado === 'activa' ? '<span class="new badge orange" style="background:#fb8c00;">Activa</span>' : '<span class="new badge green" style="background:#43a047;">Cerrada</span>';
+                html += '<tr style="border-bottom:1px solid var(--border-light);"><td style="padding:0.5rem 0.8rem;font-weight:600;color:var(--text-muted);">' + (i + 1) + '</td><td style="padding:0.5rem 0.8rem;font-weight:500;">' + escHtml(s.cliente_nombre || 'Anónimo') + '</td><td style="padding:0.5rem 0.8rem;font-size:0.85rem;color:var(--text-muted);">' + escHtml(s.tiempo_uso || '-') + '</td><td style="padding:0.5rem 0.8rem;text-align:right;font-weight:700;color:var(--primary);">' + precioT + '</td><td style="padding:0.5rem 0.8rem;">' + estadoBadge + '</td></tr>';
+            });
+            html += '</tbody></table></div><div style="margin-top:0.75rem;text-align:right;color:var(--text-muted);font-size:0.8rem;"><i class="material-icons left" style="font-size:0.9rem;">info</i>Mostrando ' + datos.length + ' sesiones de ' + escHtml(nombre) + '</div>';
+            $resultados.html(html);
+        }).fail(function () {
+            $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>Error de conexión al servidor</div>');
+        });
+    }
+
+    // ================================================================
+    // REFRESCAR
+    // ================================================================
+    $(document).on('click', '#btnRefrescar', function () {
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="material-icons left" style="font-size:1rem;">hourglass_top</i> Actualizando...');
+        cargarEstado();
+        setTimeout(function () {
+            $btn.prop('disabled', false).html('<i class="material-icons left" style="font-size:1rem;">refresh</i>Actualizar');
+            EIS.toast('Datos actualizados', 'green', 'refresh');
+        }, 500);
+    });
+
+    // ================================================================
     // INICIALIZACIÓN
     // ================================================================
     $('#cyberModal').modal();
+    $('#modalPCForm').modal();
+    $('#modalConfirmarEliminar').modal();
+    $('#modalHistorial').modal();
     cargarEstado();
 });
