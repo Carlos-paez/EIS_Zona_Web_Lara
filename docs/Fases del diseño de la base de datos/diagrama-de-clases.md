@@ -1,5 +1,7 @@
 # Diagrama de Clases — EIS Zona Web Lara (Arquitectura MVC)
 
+> **Actualizado (Agosto 2026):** Documento de diseño histórico. La implementación final cuenta con **12 controladores y 13 modelos POO**.
+
 ## Estado Actual (Clases PHP con Namespace — Patrón MVC)
 
 ```mermaid

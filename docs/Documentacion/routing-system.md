@@ -14,16 +14,24 @@ src/
 ├── app/
 │   ├── core/
 │   │   ├── Database.php         ← Conexion PDO Singleton
+│   │   ├── Exporter.php         ← Exportaciones CSV
 │   │   ├── Model.php            ← Clase base abstracta con helpers de validacion
-│   │   └── router.php           ← Enrutador OOP (clase Router, CSRF tokens)
-│   ├── Controllers/
+│   │   ├── PdfBuilder.php       ← Generacion de PDF para reportes
+│   │   └── router.php           ← Enrutador OOP (clase Router, mapa CONTROLLERS, dispatchAction, CSRF)
+│   ├── Controllers/             ← 12 controladores con namespace
 │   │   ├── AuthController.php   ← Login/logout con sesiones + CSRF + session_regenerate_id
 │   │   ├── ClienteController.php← Controlador AJAX clientes
 │   │   ├── inventarioController.php ← Controlador AJAX inventario
 │   │   ├── ProveedorController.php  ← Controlador AJAX proveedores (solicitudes)
 │   │   ├── ProveedorGestionController.php ← Controlador AJAX proveedores (gestion)
-│   │   └── RolController.php    ← Controlador AJAX roles/permisos
-│   ├── Models/
+│   │   ├── RolController.php    ← Controlador AJAX roles/permisos
+│   │   ├── ActivoController.php ← Controlador AJAX activos
+│   │   ├── AsesoriaController.php← Controlador AJAX asesorias
+│   │   ├── CiberController.php  ← Controlador AJAX cybercafe
+│   │   ├── DashboardController.php← Controlador AJAX dashboard
+│   │   ├── ReporteController.php← Controlador AJAX reportes
+│   │   └── VentaController.php  ← Controlador AJAX ventas (POS)
+│   ├── Models/                  ← 13 modelos POO
 │   │   ├── Cliente.php          ← Modelo POO clientes
 │   │   ├── Inventario.php       ← Modelo POO inventario (namespace)
 │   │   ├── Usuario.php          ← Modelo POO usuarios
@@ -31,6 +39,12 @@ src/
 │   │   ├── ProveedorGestion.php ← Modelo POO proveedores (gestion)
 │   │   ├── Rol.php              ← Modelo POO roles/permisos
 │   │   ├── Asesoria.php         ← Modelo POO asesorias
+│   │   ├── Activo.php           ← Modelo POO activos
+│   │   ├── Venta.php            ← Modelo POO ventas
+│   │   ├── Reporte.php          ← Modelo POO reportes
+│   │   ├── Dashboard.php        ← Modelo POO dashboard
+│   │   ├── CiberControl.php     ← Modelo POO control cyber
+│   │   ├── CiberModel.php       ← Modelo POO sesiones cyber
 │   │   ├── crud_users.php       ← CRUD usuarios legacy
 │   │   └── crud_asesorias.php   ← CRUD asesorias legacy
 │   ├── template/
@@ -52,7 +66,7 @@ src/
 │       └── roles.php            ← Gestion de roles/permisos (conectado a BD)
 └── Public/
     ├── css/                     ← Estilos (locales)
-    ├── js/                      ← JavaScript modular (10 archivos)
+    ├── js/                      ← JavaScript modular (14 archivos)
     └── fonts/                   ← Material Icons (local)
 ```
 
@@ -109,14 +123,12 @@ Ahora usa autoloader de Composer. El flujo es: `index.php` -> `new Router()` -> 
 
 ### Mapa de rutas
 
-El enrutamiento usa la clase `Router` en namespace `App\Core`. Soporta 6 tipos de peticiones:
-1. **AJAX de clientes** (`?pagina=clientes&action=X`) -> `ClienteController`
-2. **AJAX de inventario** (`?pagina=inventario&action=X`) -> `InventarioController`
-3. **AJAX de roles** (`?pagina=roles&action=X`) -> `RolController`
-4. **AJAX de proveedores** (`?pagina=proveedores&action=X`) -> `ProveedorController`
-5. **AJAX de proveedores-gestion** (`?pagina=proveedores-gestion&action=X`) -> `ProveedorGestionController`
-6. **Auth actions** (`?pagina=login_validate` o `logout`) -> `AuthController`
-7. **Vistas normales** -> `renderView()` -> `layout.php` + vista
+El enrutamiento usa la clase `Router` en namespace `App\Core`. Centraliza los controladores en un mapa `CONTROLLERS` (`pagina => clase`) y usa `dispatchAction()` para las peticiones AJAX:
+1. **AJAX** (`?pagina=X&action=Y`) cuando `X` esta en `CONTROLLERS` -> `dispatchAction()` instancia el controlador y ejecuta `handle()`
+2. **Auth actions** (`?pagina=login_validate` o `logout`) -> `AuthController`
+3. **Vistas normales** -> `render()` -> `layout.php` + vista
+
+El mapa `CONTROLLERS` incluye: `clientes`, `inventario`, `ventas`, `roles`, `proveedores`, `proveedores-gestion`, `asesorias`, `ciberControl`, `dashboard`, `reportes`, `activos`.
 
 ### Estructura de la clase
 
@@ -127,6 +139,19 @@ namespace App\Core;
 class Router
 {
     private string $pagina;
+    private const CONTROLLERS = [
+        'clientes'          => \App\Controllers\ClienteController::class,
+        'inventario'        => \App\Controllers\InventarioController::class,
+        'ventas'            => \App\Controllers\VentaController::class,
+        'roles'             => \App\Controllers\RolController::class,
+        'proveedores'       => \App\Controllers\ProveedorController::class,
+        'proveedores-gestion' => \App\Controllers\ProveedorGestionController::class,
+        'asesorias'         => \App\Controllers\AsesoriaController::class,
+        'ciberControl'      => \App\Controllers\CiberController::class,
+        'dashboard'         => \App\Controllers\DashboardController::class,
+        'reportes'          => \App\Controllers\ReporteController::class,
+        'activos'           => \App\Controllers\ActivoController::class,
+    ];
 
     public function __construct()
     {
@@ -136,25 +161,13 @@ class Router
 
     public function handle(): void
     {
-        if ($this->isAjaxCliente()) {
-            $this->runClienteController(); return;
-        }
-        if ($this->isAjaxInventario()) {
-            $this->runInventarioController(); return;
-        }
-        if ($this->isAjaxRoles()) {
-            $this->runRolController(); return;
-        }
-        if ($this->isAjaxProveedores()) {
-            $this->runProveedorController(); return;
-        }
-        if ($this->isAjaxProveedorGestion()) {
-            $this->runProveedorGestionController(); return;
-        }
         if ($this->isAuthAction()) {
             $this->runAuthAction(); return;
         }
-        $this->renderView();
+        if (array_key_exists($this->pagina, self::CONTROLLERS) && isset($_GET['action'])) {
+            $this->dispatchAction(); return;
+        }
+        $this->render();
     }
 
     private function resolvePage(): string
@@ -169,34 +182,18 @@ class Router
         return $pagina;
     }
 
-    private function isAjaxCliente(): bool
-    {
-        return $this->pagina === 'clientes' && isset($_GET['action']);
-    }
-
-    private function isAjaxInventario(): bool
-    {
-        return $this->pagina === 'inventario' && isset($_GET['action']);
-    }
-
-    private function isAjaxRoles(): bool
-    {
-        return $this->pagina === 'roles' && isset($_GET['action']);
-    }
-
-    private function isAjaxProveedores(): bool
-    {
-        return $this->pagina === 'proveedores' && isset($_GET['action']);
-    }
-
-    private function isAjaxProveedorGestion(): bool
-    {
-        return $this->pagina === 'proveedores-gestion' && isset($_GET['action']);
-    }
-
     private function isAuthAction(): bool
     {
         return $this->pagina === 'login_validate' || $this->pagina === 'logout';
+    }
+
+    private function dispatchAction(): void
+    {
+        $controllerClass = self::CONTROLLERS[$this->pagina];
+        $this->requireAuth();
+        $controller = new $controllerClass();
+        $controller->handle();
+        exit;
     }
 
     private function requireAuth(): void
@@ -206,46 +203,6 @@ class Router
             echo json_encode(['success' => false, 'error' => 'No autenticado']);
             exit;
         }
-    }
-
-    private function runClienteController(): void
-    {
-        $this->requireAuth();
-        $controller = new \App\Controllers\ClienteController();
-        $controller->handle();
-        exit;
-    }
-
-    private function runInventarioController(): void
-    {
-        $this->requireAuth();
-        $controller = new \App\Controllers\InventarioController();
-        $controller->handle();
-        exit;
-    }
-
-    private function runRolController(): void
-    {
-        $this->requireAuth();
-        $controller = new \App\Controllers\RolController();
-        $controller->handle();
-        exit;
-    }
-
-    private function runProveedorController(): void
-    {
-        $this->requireAuth();
-        $controller = new \App\Controllers\ProveedorController();
-        $controller->handle();
-        exit;
-    }
-
-    private function runProveedorGestionController(): void
-    {
-        $this->requireAuth();
-        $controller = new \App\Controllers\ProveedorGestionController();
-        $controller->handle();
-        exit;
     }
 
     private function runAuthAction(): void
@@ -260,7 +217,7 @@ class Router
         exit;
     }
 
-    private function renderView(): void
+    private function render(): void
     {
         $publicPages = ['login'];
         if (!isset($_SESSION['logged_in']) && !in_array($this->pagina, $publicPages)) {
@@ -287,8 +244,10 @@ class Router
             'dashboard'    => 'Panel de Control',
             'inventario'   => 'Gestion de inventario',
             'ventas'       => 'Punto de Venta (POS)',
+            'clientes'     => 'Gestion de Clientes',
             'ciberControl' => 'Control de Cybercafe',
             'proveedores'  => 'Solicitudes a Proveedores',
+            'proveedores-gestion' => 'Gestion de Proveedores',
             'reportes'     => 'Reportes y Estadisticas',
             'activos'      => 'Gestion de Activos',
             'asesorias'    => 'Asesoria Legal',
@@ -311,22 +270,14 @@ class Router
 |--------|-------------|
 | `__construct()` | Inicia sesion, genera CSRF token (`bin2hex(random_bytes(32))`), resuelve `$pagina` |
 | `handle()` | Metodo principal: determina el tipo de peticion y ejecuta la accion |
+| `CONTROLLERS` | Mapa `pagina => clase` que centraliza los 12 controladores |
 | `resolvePage()` | Lee `$_GET["pagina"]`, valida con regex, retorna el nombre (default: "login") |
-| `isAjaxCliente()` | True si pagina='clientes' Y existe `$_GET['action']` |
-| `isAjaxInventario()` | True si pagina='inventario' Y existe `$_GET['action']` |
-| `isAjaxRoles()` | True si pagina='roles' Y existe `$_GET['action']` |
-| `isAjaxProveedores()` | True si pagina='proveedores' Y existe `$_GET['action']` |
-| `isAjaxProveedorGestion()` | True si pagina='proveedores-gestion' Y existe `$_GET['action']` |
+| `dispatchAction()` | Si la pagina esta en `CONTROLLERS` y hay `action`, instancia el controlador y ejecuta `handle()` |
 | `isAuthAction()` | True si pagina='login_validate' o 'logout' |
-| `requireAuth()` | Verifica `$_SESSION['logged_in']`, si no existe: JSON error + exit |
-| `runClienteController()` | Instancia y ejecuta `\App\Controllers\ClienteController` |
-| `runInventarioController()` | Instancia y ejecuta `\App\Controllers\InventarioController` |
-| `runRolController()` | Instancia y ejecuta `\App\Controllers\RolController` |
-| `runProveedorController()` | Instancia y ejecuta `\App\Controllers\ProveedorController` |
-| `runProveedorGestionController()` | Instancia y ejecuta `\App\Controllers\ProveedorGestionController` |
 | `runAuthAction()` | Instancia `AuthController` y llama `login()` o `logout()` |
-| `renderView()` | Verifica auth, determina si es publica o protegida, y renderiza |
+| `render()` | Verifica auth, determina si es publica o protegida, y renderiza (vista o layout) |
 | `renderWithLayout()` | Prepara variables ($pageTitle, $headerExtra, $contentView) e incluye layout.php |
+| `requireAuth()` | Verifica `$_SESSION['logged_in']`, si no existe: JSON error + exit |
 
 ### Mejoras sobre la version procedural
 
@@ -334,7 +285,7 @@ class Router
 |---------|------------------------------|----------------------|
 | **Tipo** | Script procedural (75 lineas) | Clase con namespace |
 | **Autoloader** | No usado | Composer PSR-4 |
-| **AJAX** | Solo inventario | Clientes, Inventario, Roles, Proveedores, ProveedorGestion |
+| **AJAX** | Solo inventario | 12 controladores via mapa `CONTROLLERS` + `dispatchAction()` |
 | **Auth** | login_validate.php (vista) | AuthController con login()/logout() + session_regenerate_id |
 | **CSRF** | No implementado | `bin2hex(random_bytes(32))` en constructor + `<input name="csrf_token">` |
 | **Seguridad AJAX** | No verificaba auth | `requireAuth()` con respuesta JSON |
@@ -365,7 +316,7 @@ class Router
 <script src="Public/js/app.tables.js"></script>
 <script src="Public/js/app.ui.js"></script>
 
-<!-- Scripts especificos por pagina (6 modulos) -->
+<!-- Scripts especificos por pagina (modulos) -->
 <?php if ($pagina === 'ventas'): ?>
 <script src="Public/js/app.pos.js"></script>
 <?php endif; ?>
@@ -381,8 +332,20 @@ class Router
 <?php if ($pagina === 'roles'): ?>
 <script src="Public/js/app.roles.js"></script>
 <?php endif; ?>
-<?php if ($pagina === 'proveedores' || $pagina === 'clientes' || $pagina === 'proveedores-gestion'): ?>
+<?php if ($pagina === 'proveedores'): ?>
 <script src="Public/js/app.proveedores.js"></script>
+<?php endif; ?>
+<?php if ($pagina === 'proveedores-gestion'): ?>
+<script src="Public/js/app.proveedores-gestion.js"></script>
+<?php endif; ?>
+<?php if ($pagina === 'clientes'): ?>
+<script src="Public/js/app.clientes.js"></script>
+<?php endif; ?>
+<?php if ($pagina === 'activos'): ?>
+<script src="Public/js/app.activos.js"></script>
+<?php endif; ?>
+<?php if ($pagina === 'reportes'): ?>
+<script src="Public/js/app.reportes.js"></script>
 <?php endif; ?>
 ```
 
@@ -401,13 +364,13 @@ class Router
 | `ventas` | `ventas.php` | No | `app.pos.js` |
 | `proveedores` | `proveedores.php` | No | `app.proveedores.js` |
 | `proveedores&action=X` | `ProveedorController::handle()` | No | (AJAX) |
-| `clientes` | `clientes.php` | No | `app.proveedores.js` |
+| `clientes` | `clientes.php` | No | `app.clientes.js` |
 | `clientes&action=X` | `ClienteController::handle()` | No | (AJAX) |
-| `proveedores-gestion` | proveedores.php | No | `app.proveedores.js` |
+| `proveedores-gestion` | proveedores-gestion.php | No | `app.proveedores-gestion.js` |
 | `proveedores-gestion&action=X` | `ProveedorGestionController::handle()` | No | (AJAX) |
 | `ciberControl` | `ciberControl.php` | No | `app.cyber.js` |
-| `reportes` | `reportes.php` | No | Ninguno |
-| `activos` | `activos.php` | No | Ninguno |
+| `reportes` | `reportes.php` | No | `app.reportes.js` |
+| `activos` | `activos.php` | No | `app.activos.js` |
 | `asesorias` | `asesorias.php` | No | `app.legal.js` |
 | `usuarios` | `usuarios.php` | No | Ninguno |
 | `roles` | `roles.php` | No | `app.roles.js` |
@@ -536,7 +499,7 @@ Usuario: GET /src/?pagina=ventas
 |---------|---------------------------|--------------|
 | **Enrutador** | `Router` clase con namespace, OOP | Framework (Laravel, Symfony) con routing DSL |
 | **Punto de entrada** | `autoload.php` + `new Router()` + `->handle()` | Igual, pero con contenedor DI |
-| **Controladores** | 6 controladores con namespace, metodo `handle()` | Controladores con acciones por metodo |
+| **Controladores** | 12 controladores con namespace, metodo `handle()` | Controladores con acciones por metodo |
 | **Layout** | `template/layout.php` | `Views/layouts/main.php` |
 | **Vistas** | `Views/dashboard.php` (plano) | `Views/dashboard/index.php` (subdirectorios) |
 | **Autoloader** | Composer PSR-4 | Igual |

@@ -21,7 +21,7 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 
 **Caracteristicas tecnicas destacadas**:
 - Assets 100% locales (sin dependencia de CDN)
-- JavaScript modular en 10 archivos especializados
+- JavaScript modular en 14 archivos especializados
 - Service Worker para funcionamiento offline
 - PWA con manifest.json
 - Tema oscuro/claro con persistencia en localStorage
@@ -29,7 +29,7 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 - Namespace `App\Core`, `App\Models`, `App\Controllers` con autoloading PSR-4
 - Patron Singleton para conexion PDO (clase `Database`)
 - Clase base abstracta `Model` con helpers de validacion reutilizables
-- 6 controladores con namespace para CRUD via AJAX
+- 12 controladores con namespace para CRUD via AJAX
 - Seguridad: CSRF tokens, XSS sanitizacion, session hardening, validacion backend completa
 
 ---
@@ -49,35 +49,29 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
    |
 6. Router::handle():
    |
-7. ¿Es AJAX de clientes? (clientes + action) -> ClienteController
+7. ¿Existe pagina y action en el mapa CONTROLLERS? -> dispatchAction()
    |
-8. ¿Es AJAX de inventario? (inventario + action) -> InventarioController
+8. dispatchAction(): Instancia el controlador segun self::CONTROLLERS[$pagina] y ejecuta handle()
    |
-9. ¿Es AJAX de roles? (roles + action) -> RolController
+9. ¿Es accion de auth? (login_validate/logout) -> AuthController
    |
-10. ¿Es AJAX de proveedores? (proveedores + action) -> ProveedorController
+10. Si no es ninguna accion especial -> render()
    |
-11. ¿Es AJAX de proveedores-gestion? (proveedores-gestion + action) -> ProveedorGestionController
+11. render(): Verifica si el usuario esta logueado
    |
-12. ¿Es accion de auth? (login_validate/logout) -> AuthController
+12. Si no esta logueado Y la pagina no es publica -> Redirige a login
    |
-13. Si no es ninguna accion especial -> renderView()
+13. Si la pagina es publica (login) -> Carga directa
    |
-14. renderView(): Verifica si el usuario esta logueado
-   |
-15. Si no esta logueado Y la pagina no es publica -> Redirige a login
-   |
-16. Si la pagina es publica (login) -> Carga directa
-   |
-17. Si es pagina autenticada -> renderWithLayout(): Carga layout.php que incluye:
-   |  - CSRF token en window.EIS.csrfToken y <input name="csrf_token">
-   |  - Sidebar con Materialize Sidenav (13 modulos)
-   |  - Header con nav, reloj y notificaciones
-   |  - Contenido especifico de la vista
-   |  - Scripts: Materialize JS + 10 modulos JS segun pagina
-   |  - Service Worker registration
-   |
-18. Si el archivo no existe -> Muestra error 404
+14. Si es pagina autenticada -> render(): Carga layout.php que incluye:
+    |  - CSRF token en window.EIS.csrfToken y <input name="csrf_token">
+    |  - Sidebar con Materialize Sidenav (13 modulos)
+    |  - Header con nav, reloj y notificaciones
+    |  - Contenido especifico de la vista
+    |  - Scripts: Materialize JS + 14 modulos JS segun pagina
+    |  - Service Worker registration
+    |
+15. Si el archivo no existe -> Muestra error 404
 ```
 
 ---
@@ -92,14 +86,20 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 | src/Config/database.php | 46 | Configuracion BD (legacy) |
 | src/app/core/Database.php | 81 | Conexion PDO Singleton (moderna) |
 | src/app/core/Model.php | 200+ | Clase base abstracta con helpers de validacion |
-| src/app/core/router.php | — | Enrutador OOP (clase Router, CSRF tokens, 5 rutas AJAX, auth, vistas) |
-| src/app/template/layout.php | 201 | Layout maestro con CSRF token + JS condicional (10 modulos JS) |
+| src/app/core/router.php | — | Enrutador OOP (clase Router, CSRF tokens, mapa CONTROLLERS, dispatchAction, auth, vistas) |
+| src/app/template/layout.php | 201 | Layout maestro con CSRF token + JS condicional (14 modulos JS) |
 | src/app/Controllers/AuthController.php | — | Controlador login/logout con session_regenerate_id |
 | src/app/Controllers/ClienteController.php | — | Controlador AJAX clientes |
 | src/app/Controllers/inventarioController.php | — | Controlador AJAX inventario |
 | src/app/Controllers/ProveedorController.php | — | Controlador AJAX proveedores (solicitudes) |
 | src/app/Controllers/ProveedorGestionController.php | — | Controlador AJAX proveedores (gestion) |
 | src/app/Controllers/RolController.php | — | Controlador AJAX roles/permisos |
+| src/app/Controllers/ActivoController.php | — | Controlador AJAX activos |
+| src/app/Controllers/AsesoriaController.php | — | Controlador AJAX asesorias |
+| src/app/Controllers/CiberController.php | — | Controlador AJAX cybercafe |
+| src/app/Controllers/DashboardController.php | — | Controlador AJAX dashboard |
+| src/app/Controllers/ReporteController.php | — | Controlador AJAX reportes |
+| src/app/Controllers/VentaController.php | — | Controlador AJAX ventas (POS) |
 | src/app/Models/Cliente.php | — | Modelo POO clientes |
 | src/app/Models/Inventario.php | — | Modelo POO inventario (namespace) |
 | src/app/Models/Usuario.php | — | Modelo POO usuarios |
@@ -107,6 +107,12 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 | src/app/Models/ProveedorGestion.php | — | Modelo POO proveedores (gestion) |
 | src/app/Models/Rol.php | — | Modelo POO roles/permisos |
 | src/app/Models/Asesoria.php | — | Modelo POO asesorias |
+| src/app/Models/Activo.php | — | Modelo POO activos fijos |
+| src/app/Models/Venta.php | — | Modelo POO ventas |
+| src/app/Models/Reporte.php | — | Modelo POO reportes |
+| src/app/Models/Dashboard.php | — | Modelo POO dashboard |
+| src/app/Models/CiberControl.php | — | Modelo POO control cyber |
+| src/app/Models/CiberModel.php | — | Modelo POO sesiones cyber |
 | src/app/Models/crud_users.php | 54 | CRUD usuarios legacy (8 funciones) |
 | src/app/Models/crud_asesorias.php | 49 | CRUD asesorias legacy (8 funciones) |
 | src/app/Views/login.php | — | Pagina login |
@@ -140,7 +146,7 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 | src/manifest.json | 15 | Manifiesto PWA |
 | src/sw.js | 83 | Service Worker |
 | src/offline.php | 43 | Pagina offline |
-| src/Database/estructura.sql | 243 | Esquema BD v3.0 (27 tablas) |
+| src/Database/estructura.sql | 243 | Esquema BD v3.0 (21 tablas) |
 | src/Database/seed_data.sql | — | Datos prueba |
 | src/Database/seed_data_masivo.sql | — | Datos masivos prueba |
 | src/Database/reportes_ejemplo.sql | — | Consultas ejemplo reportes |
@@ -172,53 +178,47 @@ namespace App\Core;
 class Router
 {
     private string $pagina;
+    private const CONTROLLERS = [
+        'clientes'          => ClienteController::class,
+        'inventario'        => InventarioController::class,
+        'ventas'            => VentaController::class,
+        'roles'             => RolController::class,
+        'proveedores'       => ProveedorController::class,
+        'proveedores-gestion' => ProveedorGestionController::class,
+        'asesorias'         => AsesoriaController::class,
+        'ciberControl'      => CiberController::class,
+        'dashboard'         => DashboardController::class,
+        'reportes'          => ReporteController::class,
+        'activos'           => ActivoController::class,
+    ];
 
     public function __construct()
     {
         session_start();
-        $this->csrfToken = bin2hex(random_bytes(32));
+        // Token CSRF: se genera una sola vez por sesión y se guarda en $_SESSION
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
         $this->pagina = $this->resolvePage();
     }
 
     public function handle(): void
     {
-        if ($this->isAjaxCliente()) {
-            $this->runClienteController(); return;
-        }
-        if ($this->isAjaxInventario()) {
-            $this->runInventarioController(); return;
-        }
-        if ($this->isAjaxRoles()) {
-            $this->runRolController(); return;
-        }
-        if ($this->isAjaxProveedores()) {
-            $this->runProveedorController(); return;
-        }
-        if ($this->isAjaxProveedorGestion()) {
-            $this->runProveedorGestionController(); return;
-        }
         if ($this->isAuthAction()) {
             $this->runAuthAction(); return;
         }
-        $this->renderView();
+        if (array_key_exists($this->pagina, self::CONTROLLERS) && isset($_GET['action'])) {
+            $this->dispatchAction(); return;
+        }
+        $this->render();
     }
 
     private function resolvePage(): string { /* valida con regex */ }
-    private function isAjaxCliente(): bool { return $this->pagina === 'clientes' && isset($_GET['action']); }
-    private function isAjaxInventario(): bool { return $this->pagina === 'inventario' && isset($_GET['action']); }
-    private function isAjaxRoles(): bool { return $this->pagina === 'roles' && isset($_GET['action']); }
-    private function isAjaxProveedores(): bool { return $this->pagina === 'proveedores' && isset($_GET['action']); }
-    private function isAjaxProveedorGestion(): bool { return $this->pagina === 'proveedores-gestion' && isset($_GET['action']); }
     private function isAuthAction(): bool { return $this->pagina === 'login_validate' || $this->pagina === 'logout'; }
-    private function requireAuth(): void { /* JSON error si no autenticado */ }
-    private function runClienteController(): void { /* new ClienteController()->handle() */ }
-    private function runInventarioController(): void { /* new InventarioController()->handle() */ }
-    private function runRolController(): void { /* new RolController()->handle() */ }
-    private function runProveedorController(): void { /* new ProveedorController()->handle() */ }
-    private function runProveedorGestionController(): void { /* new ProveedorGestionController()->handle() */ }
+    private function dispatchAction(): void { /* instancia el controlador segun CONTROLLERS[$pagina] y ejecuta handle() */ }
     private function runAuthAction(): void { /* AuthController::login() o logout() */ }
-    private function renderView(): void { /* carga vista o layout */ }
-    private function renderWithLayout(string $contentView): void { /* layout.php con titulos + CSRF token */ }
+    private function render(): void { /* verifica autenticacion y carga vista/layout */ }
+    private function requireAuth(): void { /* JSON error si no autenticado */ }
 }
 ```
 
@@ -228,24 +228,15 @@ class Router
 |--------|-------------|
 | `__construct()` | Inicia sesion, genera CSRF token, resuelve `$pagina` via `resolvePage()` |
 | `handle()` | Determina el tipo de peticion y ejecuta la accion correspondiente |
+| `CONTROLLERS` | Mapa `pagina => clase controlador` que centraliza la resolucion de controladores |
 | `resolvePage()` | Lee `$_GET["pagina"]` y valida con `preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)` |
-| `isAjaxCliente()` | True si `pagina=clientes` y existe `$_GET['action']` |
-| `isAjaxInventario()` | True si `pagina=inventario` y existe `$_GET['action']` |
-| `isAjaxRoles()` | True si `pagina=roles` y existe `$_GET['action']` |
-| `isAjaxProveedores()` | True si `pagina=proveedores` y existe `$_GET['action']` |
-| `isAjaxProveedorGestion()` | True si `pagina=proveedores-gestion` y existe `$_GET['action']` |
 | `isAuthAction()` | True si `pagina=login_validate` o `pagina=logout` |
-| `requireAuth()` | Verifica `$_SESSION['logged_in']`, si no existe -> JSON error |
-| `runClienteController()` | Instancia `App\Controllers\ClienteController` y ejecuta `handle()` |
-| `runInventarioController()` | Instancia `App\Controllers\InventarioController` y ejecuta `handle()` |
-| `runRolController()` | Instancia `App\Controllers\RolController` y ejecuta `handle()` |
-| `runProveedorController()` | Instancia `App\Controllers\ProveedorController` y ejecuta `handle()` |
-| `runProveedorGestionController()` | Instancia `App\Controllers\ProveedorGestionController` y ejecuta `handle()` |
+| `dispatchAction()` | Instancia el controlador indicado por `CONTROLLERS[$pagina]` y ejecuta su `handle()` para peticiones AJAX |
 | `runAuthAction()` | Login: `new AuthController()->login()`, Logout: `->logout()` |
-| `renderView()` | Verifica autenticacion, carga vista (publica) o `renderWithLayout()` |
-| `renderWithLayout()` | Define `$titulos` (13 modulos), `$extraHeaders`, CSRF token, incluye `layout.php` |
+| `render()` | Verifica autenticacion, carga vista (publica) o el layout maestro con CSRF token |
+| `requireAuth()` | Verifica `$_SESSION['logged_in']`, si no existe -> JSON error |
 
-**Mejora sobre la version anterior**: Ahora soporta 5 controladores AJAX, CSRF tokens, session hardening, verificacion de autenticacion en peticiones AJAX con respuesta JSON, y usa PSR-4 autoloading.
+**Mejora sobre la version anterior**: Ahora usa un mapa `CONTROLLERS` que centraliza los 12 controladores AJAX, con `dispatchAction()` para despachar peticiones y `render()` para renderizar vistas, ademas de CSRF tokens, session hardening, verificacion de autenticacion en peticiones AJAX con respuesta JSON, y autoloading PSR-4.
 
 ---
 
@@ -301,13 +292,17 @@ class Router
     <script src="Public/js/app.tables.js"></script>
     <script src="Public/js/app.ui.js"></script>
 
-    <!-- Scripts condicionales (6 modulos) -->
+    <!-- Scripts condicionales (modulos por pagina) -->
     <?php if ($pagina === 'ventas'): ?><script src="Public/js/app.pos.js"></script><?php endif; ?>
     <?php if ($pagina === 'ciberControl'): ?><script src="Public/js/app.cyber.js"></script><?php endif; ?>
     <?php if ($pagina === 'asesorias'): ?><script src="Public/js/app.legal.js"></script><?php endif; ?>
     <?php if ($pagina === 'inventario'): ?><script src="Public/js/app.inventario.js"></script><?php endif; ?>
     <?php if ($pagina === 'roles'): ?><script src="Public/js/app.roles.js"></script><?php endif; ?>
     <?php if ($pagina === 'proveedores'): ?><script src="Public/js/app.proveedores.js"></script><?php endif; ?>
+    <?php if ($pagina === 'proveedores-gestion'): ?><script src="Public/js/app.proveedores-gestion.js"></script><?php endif; ?>
+    <?php if ($pagina === 'clientes'): ?><script src="Public/js/app.clientes.js"></script><?php endif; ?>
+    <?php if ($pagina === 'activos'): ?><script src="Public/js/app.activos.js"></script><?php endif; ?>
+    <?php if ($pagina === 'reportes'): ?><script src="Public/js/app.reportes.js"></script><?php endif; ?>
 
     <!-- Service Worker -->
     <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }</script>
@@ -323,7 +318,7 @@ class Router
 | `nav` | Barra superior con titulo dinamico, reloj, notificaciones, usuario, header extra |
 | `container` | Contenedor central donde se renderiza `$contentView` |
 | `backToTop` | Boton flotante para volver arriba |
-| Modulos JS | 5 archivos base + 6 condicionales por pagina (pos, cyber, legal, inventario, roles, proveedores) |
+| Modulos JS | 5 archivos base + condicionales por pagina (pos, cyber, legal, inventario, roles, proveedores, proveedores-gestion, clientes, activos, reportes) |
 | `sw.js` | Service Worker para cache offline |
 
 **Variables PHP pasadas desde router.php**:
@@ -416,10 +411,16 @@ El proyecto tiene 2 tipos de modelos:
 | `Cliente` | `Cliente.php` | `clientes` | CRUD clientes, validacion cedula (min 5), unicidad cedula |
 | `Inventario` | `Inventario.php` | `productos` | CRUD productos, KPIs, movimientos stock, FK categoria |
 | `Usuario` | `Usuario.php` | `usuarios` | CRUD usuarios, autenticacion con password_hash |
-| `Proveedor` | `Proveedor.php` | `proveedores` | CRUD proveedores, ordenes de compra, FK proveedor/status |
+| `Proveedor` | `Proveedor.php` | `proveedores`, `orden_abastecimiento` | CRUD proveedores, ordenes de abastecimiento, FK proveedor/status |
 | `ProveedorGestion` | `ProveedorGestion.php` | `proveedores` | CRUD proveedores (gestion), unicidad RIF, email format |
 | `Rol` | `Rol.php` | `roles`, `permisos`, `permisos_rol` | CRUD roles, asignacion permisos, unicidad nombre |
 | `Asesoria` | `Asesoria.php` | `asesoria` | CRUD asesorias legales |
+| `Activo` | `Activo.php` | `activos` | CRUD activos fijos |
+| `Venta` | `Venta.php` | `orden_de_venta`, `lineas_venta` | CRUD ventas y lineas de venta |
+| `Reporte` | `Reporte.php` | — | Generacion de reportes |
+| `Dashboard` | `Dashboard.php` | — | Metricas del panel principal |
+| `CiberControl` | `CiberControl.php` | `sesion_ciber` | Control de estaciones cyber |
+| `CiberModel` | `CiberModel.php` | `sesion_ciber` | Sesiones de cybercafe |
 
 Todos heredan de `App\Core\Model` y usan `$this->db` (conexion PDO Singleton).
 
@@ -448,6 +449,12 @@ Todos heredan de `App\Core\Model` y usan `$this->db` (conexion PDO Singleton).
 | `RolController` | `RolController.php` | `handle()` — CRUD roles y permisos via AJAX con proteccion admin |
 | `ProveedorController` | `ProveedorController.php` | `handle()` — CRUD proveedores y ordenes via AJAX |
 | `ProveedorGestionController` | `ProveedorGestionController.php` | `handle()` — CRUD proveedores (gestion) via AJAX |
+| `ActivoController` | `ActivoController.php` | `handle()` — CRUD activos fijos via AJAX |
+| `AsesoriaController` | `AsesoriaController.php` | `handle()` — CRUD asesorias via AJAX |
+| `CiberController` | `CiberController.php` | `handle()` — control de estaciones cyber via AJAX |
+| `DashboardController` | `DashboardController.php` | `handle()` — metricas del dashboard via AJAX |
+| `ReporteController` | `ReporteController.php` | `handle()` — generacion de reportes via AJAX |
+| `VentaController` | `VentaController.php` | `handle()` — ventas POS via AJAX |
 
 **Seguridad en controladores:**
 - CSRF token en todas las peticiones AJAX
@@ -487,14 +494,15 @@ Todas las vistas autenticadas son solo fragmentos HTML sin estructura completa. 
 #### 8.1 `dashboard.php` (130 lineas)
 Panel principal con banner de bienvenida, 4 metricas (Ventas Hoy, Stock Critico, Sesiones Cyber, Solicitudes Pendientes), tablas de horas pico y productos sin stock, y actividad reciente.
 
-#### 8.2 `ventas.php` (130 lineas) - PUNTO DE VENTA (POS)
-Catalogo de 5 productos con carrito modal. Toda la logica en `app.pos.js`.
+#### 8.2 `ventas.php` (130 lineas) - PUNTO DE VENTA (POS) (FUNCIONAL CON BD)
+Catalogo de productos desde BD con carrito modal. Toda la logica en `app.pos.js` + `VentaController.php` + `Venta.php`.
 - Click en producto agrega al carrito (data-name, data-price)
 - Modal del carrito con total, eliminar, vaciar y procesar
 - Busqueda de productos con debounce 200ms
+- Registro de ordenes de venta y lineas en BD
 
-#### 8.3 `ciberControl.php` (133 lineas) - CONTROL DE CYBERCAFE
-10 estaciones organizadas en 3 zonas (Gamer, Estandar, VIP) con estados disponible/ocupada/mantenimiento. Los datos de estaciones se generan desde PHP con un array `$zonas`. Contadores calculados con PHP (`array_filter`).
+#### 8.3 `ciberControl.php` (133 lineas) - CONTROL DE CYBERCAFE (FUNCIONAL CON BD)
+Estaciones organizadas en 3 zonas (Gamer, Estandar, VIP) con estados disponible/ocupada/mantenimiento. Conectado a BD via `CiberController.php` + `CiberControl.php`/`CiberModel.php` para registrar sesiones en `sesion_ciber`.
 
 #### 8.4 `inventario.php` (474 lineas) - GESTION DE INVENTARIO (FUNCIONAL CON BD)
 Modulo completo conectado a la base de datos via `inventario.php` (modelo POO). Incluye:
@@ -515,14 +523,16 @@ Gestion de proveedores y ordenes de compra conectada a BD via `Proveedor.php` + 
 - **Busqueda y filtros** con debounce + filtro por estado
 - **JS**: `app.proveedores.js` para todas las operaciones AJAX
 
-#### 8.6 `reportes.php` (139 lineas)
-Formulario de generacion con selectores (tipo, fechas, formato), 4 metricas mensuales, listado de reportes recientes.
+#### 8.6 `reportes.php` (139 lineas) - REPORTES (FUNCIONAL CON BD)
+Formulario de generacion con selectores (tipo, fechas, formato), 4 metricas mensuales, listado de reportes recientes. Conectado a BD via `ReporteController.php` + `Reporte.php`.
+- Genera reportes reales desde la base de datos
+- Exportacion a CSV/PDF via `Exporter.php` y `PdfBuilder.php`
 
-#### 8.7 `activos.php` (207 lineas)
-Activos agrupados por categoria (Equipos 3, Licencias 2, Herramientas 4) con resumen de totales.
+#### 8.7 `activos.php` (207 lineas) - ACTIVOS (FUNCIONAL CON BD)
+Activos agrupados por categoria (Equipos, Licencias, Herramientas) con resumen de totales. Conectado a BD via `ActivoController.php` + `Activo.php` + `app.activos.js`.
 
-#### 8.8 `asesorias.php` (128 lineas) - ASESORIA LEGAL
-Formulario de registro con validacion de documentos permitidos (11 tipos). Toda la logica en `app.legal.js`.
+#### 8.8 `asesorias.php` (128 lineas) - ASESORIA LEGAL (FUNCIONAL CON BD)
+Formulario de registro con validacion de documentos permitidos (11 tipos). Toda la logica en `app.legal.js` + `AsesoriaController.php` + `Asesoria.php`.
 - Validacion en tiempo real: boton cambia de color segun tipo de documento
 - Historial de asesorias registradas en la sesion
 - Busqueda en el historial con debounce
@@ -551,7 +561,7 @@ Gestion de roles y permisos conectada a BD via `Rol.php` + `RolController.php` +
 
 ### Arquitectura
 
-El monolito `app.js` original se dividio en **10 archivos modulares** organizados por funcionalidad:
+El monolito `app.js` original se dividio en **14 archivos modulares** organizados por funcionalidad:
 
 | Archivo | Proposito | Carga |
 |---------|-----------|-------|
@@ -565,6 +575,10 @@ El monolito `app.js` original se dividio en **10 archivos modulares** organizado
 | `app.inventario.js` | CRUD inventario via AJAX | Solo inventario |
 | `app.roles.js` | CRUD roles/permisos via AJAX | Solo roles |
 | `app.proveedores.js` | CRUD proveedores/ordenes via AJAX | Solo proveedores |
+| `app.proveedores-gestion.js` | CRUD proveedores (gestion) via AJAX | Solo proveedores-gestion |
+| `app.clientes.js` | CRUD clientes via AJAX | Solo clientes |
+| `app.activos.js` | CRUD activos via AJAX | Solo activos |
+| `app.reportes.js` | Generacion de reportes via AJAX | Solo reportes |
 
 ### app.core.js - Funciones Compartidas
 
@@ -669,7 +683,7 @@ $(function () {
 - **Collation**: utf8mb4_spanish_ci
 - **Version**: 3.0
 
-### Tablas (27 total)
+### Tablas (21 total)
 
 | # | Tabla | Proposito |
 |---|-------|-----------|
@@ -695,7 +709,7 @@ $(function () {
 | 20 | `activos` | Activos fijos (equipos, licencias, herramientas) |
 | 21 | `sesion_ciber` | Sesiones de uso de estaciones cyber |
 
-Nota: El esquema SQL contiene 21 CREATE TABLE, mas tablas adicionales creadas mediante vistas, y tablas intermedias generadas por relaciones. La estructura completa incluye 27 objetos de base de datos entre tablas y vistas.
+Nota: El esquema SQL contiene 21 CREATE TABLE. La estructura completa de la base de datos se compone de estas 21 tablas.
 
 ### Indices
 Claves foraneas en todas las relaciones (fk_*). Indices en columnas clave: cedula (UNIQUE), user_name (UNIQUE), codigo (UNIQUE), rif (UNIQUE).
@@ -804,39 +818,43 @@ Hoja de estilos local para Material Icons con referencia a la fuente TTF local.
 - **Flujo**: Formulario -> AuthController::login() -> valida vs BD con password_verify -> Sesion -> Dashboard
 - **Logout**: AuthController::logout() -> destruye sesion -> redirige a login
 
-### Dashboard (UI Estatica)
-- **Archivo**: `dashboard.php`
-- **Contenido**: 4 metricas, tablas de horas pico, productos sin stock, actividad reciente
+### Dashboard (FUNCIONAL CON BD)
+- **Archivos**: `dashboard.php`, `DashboardController.php`, `Dashboard.php`
+- **Contenido**: 4 metricas, tablas de horas pico, productos sin stock, actividad reciente desde BD
 
 ### Inventario (FUNCIONAL CON BD - CRUD AJAX)
 - **Archivos**: `inventario.php`, `Inventario.php`, `inventarioController.php`, `app.inventario.js`
 - **JS**: CRUD completo via AJAX + `app.tables.js` para busqueda/filtros
 - **BD**: Productos, KPIs, movimientos de stock
 
-### Punto de Venta (Semi-funcional con jQuery)
-- **Archivo**: `ventas.php`
-- **JS**: `app.pos.js` - Carrito completo, modal Materialize, busqueda productos
+### Clientes (FUNCIONAL CON BD - CRUD AJAX)
+- **Archivos**: `clientes.php`, `Cliente.php`, `ClienteController.php`, `app.clientes.js`
+- **BD**: CRUD clientes con validacion de cedula
 
-### Cyber Control (Interactivo con jQuery)
-- **Archivo**: `ciberControl.php`
-- **JS**: `app.cyber.js` - Toggle de estados, filtros visuales, contadores dinamicos PHP
+### Punto de Venta (FUNCIONAL CON BD - CRUD AJAX)
+- **Archivos**: `ventas.php`, `Venta.php`, `VentaController.php`, `app.pos.js`
+- **BD**: Registro de ordenes de venta y lineas
+
+### Cyber Control (FUNCIONAL CON BD)
+- **Archivos**: `ciberControl.php`, `CiberController.php`, `CiberControl.php`, `app.cyber.js`
+- **BD**: Sesiones en `sesion_ciber`
 
 ### Proveedores (FUNCIONAL CON BD - CRUD AJAX)
 - **Archivos**: `proveedores.php`, `Proveedor.php`, `ProveedorController.php`, `app.proveedores.js`
 - **JS**: CRUD completo via AJAX + `app.tables.js` para busqueda/filtros
 - **BD**: Proveedores, ordenes de abastecimiento, lineas
 
-### Reportes (Simulado)
-- **Archivo**: `reportes.php`
-- **JS**: `app.ui.js` - Formulario generador simulado con toasts
+### Reportes (FUNCIONAL CON BD)
+- **Archivos**: `reportes.php`, `Reporte.php`, `ReporteController.php`, `app.reportes.js`
+- **BD**: Generacion de reportes reales + exportacion CSV/PDF
 
-### Activos (UI Estatica)
-- **Archivo**: `activos.php`
-- **JS**: `app.tables.js` - busqueda por nombre
+### Activos (FUNCIONAL CON BD - CRUD AJAX)
+- **Archivos**: `activos.php`, `Activo.php`, `ActivoController.php`, `app.activos.js`
+- **BD**: CRUD de activos fijos agrupados por categoria
 
-### Asesoria Legal (Semi-funcional con jQuery)
-- **Archivo**: `asesorias.php`
-- **JS**: `app.legal.js` - Validacion documentos en tiempo real, registro historial local
+### Asesoria Legal (FUNCIONAL CON BD)
+- **Archivos**: `asesorias.php`, `Asesoria.php`, `AsesoriaController.php`, `app.legal.js`
+- **BD**: Registro de casos de asesoria con validacion de documentos
 
 ### Usuarios (FUNCIONAL CON BD - CRUD AJAX)
 - **Archivos**: `usuarios.php`, `Usuario.php`, `AuthController.php`, `app.core.js`
@@ -851,29 +869,28 @@ Hoja de estilos local para Material Icons con referencia a la fuente TTF local.
 ## Conclusiones y Recomendaciones
 
 ### Estado Actual
-El proyecto cuenta con **5 modulos funcionales con BD** y arquitectura OOP completa:
+El proyecto cuenta con **todos los modulos conectados a la BD** y arquitectura OOP completa:
 - Diseno Material Design con Materialize CSS
 - Arquitectura MVC con clases y namespaces (PSR-4)
-- **Router OOP**: Clase `Router` con 5 rutas AJAX + auth + vistas + CSRF tokens
+- **Router OOP**: Clase `Router` con mapa `CONTROLLERS` + `dispatchAction()` + auth + vistas + CSRF tokens
 - **Database Singleton**: Clase `Database` con patron Singleton para PDO
 - **Modelo base**: Clase abstracta `Model` con helpers de validacion (non-empty, min-length, FK existence, duplicates, patterns)
-- **6 controladores** con namespace: Auth, Cliente, Inventario, Proveedor, ProveedorGestion, Rol
-- **7 modelos POO**: Cliente, Inventario, Usuario, Proveedor, ProveedorGestion, Rol, Asesoria
+- **12 controladores** con namespace: Auth, Cliente, Inventario, Venta, Rol, Proveedor, ProveedorGestion, Asesoria, Ciber, Dashboard, Reporte, Activo
+- **13 modelos POO**: Cliente, Inventario, Usuario, Proveedor, ProveedorGestion, Rol, Asesoria, Activo, Venta, Reporte, Dashboard, CiberControl, CiberModel
 - **Navegacion funcional** con sidebar responsivo (13 modulos)
 - **Login con BD**: Autenticacion via AuthController + password_verify + session_regenerate_id
-- **5 modulos CRUD funcionales**: Clientes, Inventario, Usuarios, Roles/Permisos, Proveedores (solicitudes + gestion)
+- **Modulos conectados a BD**: Clientes, Inventario, Ventas, Cyber, Usuarios, Roles/Permisos, Proveedores, Activos, Asesorias, Reportes, Dashboard
 - **Seguridad completa**: CSRF tokens, XSS sanitizacion, session hardening, prepared statements, validacion backend
 - **Tema oscuro/claro** con persistencia
-- **JavaScript modular** en 10 archivos especializados
+- **JavaScript modular** en 14 archivos especializados
 - **Assets 100% locales** (sin dependencia de CDN)
 - **Service Worker** para funcionamiento offline
 - **PWA** con manifest.json
-- Esquema de BD completo v3.0 (27 tablas)
+- Esquema de BD completo v3.0 (21 tablas)
 
 ### Pendiente:
-1. **Conectar vistas restantes** Dashboard, Ventas, Cyber, Activos, Reportes, Asesorias con BD
-2. **Usar .env** para credenciales de BD
-3. **CRUD real** para modulos pendientes
+1. **Usar .env** para credenciales de BD
+2. Reforzar reportes avanzados y exportaciones
 
 ---
 

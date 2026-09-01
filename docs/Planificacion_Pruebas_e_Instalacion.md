@@ -1,5 +1,7 @@
 # Planificación de Pruebas Funcionales e Instalación — EIS System (Zona Web Lara)
 
+> **Actualizado (Agosto 2026):** Documento de planificación histórica. El proyecto se encuentra en fase de construcción avanzada: 12 controladores, 13 modelos POO y 21 tablas de base de datos, todos los módulos conectados a la base de datos.
+
 ## Alcance
 
 Este documento detalla la planificación de las **pruebas funcionales** de todos los módulos del sistema EIS, así como el **plan de instalación y despliegue** en producción. Está dirigido al equipo de QA y al equipo de infraestructura/devops.

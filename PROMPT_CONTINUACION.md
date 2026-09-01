@@ -1,33 +1,69 @@
-# PROMPT DE CONTINUACIÓN — Registro de clientes en Asesoría, Ventas (POS) y CiberControl
+# PROMPT DE CONTINUACIÓN — Estado actual del proyecto EIS_Zona_Web_Lara
 
 > Copia este archivo como prompt para continuar el trabajo en una sesión nueva de opencode.
 
-## Objective
-Implementar en el frontend de la app PHP (`EIS_Zona_Web_Lara`, rama `Carlos`) la creación y modificación segura de registros de clientes en los tres módulos relacionados: Asesoría, Ventas (POS) y CiberControl.
-Alcance elegido por el usuario: **Asesoría + Ventas + CiberControl**.
+## Contexto
+Aplicación PHP (`EIS_Zona_Web_Lara`, rama `Carlos`) con arquitectura **Front Controller + MVC OOP**,
+Router (App\Core), Database Singleton (PDO), modelos POO con namespace (PSR-4 vía Composer) y
+frontend con Materialize CSS + jQuery (assets 100 % locales, PWA offline).
 
-## Estado ACTUAL (ya hecho y commiteado)
-- Commit `8a7d5e3` (rama `Carlos`): feature parcial. `git push origin Carlos` **aún NO ejecutado** para este commit.
-- Backend Cliente: `Cliente::obtenerOCrearPorCedula(cedula, nombre, apellido, direccion, telefono): int` (get-or-create validado: crea si no existe, actualiza solo campos no vacíos si existe; resetea propiedades opcionales entre llamadas) y `obtenerClientePorCedula()`. Probado.
-- Backend Asesoría: `Asesoria::crear()` delega en Cliente + transacción (cliente + cliente_asesoria + asesoria), acepta `direccion`/`telefono`. `AsesoriaController` con `listar`, `kpis`, `detalle`, `buscar`, `crear`, `actualizar`, `eliminar`; CSRF en mutaciones. Lint PASS.
-- Nuevo: `src/app/Models/Venta.php` (`listarProductos()` → productos con stock > 0; `registrarVenta()` transaccional: cliente get-or-create + `orden_de_venta` + `lineas_venta` con precio tomado de la BD + descuento de stock) y `src/app/Controllers/VentaController.php` (`productos`, `buscarCliente`, `registrar` con CSRF). Lint PASS.
-- Router: rutas AJAX registradas para `pagina=asesorias`, `pagina=ventas` y `pagina=ciberControl` → `AsesoriaController`, `VentaController`, `CiberController` (este último AÚN no existe; la ruta `ciberControl&action` respondería 500 hasta crearlo). Chips de cabecera de ciberControl ahora con `id="hdrDisponibles"` / `id="hdrOcupadas"`.
-- Vista `asesorias.php`: agregados campos `direccion` y `telefono` al formulario + modal de edición `#modal-asesoria` al final del archivo (fuera del form). `app.legal.js` reescrito: AJAX (`?pagina=asesorias&action=...`), CSRF automático vía `$.ajaxSetup` del layout, render seguro `escHtml`, historial con editar/eliminar, KPI chip/badge, búsqueda filtrable, aviso "cliente ya registrado" al blur de cédula.
-- Patrón CSRF: el layout inyecta `window.EIS.csrfToken` y `$.ajaxSetup` lo agrega a todo POST (no hace falta incluir el token en el JS).
+Base de datos: `zona_web_lara`.
 
-## Pendiente (orden sugerido)
-1. **Ventas frontend**: reescribir `src/app/Views/ventas.php` (catálogo dinámico desde `?pagina=ventas&action=productos`, modal carrito con form de cliente: `ciudadano`, `cedula`, `direccion`, `telefono`; al blur de cédula prefill con `buscarCliente`) y `src/Public/js/app.pos.js` (carrito con cantidades, POST `registrar` con `items` JSON: `[{id, cantidad}]`, CSRF, render seguro). La vista actual es prototipo estático (tarjetas hardcodeadas) y `app.pos.js` es carrito simulado sin backend.
-2. **Backend CiberControl**: ALTER `sesion_ciber ADD COLUMN finalizada TINYINT(1) NOT NULL DEFAULT 0` en `src/Database/estructura.sql` y aplicarlo en la BD dev (`zona_web_lara`). Crear `src/app/Models/CiberControl.php` + `src/app/Controllers/CiberController.php` (listar activos ciber activos, tarifas, buscar cliente por cédula, iniciar sesión = cliente get-or-create + `sesion_ciber`, finalizar sesión marcando `finalizada=1`). CSRF en mutaciones. Seguir patrón de `VentaController`.
-3. **CiberControl frontend**: rehacer `src/app/Views/ciberControl.php` y `src/Public/js/app.cyber.js` (estado de estaciones dinámico, registrar cliente, iniciar/finalizar sesión; actualizar chips `#hdrDisponibles`/`#hdrOcupadas`).
-4. **Verificación**: `php -l` en todos los PHP; smoke tests contra BD dev (los 3 módulos) sin dejar datos residuales.
-5. **Commit**: commitear la feature completa (excluir `.idea/php.xml`, que tiene cambios de IDE no deseados) y ejecutar `git push origin Carlos`.
+## Estado ACTUAL (todo funcional con BD)
+Todos los módulos están **conectados a la base de datos** con modelo POO + controlador + vista +
+JS modular. Los commits recientes (`8a7d5e3`, `c6d4ba7`, `6d5437b`, `0076d6e`, `01719e5`, `70e4c38`)
+implementaron: registro seguro de clientes en Asesoría/Ventas/CiberControl, POS transaccional,
+CiberControl con sesiones iniciar/finalizar, CRUD de Activos, Dashboard con KPIs reales y
+Reportes con exportación (CSV/Excel/PDF).
 
-## Detalles clave / contratos
-- BD: `zona_web_lara`. Tablas relevantes: `clientes`, `cliente_asesoria`, `asesoria`, `productos` (`precio_venta`, `stock`), `orden_de_venta` (`numero_de_orden`, `fecha`, `fk_usuario`, `fk_cliente`), `lineas_venta` (`cantidad`, `precio`, `fk_orden`, `fk_producto`), `tarifas` (`tarifa_hora`, `precio_tiempo`), `activos` (`marca`, `descripcion`, `is_ciber`, `activa`, `fk_tipo_activo`), `sesion_ciber` (`tiempo_uso`, `fk_cliente`, `fk_tarifa`, `fk_activo` — falta `finalizada`).
+- Rama `Carlos` está **2 commits por delante** de `origin/Carlos` (sin pushear).
+
+### Controladores (12)
+`Activo, Asesoria, Auth, Ciber, Cliente, Dashboard, Inventario, Proveedor, ProveedorGestion,
+Reporte, Rol, Venta`.
+
+### Modelos (13 POO + 2 legacy)
+`Activo, Asesoria, CiberControl, Cliente, Dashboard, Inventario, Proveedor, ProveedorGestion,
+Reporte, Rol, Usuario, Venta` + `CiberModel` (legacy) + `crud_users`, `crud_asesorias` (legacy).
+
+### Core (5)
+`Database` (Singleton), `Model` (abstracto con helpers de validación), `router` (Front Controller),
+`Exporter` (CSV/Excel/PDF), `PdfBuilder` (PDF mínimo propio).
+
+### JS (15 módulos)
+`app.core, app.init, app.tables, app.ui, app.pos, app.cyber, app.legal, app.inventario,
+app.roles, app.proveedores, app.proveedores-gestion, app.clientes, app.activos, app.reportes`
+(+ `app.js` utilidad).
+
+### Vistas (15)
+`login, login_validate, menu, dashboard, inventario, ventas, clientes, proveedores,
+proveedores-gestion, ciberControl, reportes, activos, asesorias, usuarios, roles`.
+
+## Patrones clave / contratos
+- BD: `zona_web_lara`. Tablas (21): `roles, permisos, categoria, clientes, cliente_asesoria,
+  proveedores, status_seguimiento, tipo_asesoria, tarifas, tipo_activo, rol_usuarios, usuarios,
+  permisos_rol, productos, orden_de_venta, lineas_venta, orden_abastecimiento,
+  lineas_abastecimiento, asesoria, activos, sesion_ciber`.
 - Respuestas JSON: `{success:bool, data?:..., error?:string, message?:string}`.
-- `listar` de asesorías devuelve: `id, documento, descripcion, fecha, cedula, ciudadano_nombre, ciudadano_apellido, ciudadano, tipo_documento, permitido`.
 - Usuario logueado: `$_SESSION['user_id']`.
-- Validación backend en setters del modelo (`sanitizeString`, `validateLength`, `validateNotEmpty` de `App\Core\Model`).
-- Frontend: jQuery 3.7.1 + Materialize local, global `EIS.toast(msg, color, icon)`, `debounce`, `escHtml` (recomendado `$('<span>').text(...).html()`), escape de HTML SIEMPRE en render.
-- Referencias de patrón: `src/app/Controllers/ClienteController.php`, `src/app/Models/Inventario.php`, `src/Public/js/app.clientes.js`, `src/Public/js/app.proveedores-gestion.js`.
-- Rutas de controladores registradas en `src/app/core/router.php` (`isAjax*` + `run*Controller` + dispatch en `handle()`).
+- CSRF: el layout inyecta `window.EIS.csrfToken` y `$.ajaxSetup` lo agrega a cada POST;
+  el backend valida con `Router::verifyCsrfToken($_POST['csrf_token'] ?? null)`.
+- Validación backend en setters del modelo (`sanitizeString`, `validateLength`,
+  `validateNotEmpty` de `App\Core\Model`).
+- Cliente **get-or-create** centralizado: `Cliente::obtenerOCrearPorCedula(cedula, nombre,
+  apellido, direccion, telefono): int`.
+- Operaciones transaccionales: `Venta::registrarVenta`, `Asesoria::crear`,
+  `CiberControl::iniciarSesion` (cliente get-or-create + entidades relacionadas).
+- Exportación: `Exporter::csv|excel|pdf($titulo, $columnas, $filas)`; `ReporteController::exportar`
+  valida CSRF + rango de fechas + formato permitido.
+- Frontend: jQuery + Materialize local, `EIS.toast(msg, color, icon)`, `debounce()`, `escHtml()`
+  (recomendado `$('<span>').text(...).html()`); escapar HTML SIEMPRE al renderizar.
+- Rutas de controladores registradas en `src/app/core/router.php` (tabla `CONTROLLERS` +
+  despacho en `handle()`).
+
+## Próximos pasos recomendados / pendientes
+- [ ] `git push origin Carlos` de los 2 commits locales.
+- [ ] Mover credenciales de BD a variables de entorno (`.env`).
+- [ ] Unificar modelos legacy (`CiberModel`, `crud_*`) con los POO modernos.
+- [ ] Middleware de autenticación/CSRF como capa separada.
+- [ ] URLs limpias (`/nombre` en lugar de `?pagina=nombre`).

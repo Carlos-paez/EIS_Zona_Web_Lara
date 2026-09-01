@@ -2,6 +2,10 @@
 
   
 
+> **⚠️ Nota (Agosto 2026):** Este documento describe una **versión anterior/intermedia del enrutador** basada en `Request.php`, `Controller.php` y registro de rutas (`$router->get('/dashboard', 'Controller@index')`). La arquitectura **actual** usa un Front Controller con la clase `Router` (namespace `App\Core`) y un mapa `CONTROLLERS` (`pagina => clase`) + `dispatchAction()` + `render()`, sin `Request` ni `Controller` en `App\Core`, ni `VentasController`/`ReportesController`/`MenuController`. Los controladores actuales son 12 (`Auth`, `Cliente`, `Inventario`, `Venta`, `Rol`, `Proveedor`, `ProveedorGestion`, `Asesoria`, `Ciber`, `Dashboard`, `Reporte`, `Activo`) y hay 13 modelos POO. La BD final tiene 21 tablas. Este documento conserva valor de estudio de conceptos MVC, pero los nombres de archivos/rutas referidos ya no corresponden al código fuente actual.
+
+  
+
 > **Propósito:** Este documento explica el funcionamiento de cada archivo y cada línea de la aplicación EIS System, un sistema de gestión empresarial integral (inventario, ventas POS, cybercafé, proveedores, activos, reportes). Está diseñado para ser ingresado a NotebookLM y generar material de estudio.
 
   
@@ -202,7 +206,7 @@ eis_zona_web_lara/
 
     ├── Database/
 
-    │   ├── estructura.sql      # Esquema BD v3.0 (27 tablas)
+    │   ├── estructura.sql      # Esquema BD v3.0 (21 tablas)
 
     │   ├── seed_data.sql       # Datos de prueba
 

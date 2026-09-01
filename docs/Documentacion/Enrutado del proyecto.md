@@ -22,7 +22,7 @@ La ejecución de PHP:
 
 El Router **no usa Request encapsulado ni registro de rutas con métodos HTTP**. En su lugar, usa un enfoque más simple: analiza `$_GET['pagina']` y deriva según casos.
 
-### 3. El Motor del Router (router.php, 385 líneas)
+### 3. El Motor del Router (router.php)
 
 La clase `Router` tiene los siguientes métodos clave:
 
@@ -30,26 +30,20 @@ La clase `Router` tiene los siguientes métodos clave:
 |--------|---------|
 | `__construct()` | Inicia sesión y resuelve `$pagina` mediante `resolvePage()` |
 | `handle()` | Determina el tipo de petición y redirige al controlador/vista correspondiente |
+| `CONTROLLERS` | Mapa `pagina => clase` que centraliza los 12 controladores AJAX |
 | `resolvePage()` | Lee `$_GET["pagina"]`, valida con regex (solo alfanumérico+guiones), retorna string |
-| `isAjaxInventario()` | True si es inventario + action |
-| `isAjaxRoles()` | True si es roles + action |
-| `isAjaxProveedores()` | True si es proveedores + action |
+| `dispatchAction()` | Si la página está en `CONTROLLERS` y hay `action`, instancia el controlador y ejecuta `handle()` |
 | `isAuthAction()` | True si es login_validate o logout |
 | `requireAuth()` | Verifica `$_SESSION['logged_in']`, retorna JSON error si no |
-| `runInventarioController()` | Instancia y ejecuta `\App\Controllers\InventarioController::handle()` |
-| `runRolController()` | Instancia y ejecuta `\App\Controllers\RolController::handle()` |
-| `runProveedorController()` | Instancia y ejecuta `\App\Controllers\ProveedorController::handle()` |
 | `runAuthAction()` | AuthController::login() o logout() |
-| `renderView()` | Verifica autenticación, carga vista pública o llama a `renderWithLayout()` |
-| `renderWithLayout()` | Define `$titulos` (10 módulos) y `$extraHeaders`, incluye `layout.php` |
+| `render()` | Verifica autenticación, carga vista pública o llama a `renderWithLayout()` |
+| `renderWithLayout()` | Define `$titulos` (12 módulos) y `$extraHeaders`, incluye `layout.php` |
 
 ### 4. Procesamiento en handle()
 
-1. ¿Es AJAX de inventario? → `InventarioController::handle()` → JSON response
-2. ¿Es AJAX de roles? → `RolController::handle()` → JSON response
-3. ¿Es AJAX de proveedores? → `ProveedorController::handle()` → JSON response
-4. ¿Es auth (login_validate/logout)? → `AuthController::login()` o `logout()`
-5. ¿Es vista normal? → `renderView()`:
+1. ¿Es auth (login_validate/logout)? → `AuthController::login()` o `logout()`
+2. ¿La página está en el mapa `CONTROLLERS` y hay `action`? → `dispatchAction()`: instancia el controlador según `CONTROLLERS[$pagina]` y ejecuta `handle()` → JSON response
+3. ¿Es vista normal? → `render()`:
    - Si es pública (`login`): carga directa
    - Si es privada: verifica `$_SESSION['logged_in']` → redirige a login si no autenticado
    - Renderiza dentro de `layout.php` si está autenticado
@@ -62,6 +56,14 @@ La clase `Router` tiene los siguientes métodos clave:
 | `InventarioController` | `handle()` — acciones CRUD para inventario via AJAX |
 | `RolController` | `handle()` — acciones CRUD para roles/permisos via AJAX |
 | `ProveedorController` | `handle()` — acciones CRUD para proveedores/ordenes via AJAX |
+| `ProveedorGestionController` | `handle()` — acciones CRUD para proveedores (gestión) via AJAX |
+| `ClienteController` | `handle()` — acciones CRUD para clientes via AJAX |
+| `VentaController` | `handle()` — acciones CRUD para ventas (POS) via AJAX |
+| `CiberController` | `handle()` — control de estaciones cyber via AJAX |
+| `AsesoriaController` | `handle()` — acciones CRUD para asesorías via AJAX |
+| `ActivoController` | `handle()` — acciones CRUD para activos fijos via AJAX |
+| `DashboardController` | `handle()` — métricas del dashboard via AJAX |
+| `ReporteController` | `handle()` — generación de reportes via AJAX |
 
 ### 6. Diferencia con el diseño anterior
 
@@ -73,7 +75,8 @@ El diseño anterior (descrito en versiones previas de la documentación) usaba:
 
 El diseño actual usa:
 - Clase Router OOP con namespace y métodos privados
+- Mapa `CONTROLLERS` que centraliza la resolución de controladores + `dispatchAction()`
 - AuthController para login/logout
-- 3 controladores AJAX (inventario, roles, proveedores)
+- 12 controladores AJAX resueltos dinámicamente desde el mapa `CONTROLLERS`
 - Autoloader PSR-4 de Composer
 - URLs limpias parciales via .htaccess

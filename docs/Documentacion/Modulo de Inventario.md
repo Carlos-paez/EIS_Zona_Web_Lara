@@ -2,6 +2,8 @@
 
 ## Sistema EIS Zona Web Lara (ZWL)
 
+> **Nota (Agosto 2026):** Este documento es una guía didáctica para principiantes basada en una variante procedural (`crud_inventario.php`, tablas `categorias`, `bitacora_movimientos_stock`). La implementación actual del sistema es **POO**: clase `Inventario.php` en `App\Models` que usa la tabla `productos` y el catálogo `categoria` (singular), con el enrutador basado en el mapa `CONTROLLERS` + `dispatchAction()`. El módulo está totalmente conectado a la base de datos.
+
   
 
 ---

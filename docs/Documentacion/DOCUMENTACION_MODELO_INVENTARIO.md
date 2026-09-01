@@ -590,15 +590,12 @@ Tanto la vista como el JavaScript protegen contra XSS:
 
 ### 9.1 Tablas que usa el modelo
 
+> **Nota (Agosto 2026):** En la base de datos final del sistema (21 tablas), el módulo de inventario utiliza la tabla **`productos`** y el catálogo **`categoria`** (singular). Los nombres `categorias`, `subcategorias`, `marcas`, `modelos` y `bitacora_movimientos_stock` mostrados en esta sección y en los ejemplos de código corresponden a una nomenclatura académica alternativa; la implementación real usa columnas como `fk_categoria`, `nombre_categoria`, `precio_compra`/`precio_venta`.
+
 | Tabla | Tipo | Descripción |
 |-------|------|-------------|
 | `productos` | Principal | Guarda todos los productos del inventario |
-| `categorias` | Catálogo | Clasificación de productos |
-| `subcategorias` | Catálogo | Agrupación de categorías |
-| `marcas` | Catálogo | Marcas de los productos |
-| `modelos` | Catálogo | Modelos específicos de cada marca |
-| `bitacora_movimientos_stock` | Auditoría | Historial de entradas y salidas |
-| `usuarios` | Relacionada | Usuarios del sistema (para saber quién hizo cada movimiento) |
+| `categoria` | Catálogo | Clasificación de productos (columna `nombre_categoria`) |
 
 ### 9.2 Estructura de la tabla `productos`
 

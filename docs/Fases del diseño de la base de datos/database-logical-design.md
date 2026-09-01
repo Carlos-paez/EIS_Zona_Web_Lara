@@ -1,5 +1,7 @@
 # Documentación del Diseño Lógico de Base de Datos - Sistema ZWL v2.0
 
+> **Actualizado (Agosto 2026):** Documento de diseño histórico. La base de datos final implementada contiene **21 tablas** y todos los módulos están conectados a ella.
+
 ## 1. Introducción
 
 El diseño lógico representa la estructura detallada de la base de datos del Sistema ZWL. Esta versión 2.0 implementa normalización completa, tablas puente (M:N), eliminación de redundancias, seguridad por roles, autenticación segura con bcrypt, procedimientos almacenados transaccionales, triggers para automatización de reglas de negocio y eventos programados.
