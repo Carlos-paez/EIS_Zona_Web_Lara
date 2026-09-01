@@ -10,14 +10,14 @@ La integracion incluyo:
 - Migracion de JS vanilla a jQuery para theme toggle, sidebar, busquedas, filtros
 - Implementacion de componentes Materialize: sidenav, modals, selects, tooltips, tabs
 - Refactorizacion de vistas autenticadas para usar solo contenido (sin HTML repetido)
-- Creacion de JavaScript modular en 7 archivos especializados
+- Creacion de JavaScript modular en 14 archivos especializados
 - Validacion de documentos en modulo de Asesoria Legal
 
 ---
 
 ## 2. Archivos del Proyecto
 
-### JavaScript (10 modulos)
+### JavaScript (14 modulos)
 
 | Archivo | Proposito | Carga |
 |---------|-----------|-------|
@@ -31,6 +31,10 @@ La integracion incluyo:
 | `Public/js/app.inventario.js` | CRUD de inventario via AJAX | Solo en pagina inventario |
 | `Public/js/app.roles.js` | CRUD de roles y permisos via AJAX | Solo en pagina roles |
 | `Public/js/app.proveedores.js` | CRUD de proveedores y ordenes via AJAX | Solo en pagina proveedores |
+| `Public/js/app.proveedores-gestion.js` | CRUD de proveedores (gestion) via AJAX | Solo en pagina proveedores-gestion |
+| `Public/js/app.clientes.js` | CRUD de clientes via AJAX | Solo en pagina clientes |
+| `Public/js/app.activos.js` | CRUD de activos via AJAX | Solo en pagina activos |
+| `Public/js/app.reportes.js` | Generacion de reportes via AJAX | Solo en pagina reportes |
 
 ### Librerias (locales)
 
@@ -77,6 +81,10 @@ La integracion incluyo:
     app.inventario.js  (solo en inventario)
     app.roles.js       (solo en roles)
     app.proveedores.js (solo en proveedores)
+    app.proveedores-gestion.js (solo en proveedores-gestion)
+    app.clientes.js    (solo en clientes)
+    app.activos.js     (solo en activos)
+    app.reportes.js    (solo en reportes)
 
     Service Worker registration
 </body>

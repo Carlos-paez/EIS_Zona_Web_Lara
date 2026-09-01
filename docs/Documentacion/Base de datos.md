@@ -1,5 +1,7 @@
 # Documentación de la Base de Datos — Zona Web Lara v3.0
 
+> **⚠️ Nota (Agosto 2026):** Este documento describe el **modelo de diseño académico/referencia** (19 tablas, incluida la jerarquía `subcategorias`/`categorias`/`marcas`/`modelos` y la bitácora `bitacora_movimientos_stock`) con fines de asesoría/estudio. La **base de datos real implementada** consta de **21 tablas**: `roles, permisos, categoria, clientes, cliente_asesoria, proveedores, status_seguimiento, tipo_asesoria, tarifas, tipo_activo, rol_usuarios, usuarios, permisos_rol, productos, orden_de_venta, lineas_venta, orden_abastecimiento, lineas_abastecimiento, asesoria, activos, sesion_ciber`. Las tablas `categorias`/`subcategorias`/`marcas`/`modelos` aparecen en la práctica como la tabla única `categoria`, y la bitácora no está implementada. Este documento conserva valor conceptual, pero los nombres/esquema no reflejan literalmente el `estructura.sql` actual.
+
 > Sistema de Gestión Empresarial — Zona Web Lara  
 > Documentación para asesoría sobre diseño de base de datos
 

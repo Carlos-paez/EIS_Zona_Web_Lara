@@ -29,13 +29,7 @@ flowchart TB
 
  subgraph subGraph1["CAPA DE DATOS"]
 
-        STATIC["📁 Datos Estáticos/Simulados<br>(Prototipo UI)"]
-
-        DB@{ label: "🗄️ DB 'zona_web_lara'<br>MySQL + PDO" }
-
-        USERS_MODEL["crud_users.php"]
-
-        ASES_MODEL["crud_asesorias.php"]
+        DB@{ label: "🗄️ DB 'zona_web_lara'<br>MySQL + PDO (21 tablas)" }
 
   end
 
@@ -117,31 +111,25 @@ flowchart TB
 
     ASESORIAS -- Asesoría Legal<br>Registro, Validación, Historial --> ASE_VIEW["⚖️ Vista Asesorías"]
 
-    DASH_VIEW -. (futuro) .-> DB
+ DASH_VIEW --> DB
 
-    INV_VIEW -. (futuro) .-> DB
+ INV_VIEW --> DB
 
-    VENT_VIEW -. (futuro) .-> DB
+ VENT_VIEW --> DB
 
-    PROV_VIEW -. (futuro) .-> DB
+ PROV_VIEW --> DB
 
-    CIBER_VIEW -. (futuro) .-> DB
+ CIBER_VIEW --> DB
 
-    REP_VIEW -. (futuro) .-> DB
+ REP_VIEW --> DB
 
-    ACT_VIEW -. (futuro) .-> DB
+ ACT_VIEW --> DB
 
-    ASE_VIEW -. (futuro) .-> ASES_MODEL
+ ASE_VIEW --> DB
 
-    USUARIOS_VIEW@{ label: "📋 Vista Usuarios" } ---> USERS_MODEL
+ USUARIOS_VIEW@{ label: "📋 Vista Usuarios" } --> DB
 
-    ROLES_VIEW@{ label: "📋 Vista Roles" } ---> ROL_MODEL@{ label: "Model Rol.php" }
-
-    ROL_MODEL --> DB
-
-    ASES_MODEL --> DB
-
-    USERS_MODEL --> DB
+ ROLES_VIEW@{ label: "📋 Vista Roles" } --> DB
 
   
 
@@ -262,23 +250,23 @@ INICIO
 
 3. **Router** (`router.php` - clase `Router` en `App\Core`):
 
-   - `resolvePage()`: Sanitiza `?pagina=` (regex `^[a-zA-Z0-9_-]+$`)
+ - `resolvePage()`: Sanitiza `?pagina=` (regex `^[a-zA-Z0-9_-]+$`)
 
-   - `handle()`: Determina el tipo de petición:
+ - `handle()`: Determina el tipo de petición:
 
-      - ¿AJAX de inventario/roles/proveedores? → Controlador respectivo
+ - El mapa `CONTROLLERS` (`pagina => clase`) resuelve los 12 controladores; si hay `action`, `dispatchAction()` instancia y ejecuta `handle()`
 
-      - ¿Auth (login_validate/logout)? → `AuthController::login()` o `logout()`
+ - ¿Auth (login_validate/logout)? → `AuthController::login()` o `logout()`
 
-      - ¿Vista normal? → `renderView()`
+ - ¿Vista normal? → `render()`
 
-   - `renderView()`: Si es pública (`login`), renderiza standalone
+ - `render()`: Si es pública (`login`), renderiza standalone
 
-   - Si es privada: verifica `$_SESSION['logged_in']`, redirige a login si no existe
+ - Si es privada: verifica `$_SESSION['logged_in']`, redirige a login si no existe
 
-   - Si la vista no existe: HTTP 404
+ - Si la vista no existe: HTTP 404
 
-   - Para páginas privadas: `renderWithLayout()` → `layout.php` vía `require $contentView`
+ - Para páginas privadas: `renderWithLayout()` → `layout.php` vía `require $contentView`
 
   
 

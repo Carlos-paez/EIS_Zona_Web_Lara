@@ -2,6 +2,8 @@
 
 ## Sistema EIS Zona Web Lara (ZWL)
 
+> **Nota (Agosto 2026):** El módulo está totalmente conectado a la base de datos. En el esquema final (21 tablas) el modelo POO `inventario.php` usa la tabla **`productos`** y el catálogo **`categoria`** (singular). Secciones que mencionan `categorias`, `bitacora_movimientos_stock` y firmas con `$pdo` corresponden a una nomenclatura variante; el enrutado real se resuelve con el mapa `CONTROLLERS` + `dispatchAction()`.
+
 ---
 
 # Índice

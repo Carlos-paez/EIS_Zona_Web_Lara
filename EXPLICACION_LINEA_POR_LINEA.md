@@ -505,64 +505,60 @@ Este archivo contiene el motor de enrutamiento principal. Se detallan sus partes
 ```
 * **Línea 39**: Constructor del Router.
 * **Línea 42**: Ejecuta `session_start()` al inicio del ciclo de vida de la solicitud.
-* **Línea 44**: Genera un token CSRF único using `bin2hex(random_bytes(32))`. Este token se inyecta en `window.EIS.csrfToken` para uso en AJAX y en `<input name="csrf_token">` para formularios.
+* **Línea 44**: Genera un token CSRF único con `bin2hex(random_bytes(32))` **una sola vez por sesión** (solo si `$_SESSION['csrf_token']` está vacío). Este token se inyecta en `window.EIS.csrfToken` para uso en AJAX y en `<input name="csrf_token">` para formularios, y se valida con `Router::verifyCsrfToken()`.
 * **Línea 46**: Resuelve y valida el nombre del recurso solicitado.
 
 ```php
 57:     public function handle(): void
 58:     {
 ```
-* **Línea 57**: Define el método principal `handle()`.
+* **Línea 57**: Define el método principal `handle()`, que orquesta todo el ciclo de la solicitud.
 
 ```php
-60:         if ($this->isAjaxCliente()) {
-61:             $this->runClienteController();
-62:             return;
-63:         }
-64: 
-65:         if ($this->isAjaxInventario()) {
-66:             $this->runInventarioController();
-67:             return;
-68:         }
+60:         // Página de cierre de sesión (GET ?pagina=login con intención de logout).
+61:         if (
+62:             $this->pagina === 'login'
+63:             && isset($_GET['logout'])
+64:             && isset($_SESSION['logged_in'])
+65:         ) {
+66:             $this->logout();
+67:         }
 ```
-* **Líneas 60-68**: Detecta si la petición es AJAX de clientes o inventario. Si es afirmativo, llama al manejador correspondiente y detiene la ejecución con `return`.
+* **Líneas 60-67**: Detecta la intención de cierre de sesión (página `login` con parámetro `logout` y sesión activa) y delega en `logout()`, que regenera el ID de sesión, limpia `$_SESSION` y redirige a login.
 
 ```php
-70:         // Si es una petición AJAX de roles (tiene ?action=...), deriva al controlador
-71:         if ($this->isAjaxRoles()) {
-72:             $this->runRolController();
-73:             return;
-74:         }
-75: 
-76:         // Si es una petición AJAX de proveedores (tiene ?action=...), deriva al controlador
-77:         if ($this->isAjaxProveedores()) {
-78:             $this->runProveedorController();
-79:             return;
+69:         // Control de acceso: las páginas privadas requieren sesión.
+70:         if (
+71:             !isset($_SESSION['logged_in'])
+72:             && !in_array($this->pagina, self::PUBLIC_PAGES, true)
+73:         ) {
+74:             $this->redirect('login');
+75:         }
+```
+* **Líneas 69-75**: Guardián de acceso. Si no hay sesión activa y la página no está en `PUBLIC_PAGES` (`['login', 'login_validate']`), redirige mediante `redirect('login')` (cabecera `Location` + `exit`).
+
+```php
+77:         // Despacho de peticiones AJAX de los módulos (?pagina=X&action=Y).
+78:         if (array_key_exists($this->pagina, self::CONTROLLERS) && isset($_GET['action'])) {
+79:             $this->dispatchAction();
 80:         }
-81: 
-82:         // Si es una petición AJAX de proveedores-gestion (tiene ?action=...), deriva al controlador
-83:         if ($this->isAjaxProveedorGestion()) {
-84:             $this->runProveedorGestionController();
+```
+* **Líneas 77-80**: Si la página solicitada existe como clave en el mapa `CONTROLLERS` y la URL trae `?action=...`, delega en `dispatchAction()`, que instancia el controlador correspondiente y llama a su método `handle()` (que termina con `exit`).
+
+```php
+82:         // Flujo de inicio de sesión (POST ?pagina=login_validate).
+83:         if ($this->pagina === 'login_validate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+84:             (new AuthController())->login();
 85:             return;
 86:         }
 ```
-* **Líneas 70-86**: Replica la estructura condicional para despachar peticiones AJAX de Roles, Proveedores y ProveedorGestion.
+* **Líneas 82-86**: Intercepta el flujo de login: solo acepta POST hacia `login_validate` y deriva en `AuthController::login()`.
 
 ```php
-88:         // Si es una acción de autenticación (login_validate o logout), deriva al AuthController
-89:         if ($this->isAuthAction()) {
-90:             $this->runAuthAction();
-91:             return;
-92:         }
+88:         $this->render();
+89:     }
 ```
-* **Líneas 88-92**: Intercepta acciones de autenticación.
-
-```php
-94:         // Para cualquier otra página, renderiza la vista correspondiente
-95:         $this->renderView();
-96:     }
-```
-* **Línea 95**: Si no es ninguna acción especial, procede a cargar la vista visual.
+* **Línea 88**: Si no es ninguna acción especial ni AJAX, procede a renderizar la vista mediante `render()`.
 
 ```php
 97:     private function resolvePage(): string
@@ -599,74 +595,57 @@ Este archivo contiene el motor de enrutamiento principal. Se detallan sus partes
 * **Línea 115**: Retorna el nombre resuelto de la página, totalmente sanitizado para prevenir inyecciones de archivos locales (*Local File Inclusion*).
 
 ```php
-185:     private function requireAuth(): void
-186:     {
-187:         // Si el usuario no ha iniciado sesión (no existe 'logged_in' en $_SESSION)
-188:         if (!isset($_SESSION['logged_in'])) {
-189:             // Establece el tipo de contenido como JSON para la respuesta
-190:             header('Content-Type: application/json');
-191:             // Devuelve un JSON con indicador de error y mensaje de no autenticado
-192:             echo json_encode(['success' => false, 'error' => 'No autenticado']);
-193:             // Termina la ejecución del script inmediatamente
-194:             exit;
-195:         }
-196:     }
+108:     private function dispatchAction(): void
+109:     {
+110:         $controllerClass = self::CONTROLLERS[$this->pagina];
+111:         $controller      = new $controllerClass();
+112:
+113:         if (method_exists($controller, 'handle')) {
+114:             $controller->handle();
+115:             exit;
+116:         }
+117:     }
 ```
-* **Líneas 185-196**: Define el guardián de autenticación para peticiones asíncronas AJAX. Si la variable de sesión `logged_in` no está registrada en `$_SESSION`, intercepta la petición, devuelve un código JSON explícito con error de seguridad y aborta inmediatamente la ejecución con `exit`.
+* **Líneas 108-117**: Resuelve la clase del controlador desde el mapa `CONTROLLERS` (cada `pagina` apunta a una clase como `ClienteController::class`), la instancia y delega en su método `handle()`. Si el controlador posee ese método, ejecuta y termina con `exit` para evitar el render posterior. Este patrón centraliza el despacho: en lugar de una cascada de `if (isAjaxX()) runXController()`, basta añadir la entrada `pagina => Clase::class` al mapa `CONTROLLERS`.
 
 ```php
-301:     private function renderView(): void
-302:     {
-303:         // Lista de páginas públicas que no requieren autenticación
-304:         $publicPages = ['login'];
+120:     private function render(): void
+121:     {
+122:         // Vista de inicio de sesión (páginas públicas).
+123:         if (in_array($this->pagina, self::PUBLIC_PAGES, true)) {
+124:             $rutaVista = $this->viewsDir() . $this->pagina . '.php';
+125:             if (is_file($rutaVista)) {
+126:                 require $rutaVista;
+127:             } else {
+128:                 http_response_code(404);
+129:                 echo '<h1>Error 404: Página no encontrada</h1>';
+130:             }
+131:             return;
+132:         }
 ```
-* **Línea 304**: Declara un arreglo que delimita cuáles páginas del sistema tienen acceso libre y público sin necesidad de iniciar sesión (únicamente `'login'`).
+* **Líneas 120-132**: El método `render()` distingue las páginas públicas (login, login_validate) y las incluye de forma individual sin layout mediante `require`, con control de existencia del archivo (404 si no existe).
 
 ```php
-307:         if (!isset($_SESSION['logged_in']) && !in_array($this->pagina, $publicPages)) {
-308:             // Redirige mediante HTTP Location a la página de login
-309:             header('Location: ?pagina=login');
-310:             // Termina la ejecución para que no se siga procesando
-311:             exit;
-312:         }
+134:         // Vistas protegidas con layout.
+135:         $rutaVista = $this->viewsDir() . $this->pagina . '.php';
+136:
+137:         if (!is_file($rutaVista)) {
+138:             http_response_code(404);
+139:             echo '<h1>Error 404: Página no encontrada</h1>';
+140:             echo "<p>La página <strong>{$this->pagina}</strong> no existe.</p>";
+141:             echo "<a href='?pagina=dashboard'>Volver al dashboard</a>";
+142:             return;
+143:         }
+144:
+145:         $pageTitle  = self::PAGE_TITLES[$this->pagina] ?? 'EIS System';
+146:         $headerExtra = self::PAGE_EXTRA_HEADERS[$this->pagina] ?? '';
+147:         $contentView = $rutaVista;
+148:         $pagina      = $this->pagina;
+149:
+150:         require __DIR__ . '/../template/layout.php';
+151:     }
 ```
-* **Línea 307**: Evalúa si el usuario actual **no** posee una sesión activa y al mismo tiempo está intentando ingresar a una vista protegida de administración.
-* **Línea 309**: Emite una cabecera de redirección HTTP clásica `Location: ?pagina=login` para forzar al navegador web del cliente a regresar a la vista de login.
-* **Línea 311**: Ejecuta `exit` para interrumpir todo proceso del backend y proteger las vistas privadas.
-
-```php
-314:         // Construye la ruta al archivo de la vista en el directorio Views
-315:         $rutaVista = __DIR__ . '/../Views/' . $this->pagina . '.php';
-```
-* **Línea 315**: Resuelve en una variable local la ruta física absoluta de la vista solicitada (ej. `D:\...\src\app\Views\inventario.php`).
-
-```php
-318:         if (!is_file($rutaVista)) {
-319:             // Establece el código de respuesta HTTP 404 (No encontrado)
-320:             http_response_code(404);
-321:             // Muestra el título del error
-322:             echo '<h1>Error 404: Página no encontrada</h1>';
-...
-328:             return;
-329:         }
-```
-* **Línea 318**: Ejecuta el validador físico `is_file()` para determinar si el archivo de la vista realmente existe en el sistema de almacenamiento.
-* **Línea 320**: En caso de no existir, emite un estado de cabecera HTTP estándar de recurso ausente `404 Not Found` y renderiza un mensaje alternativo controlado para el usuario sin generar roturas o pantallas en blanco imprevistas.
-
-```php
-332:         if (in_array($this->pagina, $publicPages)) {
-333:             // Incluye el archivo de la vista (que se renderiza solo, sin sidebar ni navbar)
-334:             require $rutaVista;
-335:             return;
-336:         }
-```
-* **Línea 332-336**: Si la página solicitada es clasificada como de acceso público (como el panel de login), carga e incluye directamente el archivo de vista correspondiente mediante `require` de manera limpia e individual, omitiendo el renderizado del layout de administración.
-
-```php
-339:         $this->renderWithLayout($rutaVista);
-340:     }
-```
-* **Línea 339**: Para cualquier recurso protegido, ejecuta el método privado especializado `renderWithLayout()` para inyectar dinámicamente el contenido dentro del layout con el menú y barra lateral.
+* **Líneas 134-151**: Para recursos protegidos, valida la existencia de la vista (404 con enlace de retorno si falta), resuelve el título y cabeceras extra desde las constantes `PAGE_TITLES` y `PAGE_EXTRA_HEADERS`, define `$pageTitle`, `$headerExtra`, `$contentView` y `$pagina`, e incluye `layout.php` para inyectar el contenido dentro del menú lateral y navbar.
 
 ---
 

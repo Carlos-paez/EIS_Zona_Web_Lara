@@ -131,7 +131,7 @@
                     </div>
                 </div>
                 <!-- Tabla de asesorías (los datos se cargan dinámicamente con JavaScript) -->
-                <table class="striped responsive-table">
+                <table class="striped responsive-table" id="tabla-asesorias">
                     <thead>
                         <tr>
                             <th class="hide-on-small-only">#</th>

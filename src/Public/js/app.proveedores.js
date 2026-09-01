@@ -67,7 +67,7 @@ $(function () {
 
             $('.result-count').text(r.data.length + ' resultados');
             $('.tooltipped').tooltip();
-            aplicarFiltro();
+            EIS.datatableRefresh('#tabla-ordenes');
         }).fail(function () {
             EIS.toast('Error al cargar solicitudes', 'red', 'error');
         });
@@ -77,22 +77,19 @@ $(function () {
     // FUNCIÓN: aplicarFiltro()
     // ================================================================
     function aplicarFiltro() {
-        var q = $('#searchProveedor').val().toLowerCase();
-        var estadoFiltro = $('#filterEstadoProv').val();
+        if (!(window.jQuery && $.fn.DataTable)) return;
+        var dt = $('#tabla-ordenes').DataTable();
+        if (!dt) return;
 
-        $('#tabla-ordenes tbody tr').each(function () {
-            var mostrar = true;
-            var texto = $(this).text().toLowerCase();
+        var q = $('#searchProveedor').val() || '';
+        var estadoFiltro = $('#filterEstadoProv').val() || '';
 
-            if (q && texto.indexOf(q) === -1) mostrar = false;
-
-            if (estadoFiltro) {
-                var badge = $(this).find('td').eq(4).text().trim().toLowerCase();
-                if (badge.indexOf(estadoFiltro) === -1) mostrar = false;
-            }
-
-            $(this).toggle(mostrar);
-        });
+        dt.search(q);
+        if (estadoFiltro) {
+            dt.column(4).search(estadoFiltro, true, false).draw();
+        } else {
+            dt.column(4).search('').draw();
+        }
     }
 
     // ================================================================
@@ -376,4 +373,8 @@ $(function () {
     $('#linea-producto').formSelect();
     $('.modal').modal();
     $('.tooltipped').tooltip();
+
+    if (window.EIS && EIS.datatable) {
+        EIS.datatable('#tabla-ordenes');
+    }
 });

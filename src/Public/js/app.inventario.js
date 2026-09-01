@@ -135,14 +135,11 @@ $(function () {
                 tbody.append(row);
             });
 
-            // Actualizo el contador de resultados con la cantidad de productos
-            $('.result-count').text(r.data.length + ' productos');
-
             // Reinicio los tooltips de los botones (Materialize los necesita después de agregar HTML nuevo)
             $('.tooltipped').tooltip();
 
-            // Aplico el filtro activo (si hay búsqueda o filtro de estado) sobre la tabla recién cargada
-                aplicarFiltro();
+            // Refresco la instancia de DataTables con las filas recién cargadas
+            EIS.datatableRefresh('#tabla-productos');
         }).fail(function () {
             // Si hay error de conexión, muestro toast de error
             EIS.toast('Error al cargar la tabla', 'red', 'error');
@@ -151,46 +148,24 @@ $(function () {
 
     // ================================================================
     // FUNCIÓN: aplicarFiltro()
-    // PROPÓSITO: Filtra las filas de la tabla en el lado del cliente
-    //            (sin recargar) según el texto de búsqueda y el estado
-    //            seleccionado. Se ejecuta cada vez que el usuario
-    //            escribe o cambia el filtro.
+    // PROPÓSITO: (Legado / integración DataTables) Conecta la barra de
+    //            búsqueda y el filtro de estado con la búsqueda y el
+    //            filtro de columna de DataTables. Ya no recorre filas
+    //            manualmente; DataTables se encarga de filtrar/paginar.
     // ================================================================
     function aplicarFiltro() {
-        // Obtengo el texto de búsqueda en minúsculas para comparación
-        var q = $('#searchProducto').val().toLowerCase();
-        // Obtengo el filtro de estado seleccionado (vacío = todos)
-        var estadoFiltro = $('#filterEstado').val();
+        if (!(window.jQuery && $.fn.DataTable)) return;
+        var dt = $('#tabla-productos').DataTable();
+        if (!dt) return;
 
-        // Recorro cada fila de la tabla de productos
-        $('#tabla-productos tbody tr').each(function () {
-            var mostrar = true; // Por defecto, la fila se muestra
-            var $row = $(this);
+        // Búsqueda global (barra existente)
+        var q = $('#searchProducto').val();
+        dt.search(q ? q : '');
 
-            // --- Filtro por texto de búsqueda ---
-            // Obtengo el nombre desde data-nombre (escapado) y el código de la columna 1
-            var nombre = $row.data('nombre') || '';
-            var codigo = $row.find('td').eq(1).text().toLowerCase();
-            var texto = nombre.toLowerCase() + ' ' + codigo;
-            // Si hay texto de búsqueda y no coincide, oculto la fila
-            if (q && texto.indexOf(q) === -1) mostrar = false;
-
-            // --- Filtro por estado ---
-            if (estadoFiltro) {
-                // El estado está en la columna 5 (índice 4) como texto del badge
-                var badge = $row.find('td').eq(4).text().trim().toLowerCase();
-                // Si el texto del badge no contiene el filtro seleccionado, oculto
-                if (badge.indexOf(estadoFiltro) === -1) mostrar = false;
-            }
-
-            // Muestro u oculto la fila según las condiciones evaluadas
-            $row.toggle(mostrar);
-        });
-
-        // Actualizo el contador de resultados visibles vs totales
-        var visibles = $('#tabla-productos tbody tr:visible').length;
-        var total = $('#tabla-productos tbody tr').length;
-        $('.result-count').text('Mostrando ' + visibles + ' de ' + total + ' resultados');
+        // Filtro de columna 4 (estado: OK / Crítico / Sin stock)
+        var estadoFiltro = $('#filterEstado').val() || '';
+        dt.column(4).search(estadoFiltro ? estadoFiltro : '', true, false);
+        dt.draw();
     }
 
     // ================================================================
@@ -261,6 +236,7 @@ $(function () {
             tbody.empty();
             if (!r.data.length) {
                 tbody.html('<tr><td colspan="2" style="text-align:center;padding:2rem;color:var(--text-muted);"><i class="material-icons" style="font-size:2.5rem;display:block;margin-bottom:0.5rem;">category</i>Sin categorías</td></tr>');
+                EIS.datatableRefresh('#tabla-categorias');
                 return;
             }
             $.each(r.data, function (i, c) {
@@ -274,6 +250,7 @@ $(function () {
                 tbody.append(fila);
             });
             $('.tooltipped').tooltip();
+            EIS.datatableRefresh('#tabla-categorias');
         });
     }
 
@@ -507,18 +484,24 @@ $(function () {
     // Uso debounce para no ejecutar el filtro en cada tecla, sino
     // esperar 300ms después de que el usuario deje de escribir.
     // ================================================================
-    $('#searchProducto').on('keyup', debounce(function () {
-        aplicarFiltro();
-    }, 300));
+    // Búsqueda y filtro de estado conectados a DataTables
+    if (window.EIS && EIS.datatableWireSearch) {
+        EIS.datatableWireSearch('#tabla-productos', '#searchProducto');
+    } else {
+        $('#searchProducto').on('keyup', debounce(function () { aplicarFiltro(); }, 300));
+        $('#filterEstado').on('change', function () { aplicarFiltro(); });
+    }
 
-    // ================================================================
-    // EVENTO: Cambio en el selector de estado (#filterEstado)
-    // Cuando el usuario selecciona un estado, se aplica el filtro
-    // inmediatamente.
-    // ================================================================
-    $('#filterEstado').on('change', function () {
-        aplicarFiltro();
-    });
+    // Filtro de estado por columna (sin recorrer filas manualmente)
+    if (window.EIS && EIS.datatableWireColumnFilter && $('#filterEstado').length) {
+        var $filterEstado = $('#filterEstado');
+        $filterEstado.off('change.dt').on('change.dt', function () {
+            var dt = $('#tabla-productos').DataTable();
+            if (!dt) return;
+            var val = $(this).val() || '';
+            dt.column(4).search(val ? val : '', true, false).draw();
+        });
+    }
 
     // ================================================================
     // INICIALIZACIÓN DE COMPONENTES MATERIALIZE
@@ -528,5 +511,9 @@ $(function () {
     $('.tooltipped').tooltip();
     // Inicializo todos los modales de la página para que Materialize los maneje
     $('.modal').modal();
+
+    // Inicializo DataTables sobre las tablas del módulo
+    EIS.datatable('#tabla-productos');
+    EIS.datatable('#tabla-categorias', { pageLength: 5, lengthMenu: [5, 10] });
 
 });

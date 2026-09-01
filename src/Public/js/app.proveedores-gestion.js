@@ -33,7 +33,7 @@ $(function () {
 
             if (!r.data || r.data.length === 0) {
                 tbody.html('<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);"><i class="material-icons" style="font-size:2.5rem;display:block;margin-bottom:0.5rem;">store</i>No hay proveedores registrados</td></tr>');
-                $('.result-count').text('0 resultados');
+                EIS.datatableRefresh('#tabla-proveedores');
                 return;
             }
 
@@ -62,9 +62,8 @@ $(function () {
                 tbody.append(row);
             });
 
-            $('.result-count').text(r.data.length + ' resultados');
             $('.tooltipped').tooltip();
-            aplicarFiltro();
+            EIS.datatableRefresh('#tabla-proveedores');
         }).fail(function () {
             EIS.toast('Error al cargar proveedores', 'red', 'error');
         });
@@ -72,21 +71,15 @@ $(function () {
 
     // ================================================================
     // FUNCIÓN: aplicarFiltro()
-    // PROPÓSITO: Filtra filas según texto de búsqueda.
+    // PROPÓSITO: Conecta la búsqueda existente a la búsqueda de DataTables.
     // ================================================================
     function aplicarFiltro() {
-        var q = $('#searchProveedorGestion').val().toLowerCase();
-
-        $('#tabla-proveedores tbody tr').each(function () {
-            var mostrar = true;
-            var texto = $(this).text().toLowerCase();
-            if (q && texto.indexOf(q) === -1) mostrar = false;
-            $(this).toggle(mostrar);
-        });
-
-        var visibles = $('#tabla-proveedores tbody tr:visible').length;
-        var total = $('#tabla-proveedores tbody tr').length;
-        $('.result-count').text('Mostrando ' + visibles + ' de ' + total + ' resultados');
+        if (!(window.jQuery && $.fn.DataTable)) return;
+        var dt = $('#tabla-proveedores').DataTable();
+        if (dt) {
+            dt.search($('#searchProveedorGestion').val() || '');
+            dt.draw();
+        }
     }
 
     // ================================================================
@@ -195,8 +188,12 @@ $(function () {
         }
     });
 
-    // Búsqueda en tiempo real
-    $('#searchProveedorGestion').on('keyup', debounce(function () { aplicarFiltro(); }, 300));
+    // Búsqueda en tiempo real conectada a DataTables
+    if (window.EIS && EIS.datatableWireSearch) {
+        EIS.datatableWireSearch('#tabla-proveedores', '#searchProveedorGestion');
+    } else {
+        $('#searchProveedorGestion').on('keyup', debounce(function () { aplicarFiltro(); }, 300));
+    }
 
     // ================================================================
     // INICIALIZACIÓN
@@ -204,4 +201,5 @@ $(function () {
     refrescarTabla();
     $('.modal').modal();
     $('.tooltipped').tooltip();
+    EIS.datatable('#tabla-proveedores');
 });

@@ -23,7 +23,7 @@ $(function () {
 
             if (!r.data || r.data.length === 0) {
                 tbody.html('<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);"><i class="material-icons" style="font-size:2.5rem;display:block;margin-bottom:0.5rem;">devices_other</i>No hay activos registrados</td></tr>');
-                $('.result-count').text('0 resultados');
+                EIS.datatableRefresh('#tabla-activos');
                 return;
             }
 
@@ -53,29 +53,22 @@ $(function () {
                 tbody.append(row);
             });
 
-            $('.result-count').text(r.data.length + ' resultados');
             $('.tooltipped').tooltip();
-            aplicarFiltro();
+            EIS.datatableRefresh('#tabla-activos');
         }).fail(function () {
             EIS.toast('Error al cargar activos', 'red', 'error');
         });
     }
 
     function aplicarFiltro() {
-        var q = $('#searchActivo').val().toLowerCase();
+        if (!(window.jQuery && $.fn.DataTable)) return;
+        var dt = $('#tabla-activos').DataTable();
+        if (!dt) return;
+        var q = $('#searchActivo').val();
         var tipo = $('#filterTipo').val() || '';
-
-        $('#tabla-activos tbody tr').each(function () {
-            var mostrar = true;
-            var texto = $(this).text().toLowerCase();
-            if (q && texto.indexOf(q) === -1) mostrar = false;
-            if (tipo && texto.indexOf(tipo.toLowerCase()) === -1) mostrar = false;
-            $(this).toggle(mostrar);
-        });
-
-        var visibles = $('#tabla-activos tbody tr:visible').length;
-        var total = $('#tabla-activos tbody tr').length;
-        $('.result-count').text('Mostrando ' + visibles + ' de ' + total + ' resultados');
+        dt.search(q ? q : '');
+        dt.column(2).search(tipo ? tipo : '', false, false);
+        dt.draw();
     }
 
     $(document).on('click', '.btn-nuevo-activo', function () {
@@ -163,12 +156,25 @@ $(function () {
         }
     });
 
-    $('#searchActivo').on('keyup', debounce(function () { aplicarFiltro(); }, 300));
-    $('#filterTipo').on('change', function () { aplicarFiltro(); });
+    // Búsqueda y filtro por tipo conectados a DataTables
+    if (window.EIS && EIS.datatableWireSearch) {
+        EIS.datatableWireSearch('#tabla-activos', '#searchActivo');
+    } else {
+        $('#searchActivo').on('keyup', debounce(function () { aplicarFiltro(); }, 300));
+        $('#filterTipo').on('change', function () { aplicarFiltro(); });
+    }
+    if (window.EIS && EIS.datatableWireColumnFilter && $('#filterTipo').length) {
+        $('#filterTipo').off('change.dt').on('change.dt', function () {
+            var dt = $('#tabla-activos').DataTable();
+            if (!dt) return;
+            dt.column(2).search($(this).val() || '', false, false).draw();
+        });
+    }
 
     refrescarKPI();
     refrescarTabla();
     $('.modal').modal();
     $('.tooltipped').tooltip();
     M.FormSelect.init($('#filterTipo'));
+    EIS.datatable('#tabla-activos');
 });

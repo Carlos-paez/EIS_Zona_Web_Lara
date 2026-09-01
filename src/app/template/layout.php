@@ -24,6 +24,8 @@
     <link rel="stylesheet" href="Public/css/materialize.min.css">
     <!-- Estilos personalizados de la aplicación -->
     <link rel="stylesheet" href="Public/css/styles.css">
+    <!-- Estilos de jQuery DataTables adaptados a Materialize y al tema -->
+    <link rel="stylesheet" href="Public/css/dataTables.materialize.css">
     <!-- Estilos del submenú de Solicitudes -->
     <style>
         .has-submenu .submenu-list {
@@ -186,10 +188,17 @@
     <!-- Materialize JS - Framework de componentes UI (modales, sidenav, tooltips, selects, etc.) -->
     <script src="Public/js/materialize.min.js"></script>
 
+    <!-- jQuery DataTables - ordenamiento, paginación y búsqueda de tablas -->
+    <script src="Public/js/jquery.dataTables.min.js"></script>
+    <!-- Integración ligera de DataTables con Materialize y config por defecto -->
+    <script src="Public/js/dataTables.materialize.js"></script>
+
     <!-- Core: funciones compartidas en todas las páginas (namespace EIS, utilidades) -->
     <script src="Public/js/app.core.js"></script>
     <!-- Init: inicialización de componentes Materialize, reloj, tema oscuro/claro, animaciones -->
     <script src="Public/js/app.init.js"></script>
+    <!-- Selects: barra de búsqueda en los menús desplegables (selects de Materialize) -->
+    <script src="Public/js/app.selects.js"></script>
     <!-- Tables: búsqueda, filtro y paginación de tablas -->
     <script src="Public/js/app.tables.js"></script>
     <!-- UI: notificaciones, botones de acción, reportes, tooltips -->
@@ -253,6 +262,11 @@
     <!-- Módulo de Clientes -->
     <?php if ($pagina === 'clientes'): ?>
     <script src="Public/js/app.clientes.js"></script>
+    <?php endif; ?>
+
+    <!-- Módulo de Reportes -->
+    <?php if ($pagina === 'reportes'): ?>
+    <script src="Public/js/app.reportes.js"></script>
     <?php endif; ?>
 
     <!-- Módulo de Gestión de Activos -->

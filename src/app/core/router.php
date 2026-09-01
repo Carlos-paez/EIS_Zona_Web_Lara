@@ -12,6 +12,8 @@ use App\Controllers\ProveedorController;
 use App\Controllers\ProveedorGestionController;
 use App\Controllers\AsesoriaController;
 use App\Controllers\CiberController;
+use App\Controllers\DashboardController;
+use App\Controllers\ReporteController;
 
 /**
  * Enrutador principal (Front Controller).
@@ -48,7 +50,7 @@ class Router
 
     /** Encabezados extra opcionales por página (chips, badges, etc.). */
     private const PAGE_EXTRA_HEADERS = [
-        'ciberControl' => '<span class="chip green white-text">Disponibles</span><span class="chip orange white-text">Ocupadas</span>',
+        'ciberControl' => '<span id="hdrDisponibles" class="chip green white-text">Disponibles</span><span id="hdrOcupadas" class="chip orange white-text">Ocupadas</span>',
     ];
 
     /** Mapa página => controlador para el despacho AJAX (?pagina=X&action=Y). */
@@ -62,6 +64,8 @@ class Router
         'asesorias'          => AsesoriaController::class,
         'ciberControl'       => CiberController::class,
         'activos'            => ActivoController::class,
+        'dashboard'          => DashboardController::class,
+        'reportes'           => ReporteController::class,
     ];
 
     /** @var string Página actual resuelta. */

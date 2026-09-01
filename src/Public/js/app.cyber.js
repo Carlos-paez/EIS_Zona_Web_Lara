@@ -567,14 +567,21 @@ $(function () {
                 $resultados.html('<div class="center-align" style="padding:2rem 0;"><i class="material-icons" style="font-size:3.5rem;display:block;margin-bottom:0.5rem;opacity:0.3;">hourglass_empty</i><p style="color:var(--text-muted);font-size:1rem;"><strong>' + escHtml(nombre) + '</strong> no tiene sesiones registradas</p></div>');
                 return;
             }
-            var html = '<div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border-light);"><table class="striped responsive-table" style="margin-bottom:0;font-size:0.9rem;"><thead><tr style="background:var(--surface-hover);"><th style="padding:0.6rem 0.8rem;">#</th><th style="padding:0.6rem 0.8rem;">Cliente</th><th style="padding:0.6rem 0.8rem;">Tiempo</th><th style="padding:0.6rem 0.8rem;text-align:right;">Precio</th><th style="padding:0.6rem 0.8rem;">Estado</th></tr></thead><tbody>';
+            var html = '<div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border-light);"><table class="striped responsive-table" id="tabla-historial" style="margin-bottom:0;font-size:0.9rem;"><thead><tr style="background:var(--surface-hover);"><th style="padding:0.6rem 0.8rem;">#</th><th style="padding:0.6rem 0.8rem;">Cliente</th><th style="padding:0.6rem 0.8rem;">Tiempo</th><th style="padding:0.6rem 0.8rem;text-align:right;">Precio</th><th style="padding:0.6rem 0.8rem;">Estado</th></tr></thead><tbody>';
             datos.forEach(function (s, i) {
                 var precioT = (s.precio_tiempo !== null && s.precio_tiempo !== undefined) ? '$' + parseFloat(s.precio_tiempo).toFixed(2) : '-';
                 var estadoBadge = s.estado === 'activa' ? '<span class="new badge orange" style="background:#fb8c00;">Activa</span>' : '<span class="new badge green" style="background:#43a047;">Cerrada</span>';
                 html += '<tr style="border-bottom:1px solid var(--border-light);"><td style="padding:0.5rem 0.8rem;font-weight:600;color:var(--text-muted);">' + (i + 1) + '</td><td style="padding:0.5rem 0.8rem;font-weight:500;">' + escHtml(s.cliente_nombre || 'Anónimo') + '</td><td style="padding:0.5rem 0.8rem;font-size:0.85rem;color:var(--text-muted);">' + escHtml(s.tiempo_uso || '-') + '</td><td style="padding:0.5rem 0.8rem;text-align:right;font-weight:700;color:var(--primary);">' + precioT + '</td><td style="padding:0.5rem 0.8rem;">' + estadoBadge + '</td></tr>';
             });
             html += '</tbody></table></div><div style="margin-top:0.75rem;text-align:right;color:var(--text-muted);font-size:0.8rem;"><i class="material-icons left" style="font-size:0.9rem;">info</i>Mostrando ' + datos.length + ' sesiones de ' + escHtml(nombre) + '</div>';
+
+            if (window.EIS && EIS.datatableDestroy) {
+                EIS.datatableDestroy('#tabla-historial');
+            }
             $resultados.html(html);
+            if (window.EIS && EIS.datatable) {
+                EIS.datatable('#tabla-historial');
+            }
         }).fail(function () {
             $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>Error de conexión al servidor</div>');
         });

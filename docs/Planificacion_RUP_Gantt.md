@@ -1,5 +1,7 @@
 # Planificación de Desarrollo — EIS System (Zona Web Lara)
 
+> **Actualizado (Agosto 2026):** Documento de planificación histórica. El proyecto se encuentra en fase de construcción avanzada: 12 controladores, 13 modelos POO y 21 tablas de base de datos, todos los módulos conectados a la base de datos.
+
 ## Metodología: RUP (Rational Unified Process)
 
 ### Fases de RUP aplicadas al proyecto

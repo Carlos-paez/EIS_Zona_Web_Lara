@@ -1,5 +1,7 @@
 # Documentación del Diseño Físico de Base de Datos - Sistema ZWL
 
+> **Actualizado (Agosto 2026):** Documento de diseño histórico. La base de datos final implementada contiene **21 tablas** y todos los módulos están conectados a ella.
+
 ## 1. Introducción
 El diseño físico define la implementación del esquema lógico en el sistema gestor de bases de datos (MySQL 8.0+, motor InnoDB), especificando la organización de archivos, estructuras de almacenamiento, índices físicos, parámetros de configuración y políticas de respaldo para el sistema ZWL.
 

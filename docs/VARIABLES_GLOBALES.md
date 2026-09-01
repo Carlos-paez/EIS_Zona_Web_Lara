@@ -37,7 +37,7 @@ Son arrays nativos del lenguaje accesibles desde cualquier ámbito. La aplicaci�
 
 | Clave | Tipo | Descripción | Valores posibles |
 |---|---|---|---|
-| `pagina` | `string` | Nombre de la vista o acción a ejecutar | `login`, `dashboard`, `inventario`, `ventas`, `proveedores`, `ciberControl`, `reportes`, `activos`, `asesorias`, `usuarios`, `roles`, `login_validate`, `logout`, `menu` |
+| `pagina` | `string` | Nombre de la vista o acción a ejecutar | `login`, `dashboard`, `inventario`, `ventas`, `proveedores`, `proveedores-gestion`, `clientes`, `ciberControl`, `reportes`, `activos`, `asesorias`, `usuarios`, `roles`, `login_validate`, `logout`, `menu` |
 | `action` | `string` | Acción JSON específica para controladores AJAX | `listar`, `crear`, `actualizar`, `eliminar`, `detalle`, `kpis`, `categorias`, `buscar`, `proveedores`, `productos`, `statuses`, `lineas`, `agregarLinea`, `eliminarLinea`, `guardarProveedor`, `eliminarProveedor`, `proveedorPorId`, `permisos`, `permisosRol`, `guardarPermisos`, `usuarios`, `asignarRol` |
 | `id` | `int` | ID del registro a consultar | Entero positivo |
 | `rol_id` | `int` | ID del rol para consultar permisos | Entero positivo |
@@ -83,7 +83,7 @@ La sesión se inicia en `Router::__construct()` mediante `session_start()`.
 
 | Variable | Tipo | Descripción | Se establece en | Se lee en |
 |---|---|---|---|---|
-| `$_SESSION['logged_in']` | `bool` | Indica si el usuario tiene una sesión activa | `AuthController::login()` | `Router::requireAuth()`, `Router::renderView()` |
+| `$_SESSION['logged_in']` | `bool` | Indica si el usuario tiene una sesión activa | `AuthController::login()` | `Router::requireAuth()`, `Router::render()` |
 | `$_SESSION['user_id']` | `int` | ID del usuario autenticado (campo `id` de tabla `usuarios`) | `AuthController::login()` | Potencialmente en vistas o controladores |
 | `$_SESSION['username']` | `string` | Nombre de usuario (`user_name`) del autenticado | `AuthController::login()` | Potencialmente en vistas |
 | `$_SESSION['nombre']` | `string` | Nombre completo del usuario autenticado | `AuthController::login()` | Potencialmente en vistas |
@@ -160,8 +160,11 @@ Archivo: `src/app/core/router.php`
 | Variable | Tipo | Visibilidad | Descripción |
 |---|---|---|---|
 | `Router::$pagina` | `string` | `private` | Nombre de la página solicitada, resuelta y validada mediante `resolvePage()` |
+| `$_SESSION['csrf_token']` | `string` | superglobal | Token CSRF generado una sola vez por sesión con `bin2hex(random_bytes(32))`, inyectado en `window.EIS.csrfToken` y `<input name="csrf_token">`, verificado con `Router::verifyCsrfToken()` |
 
-### 6.2 Variables locales del método `renderView()`
+La clase también define la **constante** `CONTROLLERS` (mapa `pagina => clase` con los 12 controladores AJAX) que se usa en `dispatchAction()` para resolver el controlador según la página.
+
+### 6.2 Variables locales del método `render()`
 
 | Variable | Tipo | Valor | Descripción |
 |---|---|---|---|
@@ -183,16 +186,18 @@ Archivo: `src/app/core/router.php`
 
 ```php
 $titulos = [
-    'dashboard'    => 'Panel de Control',
-    'inventario'   => 'Gestión de inventario',
-    'ventas'       => 'Punto de Venta (POS)',
-    'ciberControl' => 'Control de Cybercafé',
-    'proveedores'  => 'Solicitudes a Proveedores',
-    'reportes'     => 'Reportes y Estadísticas',
-    'activos'      => 'Gestión de Activos',
-    'asesorias'    => 'Asesoría Legal',
-    'usuarios'     => 'Gestión de Usuarios',
-    'roles'        => 'Gestión de Roles y Permisos',
+    'dashboard'        => 'Panel de Control',
+    'inventario'       => 'Gestión de inventario',
+    'ventas'           => 'Punto de Venta (POS)',
+    'ciberControl'     => 'Control de Cybercafé',
+    'proveedores'      => 'Solicitudes a Proveedores',
+    'proveedores-gestion' => 'Gestión de Proveedores',
+    'clientes'         => 'Gestión de Clientes',
+    'reportes'         => 'Reportes y Estadísticas',
+    'activos'          => 'Gestión de Activos',
+    'asesorias'        => 'Asesoría Legal',
+    'usuarios'         => 'Gestión de Usuarios',
+    'roles'            => 'Gestión de Roles y Permisos',
 ];
 ```
 

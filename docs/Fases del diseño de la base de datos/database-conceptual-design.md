@@ -1,5 +1,7 @@
 # Documentación del Diseño Conceptual de Base de Datos - Sistema ZWL v2.0
 
+> **Actualizado (Agosto 2026):** Documento de diseño histórico. La base de datos final implementada contiene **21 tablas** y todos los módulos están conectados a ella.
+
 ## 1. Introducción
 
 El sistema ZWL es una aplicación de gestión integral diseñada para administrar múltiples aspectos de un negocio que incluye ventas, inventario, proveedores, activos fijos, control de cybercafé y asesorías legales. Este documento describe el diseño conceptual de la base de datos que soporta todas estas funcionalidades.

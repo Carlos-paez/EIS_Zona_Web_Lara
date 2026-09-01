@@ -1,5 +1,7 @@
 # Diagrama Entidad-Relación — Sistema ZWL (EIS_Zona_Web_Lara)
 
+> **Actualizado (Agosto 2026):** Documento de diseño histórico. La base de datos final implementada contiene **21 tablas**.
+
 ```mermaid
 erDiagram
     %% ==================== CATALOGOS ====================
