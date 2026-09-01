@@ -125,6 +125,15 @@
         </span>
         <form id="posClienteForm">
             <div class="row" style="margin-bottom:0;">
+                <!-- Selector de cliente: permite elegir un cliente registrado
+                     o dejar el valor por defecto para crear uno nuevo -->
+                <div class="input-field col s12">
+                    <i class="material-icons prefix">group</i>
+                    <select id="posClienteSelect">
+                        <option value="" selected>── Crear nuevo cliente ──</option>
+                    </select>
+                    <label>Cliente registrado</label>
+                </div>
                 <!-- Nombre completo del cliente -->
                 <div class="input-field col s12 m6">
                     <i class="material-icons prefix">badge</i>

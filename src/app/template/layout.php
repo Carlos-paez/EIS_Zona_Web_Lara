@@ -255,6 +255,11 @@
     <script src="Public/js/app.clientes.js"></script>
     <?php endif; ?>
 
+    <!-- Módulo de Reportes -->
+    <?php if ($pagina === 'reportes'): ?>
+    <script src="Public/js/app.reportes.js"></script>
+    <?php endif; ?>
+
     <!-- Módulo de Gestión de Activos -->
     <?php if ($pagina === 'activos'): ?>
     <script src="Public/js/app.activos.js"></script>

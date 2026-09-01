@@ -29,6 +29,7 @@ $(function () {
     // ================================================================
 
     var productos = [];           // Catálogo completo cargado desde el backend
+    var clientes = [];            // Clientes registrados para el selector del formulario
     var posCart = [];             // Carrito: [{id, nombre, precio, cantidad, stock}]
     var posTotal = 0;             // Total acumulado de la venta en números
 
@@ -227,6 +228,95 @@ $(function () {
     }
 
     // ================================================================
+    // FUNCIÓN: refrescarSelect($sel)
+    // PROPÓSITO: Destruye y recrea un <select> de Materialize para
+    //            reflejar las opciones recién actualizadas.
+    // ================================================================
+    function refrescarSelect($sel) {
+        var el = $sel[0];
+        if (!el) return;
+        var inst = M.FormSelect.getInstance(el);
+        if (inst) inst.destroy();
+        $sel.formSelect();
+    }
+
+    // ================================================================
+    // FUNCIÓN: poblarSelectClientes()
+    // PROPÓSITO: Llena el selector de clientes registrados. La primera
+    //            opción ("Crear nuevo cliente") es la selección por defecto.
+    // ================================================================
+    function poblarSelectClientes() {
+        var html = '<option value="">── Crear nuevo cliente ──</option>';
+        clientes.forEach(function (c) {
+            var nombreCompleto = (c.nombre || '') + ((c.apellido || '') ? ' ' + c.apellido : '');
+            html += '<option value="' + escHtml(c.cedula) + '">' + escHtml(nombreCompleto + ' (' + c.cedula + ')') + '</option>';
+        });
+        var $sel = $('#posClienteSelect');
+        $sel.html(html).val('');
+        refrescarSelect($sel);
+    }
+
+    // ================================================================
+    // FUNCIÓN: cargarClientes()
+    // PROPÓSITO: Solicita al backend la lista de clientes registrados.
+    // ================================================================
+    function cargarClientes() {
+        $.getJSON(API + 'clientes', function (r) {
+            if (!r.success) { EIS.toast(r.error || 'Error al cargar clientes', 'red', 'error'); return; }
+            clientes = r.data || [];
+            poblarSelectClientes();
+        }).fail(function () {
+            EIS.toast('Error al cargar los clientes', 'red', 'error');
+        });
+    }
+
+    // ================================================================
+    // FUNCIÓN: aplicarCliente(c)
+    // PROPÓSITO: Precarga los datos de un cliente en el formulario,
+    //            bloquea la cédula y sincroniza el selector.
+    // ================================================================
+    function aplicarCliente(c) {
+        var nombreCompleto = (c.nombre || '') + ((c.apellido || '') ? ' ' + c.apellido : '');
+        if (nombreCompleto) {
+            $('#posCiudadano').val(nombreCompleto);
+        }
+        $('#posCedula').val(c.cedula || '').prop('readonly', true);
+        $('#posDireccion').val(c.direccion || '');
+        $('#posTelefono').val(c.telefono || '');
+        if (c.cedula) {
+            $('#posClienteSelect').val(c.cedula);
+            refrescarSelect($('#posClienteSelect'));
+        }
+        M.updateTextFields();
+    }
+
+    // ================================================================
+    // FUNCIÓN: limpiarCamposNuevoCliente()
+    // PROPÓSITO: Deja el formulario listo para capturar un cliente nuevo
+    //            (limpia campos y habilita la cédula).
+    // ================================================================
+    function limpiarCamposNuevoCliente() {
+        $('#posCiudadano').val('');
+        $('#posCedula').val('').prop('readonly', false);
+        $('#posDireccion').val('');
+        $('#posTelefono').val('');
+        M.updateTextFields();
+    }
+
+    // ================================================================
+    // FUNCIÓN: limpiarClienteForm()
+    // PROPÓSITO: Reinicia por completo el formulario del cliente y el
+    //            selector a su estado inicial (modo "crear nuevo").
+    // ================================================================
+    function limpiarClienteForm() {
+        $('#posClienteForm')[0].reset();
+        $('#posClienteSelect').val('');
+        refrescarSelect($('#posClienteSelect'));
+        $('#posCedula').prop('readonly', false);
+        M.updateTextFields();
+    }
+
+    // ================================================================
     // FUNCIÓN: buscarCliente(cedula)
     // PROPÓSITO: Consulta el backend y precarga los datos del cliente
     //            en el formulario si ya está registrado.
@@ -235,14 +325,7 @@ $(function () {
         if (!cedula) return;
         $.getJSON(API + 'buscarCliente&cedula=' + encodeURIComponent(cedula), function (r) {
             if (!r.success || !r.data) return;
-            var c = r.data;
-            var nombreCompleto = (c.nombre || '') + ((c.apellido || '') ? ' ' + c.apellido : '');
-            if (nombreCompleto) {
-                $('#posCiudadano').val(nombreCompleto);
-            }
-            $('#posDireccion').val(c.direccion || '');
-            $('#posTelefono').val(c.telefono || '');
-            M.updateTextFields();
+            aplicarCliente(r.data);
             EIS.toast('Cliente encontrado: se precargaron sus datos', 'indigo', 'person');
         }).fail(function () {
             EIS.toast('Error al buscar el cliente', 'red', 'error');
@@ -317,7 +400,23 @@ $(function () {
     // EVENTO: Blur de la cédula → precarga datos del cliente
     // ================================================================
     $(document).on('blur', '#posCedula', function () {
+        if ($(this).prop('readonly')) return;
         buscarCliente($(this).val().trim());
+    });
+
+    // ================================================================
+    // EVENTO: Cambio en el selector de cliente registrado
+    //   - cédula seleccionada → precarga sus datos y bloquea la cédula
+    //   - opción por defecto    → habilita la captura de un cliente nuevo
+    // ================================================================
+    $(document).on('change', '#posClienteSelect', function () {
+        var cedula = $(this).val();
+        if (!cedula) {
+            limpiarCamposNuevoCliente();
+            return;
+        }
+        var c = clientes.find(function (x) { return x.cedula === cedula; });
+        if (c) aplicarCliente(c);
     });
 
     // ================================================================
@@ -379,11 +478,10 @@ $(function () {
                 posTotal = 0;
                 actualizarPosUI();
                 renderProductos();
-                $('#posClienteForm')[0].reset();
-                $('label').removeClass('active');
-                M.updateTextFields();
+                limpiarClienteForm();
                 $('#posCartModal').modal('close');
                 cargarProductos();
+                cargarClientes();
             } else {
                 EIS.toast(r.error || 'Error al registrar la venta', 'red', 'error');
             }
@@ -405,4 +503,5 @@ $(function () {
     // ================================================================
     $('#posCartModal').modal();
     cargarProductos();
+    cargarClientes();
 });

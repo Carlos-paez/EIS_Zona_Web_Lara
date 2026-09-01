@@ -33,10 +33,11 @@ class VentaController
 
         try {
             match ($action) {
-                'productos'    => $this->productos(),
+                'productos'     => $this->productos(),
+                'clientes'      => $this->clientes(),
                 'buscarCliente' => $this->buscarCliente(),
-                'registrar'    => $this->registrar(),
-                default        => $this->json(false, null, 'Acción no válida'),
+                'registrar'     => $this->registrar(),
+                default         => $this->json(false, null, 'Acción no válida'),
             };
         } catch (\PDOException $e) {
             echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
@@ -51,6 +52,12 @@ class VentaController
     {
         $productos = $this->model->listarProductos();
         echo json_encode(['success' => true, 'data' => $productos]);
+    }
+
+    private function clientes(): void
+    {
+        $clientes = (new Cliente())->obtenerClientes();
+        echo json_encode(['success' => true, 'data' => $clientes]);
     }
 
     private function buscarCliente(): void
