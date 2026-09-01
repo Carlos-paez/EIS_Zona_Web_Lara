@@ -1,4 +1,4 @@
-var CACHE_NAME = 'eis-cache-v1';
+var CACHE_NAME = 'eis-cache-v2';
 
 var STATIC_ASSETS = [
   'Public/css/material-icons.css',
@@ -53,11 +53,24 @@ self.addEventListener('fetch', function (event) {
   if (request.method !== 'GET') return;
   if (url.origin !== self.location.origin) return;
 
-  // Cache First for static assets
+  // Stale-While-Revalidate for static assets (JS/CSS/fonts).
+  // Sirve rapido desde cache pero SIEMPRE actualiza desde la red,
+  // evitando que una version vieja de los scripts quede servida
+  // indefinidamente y rompa la carga de modulos como el POS.
   if (isStaticAsset(url.pathname)) {
     event.respondWith(
-      caches.match(request).then(function (cached) {
-        return cached || fetch(request);
+      caches.open(CACHE_NAME).then(function (cache) {
+        return cache.match(request).then(function (cached) {
+          var networkFetch = fetch(request).then(function (response) {
+            if (response && response.ok) {
+              cache.put(request, response.clone());
+            }
+            return response;
+          }).catch(function () {
+            return cached;
+          });
+          return cached || networkFetch;
+        });
       })
     );
     return;
