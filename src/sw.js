@@ -9,6 +9,7 @@ var STATIC_ASSETS = [
   'Public/js/materialize.min.js',
   'Public/js/app.core.js',
   'Public/js/app.init.js',
+  'Public/js/app.selects.js',
   'Public/js/app.tables.js',
   'Public/js/app.ui.js',
   'Public/js/app.pos.js',

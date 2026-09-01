@@ -190,6 +190,8 @@
     <script src="Public/js/app.core.js"></script>
     <!-- Init: inicialización de componentes Materialize, reloj, tema oscuro/claro, animaciones -->
     <script src="Public/js/app.init.js"></script>
+    <!-- Selects: barra de búsqueda en los menús desplegables (selects de Materialize) -->
+    <script src="Public/js/app.selects.js"></script>
     <!-- Tables: búsqueda, filtro y paginación de tablas -->
     <script src="Public/js/app.tables.js"></script>
     <!-- UI: notificaciones, botones de acción, reportes, tooltips -->
