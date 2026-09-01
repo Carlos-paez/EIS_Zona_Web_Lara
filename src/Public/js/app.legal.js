@@ -121,7 +121,7 @@ $(function () {
 
         // Reinicio los tooltips de Materialize para los nuevos botones
         $('.tooltipped').tooltip();
-        aplicarFiltro();
+        EIS.datatableRefresh('#tabla-asesorias');
     }
 
     // ================================================================
@@ -364,15 +364,17 @@ $(function () {
     });
 
     // ================================================================
-    // EVENTO: Búsqueda en tiempo real en el historial (#searchAsesoria)
-    // Filtra las filas de la tabla según el texto ingresado.
+    // FUNCIÓN: aplicarFiltro()
+    // PROPÓSITO: Conecta la búsqueda del historial con la búsqueda
+    //            global de DataTables (ya no recorre filas manualmente).
     // ================================================================
     function aplicarFiltro() {
-        var q = $('#searchAsesoria').val().toLowerCase();
-        $('#asesoriasTableBody tr').each(function () {
-            var text = $(this).text().toLowerCase();
-            $(this).toggle(text.indexOf(q) !== -1);
-        });
+        if (!(window.jQuery && $.fn.DataTable)) return;
+        var dt = $('#tabla-asesorias').DataTable();
+        if (dt) {
+            dt.search($('#searchAsesoria').val() || '');
+            dt.draw();
+        }
     }
 
     $(document).on('input', '#searchAsesoria', debounce(function () {
@@ -383,6 +385,10 @@ $(function () {
     // INICIALIZACIÓN
     // ================================================================
     $('.modal').modal();
+    if (window.EIS && EIS.datatable) {
+        EIS.datatable('#tabla-asesorias');
+        if (EIS.datatableWireSearch) EIS.datatableWireSearch('#tabla-asesorias', '#searchAsesoria');
+    }
     cargarAsesorias();
     refrescarKPI();
 });

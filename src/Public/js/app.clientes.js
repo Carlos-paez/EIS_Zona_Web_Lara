@@ -19,7 +19,7 @@ $(function () {
 
             if (!r.data || r.data.length === 0) {
                 tbody.html('<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);"><i class="material-icons" style="font-size:2.5rem;display:block;margin-bottom:0.5rem;">badge</i>No hay clientes registrados</td></tr>');
-                $('.result-count').text('0 resultados');
+                EIS.datatableRefresh('#tabla-clientes');
                 return;
             }
 
@@ -43,27 +43,20 @@ $(function () {
                 tbody.append(row);
             });
 
-            $('.result-count').text(r.data.length + ' resultados');
             $('.tooltipped').tooltip();
-            aplicarFiltro();
+            EIS.datatableRefresh('#tabla-clientes');
         }).fail(function () {
             EIS.toast('Error al cargar clientes', 'red', 'error');
         });
     }
 
     function aplicarFiltro() {
-        var q = $('#searchCliente').val().toLowerCase();
-
-        $('#tabla-clientes tbody tr').each(function () {
-            var mostrar = true;
-            var texto = $(this).text().toLowerCase();
-            if (q && texto.indexOf(q) === -1) mostrar = false;
-            $(this).toggle(mostrar);
-        });
-
-        var visibles = $('#tabla-clientes tbody tr:visible').length;
-        var total = $('#tabla-clientes tbody tr').length;
-        $('.result-count').text('Mostrando ' + visibles + ' de ' + total + ' resultados');
+        if (!(window.jQuery && $.fn.DataTable)) return;
+        var dt = $('#tabla-clientes').DataTable();
+        if (dt) {
+            dt.search($('#searchCliente').val() || '');
+            dt.draw();
+        }
     }
 
     $(document).on('click', '.btn-nuevo-cliente', function () {
@@ -160,9 +153,14 @@ $(function () {
         }
     });
 
-    $('#searchCliente').on('keyup', debounce(function () { aplicarFiltro(); }, 300));
+    if (window.EIS && EIS.datatableWireSearch) {
+        EIS.datatableWireSearch('#tabla-clientes', '#searchCliente');
+    } else {
+        $('#searchCliente').on('keyup', debounce(function () { aplicarFiltro(); }, 300));
+    }
 
     refrescarTabla();
     $('.modal').modal();
     $('.tooltipped').tooltip();
+    EIS.datatable('#tabla-clientes');
 });

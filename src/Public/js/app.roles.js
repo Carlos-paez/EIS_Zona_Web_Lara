@@ -69,7 +69,7 @@ $(function () {
             // Si no hay roles, muestro mensaje de tabla vacía
             if (!r.data || r.data.length === 0) {
                 tbody.html('<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);"><i class="material-icons" style="font-size:2.5rem;display:block;margin-bottom:0.5rem;">admin_panel_settings</i>No hay roles registrados</td></tr>');
-                $('.result-count').text('0 roles');
+                EIS.datatableRefresh('.rol-table');
                 return;
             }
 
@@ -112,11 +112,8 @@ $(function () {
             });
 
             // Actualizo el contador de resultados
-            $('.result-count').text(r.data.length + ' roles');
-            // Reinicio los tooltips para los nuevos botones
             $('.tooltipped').tooltip();
-            // Aplico los filtros activos (búsqueda y estado)
-            aplicarFiltro();
+            EIS.datatableRefresh('.rol-table');
         }).fail(function () {
             EIS.toast('Error al cargar la tabla', 'red', 'error');
         });
@@ -124,39 +121,30 @@ $(function () {
 
     // ================================================================
     // FUNCIÓN: aplicarFiltro()
-    // PROPÓSITO: Filtra las filas de la tabla de roles según el texto
-    //            de búsqueda y el filtro de estado (con usuarios,
-    //            sin usuarios, todos).
+    // PROPÓSITO: Conecta la búsqueda y el filtro (con/sin usuarios) con
+    //            DataTables. La parte de con/sin usuarios se resuelve
+    //            con un filtro de búsqueda por fila (columna 2).
     // ================================================================
     function aplicarFiltro() {
-        var q = $('#searchRol').val().toLowerCase();        // Texto de búsqueda
-        var filtro = $('#filterRolEstado').val();           // Filtro de estado
+        if (!(window.jQuery && $.fn.DataTable)) return;
+        var dt = $('.rol-table').DataTable();
+        if (!dt) return;
+        var q = $('#searchRol').val();
+        dt.search(q ? q : '').draw();
+    }
 
-        // Recorro cada fila de la tabla de roles
-        $('#tabla-roles-body tr').each(function () {
-            var mostrar = true; // Por defecto se muestra
-            var $row = $(this);
-            var nombre = $row.data('nombre') || ''; // Nombre del rol desde data-nombre
-
-            // --- Filtro por texto de búsqueda ---
-            if (q && nombre.toLowerCase().indexOf(q) === -1) mostrar = false;
-
-            // --- Filtro por estado (con/sin usuarios) ---
-            if (filtro === 'con-usuarios') {
-                var users = parseInt($row.find('td').eq(2).text().trim()) || 0;
-                if (users === 0) mostrar = false; // Oculto si no tiene usuarios
-            } else if (filtro === 'sin-usuarios') {
-                var users = parseInt($row.find('td').eq(2).text().trim()) || 0;
-                if (users > 0) mostrar = false; // Oculto si tiene usuarios
-            }
-
-            $row.toggle(mostrar); // Muestro/oculto según las condiciones
+    // Filtro DataTables para "Con usuarios / Sin usuarios" por columna 2.
+    if (window.jQuery && $.fn.DataTable && $.fn.dataTable.ext) {
+        $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+            var dt = $('.rol-table').DataTable();
+            if (settings.nTable !== dt.table().node()) return true; // solo aplica a roles
+            var filtro = $('#filterRolEstado').val();
+            if (!filtro) return true;
+            var usuarios = parseInt(data[2]) || 0;
+            if (filtro === 'con-usuarios') return usuarios > 0;
+            if (filtro === 'sin-usuarios') return usuarios === 0;
+            return true;
         });
-
-        // Actualizo el contador de resultados visibles vs totales
-        var visibles = $('#tabla-roles-body tr:visible').length;
-        var total = $('#tabla-roles-body tr').length;
-        $('.result-count').text('Mostrando ' + visibles + ' de ' + total + ' resultados');
     }
 
     // ================================================================
@@ -417,15 +405,20 @@ $(function () {
     // EVENTOS DE FILTROS Y BÚSQUEDA
     // ================================================================
 
-    // Búsqueda en tiempo real en campo #searchRol
-    $('#searchRol').on('keyup', debounce(function () {
-        aplicarFiltro();
-    }, 300));
-
-    // Cambio en el filtro de estado de roles
-    $('#filterRolEstado').on('change', function () {
-        aplicarFiltro();
-    });
+    // Búsqueda y filtro conectados a DataTables
+    if (window.EIS && EIS.datatableWireSearch) {
+        EIS.datatableWireSearch('.rol-table', '#searchRol');
+    } else {
+        $('#searchRol').on('keyup', debounce(function () { aplicarFiltro(); }, 300));
+    }
+    if (window.EIS && EIS.datatableWireColumnFilter && $('#filterRolEstado').length) {
+        $('#filterRolEstado').off('change.dt').on('change.dt', function () {
+            var dt = $('.rol-table').DataTable();
+            if (dt) dt.draw();
+        });
+    } else {
+        $('#filterRolEstado').on('change', function () { aplicarFiltro(); });
+    }
 
     // ================================================================
     // INICIALIZACIÓN DE COMPONENTES MATERIALIZE
@@ -435,6 +428,11 @@ $(function () {
     $('.tooltipped').tooltip();
     $('select').formSelect();
     $('.modal').modal();
+
+    // Inicializo DataTables sobre la tabla de roles
+    if (window.jQuery && $.fn.DataTable) {
+        EIS.datatable('.rol-table');
+    }
 
     // ================================================================
     // CARGA INICIAL DE DATOS

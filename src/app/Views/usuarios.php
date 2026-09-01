@@ -324,15 +324,21 @@ foreach ($usuarios as $u) {
 <script>
 // Ejecuta cuando el DOM está listo (jQuery)
 $(function () {
-    // Filtro de búsqueda en la tabla de usuarios (filtra por texto en la fila)
-    $('#searchUsuario').on('input', function () {
-        var q = $(this).val().toLowerCase(); // Obtiene el texto de búsqueda en minúsculas
-        // Itera sobre cada fila del cuerpo de la tabla
-        $('.user-table tbody tr').each(function () {
-            var text = $(this).text().toLowerCase(); // Texto completo de la fila
-            $(this).toggle(text.indexOf(q) !== -1);  // Muestra/oculta según coincidencia
-        });
-    });
+    // Inicializa DataTables sobre la tabla de usuarios (si el plugin está cargado)
+    if (window.EIS && EIS.datatable) {
+        EIS.datatable('.user-table');
+
+        // Conecta la búsqueda existente a la búsqueda global de DataTables
+        if (EIS.datatableWireSearch) EIS.datatableWireSearch('.user-table', '#searchUsuario');
+
+        // Conecta el filtro de rol (columna 2) a DataTables
+        if (EIS.datatableWireColumnFilter) {
+            $('#filterRol').off('change.dt').on('change.dt', function () {
+                var dt = $('.user-table').DataTable();
+                if (dt) dt.column(2).search($(this).val() || '', true, false).draw();
+            });
+        }
+    }
 
     // Manejador de clic para abrir el modal de edición de usuario
     $(document).on('click', '.btn-editar-usuario', function () {

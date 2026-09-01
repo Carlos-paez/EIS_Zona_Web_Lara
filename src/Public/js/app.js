@@ -10,20 +10,6 @@ function debounce(fn, delay) {
     };
 }
 
-function filtrarTabla(inputSelector, tableSelector, colIndex) {
-    var q = $(inputSelector).val().toLowerCase();
-    $(tableSelector + ' tbody tr').each(function () {
-        var $row = $(this);
-        var text = colIndex !== undefined
-            ? $row.find('td').eq(colIndex).text().toLowerCase()
-            : $row.text().toLowerCase();
-        $row.toggle(text.indexOf(q) !== -1);
-    });
-    var visibles = $(tableSelector + ' tbody tr:visible').length;
-    var total = $(tableSelector + ' tbody tr').length;
-    $(tableSelector).closest('.card').find('.result-count').text('Mostrando ' + visibles + ' de ' + total + ' resultados');
-}
-
 /* ===== Sistema de notificaciones (Toast) ===== */
 EIS.toast = function (msg, color, icon) {
     color = color || 'indigo';
@@ -106,19 +92,7 @@ $(function () {
     }
     animarContadores();
 
-    /* ===== Búsqueda en tablas con debounce ===== */
-    $(document).on('input', '#searchProducto', debounce(function () {
-        filtrarTabla('#searchProducto', '.responsive-table', 1);
-    }, 300));
-
-    $(document).on('input', '#searchProveedor', debounce(function () {
-        filtrarTabla('#searchProveedor', '.responsive-table', 1);
-    }, 300));
-
-    $(document).on('input', '#searchActivo', debounce(function () {
-        filtrarTabla('#searchActivo', '.striped', 0);
-    }, 300));
-
+    /* ===== Búsqueda en tablas: ahora la gestiona DataTables (ver app.core.js) ===== */
     $(document).on('input', '#posSearch', debounce(function () {
         var q = $(this).val().toLowerCase();
         $('#posProducts .col').each(function () {
@@ -127,23 +101,7 @@ $(function () {
         });
     }, 200));
 
-    /* ===== Filtro por estado (select) en inventario y proveedores ===== */
-    $(document).on('change', '#filterEstado, #filterEstadoProv', function () {
-        var val = $(this).val().toLowerCase();
-        var table = $(this).closest('.card').next('.card').find('table');
-        if (!table.length) table = $(this).closest('.row').siblings('.card').find('table');
-        table.find('tbody tr').each(function () {
-            var badge = $(this).find('.new-badge, .new badge, .badge').text().trim().toLowerCase();
-            if (!val || badge.indexOf(val) !== -1) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
-        });
-        var visibles = table.find('tbody tr:visible').length;
-        var total = table.find('tbody tr').length;
-        $('.result-count').text('Mostrando ' + visibles + ' de ' + total + ' resultados');
-    });
+    /* ===== Filtro por estado (select): ahora lo gestiona DataTables ===== */
 
     /* ===== SISTEMA POS con carrito modal ===== */
     var posCart = [];
@@ -261,16 +219,7 @@ $(function () {
         EIS.toast('Formulario para nuevo ' + tipo + ' abierto (demo)', 'indigo', 'add_circle');
     });
 
-    /* ===== Paginación con jQuery ===== */
-    $(document).on('click', '.pagination li:not(.disabled):not(.active) a', function (e) {
-        e.preventDefault();
-        var $li = $(this).closest('li');
-        var $ul = $li.closest('.pagination');
-        $ul.find('li.active').removeClass('active indigo');
-        $li.addClass('active indigo');
-        var page = $(this).text().trim();
-        EIS.toast('Navegando a página ' + page, 'indigo', 'chevron_right');
-    });
+    /* ===== Paginación: la gestiona DataTables en cada tabla principal ===== */
 
     /* ===== Enlaces de descarga con feedback ===== */
     $(document).on('click', '.btn-download', function () {
@@ -440,14 +389,7 @@ $(function () {
         }
     });
 
-    $(document).on('input', '#searchAsesoria', debounce(function () {
-        var q = $(this).val().toLowerCase();
-        var $rows = $('#asesoriasTableBody tr');
-        $rows.each(function () {
-            var text = $(this).text().toLowerCase();
-            $(this).toggle(text.indexOf(q) !== -1);
-        });
-    }, 300));
+    /* ===== Búsqueda de asesorías: la gestiona DataTables (ver app.legal.js) ===== */
 
     /* ===== Notificaciones de demo (campana) ===== */
     $(document).on('click', '#notifBell', function () {

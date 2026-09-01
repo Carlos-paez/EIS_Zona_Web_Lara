@@ -75,7 +75,7 @@ $fmt = fn($v) => '$' . number_format((float)$v, 2);
         <div class="card">
             <div class="card-content">
                 <span class="card-title"><i class="material-icons left">access_time</i>Ventas por Día (7 días)</span>
-                <table class="responsive-table">
+                <table class="responsive-table" id="tabla-ventas-dia">
                     <thead>
                         <tr>
                             <th>Fecha</th>
@@ -105,7 +105,7 @@ $fmt = fn($v) => '$' . number_format((float)$v, 2);
         <div class="card">
             <div class="card-content">
                 <span class="card-title"><i class="material-icons left">inventory</i>Stock Crítico</span>
-                <table class="responsive-table">
+                <table class="responsive-table" id="tabla-stock-critico">
                     <thead>
                         <tr>
                             <th>Producto</th>
@@ -152,3 +152,14 @@ $fmt = fn($v) => '$' . number_format((float)$v, 2);
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+// Inicializa DataTables en las tablas informativas del dashboard
+$(function () {
+    if (window.EIS && EIS.datatable) {
+        ['#tabla-ventas-dia', '#tabla-stock-critico'].forEach(function (sel) {
+            EIS.datatable(sel, { pageLength: 5 });
+        });
+    }
+});
+</script>

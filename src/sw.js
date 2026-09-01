@@ -1,12 +1,15 @@
-var CACHE_NAME = 'eis-cache-v2';
+var CACHE_NAME = 'eis-cache-v4';
 
 var STATIC_ASSETS = [
   'Public/css/material-icons.css',
   'Public/css/materialize.min.css',
   'Public/css/styles.css',
+  'Public/css/dataTables.materialize.css',
   'Public/css/login.css',
   'Public/js/jquery-3.7.1.min.js',
   'Public/js/materialize.min.js',
+  'Public/js/jquery.dataTables.min.js',
+  'Public/js/dataTables.materialize.js',
   'Public/js/app.core.js',
   'Public/js/app.init.js',
   'Public/js/app.selects.js',

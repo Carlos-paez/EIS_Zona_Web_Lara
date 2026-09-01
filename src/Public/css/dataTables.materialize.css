@@ -1,0 +1,185 @@
+/* =====================================================================
+   ARCHIVO: dataTables.materialize.css
+   FUNCIÓN: Estilos propios para adaptar el plugin jQuery DataTables
+            (v1.13.x) al look & feel de Materialize y al tema
+            oscuro/claro de la aplicación (usa las variables CSS de
+            styles.css). No depende de fetch externo; se sirve local
+            y se precachea en la PWA.
+   ===================================================================== */
+
+/* --- Contenedor general de DataTables dentro de las .card de la app --- */
+.eis-dt-wrap {
+    margin-top: 0;
+}
+
+/* --- Barra superior: buscador a la izquierda, longitud a la derecha --- */
+.eis-dt-wrap .dataTables_filter {
+    float: right;
+    text-align: right;
+}
+.eis-dt-wrap .dataTables_length {
+    float: left;
+    text-align: left;
+}
+
+/* --- Inputs de búsqueda / longitud con estilo Materialize-like --- */
+.eis-dt-wrap .dataTables_filter input,
+.eis-dt-wrap .dataTables_length select {
+    display: inline-block;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    margin-left: 0.4rem;
+    height: auto;
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--surface-hover);
+    box-shadow: none;
+    box-sizing: border-box;
+}
+.eis-dt-wrap .dataTables_length select {
+    width: auto;
+    min-width: 60px;
+    cursor: pointer;
+}
+.eis-dt-wrap .dataTables_filter input:focus,
+.eis-dt-wrap .dataTables_length select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+}
+.eis-dt-wrap .dataTables_filter label,
+.eis-dt-wrap .dataTables_length label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* --- Tabla: separar un poco el info/paginación y el encabezado --- */
+.eis-dt-wrap table.dataTable {
+    margin: 0.75rem 0;
+    border: none;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100% !important;
+}
+.eis-dt-wrap table.dataTable thead th {
+    border-bottom: 2px solid var(--primary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--primary);
+    white-space: nowrap;
+}
+.eis-dt-wrap table.dataTable tbody tr {
+    border-bottom: none;
+}
+.eis-dt-wrap table.dataTable td {
+    border-bottom: 1px solid var(--border-light);
+    vertical-align: middle;
+}
+
+/* --- Resaltado de fila al pasar el mouse (igual que .striped) --- */
+.eis-dt-wrap table.dataTable tbody tr:hover {
+    background: var(--surface-hover) !important;
+}
+/* --- Filas zebra cuando la tabla usa .striped --- */
+.eis-dt-wrap table.dataTable.stripe tbody tr.odd,
+.eis-dt-wrap table.dataTable.display tbody tr.odd {
+    background: var(--surface-hover);
+}
+.eis-dt-wrap table.dataTable.stripe tbody tr.even,
+.eis-dt-wrap table.dataTable.display tbody tr.even {
+    background: var(--surface);
+}
+
+/* --- Info: "Mostrando X de Y" --- */
+.eis-dt-wrap .dataTables_info {
+    float: left;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    padding-top: 0.65rem;
+}
+
+/* --- Paginación tipo Materialize (pills índigo) --- */
+.eis-dt-wrap .dataTables_paginate {
+    float: right;
+    text-align: right;
+    padding-top: 0.25rem;
+    user-select: none;
+}
+.eis-dt-wrap .dataTables_paginate a.paginate_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    margin: 0 2px;
+    border-radius: 50%;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+}
+.eis-dt-wrap .dataTables_paginate a.paginate_button:hover {
+    background: var(--surface-hover);
+}
+.eis-dt-wrap .dataTables_paginate a.paginate_button.current {
+    background: var(--primary) !important;
+    color: #fff !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.eis-dt-wrap .dataTables_paginate a.paginate_button.disabled {
+    color: var(--text-light);
+    cursor: default;
+    pointer-events: none;
+}
+
+/* --- Oculta el "processing"/overlay si llegara a usarse --- */
+.eis-dt-wrap .dataTables_processing {
+    background: var(--surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    box-shadow: var(--shadow);
+}
+
+/* --- Limpieza de floats al final del wrapper --- */
+.eis-dt-wrap::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* --- Responsive / pantallas pequeñas --- */
+@media (max-width: 600px) {
+    .eis-dt-wrap .dataTables_filter {
+        float: none;
+        text-align: left;
+        margin-bottom: 0.5rem;
+    }
+    .eis-dt-wrap .dataTables_length {
+        float: none;
+        margin-bottom: 0.5rem;
+    }
+    .eis-dt-wrap .dataTables_info {
+        float: none;
+        text-align: left;
+    }
+    .eis-dt-wrap .dataTables_paginate {
+        float: none;
+        text-align: left;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 0.4rem;
+    }
+}
+
+/* --- Tabla vacía / sin resultados (mensaje centrado de la app) --- */
+.eis-dt-empty {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}

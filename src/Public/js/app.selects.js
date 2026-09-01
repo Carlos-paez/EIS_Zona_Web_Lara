@@ -64,16 +64,43 @@ $(function () {
             + '</li>'
         );
 
+        var $bar = $ul.find('li.eis-select-search');
+
         // Filtro en tiempo real
-        $ul.find('li.eis-select-search input').on('input', function () {
+        $bar.find('input').on('input', function () {
             aplicarFiltro($ul, this.value.trim());
         });
 
-        // Evito que el desplegable se cierre al hacer clic en la barra
-        $ul.find('li.eis-select-search').on('mousedown', function (e) {
+        // Evito que el desplegable se cierre al interactuar con la barra.
+        // Materialize cierra el menú (closeOnClick) mediante un handler de
+        // "click" en document, así que detengo la propagación de ese click
+        // para poder escribir. Uso stopPropagation (NO preventDefault) en
+        // mousedown/touchstart para permitir que el input reciba el foco.
+        $bar.on('mousedown touchstart', function (e) {
             e.stopPropagation();
-            e.preventDefault();
         });
+        $bar.on('click', function (e) {
+            e.stopPropagation();
+        });
+    }
+
+    // ---------------------------------------------------------------
+    // FUNCIÓN: restablecerBusqueda(ul)
+    // PROPÓSITO: Al abrir un desplegable, limpia la búsqueda previa y
+    //            restaura las opciones. Evita que un filtro anterior
+    //            quede "pegado" (con filas ocultas) al reabrir el menú.
+    // ---------------------------------------------------------------
+    function restablecerBusqueda($ul) {
+        var $bar = $ul.find('li.eis-select-search');
+        if (!$bar.length) return;
+
+        var $input = $bar.find('input');
+        if ($input.val() !== '') {
+            $input.val('');
+        }
+        // Restauro la visibilidad de todas las opciones y quito avisos.
+        $ul.find('> li').not('.eis-select-search').css('display', '');
+        $ul.find('li.eis-select-no-results').remove();
     }
 
     // ---------------------------------------------------------------
@@ -110,14 +137,17 @@ $(function () {
 
     // ---------------------------------------------------------------
     // EVENTO: Al enfocar/abrir cualquier select de Materialize,
-    //         aseguro inyectar su barra de búsqueda y restaurar la
-    //         última búsqueda introducida (para selects regenerados).
+    //         aseguro inyectar su barra de búsqueda (idempotente) y
+    //         restablezco el filtro para que cada vez que se abra el
+    //         menú las opciones se vean completas. Se usa focusin
+    //         (en vez de solo click) para cubrir selects regenerados.
     // ---------------------------------------------------------------
     $(document).on('focusin click', '.select-wrapper input.select-dropdown', function () {
         var $wrapper = $(this).closest('.select-wrapper');
         var $ul = $wrapper.find('ul.dropdown-content.select-dropdown');
         if (!$ul.length) return;
         inyectarBusqueda($ul);
+        restablecerBusqueda($ul);
     });
 
     // ---------------------------------------------------------------

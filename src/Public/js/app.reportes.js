@@ -52,6 +52,12 @@
             var columnas = data.columnas || [];
             var filas = data.filas || [];
 
+            // Destruye cualquier instancia previa de DataTables para reconstruirla
+            // con el nuevo número de columnas.
+            if (window.EIS && EIS.datatableDestroy) {
+                EIS.datatableDestroy('#tablaReporte');
+            }
+
             if (!filas.length) {
                 $thead.html('');
                 $tbody.html('');
@@ -78,6 +84,11 @@
             });
             $tbody.html(bodyHtml);
             $count.text(filas.length + ' resultados');
+
+            // Inicializa DataTables sobre la tabla rellenada.
+            if (window.EIS && EIS.datatable) {
+                EIS.datatable('#tablaReporte');
+            }
         }
 
         $form.on('submit', function (e) {
