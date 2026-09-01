@@ -10,21 +10,24 @@ La integracion incluyo:
 - Migracion de JS vanilla a jQuery para theme toggle, sidebar, busquedas, filtros
 - Implementacion de componentes Materialize: sidenav, modals, selects, tooltips, tabs
 - Refactorizacion de vistas autenticadas para usar solo contenido (sin HTML repetido)
-- Creacion de JavaScript modular en 14 archivos especializados
+- Creacion de JavaScript modular en 15 archivos especializados mas el motor de jQuery DataTables
 - Validacion de documentos en modulo de Asesoria Legal
 
 ---
 
 ## 2. Archivos del Proyecto
 
-### JavaScript (14 modulos)
+### JavaScript (15 modulos + DataTables)
 
 | Archivo | Proposito | Carga |
 |---------|-----------|-------|
-| `Public/js/app.core.js` | Funciones compartidas: namespace EIS, debounce, filtrarTabla, EIS.toast | Siempre |
+| `Public/js/app.core.js` | Funciones compartidas: namespace EIS, debounce, EIS.toast y helpers `EIS.datatable*` | Siempre |
 | `Public/js/app.init.js` | Inicializacion Materialize, reloj, tema oscuro/claro, animaciones | Siempre |
-| `Public/js/app.tables.js` | Busqueda en tablas con debounce, filtro por estado, paginacion | Siempre |
+| `Public/js/app.selects.js` | Barra de busqueda en los selects (dropdowns) de Materialize | Siempre |
+| `Public/js/app.tables.js` | Punto de extension generico (la busqueda/filtro/paginacion la gestiona DataTables) | Siempre |
 | `Public/js/app.ui.js` | Notificaciones, botones de accion, reportes, tooltips | Siempre |
+| `Public/js/jquery.dataTables.min.js` | Motor de DataTables 1.13.8 (local) | Siempre |
+| `Public/js/dataTables.materialize.js` | Integracion de DataTables con Materialize y config por defecto (es) | Siempre |
 | `Public/js/app.pos.js` | Sistema de carrito POS | Solo en pagina ventas |
 | `Public/js/app.cyber.js` | Gestion de estaciones Cyber | Solo en pagina ciberControl |
 | `Public/js/app.legal.js` | Validacion de documentos de asesoria legal | Solo en pagina asesorias |
@@ -42,7 +45,9 @@ La integracion incluyo:
 |---------|---------|
 | `Public/js/jquery-3.7.1.min.js` | jQuery 3.7.1 |
 | `Public/js/materialize.min.js` | Materialize JS 1.0.0 |
+| `Public/js/jquery.dataTables.min.js` | jQuery DataTables 1.13.8 |
 | `Public/css/materialize.min.css` | Materialize CSS 1.0.0 |
+| `Public/css/dataTables.materialize.css` | Tema de DataTables (Materialize/oscuro-claro) |
 | `Public/css/material-icons.css` | Material Icons (local) |
 | `Public/fonts/MaterialIcons-Regular.ttf` | Material Icons font |
 
@@ -69,10 +74,13 @@ La integracion incluyo:
 
     <!-- Siempre -->
     Materialize JS (local)
-    app.core.js       (EIS, debounce, toast)
-    app.init.js       (Materialize init, reloj, tema, animaciones)
-    app.tables.js     (Busqueda y filtros de tablas)
-    app.ui.js         (Notificaciones, botones, reportes)
+    jquery.dataTables.min.js  (motor DataTables)
+    dataTables.materialize.js (integracion DataTables + Materialize)
+    app.core.js   (EIS, debounce, toast, EIS.datatable*)
+    app.init.js   (Materialize init, reloj, tema, animaciones)
+    app.selects.js (barra de busqueda en selects de Materialize)
+    app.tables.js (punto de extension; la busqueda/filtro/paginacion la gestiona DataTables)
+    app.ui.js     (Notificaciones, botones, reportes)
 
     <!-- Condicional por pagina -->
     app.pos.js         (solo en ventas)
@@ -111,20 +119,10 @@ function debounce(fn, delay) {
     };
 }
 
-function filtrarTabla(inputSelector, tableSelector, colIndex) {
-    var q = $(inputSelector).val().toLowerCase();
-    $(tableSelector + ' tbody tr').each(function () {
-        var $row = $(this);
-        var text = colIndex !== undefined
-            ? $row.find('td').eq(colIndex).text().toLowerCase()
-            : $row.text().toLowerCase();
-        $row.toggle(text.indexOf(q) !== -1);
-    });
-    var visibles = $(tableSelector + ' tbody tr:visible').length;
-    var total = $(tableSelector + ' tbody tr').length;
-    $(tableSelector).closest('.card').find('.result-count')
-        .text('Mostrando ' + visibles + ' de ' + total + ' resultados');
-}
+// filtrarTabla() es LEGACY: se conserva por compatibilidad pero ya no se usa
+// (las tablas las filtra jQuery DataTables). La busqueda/filtro manuales de
+// app.js y app.tables.js se eliminaron en favor de DataTables.
+function filtrarTabla(inputSelector, tableSelector, colIndex) { ... }
 
 EIS.toast = function (msg, color, icon) {
     color = color || 'indigo';
@@ -133,6 +131,13 @@ EIS.toast = function (msg, color, icon) {
         + icon + '</i>' + msg;
     M.toast({ html: html, classes: color + ' rounded', displayLength: 3000 });
 };
+
+// Familia de helpers de jQuery DataTables:
+EIS.datatable(selector, opts)                      // Inicializa DataTables (quita filas vacias colspan)
+EIS.datatableRefresh(selector)                     // Recarga filas tras re-render AJAX
+EIS.datatableWireSearch(selector, inputSelector)   // Conecta un input a la busqueda global
+EIS.datatableWireColumnFilter(selector, sel, col)  // Conecta un select a un filtro de columna
+EIS.datatableDestroy(selector)                     // Destruye una instancia (tabla dinamica)
 ```
 
 ### 4.2 app.init.js - Inicializacion
@@ -215,32 +220,30 @@ $(function () {
 });
 ```
 
-### 4.3 app.tables.js - Busqueda en Tablas
+### 4.3 DataTables - Tablas con Ordenamiento, Paginacion y Busqueda
 
-Usa event delegation para buscar y filtrar tablas:
+La busqueda, el filtro por estado y la paginacion de todas las tablas principales la gestiona **jQuery DataTables** (local). `app.tables.js` se mantiene como punto de extension generico sin handlers manuales (para evitar conflictos con las instancias de DataTables).
+
+Helpers en `app.core.js`:
 
 ```javascript
-// Busqueda en inventario (columna 1)
-$(document).on('input', '#searchProducto', debounce(function () {
-    filtrarTabla('#searchProducto', '.responsive-table', 1);
-}, 300));
+// Inicializa DataTables sobre una tabla (quita filas vacias con <td colspan>)
+EIS.datatable('#tabla-productos', { pageLength: 5 });
 
-// Busqueda en proveedores (columna 1)
-$(document).on('input', '#searchProveedor', debounce(function () {
-    filtrarTabla('#searchProveedor', '.responsive-table', 1);
-}, 300));
+// Re-sincroniza filas tras un re-render del <tbody> por AJAX
+EIS.datatableRefresh('#tabla-productos');
 
-// Busqueda en activos (columna 0)
-$(document).on('input', '#searchActivo', debounce(function () {
-    filtrarTabla('#searchActivo', '.striped', 0);
-}, 300));
+// Conecta un input existente a la busqueda global de DataTables (debounce 250ms)
+EIS.datatableWireSearch('#tabla-productos', '#searchProducto');
 
-// Filtro por estado (select)
-$(document).on('change', '#filterEstado, #filterEstadoProv', function () { ... });
+// Conecta un select a un filtro de columna (ej: filtro por estado = columna 4)
+EIS.datatableWireColumnFilter('#tabla-productos', '#filterEstado', 4);
 
-// Paginacion
-$(document).on('click', '.pagination li:not(.disabled):not(.active) a', function () { ... });
+// Destruye una instancia (util en tablas dinamicas cuyo numero de columnas varia, p. ej. reportes)
+EIS.datatableDestroy('#tablaReporte');
 ```
+
+Cada modulo inicializa su tabla con `EIS.datatable()` y conecta sus barras de busqueda/filtros a la instancia correspondiente.
 
 ### 4.4 app.ui.js - Interacciones UI
 

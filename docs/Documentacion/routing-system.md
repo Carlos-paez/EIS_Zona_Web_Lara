@@ -66,7 +66,7 @@ src/
 │       └── roles.php            ← Gestion de roles/permisos (conectado a BD)
 └── Public/
     ├── css/                     ← Estilos (locales)
-    ├── js/                      ← JavaScript modular (14 archivos)
+    ├── js/                      ← JavaScript modular (15 modulos + jQuery/Materialize/DataTables)
     └── fonts/                   ← Material Icons (local)
 ```
 
@@ -311,8 +311,11 @@ class Router
 ```php
 <!-- Scripts base (siempre) -->
 <script src="Public/js/materialize.min.js"></script>
+<script src="Public/js/jquery.dataTables.min.js"></script>
+<script src="Public/js/dataTables.materialize.js"></script>
 <script src="Public/js/app.core.js"></script>
 <script src="Public/js/app.init.js"></script>
+<script src="Public/js/app.selects.js"></script>
 <script src="Public/js/app.tables.js"></script>
 <script src="Public/js/app.ui.js"></script>
 
@@ -476,11 +479,11 @@ Usuario: GET /src/?pagina=ventas
    └── require __DIR__ . '/../template/layout.php'
 
 4. layout.php:
-   ├── <html><head> con Materialize CSS local + jQuery local
+   ├── <html><head> con Materialize CSS + jQuery + DataTables locales
    ├── Sidebar con enlaces a modulos
    ├── Header con reloj y notificaciones
    ├── <main> -> require $contentView (ventas.php)
-   ├── Scripts: app.core.js, app.init.js, app.tables.js, app.ui.js
+   ├── Scripts: app.core.js, app.init.js, app.selects.js, app.tables.js, app.ui.js (+ DataTables)
    ├── $pagina === 'ventas' -> app.pos.js
    └── Service Worker registration
 

@@ -99,8 +99,8 @@ eis_zona_web_lara/
 │   │   ├── reportes_ejemplo.sql      # Consultas de ejemplo
 │   │   └── usuario dev.txt           # Credenciales de usuario dev
 │   └── Public/
-│       ├── css/                      # styles, login, materialize, material-icons (local)
-│       ├── js/                       # jQuery, Materialize + 15 módulos app.*.js
+│       ├── css/                      # styles, login, materialize, material-icons, dataTables.materialize (local)
+│       ├── js/                       # jQuery, Materialize, DataTables + 15 módulos app.*.js
 │       └── fonts/                    # MaterialIcons-Regular.ttf (local)
 ├── docs/                             # Documentación del proyecto
 ├── vendor/                           # Autoloader de Composer
@@ -120,6 +120,7 @@ eis_zona_web_lara/
 ### Frontend
 - **Materialize CSS 1.0.0** — Framework Material Design (local)
 - **jQuery 3.7.1** — Manipulación DOM y AJAX (local)
+- **jQuery DataTables 1.13.8** — Ordenamiento, paginación y búsqueda de tablas (local)
 - **Material Icons** — Iconografía (local)
 - **HTML5 / CSS3** — Variables CSS, Flexbox, Grid, tema oscuro/claro
 - **Service Worker + PWA** — Caché offline, `manifest.json`, `offline.php`
@@ -245,11 +246,14 @@ Navegador → src/.htaccess → src/index.php → App\Core\Router->handle()
 - `ReporteController::exportar` valida CSRF, rango de fechas y formato permitido
 
 ### JavaScript Modular
-- **`app.core.js`** — namespace `EIS`, `debounce`, `EIS.toast`, `escHtml` (XSS)
+- **`app.core.js`** — namespace `EIS`, `debounce`, `EIS.toast`, `escHtml` (XSS) y la familia de helpers de **DataTables**: `EIS.datatable`, `EIS.datatableRefresh`, `EIS.datatableWireSearch`, `EIS.datatableWireColumnFilter`, `EIS.datatableDestroy`
 - **`app.init.js`** — inicia Materialize, reloj, tema oscuro/claro
-- **`app.tables.js`** — búsqueda con debounce, filtro por estado, paginación
+- **`app.selects.js`** — barra de búsqueda en los menús desplegables (selects) de Materialize
+- **`app.tables.js`** — punto de extensión genérico; la búsqueda, filtro y paginación ya las gestiona **DataTables** en cada módulo (se mantiene sin handlers manuales para evitar conflictos)
 - **`app.ui.js`** — notificaciones, botones, tooltips
-- **`app.inventario.js`**, **`app.roles.js`**, **`app.clientes.js`**, **`app.proveedores.js`**, **`app.proveedores-gestion.js`**, **`app.activos.js`**, **`app.legal.js`**, **`app.pos.js`**, **`app.cyber.js`**, **`app.reportes.js`** — CRUD/acciones AJAX por módulo
+- **`jquery.dataTables.min.js`** + **`dataTables.materialize.js`** + **`dataTables.materialize.css`** — motor DataTables (local), integración con tema Materialize oscuro/claro y configuración por defecto (lenguaje español, `pageLength` 10)
+- **`app.inventario.js`**, **`app.roles.js`**, **`app.clientes.js`**, **`app.proveedores.js`**, **`app.proveedores-gestion.js`**, **`app.activos.js`**, **`app.legal.js`**, **`app.pos.js`**, **`app.cyber.js`**, **`app.reportes.js`** — CRUD/acciones AJAX por módulo; cada uno conecta su barra de búsqueda/filtros existente a la instancia de DataTables correspondiente
+- **DataTables transversal** — las tablas principales de Inventario, Clientes, Activos, Roles, Usuarios, Proveedores (órdenes y gestión), Asesorías, Reportes (tabla dinámica), Cyber (historial) y Dashboard usan `EIS.datatable()`; los re-render por AJAX se sincronizan con `EIS.datatableRefresh()`
 - **CSRF automático** — el layout inyecta `window.EIS.csrfToken` y `$.ajaxSetup` lo agrega a cada POST
 
 ### Offline / PWA
@@ -291,7 +295,7 @@ Diseño conceptual, lógico y físico de la base de datos, ER y diagrama de clas
 
 1. **Configuración sin `.env`** — Las credenciales de BD están como constantes en `Database.php` y `Config/database.php` (duplicadas en dos archivos)
 2. **Modelos legacy** — `CiberModel.php` y los `crud_*.php` coexisten con los modernos (`CiberControl.php`, modelos POO); se mantienen por compatibilidad
-3. **Rama de desarrollo** — El trabajo activo está en la rama `Carlos` (puede estar **2 commits por delante** de `origin/Carlos` sin pushear)
+3. **Rama de desarrollo** — El trabajo activo está en la rama `Carlos` (sincronizada con `origin/Carlos`)
 
 ---
 
@@ -302,6 +306,7 @@ Diseño conceptual, lógico y físico de la base de datos, ER y diagrama de clas
 - [x] Persistir sesiones del cybercafé en BD (iniciar/finalizar)
 - [x] CRUD de activos fijos con BD
 - [x] Reportes reales con exportación CSV/Excel/PDF
+- [x] Integrar jQuery DataTables en todas las tablas principales
 - [ ] Mover credenciales de BD a variables de entorno (`.env`)
 - [ ] Unificar modelos legacy (`CiberModel`, `crud_*`) con los POO modernos
 - [ ] Middleware de autenticación/CSRF como capa separada
@@ -317,8 +322,8 @@ Diseño conceptual, lógico y físico de la base de datos, ER y diagrama de clas
 | Modelos | 15 (13 POO + 2 legacy procedurales) |
 | Vistas | 15 |
 | Core OOP | 5 (Database, Model, Router, Exporter, PdfBuilder) |
-| Archivos JS | 17 (2 librerías + 15 módulos) |
-| Archivos CSS | 4 |
+| Archivos JS | 19 (4 librerías/integración + 15 módulos) |
+| Archivos CSS | 5 |
 | Archivos SQL | 4 (estructura + 3 seed/ejemplos) |
 | Tablas en BD | 21 |
 | Módulos del sistema | 13 |
@@ -338,6 +343,7 @@ Email: carlospaezguerra@gmail.com
 
 | Versión | Fecha | Descripción |
 |---------|-------|-------------|
+| 4.1 | Sep 2026 | Integración de **jQuery DataTables** (local) en todas las tablas principales (ordenamiento, paginación y búsqueda): Inventario, Clientes, Activos, Roles, Usuarios, Proveedores, Asesorías, Reportes, Cyber historial y Dashboard; helpers `EIS.datatable*` en `app.core.js` y tema Materialize oscuro/claro |
 | 4.x | Ago 2026 | Dashboard y Reportes conectados a datos reales con exportación (CSV/Excel/PDF vía `Exporter`/`PdfBuilder`); registro de clientes en POS; CRUD de Activos; CiberControl con sesiones iniciar/finalizar y CRUD de PCs |
 | 3.3 | Jul 2026 | Validación backend completa: helpers reutilizables, existence checks, coherencia de datos |
 | 3.2 | Jul 2026 | Seguridad: CSRF, XSS, session hardening, módulos Clientes y ProveedorGestion |
@@ -348,5 +354,5 @@ Email: carlospaezguerra@gmail.com
 
 ---
 
-**Última actualización**: Agosto 2026
-**Estado**: En desarrollo activo (rama `Carlos`). Todos los módulos funcionales con MVC + AJAX + BD.
+**Última actualización**: Septiembre 2026
+**Estado**: En desarrollo activo (rama `Carlos`). Todos los módulos funcionales con MVC + AJAX + BD + tablas con DataTables.

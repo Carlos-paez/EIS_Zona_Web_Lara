@@ -698,6 +698,8 @@ Las tablas están en **3ra Forma Normal (3FN)**:
 > $pagina = $_GET['pagina'] ?? 1;
 > $productos = $modelo->obtenerProductos(($pagina-1) * 50, 50);
 > ```
+>
+> **Nota actual del proyecto:** hoy la paginación (y el ordenamiento/búsqueda) la maneja **jQuery DataTables** en el cliente a través de `EIS.datatable('#tabla-productos')`. El modelo sigue trayendo todas las filas y DataTables las pagina/ordena/filtra en memoria, por lo que esta paginación SQL no es necesaria por ahora. Si el volumen de datos creciera mucho, esta sería la base para una paginación en servidor.
 
 ---
 

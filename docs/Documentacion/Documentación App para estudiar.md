@@ -228,19 +228,25 @@ eis_zona_web_lara/
 
         │   ├── jquery-3.7.1.min.js  # jQuery (local)
 
-        │   ├── materialize.min.js   # Materialize JS (local)
+│   ├── materialize.min.js   # Materialize JS (local)
 
-        │   ├── app.core.js      # Utilidades compartidas (EIS, debounce)
+        │   ├── jquery.dataTables.min.js  # Motor DataTables (local)
 
-        │   ├── app.init.js      # Inicialización Materialize, reloj, tema
+        │   ├── dataTables.materialize.js # Integración DataTables + Materialize
 
-        │   ├── app.tables.js    # Búsqueda y filtro de tablas
+        │   ├── app.core.js         # Utilidades compartidas (EIS, debounce, EIS.datatable*)
 
-        │   ├── app.ui.js        # Notificaciones, botones, tooltips
+        │   ├── app.init.js         # Inicialización Materialize, reloj, tema
 
-        │   ├── app.pos.js       # Sistema de carrito POS
+        │   ├── app.selects.js      # Barra de búsqueda en selects de Materialize
 
-        │   ├── app.cyber.js     # Gestión de estaciones Cyber
+        │   ├── app.tables.js       # Punto de extensión (búsqueda/filtro/paginación vía DataTables)
+
+        │   ├── app.ui.js           # Notificaciones, botones, tooltips
+
+        │   ├── app.pos.js          # Sistema de carrito POS
+
+        │   ├── app.cyber.js        # Gestión de estaciones Cyber
 
         │   ├── app.legal.js     # Validación de asesoría legal
 
@@ -1508,7 +1514,7 @@ Línea 29-110: Tabla de productos:
 
   - Acciones por fila: botón de movimientos (inventory) y editar (edit).
 
-  - Paginación: 3 páginas (solo UI, sin lógica real).
+  - Paginación: hoy la gestiona jQuery DataTables (`EIS.datatable('#tabla-productos')`) con datos reales desde BD.
 
 ```
 
@@ -1598,7 +1604,7 @@ Línea 29-99: Tabla de solicitudes:
 
   - Acción: botón "Ver detalles" (visibility).
 
-  - Paginación similar a inventario.
+  - Paginación: hoy la gestiona jQuery DataTables (`EIS.datatable('#tabla-ordenes')`).
 
 ```
 
@@ -2020,7 +2026,7 @@ Línea 307-334: Botón "volver arriba" y campana de notificaciones con animació
 
   
 
-Línea 336-351: Toasts (notificaciones) y paginación.
+Línea 336-351 (app.js): Toasts (notificaciones) y paginación — la parte de paginación manual se eliminó (hoy la genera DataTables).
 
   
 
@@ -2154,17 +2160,18 @@ Línea 59-82: Animación de contadores:
 
   
 
-Línea 84-126: Búsqueda en tablas con debounce:
+Línea 84-126 (app.js): Búsqueda en tablas — DESACTUALIZADO
 
-  - debounce(fn, delay): evita ejecutar la función demasiado seguido.
+  Nota: este comportamiento de app.js se eliminó en favor de jQuery DataTables.
+  Hoy la búsqueda, el filtro por estado y la paginación de las tablas principales
+  las gestiona DataTables (helpers EIS.datatable* en app.core.js + la inicialización
+  en cada módulo). app.tables.js se mantiene como punto de extensión sin handlers
+  manuales para no entrar en conflicto con DataTables.
 
-  - filtrarTabla(inputSelector, tableSelector, colIndex): filtra filas por texto.
-
-  - Actualiza el contador "Mostrando X de Y resultados".
-
-  - Inputs: #searchProducto, #searchProveedor, #searchActivo, #posSearch.
-
-  - Debounce de 200-300ms para mejor rendimiento.
+  - debounce(fn, delay): evita ejecutar la función demasiado seguido.
+  - filtrarTabla(inputSelector, tableSelector, colIndex): función legacy conservada
+    en app.core.js pero ya no se usa (filtrado manual obsoleto).
+  - Inputs: #searchProducto, #searchProveedor, #searchActivo, #posSearch.
 
   
 
@@ -2244,7 +2251,8 @@ Línea 304-314: Botones de acción:
 
   
 
-Línea 316-325: Paginación: al hacer clic, marca la página como activa.
+Línea 316-325 (app.js): Paginación — DESACTUALIZADO (marcaba la página como activa de forma simulada). Este código
+  de paginación manual se eliminó de app.js; hoy la paginación real de las tablas la genera jQuery DataTables.
 
   
 

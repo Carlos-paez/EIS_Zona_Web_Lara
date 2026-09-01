@@ -346,7 +346,7 @@ Son variables JavaScript globales del ámbito del Service Worker.
 
 | Variable | Tipo | Valor | Descripción |
 |---|---|---|---|
-| `CACHE_NAME` | `string` | `'eis-cache-v1'` | Nombre del caché para almacenar assets estáticos |
+| `CACHE_NAME` | `string` | `'eis-cache-v4'` | Nombre del caché para almacenar assets estáticos |
 | `STATIC_ASSETS` | `array` | Lista de rutas de archivos CSS, JS, fuentes e iconos | Assets a cachear durante la instalación del Service Worker |
 
 ### Contenido de `STATIC_ASSETS`
@@ -355,11 +355,15 @@ Son variables JavaScript globales del ámbito del Service Worker.
 Public/css/material-icons.css
 Public/css/materialize.min.css
 Public/css/styles.css
+Public/css/dataTables.materialize.css
 Public/css/login.css
 Public/js/jquery-3.7.1.min.js
 Public/js/materialize.min.js
+Public/js/jquery.dataTables.min.js
+Public/js/dataTables.materialize.js
 Public/js/app.core.js
 Public/js/app.init.js
+Public/js/app.selects.js
 Public/js/app.tables.js
 Public/js/app.ui.js
 Public/js/app.pos.js

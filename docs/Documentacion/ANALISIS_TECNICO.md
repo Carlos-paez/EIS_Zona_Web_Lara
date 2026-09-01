@@ -184,7 +184,7 @@ php src/cli/create_user.php --username=admin --password=1234 --nombre="Administr
 ### 4.2 Funcionalidad
 - CRUD de productos (crear, listar, editar, eliminar)
 - KPIs: total, stock crítico/bajo, valor total del inventario
-- Búsqueda por término, filtros, paginación
+- Búsqueda por término, filtros, paginación (gestionadas por **jQuery DataTables** vía `EIS.datatable('#tabla-productos')`)
 - `app.inventario.js` para las operaciones AJAX
 
 ---

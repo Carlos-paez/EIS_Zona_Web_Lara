@@ -30,10 +30,11 @@ Reporte, Rol, Usuario, Venta` + `CiberModel` (legacy) + `crud_users`, `crud_ases
 `Database` (Singleton), `Model` (abstracto con helpers de validación), `router` (Front Controller),
 `Exporter` (CSV/Excel/PDF), `PdfBuilder` (PDF mínimo propio).
 
-### JS (15 módulos)
-`app.core, app.init, app.tables, app.ui, app.pos, app.cyber, app.legal, app.inventario,
+### JS (15 módulos + DataTables)
+`app.core, app.init, app.selects, app.tables, app.ui, app.pos, app.cyber, app.legal, app.inventario,
 app.roles, app.proveedores, app.proveedores-gestion, app.clientes, app.activos, app.reportes`
-(+ `app.js` utilidad).
+(+ `app.js` utilidad). Las tablas principales usan **jQuery DataTables** (local) vía los helpers
+`EIS.datatable*` de `app.core.js`; la busqueda/filtro/paginacion de cada modulo se conecta a su instancia.
 
 ### Vistas (15)
 `login, login_validate, menu, dashboard, inventario, ventas, clientes, proveedores,
@@ -56,13 +57,14 @@ proveedores-gestion, ciberControl, reportes, activos, asesorias, usuarios, roles
   `CiberControl::iniciarSesion` (cliente get-or-create + entidades relacionadas).
 - Exportación: `Exporter::csv|excel|pdf($titulo, $columnas, $filas)`; `ReporteController::exportar`
   valida CSRF + rango de fechas + formato permitido.
-- Frontend: jQuery + Materialize local, `EIS.toast(msg, color, icon)`, `debounce()`, `escHtml()`
-  (recomendado `$('<span>').text(...).html()`); escapar HTML SIEMPRE al renderizar.
+- Frontend: jQuery + Materialize + DataTables local, `EIS.toast(msg, color, icon)`, `debounce()`, `escHtml()`
+  (recomendado `$('<span>').text(...).html()`); escapar HTML SIEMPRE al renderizar. Tablas con DataTables
+  vía `EIS.datatable()` / `EIS.datatableRefresh()` / `EIS.datatableWireSearch()` / etc.
 - Rutas de controladores registradas en `src/app/core/router.php` (tabla `CONTROLLERS` +
   despacho en `handle()`).
 
 ## Próximos pasos recomendados / pendientes
-- [ ] `git push origin Carlos` de los 2 commits locales.
+- [x] Integrar jQuery DataTables en todas las tablas principales y pushear rama `Carlos`.
 - [ ] Mover credenciales de BD a variables de entorno (`.env`).
 - [ ] Unificar modelos legacy (`CiberModel`, `crud_*`) con los POO modernos.
 - [ ] Middleware de autenticación/CSRF como capa separada.

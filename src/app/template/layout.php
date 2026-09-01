@@ -199,7 +199,7 @@
     <script src="Public/js/app.init.js"></script>
     <!-- Selects: barra de búsqueda en los menús desplegables (selects de Materialize) -->
     <script src="Public/js/app.selects.js"></script>
-    <!-- Tables: búsqueda, filtro y paginación de tablas -->
+    <!-- Tables: punto de extensión genérico (la búsqueda/filtro/paginación la gestiona DataTables en cada módulo) -->
     <script src="Public/js/app.tables.js"></script>
     <!-- UI: notificaciones, botones de acción, reportes, tooltips -->
     <script src="Public/js/app.ui.js"></script>
