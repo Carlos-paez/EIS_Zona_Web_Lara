@@ -420,7 +420,7 @@ El proyecto tiene 2 tipos de modelos:
 | `Usuario` | `Usuario.php` | `usuarios` | CRUD usuarios, autenticacion con password_hash |
 | `Proveedor` | `Proveedor.php` | `proveedores`, `orden_abastecimiento` | CRUD proveedores, ordenes de abastecimiento, FK proveedor/status |
 | `ProveedorGestion` | `ProveedorGestion.php` | `proveedores` | CRUD proveedores (gestion), unicidad RIF, email format |
-| `Rol` | `Rol.php` | `roles`, `permisos`, `permisos_rol` | CRUD roles, asignacion permisos, unicidad nombre |
+| `Rol` | `Rol.php` | `roles`, `permisos`, `permisos_rol`, `rol_usuarios` | CRUD roles, asignacion permisos, unicidad nombre, **descripcion** y **created_at** (v4.1) |
 | `Asesoria` | `Asesoria.php` | `asesoria` | CRUD asesorias legales |
 | `Activo` | `Activo.php` | `activos` | CRUD activos fijos |
 | `Venta` | `Venta.php` | `orden_de_venta`, `lineas_venta` | CRUD ventas y lineas de venta |
@@ -576,7 +576,7 @@ El monolito `app.js` original se dividio en **15 archivos modulares** organizado
 | `app.init.js` | Init Materialize, reloj, tema, animaciones | Siempre |
 | `app.selects.js` | Barra de busqueda en los selects (dropdowns) de Materialize | Siempre |
 | `app.tables.js` | Punto de extension generico (la busqueda/filtro/paginacion la gestiona DataTables) | Siempre |
-| `app.ui.js` | Notificaciones, botones, reportes, tooltips | Siempre |
+| `app.ui.js` | Notificaciones, botones, tooltips | Siempre |
 | `jquery.dataTables.min.js` | Motor jQuery DataTables (ordenamiento/paginacion/busqueda) | Siempre |
 | `dataTables.materialize.js` | Integracion DataTables + Materialize y config por defecto (es) | Siempre |
 | `dataTables.materialize.css` | Tema de DataTables adaptado a Materialize y tema oscuro/claro | Siempre |
@@ -652,13 +652,17 @@ Cada modulo inicializa su tabla con `EIS.datatable('#id-tabla')` y re-sincroniza
 ```javascript
 $(function () {
     // #notifBell - Notificaciones demo
-    // #formReporte - Generador de reportes simulado
     // [data-confirm] - Botones con confirmacion
-    // .btn-nuevo - Boton nuevo elemento
     // .btn-download - Descarga simulada
     // .btn-floating, .tooltip-me - Tooltips mejorados
 });
 ```
+
+> **Nota (v4.1):** En la corrección de bugs se **eliminaron** de `app.ui.js` los handlers demo de
+> `#formReporte` (que hacía `e.preventDefault()` y leía un campo `name="format"` inexistente,
+> en realidad el formato es `name="formato"`) y de `.btn-nuevo` (que mostraba un toast "(demo)").
+> El submit del formulario de reportes lo maneja ahora el módulo real `app.reportes.js:83`, y
+> `.btn-nuevo` lo manejan los módulos de cada vista (inventario, proveedores-gestión, etc.).
 
 ### app.pos.js - Sistema POS
 
@@ -719,7 +723,7 @@ $(function () {
 
 | # | Tabla | Proposito |
 |---|-------|-----------|
-| 1 | `roles` | Catalogo de roles de usuario |
+| 1 | `roles` | Catalogo de roles de usuario (incluye `descripcion` y `created_at` desde v4.1) |
 | 2 | `permisos` | Catalogo de permisos del sistema |
 | 3 | `categoria` | Catalogo de categorias de productos |
 | 4 | `clientes` | Clientes del sistema |
@@ -897,6 +901,29 @@ Hoja de estilos local para Material Icons con referencia a la fuente TTF local.
 ### Roles y Permisos (FUNCIONAL CON BD - CRUD AJAX)
 - **Archivos**: `roles.php`, `Rol.php`, `RolController.php`, `app.roles.js`
 - **BD**: Crear, editar roles + asignacion de permisos
+- **v4.1**: soporte completo de `descripcion`/`created_at`; `asignarRolAUsuario()` resuelve `rol_usuarios.id` correctamente
+
+---
+
+## Correcciones v4.1 (7 bugs)
+
+> Se corrigieron 7 bugs que impedían la funcionalidad completa del sistema:
+
+| # | Modulo | Archivo | Correccion |
+|---|--------|---------|-----------|
+| 1-2 | Reportes / UI | `Public/js/app.ui.js` | Eliminados handlers demo de `#formReporte` y `.btn-nuevo` que interferian con los modulos reales (el submit de reportes lo maneja `app.reportes.js`) |
+| 3 | Clientes | `ClienteController.php`, `Cliente.php` | `direccion` y `telefono` ahora opcionales (antes obligatorios, pero el front los trataba como opcionales) |
+| 4 | Activos | `ActivoController.php` | Checkbox `activa` usa `isset($_POST['activa'])`; un activo desmarcado ya se guarda como inactivo |
+| 5 | Roles | `Rol.php` | `asignarRolAUsuario()` resuelve `rol_usuarios.id` por `fk_rol` antes de escribir `usuarios.fk_rol_usuario` (antes escribia `roles.id` directo y el JOIN no resolvia el rol) |
+| 6 | Roles | `estructura.sql`, `Rol.php`, `RolController.php`, `app.roles.js` | Soporte completo de `descripcion` y `created_at` (columnas nuevas, setters, persistencia y render formateado) |
+| 7 | Seed data | `seed_data.sql` | INSERT de `cliente_asesoria` usa columnas reales `(fk_cliente, email, rif, tipo)` con IDs de clientes correctos |
+
+**Migración BD (v4.1):** si la BD ya existe, aplicar a la tabla `roles`:
+```sql
+ALTER TABLE roles
+  ADD COLUMN descripcion VARCHAR(500) DEFAULT NULL AFTER nombre_rol,
+  ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER descripcion;
+```
 
 ---
 
@@ -929,7 +956,7 @@ El proyecto cuenta con **todos los modulos conectados a la BD** y arquitectura O
 
 ---
 
-**Documentacion generada**: Julio 2026
-**Version**: 4.0
+**Documentacion generada**: Julio 2026 (actualizada Sept 2026, v4.1)
+**Version**: 4.1
 **Autor**: Carlos Paez Guerra
 

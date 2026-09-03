@@ -105,7 +105,7 @@ class ActivoController
         $marca       = trim($_POST['marca'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
         $tipoActivo  = (int)($_POST['tipo_activo_id'] ?? 0);
-        $activa      = (int)($_POST['activa'] ?? 1);
+        $activa      = isset($_POST['activa']) ? (int)$_POST['activa'] : 0;
         $isCiber     = isset($_POST['is_ciber']) ? (int)$_POST['is_ciber'] : 0;
 
         if (empty($marca) || empty($descripcion) || $tipoActivo <= 0) {
@@ -132,7 +132,7 @@ class ActivoController
         $marca       = trim($_POST['marca'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
         $tipoActivo  = (int)($_POST['tipo_activo_id'] ?? 0);
-        $activa      = (int)($_POST['activa'] ?? 1);
+        $activa      = isset($_POST['activa']) ? (int)$_POST['activa'] : 0;
         $isCiber     = isset($_POST['is_ciber']) ? (int)$_POST['is_ciber'] : 0;
 
         if (!$id || empty($marca) || empty($descripcion) || $tipoActivo <= 0) {

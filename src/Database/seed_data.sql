@@ -61,12 +61,12 @@ INSERT INTO clientes (cedula, nombre, apellido, direccion, telefono) VALUES
 -- ============================================================
 -- CLIENTE_ASESORIA
 -- ============================================================
-INSERT INTO cliente_asesoria (cedula, nombre, apellido, direccion, telefono, email) VALUES
-('V-12345678', 'Carlos', 'González', 'Av. Libertador, Caracas', '0412-1234567', 'carlosg@email.com'),
-('V-34567890', 'Pedro', 'Martínez', 'Urb. Las Mercedes, Valencia', '0424-3456789', 'pedrom@email.com'),
-('J-56789012', 'Comercial XYZ, C.A.', 'S/N', 'Zona Industrial, San Cristóbal', '0276-5678901', 'comercialxyz@email.com'),
-('V-23456789', 'María', 'Rodríguez', 'Calle Sucre, Maracaibo', '0414-2345678', 'mariar@email.com'),
-('J-89012345', 'Inversiones ABC, C.A.', 'S/N', 'Centro Empresarial, Los Teques', '0212-8901234', 'inversionesabc@email.com');
+INSERT INTO cliente_asesoria (fk_cliente, email, rif, tipo) VALUES
+(1, 'carlosg@email.com', 'V-12345678', 'civil'),
+(3, 'pedrom@email.com', 'V-34567890', 'civil'),
+(5, 'comercialxyz@email.com', 'J-56789012', 'comercial'),
+(2, 'mariar@email.com', 'V-23456789', 'civil'),
+(8, 'inversionesabc@email.com', 'J-89012345', 'comercial');
 
 -- ============================================================
 -- PROVEEDORES

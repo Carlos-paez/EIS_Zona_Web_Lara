@@ -2237,9 +2237,11 @@ Línea 236-291: Cybercafé:
 
 Línea 293-302: Reportes:
 
-  - Al enviar #formReporte: previene envío real, muestra toast de generación.
+  - Al enviar #formReporte: previene envío real, muestra toast de generación.
 
-  - Simula proceso con setTimeout (1.2s).
+  - Simula proceso con setTimeout (1.2s).
+
+  - **Eliminado en v4.1**: el handler demo de `#formReporte` fue removido de `app.ui.js`; el envío lo gestiona ahora el módulo real `app.reportes.js`.
 
   
 
@@ -2247,7 +2249,9 @@ Línea 304-314: Botones de acción:
 
   - [data-confirm]: muestra confirmación antes de ejecutar.
 
-  - .btn-nuevo: muestra toast "Formulario para nuevo X abierto (demo)".
+  - .btn-nuevo: muestra toast "Formulario para nuevo X abierto (demo)".
+
+  - **Eliminado en v4.1**: el handler demo de `.btn-nuevo` fue removido; la apertura de formularios la manejan los módulos reales de cada vista.
 
   
 

@@ -257,20 +257,18 @@ $(document).on('click', '#notifBell', function () {
     $('#notifBadge').hide();
 });
 
-// Generador de reportes simulado
-$(document).on('submit', '#formReporte', function (e) {
-    e.preventDefault();
-    EIS.toast('Generando reporte...', 'indigo', 'download');
-});
-
 // Botones de accion
 $(document).on('click', '[data-confirm]', function () { ... });
-$(document).on('click', '.btn-nuevo', function () { ... });
 $(document).on('click', '.btn-download', function () { ... });
 
 // Tooltips mejorados
 $(document).on('mouseenter', '.btn-floating, .tooltip-me', function () { ... });
 ```
+
+> **Nota (v4.1):** Se eliminaron los handlers demo de `#formReporte` (que hacía `preventDefault()` y
+> leía `input[name="format"]`, inexistente; el real es `name="formato"`) y de `.btn-nuevo` (que
+> mostraba un toast "(demo)"). El envío del reporte lo gestiona ahora `app.reportes.js`, y el botón
+> "nuevo" lo gestionan los módulos reales de cada vista.
 
 ### 4.5 app.pos.js - Sistema POS
 

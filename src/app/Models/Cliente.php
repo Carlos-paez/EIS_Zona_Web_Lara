@@ -83,7 +83,6 @@ class Cliente extends Model
     public function setDireccion(string $direccion): void
     {
         $direccion = $this->sanitizeString($direccion);
-        $this->validateNotEmpty($direccion, 'dirección');
         $this->validateLength($direccion, 'dirección', self::MAX_DIRECCION);
         $this->direccion = $direccion;
     }
@@ -96,7 +95,6 @@ class Cliente extends Model
     public function setTelefono(string $telefono): void
     {
         $telefono = $this->sanitizeString($telefono);
-        $this->validateNotEmpty($telefono, 'teléfono');
         $this->validateLength($telefono, 'teléfono', self::MAX_TELEFONO);
         $this->telefono = $telefono;
     }

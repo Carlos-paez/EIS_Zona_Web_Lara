@@ -269,6 +269,13 @@ Esquema en `src/Database/estructura.sql` con **21 tablas** InnoDB:
 
 `roles, permisos, categoria, clientes, cliente_asesoria, proveedores, status_seguimiento, tipo_asesoria, tarifas, tipo_activo, rol_usuarios, usuarios, permisos_rol, productos, orden_de_venta, lineas_venta, orden_abastecimiento, lineas_abastecimiento, asesoria, activos, sesion_ciber`
 
+> **Nota v4.1:** La tabla `roles` ahora incluye las columnas `descripcion` (VARCHAR 500) y `created_at` (TIMESTAMP). Para instalaciones existentes, aplicar el siguiente `ALTER TABLE` (o reimportar `estructura.sql` + `seed_data.sql`):
+> ```sql
+> ALTER TABLE roles
+>   ADD COLUMN descripcion VARCHAR(500) DEFAULT NULL AFTER nombre_rol,
+>   ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER descripcion;
+> ```
+
 ---
 
 ## Documentación Disponible
@@ -343,7 +350,7 @@ Email: carlospaezguerra@gmail.com
 
 | Versión | Fecha | Descripción |
 |---------|-------|-------------|
-| 4.1 | Sep 2026 | Integración de **jQuery DataTables** (local) en todas las tablas principales (ordenamiento, paginación y búsqueda): Inventario, Clientes, Activos, Roles, Usuarios, Proveedores, Asesorías, Reportes, Cyber historial y Dashboard; helpers `EIS.datatable*` en `app.core.js` y tema Materialize oscuro/claro |
+| 4.1 | Sep 2026 | Integración de **jQuery DataTables** (local) en todas las tablas principales (ordenamiento, paginación y búsqueda): Inventario, Clientes, Activos, Roles, Usuarios, Proveedores, Asesorías, Reportes, Cyber historial y Dashboard; helpers `EIS.datatable*` en `app.core.js` y tema Materialize oscuro/claro; corrección de 7 bugs de funcionalidad: eliminación de handlers demo en `app.ui.js` (reportes y `.btn-nuevo`), campos `direccion`/`telefono` opcionales en clientes, checkbox `activa` corregido con `isset()` en activos, `asignarRolAUsuario()` resuelve `rol_usuarios.id`, soporte completo de `descripcion`/`created_at` en roles, e INSERT corregido de `cliente_asesoria` |
 | 4.x | Ago 2026 | Dashboard y Reportes conectados a datos reales con exportación (CSV/Excel/PDF vía `Exporter`/`PdfBuilder`); registro de clientes en POS; CRUD de Activos; CiberControl con sesiones iniciar/finalizar y CRUD de PCs |
 | 3.3 | Jul 2026 | Validación backend completa: helpers reutilizables, existence checks, coherencia de datos |
 | 3.2 | Jul 2026 | Seguridad: CSRF, XSS, session hardening, módulos Clientes y ProveedorGestion |
@@ -355,4 +362,4 @@ Email: carlospaezguerra@gmail.com
 ---
 
 **Última actualización**: Septiembre 2026
-**Estado**: En desarrollo activo (rama `Carlos`). Todos los módulos funcionales con MVC + AJAX + BD + tablas con DataTables.
+**Estado**: En desarrollo activo (rama `Carlos`). Todos los módulos funcionales con MVC + AJAX + BD + tablas con DataTables. Se corrigieron 7 bugs de funcionalidad que impedían el 100% de las operaciones (ver versión 4.1).
