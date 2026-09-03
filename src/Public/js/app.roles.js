@@ -99,7 +99,8 @@ $(function () {
                 row += '<td style="padding:0.75rem 1rem;">' + usuariosBadge + '</td>';
 
                 // Columna 4: Fecha de creación del rol (oculto en móvil)
-                row += '<td class="hide-on-small-only" style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.8rem;">' + (rol.created_at || '-') + '</td>';
+                var creado = rol.created_at ? String(rol.created_at).split(' ')[0] : '-';
+                row += '<td class="hide-on-small-only" style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.8rem;">' + $('<span>').text(creado).html() + '</td>';
 
                 // Columna 5: Botones de acción (Editar, Permisos, Eliminar)
                 row += '<td style="padding:0.75rem 1rem;text-align:right;white-space:nowrap;">';

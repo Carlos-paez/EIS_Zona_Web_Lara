@@ -82,6 +82,7 @@ class RolController
         }
 
         $nombre_rol = trim($_POST['nombre'] ?? '');
+        $descripcion = trim($_POST['descripcion'] ?? '');
         if (empty($nombre_rol)) {
             echo json_encode(['success' => false, 'error' => 'El nombre del rol es obligatorio']);
             return;
@@ -92,7 +93,7 @@ class RolController
             return;
         }
 
-        $resultado = $this->model->crearRol($nombre_rol);
+        $resultado = $this->model->crearRol($nombre_rol, $descripcion);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Rol creado exitosamente']
@@ -109,6 +110,7 @@ class RolController
 
         $id = (int)($_POST['id'] ?? 0);
         $nombre_rol = trim($_POST['nombre'] ?? '');
+        $descripcion = trim($_POST['descripcion'] ?? '');
         if (!$id || empty($nombre_rol)) {
             echo json_encode(['success' => false, 'error' => 'Complete todos los campos obligatorios']);
             return;
@@ -119,7 +121,7 @@ class RolController
             return;
         }
 
-        $resultado = $this->model->actualizarRol($id, $nombre_rol);
+        $resultado = $this->model->actualizarRol($id, $nombre_rol, $descripcion);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Rol actualizado exitosamente']

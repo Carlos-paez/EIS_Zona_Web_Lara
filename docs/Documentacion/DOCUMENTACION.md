@@ -21,7 +21,7 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 
 **Caracteristicas tecnicas destacadas**:
 - Assets 100% locales (sin dependencia de CDN)
-- JavaScript modular en 14 archivos especializados
+- JavaScript modular en 15 archivos especializados mas el motor de jQuery DataTables
 - Service Worker para funcionamiento offline
 - PWA con manifest.json
 - Tema oscuro/claro con persistencia en localStorage
@@ -133,9 +133,13 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 | src/Public/css/login.css | — | Estilos login |
 | src/Public/css/material-icons.css | — | Estilos Material Icons |
 | src/Public/css/materialize.min.css | — | Materialize CSS (local) |
-| src/Public/js/app.core.js | — | Funciones compartidas |
+| src/Public/css/dataTables.materialize.css | — | Tema de DataTables adaptado a Materialize y tema oscuro/claro |
+| src/Public/js/app.core.js | — | Funciones compartidas (incluye helpers `EIS.datatable*`) |
 | src/Public/js/app.init.js | — | Inicializacion Materialize |
-| src/Public/js/app.tables.js | — | Busqueda en tablas |
+| src/Public/js/app.selects.js | — | Barra de busqueda en selects de Materialize |
+| src/Public/js/jquery.dataTables.min.js | — | Motor jQuery DataTables 1.13.8 (local, sin CDN) |
+| src/Public/js/dataTables.materialize.js | — | Integracion de DataTables con Materialize y config por defecto (es/i18n) |
+| src/Public/js/app.tables.js | — | Punto de extension generico (la busqueda/filtro/paginacion la gestiona DataTables) |
 | src/Public/js/app.ui.js | — | UI notificaciones |
 | src/Public/js/app.pos.js | — | Sistema POS |
 | src/Public/js/app.cyber.js | — | Estaciones cyber |
@@ -287,8 +291,11 @@ class Router
 
     <!-- Scripts globales -->
     <script src="Public/js/materialize.min.js"></script>
+    <script src="Public/js/jquery.dataTables.min.js"></script>
+    <script src="Public/js/dataTables.materialize.js"></script>
     <script src="Public/js/app.core.js"></script>
     <script src="Public/js/app.init.js"></script>
+    <script src="Public/js/app.selects.js"></script>
     <script src="Public/js/app.tables.js"></script>
     <script src="Public/js/app.ui.js"></script>
 
@@ -413,7 +420,7 @@ El proyecto tiene 2 tipos de modelos:
 | `Usuario` | `Usuario.php` | `usuarios` | CRUD usuarios, autenticacion con password_hash |
 | `Proveedor` | `Proveedor.php` | `proveedores`, `orden_abastecimiento` | CRUD proveedores, ordenes de abastecimiento, FK proveedor/status |
 | `ProveedorGestion` | `ProveedorGestion.php` | `proveedores` | CRUD proveedores (gestion), unicidad RIF, email format |
-| `Rol` | `Rol.php` | `roles`, `permisos`, `permisos_rol` | CRUD roles, asignacion permisos, unicidad nombre |
+| `Rol` | `Rol.php` | `roles`, `permisos`, `permisos_rol`, `rol_usuarios` | CRUD roles, asignacion permisos, unicidad nombre, **descripcion** y **created_at** (v4.1) |
 | `Asesoria` | `Asesoria.php` | `asesoria` | CRUD asesorias legales |
 | `Activo` | `Activo.php` | `activos` | CRUD activos fijos |
 | `Venta` | `Venta.php` | `orden_de_venta`, `lineas_venta` | CRUD ventas y lineas de venta |
@@ -561,14 +568,18 @@ Gestion de roles y permisos conectada a BD via `Rol.php` + `RolController.php` +
 
 ### Arquitectura
 
-El monolito `app.js` original se dividio en **14 archivos modulares** organizados por funcionalidad:
+El monolito `app.js` original se dividio en **15 archivos modulares** organizados por funcionalidad, mas el motor de **jQuery DataTables** (local):
 
 | Archivo | Proposito | Carga |
 |---------|-----------|-------|
-| `app.core.js` | Namespace EIS, debounce, filtrarTabla, EIS.toast | Siempre |
+| `app.core.js` | Namespace EIS, debounce, `EIS.toast` y helpers `EIS.datatable*` | Siempre |
 | `app.init.js` | Init Materialize, reloj, tema, animaciones | Siempre |
-| `app.tables.js` | Busqueda en tablas, filtro estado, paginacion | Siempre |
-| `app.ui.js` | Notificaciones, botones, reportes, tooltips | Siempre |
+| `app.selects.js` | Barra de busqueda en los selects (dropdowns) de Materialize | Siempre |
+| `app.tables.js` | Punto de extension generico (la busqueda/filtro/paginacion la gestiona DataTables) | Siempre |
+| `app.ui.js` | Notificaciones, botones, tooltips | Siempre |
+| `jquery.dataTables.min.js` | Motor jQuery DataTables (ordenamiento/paginacion/busqueda) | Siempre |
+| `dataTables.materialize.js` | Integracion DataTables + Materialize y config por defecto (es) | Siempre |
+| `dataTables.materialize.css` | Tema de DataTables adaptado a Materialize y tema oscuro/claro | Siempre |
 | `app.pos.js` | Sistema carrito POS | Solo ventas |
 | `app.cyber.js` | Gestion estaciones cyber | Solo ciberControl |
 | `app.legal.js` | Validacion documentos legales | Solo asesorias |
@@ -586,8 +597,14 @@ El monolito `app.js` original se dividio en **14 archivos modulares** organizado
 var EIS = {};  // Namespace global
 
 function debounce(fn, delay) { ... }
-function filtrarTabla(inputSelector, tableSelector, colIndex) { ... }
 EIS.toast = function (msg, color, icon) { ... }
+
+// Familia de helpers de jQuery DataTables:
+EIS.datatable(selector, opts)                    // Inicializa DataTables (quita filas vacias colspan)
+EIS.datatableRefresh(selector)                   // Recarga filas tras re-render AJAX
+EIS.datatableWireSearch(selector, inputSel)      // Conecta un input a la busqueda global de DataTables
+EIS.datatableWireColumnFilter(selector, sel, col) // Conecta un select a un filtro de columna
+EIS.datatableDestroy(selector)                   // Destruye una instancia (tabla dinamica)
 ```
 
 ### app.init.js - Inicializacion
@@ -603,30 +620,49 @@ $(function () {
 });
 ```
 
-### app.tables.js - Busqueda y Filtros
+### app.tables.js - Datatable Transversal
 
 ```javascript
 $(function () {
-    // #searchProducto - Tabla inventario (col 1)
-    // #searchProveedor - Tabla proveedores (col 1)
-    // #searchActivo - Tabla activos (col 0)
-    // #filterEstado, #filterEstadoProv - Filtro por estado
-    // .pagination - Paginacion
+    // La busqueda, el filtro por estado y la paginacion de todas las tablas
+    // principales las gestiona jQuery DataTables (ver EIS.datatable* en
+    // app.core.js y la inicializacion en cada modulo app.<modulo>.js).
+    // Este archivo se mantiene como punto de extension sin handlers manuales.
 });
 ```
+
+### DataTables en los modulos
+
+Cada modulo inicializa su tabla con `EIS.datatable('#id-tabla')` y re-sincroniza el `<tbody>` tras re-render por AJAX con `EIS.datatableRefresh('#id-tabla')`. Las barras de busqueda y filtros existentes se conectan a las instancias:
+
+- **Inventario**: `#tabla-productos`, `#tabla-categorias` (`pageLength` 5), `#searchProducto` y `#filterEstado` (filtro por columna 4)
+- **Clientes**: `#tabla-clientes` + `#searchCliente`
+- **Activos**: `#tabla-activos` + `#searchActivo` y `#filterTipo` (filtro por columna 2)
+- **Roles**: `.rol-table` + `#searchRol` y `#filterRolEstado` (filtro por conteo de usuarios, columna 2)
+- **Usuarios**: `.user-table` + `#searchUsuario` y `#filterRol` (columna 2)
+- **Proveedores (ordenes)**: `#tabla-ordenes` + `#searchProveedor` y `#filterEstadoProv` (columna 4)
+- **Proveedores (gestion)**: `#tabla-proveedores` + `#searchProveedorGestion`
+- **Asesorias**: `#tabla-asesorias` + `#searchAsesoria`
+- **Reportes**: `#tablaReporte` (se destruye/reinicializa al variar el numero de columnas)
+- **Cyber historial**: `#tabla-historial` (tabla creada dinamicamente en el modal)
+- **Dashboard**: `#tabla-ventas-dia`, `#tabla-stock-critico` (`pageLength` 5)
 
 ### app.ui.js - Interacciones UI
 
 ```javascript
 $(function () {
     // #notifBell - Notificaciones demo
-    // #formReporte - Generador de reportes simulado
     // [data-confirm] - Botones con confirmacion
-    // .btn-nuevo - Boton nuevo elemento
     // .btn-download - Descarga simulada
     // .btn-floating, .tooltip-me - Tooltips mejorados
 });
 ```
+
+> **Nota (v4.1):** En la corrección de bugs se **eliminaron** de `app.ui.js` los handlers demo de
+> `#formReporte` (que hacía `e.preventDefault()` y leía un campo `name="format"` inexistente,
+> en realidad el formato es `name="formato"`) y de `.btn-nuevo` (que mostraba un toast "(demo)").
+> El submit del formulario de reportes lo maneja ahora el módulo real `app.reportes.js:83`, y
+> `.btn-nuevo` lo manejan los módulos de cada vista (inventario, proveedores-gestión, etc.).
 
 ### app.pos.js - Sistema POS
 
@@ -687,7 +723,7 @@ $(function () {
 
 | # | Tabla | Proposito |
 |---|-------|-----------|
-| 1 | `roles` | Catalogo de roles de usuario |
+| 1 | `roles` | Catalogo de roles de usuario (incluye `descripcion` y `created_at` desde v4.1) |
 | 2 | `permisos` | Catalogo de permisos del sistema |
 | 3 | `categoria` | Catalogo de categorias de productos |
 | 4 | `clientes` | Clientes del sistema |
@@ -738,13 +774,15 @@ Todos los recursos que antes se cargaban desde CDN ahora son locales:
 ### Service Worker (`sw.js`)
 
 ```javascript
-var CACHE_NAME = 'eis-cache-v1';
+var CACHE_NAME = 'eis-cache-v4';
 var STATIC_ASSETS = [
   'Public/css/material-icons.css', 'Public/css/materialize.min.css',
-  'Public/css/styles.css', 'Public/css/login.css',
+  'Public/css/styles.css', 'Public/css/dataTables.materialize.css',
+  'Public/css/login.css',
   'Public/js/jquery-3.7.1.min.js', 'Public/js/materialize.min.js',
+  'Public/js/jquery.dataTables.min.js', 'Public/js/dataTables.materialize.js',
   'Public/js/app.core.js', 'Public/js/app.init.js',
-  'Public/js/app.tables.js', 'Public/js/app.ui.js',
+  'Public/js/app.selects.js', 'Public/js/app.tables.js', 'Public/js/app.ui.js',
   'Public/js/app.pos.js', 'Public/js/app.cyber.js', 'Public/js/app.legal.js',
   'Public/fonts/MaterialIcons-Regular.ttf',
   'manifest.json', 'offline.php'
@@ -824,7 +862,7 @@ Hoja de estilos local para Material Icons con referencia a la fuente TTF local.
 
 ### Inventario (FUNCIONAL CON BD - CRUD AJAX)
 - **Archivos**: `inventario.php`, `Inventario.php`, `inventarioController.php`, `app.inventario.js`
-- **JS**: CRUD completo via AJAX + `app.tables.js` para busqueda/filtros
+- **Tabla**: `#tabla-productos` y `#tabla-categorias` con **DataTables** (`EIS.datatable`); busqueda `#searchProducto` y filtro de estado `#filterEstado` conectados a la instancia
 - **BD**: Productos, KPIs, movimientos de stock
 
 ### Clientes (FUNCIONAL CON BD - CRUD AJAX)
@@ -841,7 +879,7 @@ Hoja de estilos local para Material Icons con referencia a la fuente TTF local.
 
 ### Proveedores (FUNCIONAL CON BD - CRUD AJAX)
 - **Archivos**: `proveedores.php`, `Proveedor.php`, `ProveedorController.php`, `app.proveedores.js`
-- **JS**: CRUD completo via AJAX + `app.tables.js` para busqueda/filtros
+- **Tabla**: `#tabla-ordenes` con **DataTables** (`EIS.datatable`); busqueda `#searchProveedor` y filtro de estado `#filterEstadoProv` conectados a la instancia
 - **BD**: Proveedores, ordenes de abastecimiento, lineas
 
 ### Reportes (FUNCIONAL CON BD)
@@ -863,6 +901,29 @@ Hoja de estilos local para Material Icons con referencia a la fuente TTF local.
 ### Roles y Permisos (FUNCIONAL CON BD - CRUD AJAX)
 - **Archivos**: `roles.php`, `Rol.php`, `RolController.php`, `app.roles.js`
 - **BD**: Crear, editar roles + asignacion de permisos
+- **v4.1**: soporte completo de `descripcion`/`created_at`; `asignarRolAUsuario()` resuelve `rol_usuarios.id` correctamente
+
+---
+
+## Correcciones v4.1 (7 bugs)
+
+> Se corrigieron 7 bugs que impedían la funcionalidad completa del sistema:
+
+| # | Modulo | Archivo | Correccion |
+|---|--------|---------|-----------|
+| 1-2 | Reportes / UI | `Public/js/app.ui.js` | Eliminados handlers demo de `#formReporte` y `.btn-nuevo` que interferian con los modulos reales (el submit de reportes lo maneja `app.reportes.js`) |
+| 3 | Clientes | `ClienteController.php`, `Cliente.php` | `direccion` y `telefono` ahora opcionales (antes obligatorios, pero el front los trataba como opcionales) |
+| 4 | Activos | `ActivoController.php` | Checkbox `activa` usa `isset($_POST['activa'])`; un activo desmarcado ya se guarda como inactivo |
+| 5 | Roles | `Rol.php` | `asignarRolAUsuario()` resuelve `rol_usuarios.id` por `fk_rol` antes de escribir `usuarios.fk_rol_usuario` (antes escribia `roles.id` directo y el JOIN no resolvia el rol) |
+| 6 | Roles | `estructura.sql`, `Rol.php`, `RolController.php`, `app.roles.js` | Soporte completo de `descripcion` y `created_at` (columnas nuevas, setters, persistencia y render formateado) |
+| 7 | Seed data | `seed_data.sql` | INSERT de `cliente_asesoria` usa columnas reales `(fk_cliente, email, rif, tipo)` con IDs de clientes correctos |
+
+**Migración BD (v4.1):** si la BD ya existe, aplicar a la tabla `roles`:
+```sql
+ALTER TABLE roles
+  ADD COLUMN descripcion VARCHAR(500) DEFAULT NULL AFTER nombre_rol,
+  ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER descripcion;
+```
 
 ---
 
@@ -882,7 +943,8 @@ El proyecto cuenta con **todos los modulos conectados a la BD** y arquitectura O
 - **Modulos conectados a BD**: Clientes, Inventario, Ventas, Cyber, Usuarios, Roles/Permisos, Proveedores, Activos, Asesorias, Reportes, Dashboard
 - **Seguridad completa**: CSRF tokens, XSS sanitizacion, session hardening, prepared statements, validacion backend
 - **Tema oscuro/claro** con persistencia
-- **JavaScript modular** en 14 archivos especializados
+- **JavaScript modular** en 15 archivos especializados mas el motor de jQuery DataTables
+- **Tablas con DataTables**: ordenamiento, paginacion y busqueda en las tablas principales de todos los modulos
 - **Assets 100% locales** (sin dependencia de CDN)
 - **Service Worker** para funcionamiento offline
 - **PWA** con manifest.json
@@ -894,7 +956,7 @@ El proyecto cuenta con **todos los modulos conectados a la BD** y arquitectura O
 
 ---
 
-**Documentacion generada**: Julio 2026
-**Version**: 4.0
+**Documentacion generada**: Julio 2026 (actualizada Sept 2026, v4.1)
+**Version**: 4.1
 **Autor**: Carlos Paez Guerra
 

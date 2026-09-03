@@ -136,25 +136,27 @@ src/
 - Nombre de usuario
 
 ### Scripts Cargados y CSRF
-- Siempre: materialize.min.js, app.core.js, app.init.js, app.tables.js, app.ui.js
+- Siempre: materialize.min.js, jquery.dataTables.min.js, dataTables.materialize.js, app.core.js, app.init.js, app.selects.js, app.tables.js, app.ui.js
 - Condicional por modulo: app.pos.js, app.cyber.js, app.legal.js, app.inventario.js, app.roles.js,
-  app.proveedores.js, app.clientes.js, app.activos.js, app.reportes.js, etc.
+  app.proveedores.js, app.proveedores-gestion.js, app.clientes.js, app.activos.js, app.reportes.js, etc.
 - Inyecta `window.EIS.csrfToken` y `$.ajaxSetup` agrega el token a cada POST AJAX
 - Service Worker: `navigator.serviceWorker.register('sw.js')`
 
 ## JavaScript Modular
 
-Nombres: `app.core, app.init, app.tables, app.ui, app.pos, app.cyber, app.legal, app.inventario,
+Nombres: `app.core, app.init, app.selects, app.tables, app.ui, app.pos, app.cyber, app.legal, app.inventario,
 app.roles, app.proveedores, app.proveedores-gestion, app.clientes, app.activos, app.reportes`
-(+ `app.js`).
+(+ `app.js`) y el motor de tables `jquery.dataTables.min.js` + `dataTables.materialize.js`.
 
-- **app.core.js**: namespace `EIS`, `debounce()`, `EIS.toast()`, `escHtml()`
+- **app.core.js**: namespace `EIS`, `debounce()`, `EIS.toast()`, `escHtml()` y los helpers de DataTables `EIS.datatable*`
 - **app.init.js**: Materialize init, reloj, tema oscuro/claro, animaciones
-- **app.tables.js**: busqueda con debounce, filtro por estado, paginacion
+- **app.selects.js**: barra de busqueda en los selects (dropdowns) de Materialize
+- **app.tables.js**: punto de extension generico; la busqueda, filtro por estado y paginacion las gestiona DataTables
 - **app.ui.js**: notificaciones, botones, tooltips
+- **DataTables**: las tablas principales de cada modulo se inicializan con `EIS.datatable()` (ordenamiento, paginacion, busqueda); los re-render por AJAX se sincronizan con `EIS.datatableRefresh()` y las barras de busqueda/filtros existentes se conectan con `EIS.datatableWireSearch()`/`EIS.datatableWireColumnFilter()`. Tema adaptado en `dataTables.materialize.css`
 - **Modulos CRUD**: cada modulo implementa su CRUD/acciones vía AJAX
   (`?pagina=X&action=Y`) con render seguro usando `escHtml()`
-- **app.reportes.js**: consultas por rango y descarga CSV/Excel/PDF
+- **app.reportes.js**: consultas por rango y descarga CSV/Excel/PDF (tabla dinamica `#tablaReporte` con DataTables)
 
 ## Offline / PWA
 
@@ -164,6 +166,8 @@ app.roles, app.proveedores, app.proveedores-gestion, app.clientes, app.activos, 
 | Materialize CSS | `Public/css/materialize.min.css` |
 | Materialize JS | `Public/js/materialize.min.js` |
 | jQuery 3.7.1 | `Public/js/jquery-3.7.1.min.js` |
+| jQuery DataTables | `Public/js/jquery.dataTables.min.js` |
+| Tema DataTables | `Public/css/dataTables.materialize.css` + `Public/js/dataTables.materialize.js` |
 | Material Icons CSS | `Public/css/material-icons.css` |
 | Material Icons Font | `Public/fonts/MaterialIcons-Regular.ttf` |
 

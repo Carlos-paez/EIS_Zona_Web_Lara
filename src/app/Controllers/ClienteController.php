@@ -98,8 +98,8 @@ class ClienteController
         $direccion = trim($_POST['direccion'] ?? '');
         $telefono  = trim($_POST['telefono'] ?? '');
 
-        if (empty($cedula) || empty($nombre) || empty($apellido) || empty($direccion) || empty($telefono)) {
-            echo json_encode(['success' => false, 'error' => 'Todos los campos son obligatorios']);
+        if (empty($cedula) || empty($nombre) || empty($apellido)) {
+            echo json_encode(['success' => false, 'error' => 'Cédula, nombre y apellido son obligatorios']);
             return;
         }
 
@@ -130,8 +130,8 @@ class ClienteController
         $direccion = trim($_POST['direccion'] ?? '');
         $telefono  = trim($_POST['telefono'] ?? '');
 
-        if (!$id || empty($cedula) || empty($nombre) || empty($apellido) || empty($direccion) || empty($telefono)) {
-            echo json_encode(['success' => false, 'error' => 'Todos los campos son obligatorios']);
+        if (!$id || empty($cedula) || empty($nombre) || empty($apellido)) {
+            echo json_encode(['success' => false, 'error' => 'Cédula, nombre y apellido son obligatorios']);
             return;
         }
 

@@ -9,9 +9,11 @@ class Rol extends Model
 {
     private int $id = 0;
     private string $nombreRol = '';
+    private string $descripcion = '';
 
     private const MIN_NOMBRE_ROL = 2;
     private const MAX_NOMBRE_ROL = 50;
+    private const MAX_DESCRIPCION = 500;
 
     public function getId(): int
     {
@@ -28,6 +30,18 @@ class Rol extends Model
         return $this->nombreRol;
     }
 
+    public function getDescripcion(): string
+    {
+        return $this->descripcion;
+    }
+
+    public function setDescripcion(string $descripcion): void
+    {
+        $descripcion = $this->sanitizeString($descripcion);
+        $this->validateLength($descripcion, 'descripción', self::MAX_DESCRIPCION);
+        $this->descripcion = $descripcion;
+    }
+
     public function setNombreRol(string $nombreRol): void
     {
         $nombreRol = $this->sanitizeString($nombreRol);
@@ -42,6 +56,7 @@ class Rol extends Model
         return [
             'id'          => $this->id,
             'nombre_rol'  => $this->nombreRol,
+            'descripcion' => $this->descripcion,
         ];
     }
 
@@ -50,13 +65,14 @@ class Rol extends Model
         $rol = new self();
         $rol->setId((int)($data['id'] ?? 0));
         $rol->setNombreRol($data['nombre_rol'] ?? $data['nombre'] ?? '');
+        $rol->setDescripcion($data['descripcion'] ?? '');
         return $rol;
     }
 
     public function listarRoles(): array
     {
         $stmt = $this->db->query("
-            SELECT r.id, r.nombre_rol AS nombre,
+            SELECT r.id, r.nombre_rol AS nombre, r.descripcion, r.created_at,
                    (SELECT COUNT(*) FROM rol_usuarios ru WHERE ru.fk_rol = r.id) AS total_usuarios
             FROM roles r ORDER BY r.nombre_rol
         ");
@@ -66,29 +82,33 @@ class Rol extends Model
     public function obtenerRolPorId(int $id): array|false
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT id, nombre_rol AS nombre FROM roles WHERE id = ?");
+        $stmt = $this->db->prepare("SELECT id, nombre_rol AS nombre, descripcion FROM roles WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch();
     }
 
-    public function crearRol(string $nombre_rol): bool
+    public function crearRol(string $nombre_rol, string $descripcion = ''): bool
     {
         $this->setNombreRol($nombre_rol);
-        $sql = "INSERT INTO roles (nombre_rol) VALUES (?)";
+        $this->setDescripcion($descripcion);
+        $sql = "INSERT INTO roles (nombre_rol, descripcion) VALUES (?, ?)";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(1, $this->nombreRol, PDO::PARAM_STR);
+        $stmt->bindParam(2, $this->descripcion, PDO::PARAM_STR);
         return $stmt->execute();
     }
 
-    public function actualizarRol(int $id, string $nombre_rol): bool
+    public function actualizarRol(int $id, string $nombre_rol, string $descripcion = ''): bool
     {
         $this->setId($id);
         $this->setNombreRol($nombre_rol);
-        $sql = "UPDATE roles SET nombre_rol = ? WHERE id = ?";
+        $this->setDescripcion($descripcion);
+        $sql = "UPDATE roles SET nombre_rol = ?, descripcion = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(1, $this->nombreRol, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->id, PDO::PARAM_INT);
+        $stmt->bindParam(2, $this->descripcion, PDO::PARAM_STR);
+        $stmt->bindParam(3, $this->id, PDO::PARAM_INT);
         return $stmt->execute();
     }
 
@@ -173,8 +193,22 @@ class Rol extends Model
     {
         $usuario_id = $this->sanitizeInt($usuario_id);
         $rol_id = $this->sanitizeInt($rol_id);
-        $stmt = $this->db->prepare("UPDATE usuarios SET fk_rol_usuario = ? WHERE id = ?");
+
+        // usuarios.fk_rol_usuario referencia rol_usuarios.id (no roles.id).
+        // Buscamos el rol_usuarios.id correspondiente al rol seleccionado.
+        $stmt = $this->db->prepare("SELECT ru.id, ru.rol FROM rol_usuarios ru WHERE ru.fk_rol = ? LIMIT 1");
         $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
+        $stmt->execute();
+        $rolUsuarios = $stmt->fetch();
+
+        if (!$rolUsuarios) {
+            throw new \InvalidArgumentException('El rol seleccionado no tiene un registro de asignación válido');
+        }
+
+        $rolUsuariosId = (int)$rolUsuarios['id'];
+
+        $stmt = $this->db->prepare("UPDATE usuarios SET fk_rol_usuario = ? WHERE id = ?");
+        $stmt->bindParam(1, $rolUsuariosId, PDO::PARAM_INT);
         $stmt->bindParam(2, $usuario_id, PDO::PARAM_INT);
         return $stmt->execute();
     }

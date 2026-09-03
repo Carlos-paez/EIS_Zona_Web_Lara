@@ -3,8 +3,10 @@ USE zona_web_lara;
 
 CREATE TABLE roles
 (
-    id         INT PRIMARY KEY AUTO_INCREMENT,
-    nombre_rol VARCHAR(50) NOT NULL
+    id          INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_rol  VARCHAR(50)  NOT NULL,
+    descripcion VARCHAR(500)          DEFAULT NULL,
+    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
