@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Router;
+use App\Core\Validator;
 use App\Models\Cliente;
 
 class ClienteController
@@ -72,11 +73,7 @@ class ClienteController
 
     private function detalle(): void
     {
-        $id = (int)($_GET['id'] ?? 0);
-        if (!$id) {
-            echo json_encode(['success' => false, 'error' => 'ID no válido']);
-            return;
-        }
+        $id = Validator::id($_GET['id'] ?? null, 'ID del cliente');
         $cliente = $this->model->obtenerClientePorId($id);
         if ($cliente) {
             echo json_encode(['success' => true, 'data' => $cliente]);
@@ -92,16 +89,11 @@ class ClienteController
             return;
         }
 
-        $cedula    = trim($_POST['cedula'] ?? '');
-        $nombre    = trim($_POST['nombre'] ?? '');
-        $apellido  = trim($_POST['apellido'] ?? '');
-        $direccion = trim($_POST['direccion'] ?? '');
-        $telefono  = trim($_POST['telefono'] ?? '');
-
-        if (empty($cedula) || empty($nombre) || empty($apellido)) {
-            echo json_encode(['success' => false, 'error' => 'Cédula, nombre y apellido son obligatorios']);
-            return;
-        }
+        $cedula    = Validator::cedula($_POST['cedula'] ?? null, 'cédula');
+        $nombre    = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos']);
+        $apellido  = Validator::texto($_POST['apellido'] ?? null, 'apellido', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos']);
+        $direccion = Validator::texto($_POST['direccion'] ?? null, 'dirección', ['required' => false, 'max' => 500]);
+        $telefono  = Validator::telefono($_POST['telefono'] ?? null, 'teléfono');
 
         if ($this->model->existeCedula($cedula)) {
             echo json_encode(['success' => false, 'error' => 'Ya existe un cliente con esa cédula']);
@@ -123,17 +115,12 @@ class ClienteController
             return;
         }
 
-        $id        = (int)($_POST['id'] ?? 0);
-        $cedula    = trim($_POST['cedula'] ?? '');
-        $nombre    = trim($_POST['nombre'] ?? '');
-        $apellido  = trim($_POST['apellido'] ?? '');
-        $direccion = trim($_POST['direccion'] ?? '');
-        $telefono  = trim($_POST['telefono'] ?? '');
-
-        if (!$id || empty($cedula) || empty($nombre) || empty($apellido)) {
-            echo json_encode(['success' => false, 'error' => 'Cédula, nombre y apellido son obligatorios']);
-            return;
-        }
+        $id        = Validator::id($_POST['id'] ?? null, 'ID del cliente');
+        $cedula    = Validator::cedula($_POST['cedula'] ?? null, 'cédula');
+        $nombre    = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos']);
+        $apellido  = Validator::texto($_POST['apellido'] ?? null, 'apellido', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos']);
+        $direccion = Validator::texto($_POST['direccion'] ?? null, 'dirección', ['required' => false, 'max' => 500]);
+        $telefono  = Validator::telefono($_POST['telefono'] ?? null, 'teléfono');
 
         if ($this->model->existeCedula($cedula, $id)) {
             echo json_encode(['success' => false, 'error' => 'Ya existe otro cliente con esa cédula']);
@@ -155,11 +142,7 @@ class ClienteController
             return;
         }
 
-        $id = (int)($_POST['id'] ?? 0);
-        if (!$id) {
-            echo json_encode(['success' => false, 'error' => 'ID no válido']);
-            return;
-        }
+        $id = Validator::id($_POST['id'] ?? null, 'ID del cliente');
         $resultado = $this->model->eliminarCliente($id);
         echo json_encode(
             $resultado

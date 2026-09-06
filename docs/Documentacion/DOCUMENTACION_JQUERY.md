@@ -10,14 +10,15 @@ La integracion incluyo:
 - Migracion de JS vanilla a jQuery para theme toggle, sidebar, busquedas, filtros
 - Implementacion de componentes Materialize: sidenav, modals, selects, tooltips, tabs
 - Refactorizacion de vistas autenticadas para usar solo contenido (sin HTML repetido)
-- Creacion de JavaScript modular en 15 archivos especializados mas el motor de jQuery DataTables
+- Creacion de JavaScript modular en 16 archivos especializados mas el motor de jQuery DataTables
+- CRUD via AJAX en todos los modulos (POS, Cyber, Legal, Inventario, Roles, Proveedores, Clientes, Activos, Reportes, Usuarios)
 - Validacion de documentos en modulo de Asesoria Legal
 
 ---
 
 ## 2. Archivos del Proyecto
 
-### JavaScript (15 modulos + DataTables)
+### JavaScript (16 modulos + DataTables)
 
 | Archivo | Proposito | Carga |
 |---------|-----------|-------|
@@ -38,6 +39,7 @@ La integracion incluyo:
 | `Public/js/app.clientes.js` | CRUD de clientes via AJAX | Solo en pagina clientes |
 | `Public/js/app.activos.js` | CRUD de activos via AJAX | Solo en pagina activos |
 | `Public/js/app.reportes.js` | Generacion de reportes via AJAX | Solo en pagina reportes |
+| `Public/js/app.usuarios.js` | CRUD usuarios via AJAX (nuevo) | Solo en pagina usuarios |
 
 ### Librerias (locales)
 
@@ -93,6 +95,7 @@ La integracion incluyo:
     app.clientes.js    (solo en clientes)
     app.activos.js     (solo en activos)
     app.reportes.js    (solo en reportes)
+    app.usuarios.js    (solo en usuarios)
 
     Service Worker registration
 </body>
@@ -272,15 +275,20 @@ $(document).on('mouseenter', '.btn-floating, .tooltip-me', function () { ... });
 
 ### 4.5 app.pos.js - Sistema POS
 
+El POS es **completamente funcional con BD**: carga el catalogo de productos y el selector de
+clientes via AJAX (`$.getJSON(API + 'productos')`, `$.getJSON(API + 'clientes')` con
+`API = '?pagina=ventas&action='`), busca clientes por cédula y registra la orden con `$.post(API + 'registrar', {items, ciudadano, cedula, ...})`.
+
 ```javascript
-var posCart = [];      // Array de objetos {name, price}
+var posCart = [];      // Array de objetos {id, name, price}
 var posTotal = 0;
 
 // Agregar producto al carrito
 $(document).on('click', '.pos-product', function () {
+    var id = $(this).data('id');
     var name = $(this).data('name');
     var price = parseFloat($(this).data('price'));
-    posCart.push({ name: name, price: price });
+    posCart.push({ id: id, name: name, price: price });
     posTotal += price;
     actualizarPosUI();
     EIS.toast(name + ' agregado al carrito', 'green', 'add_shopping_cart');
@@ -308,8 +316,20 @@ $(document).on('click', '.cart-item-remove', function () { ... });
 // Abrir modal
 $(document).on('click', '#openCartBtn', function () { ... });
 
-// Procesar venta (simulado)
-$(document).on('click', '#procesarVenta', function () { ... });
+// Procesar venta (real): valida cliente, envia carrito como JSON items y
+// registra la orden de venta + lineas + descuento de stock en la BD
+$(document).on('click', '#procesarVenta', function () {
+    $.post(API + 'registrar', {
+        items: JSON.stringify(posCart),  // [{id, cantidad}]
+        ciudadano: ..., cedula: ..., direccion: ..., telefono: ...
+    }, function (r) {
+        if (r.success) { ... EIS.toast('Venta registrada', 'green'); }
+        else { EIS.toast(r.error, 'red', 'error'); }
+    });
+});
+
+// En `registrar` (VentaController) se decodifica `items` con json_decode y se
+// persisten `orden_de_venta` + `lineas_venta` en transaccion (stock incluido).
 
 // Vaciar carrito
 $(document).on('click', '#vaciarCarrito', function () { ... });
@@ -320,58 +340,39 @@ $(document).on('input', '#posSearch', debounce(function () { ... }, 200));
 
 ### 4.6 app.cyber.js - Estaciones Cyber
 
-```javascript
-function actualizarCyberContadores() {
-    var disp = $('.station-card.disponible').length;
-    var ocup = $('.station-card.ocupada').length;
-    $('#countDisponibles').text(disp);
-    $('#countOcupadas').text(ocup);
-}
+El control de cyber **persiste en la BD**: carga estaciones y tarifas con `Promise.all([$.getJSON(API + 'estaciones'), $.getJSON(API + 'tarifas')])` (con `API = '?pagina=ciberControl&action='`), inicia sesión (`$.post(API + 'iniciar', ...)`) desde un modal con datos del cliente, finaliza sesión (`$.post(API + 'finalizar', {sesion_id})`) con confirmación, y muestra el historial (`$.getJSON(API + 'historial')`). Los eventos reales de la grilla:
 
-// Toggle de estado con confirmacion
+```javascript
+// Click en estacion disponible -> abrirModalIniciar(id) -> POST 'iniciar'
+// Click en estacion ocupada -> confirm('¿Finalizar la sesión?') -> POST 'finalizar' {sesion_id}
 $(document).on('click', '.station-card', function () {
-    var status = $(this).data('status');
-    var num = $(this).find('.station-badge').text();
+    var id = $(this).data('id');
+    var sesionId = $(this).data('sesion');
+    var status = $(this).data('estado');
 
     if (status === 'disponible') {
-        if (confirm('¿Iniciar sesion en estacion ' + num + '?')) {
-            // Cambia a ocupada con animacion
-            $(this).removeClass('disponible').addClass('ocupada');
-            $(this).data('status', 'ocupada');
-            $(this).find('.station-status')
-                .css({ transform: 'scale(0.8)', opacity: 0 })
-                .animate({ transform: 'scale(1)', opacity: 1 }, 300);
-            actualizarCyberContadores();
-        }
+        abrirModalIniciar(id);
     } else if (status === 'ocupada') {
-        // Cambia a disponible
+        if (confirm('¿Finalizar la sesión en la estación ' + id + '?')) {
+            $.post(API + 'finalizar', { sesion_id: sesionId }, function (r) {
+                EIS.toast(r.success ? 'Sesión finalizada' : (r.error || 'Error'),
+                    r.success ? 'green' : 'red', r.success ? 'check_circle' : 'error');
+                cargarEstadoCyber();
+            });
+        }
     }
-    // Mantenimiento: muestra toast informativo
 });
 
-// Filtro visual
-$(document).on('click', '.filter-btn', function () {
-    var filter = $(this).data('filter');
-    $('.station-card').each(function () {
-        var $col = $(this).closest('.col');
-        if (filter === 'all') {
-            $col.slideDown(200);
-        } else {
-            var match = $(this).data('status') === filter;
-            match ? $col.slideDown(200) : $col.hide();
-        }
-    });
-});
+// Filtro visual por estado (all/disponible/ocupada)
+$(document).on('click', '.filter-btn', function () { ... });
 ```
 
 ### 4.7 app.legal.js - Asesoria Legal
 
+El modulo de asesorias **persiste en la BD** via AJAX: carga el historial y el KPI (`.getJSON(API + 'listar')`, `API + 'kpis'`), registra (`$.post(API + 'crear', $(this).serialize())`), actualiza (`$.post(API + 'actualizar', ...)`) y elimina (`$.post(API + 'eliminar', {id})`) con `API = '?pagina=asesorias&action='`. Mantiene la validacion en tiempo real de los tipos de documento permitidos:
+
 ```javascript
-var allowedDocs = [
-    'consulta laboral', 'consulta civil', 'consulta familiar',
-    'orientacion legal general', 'revision de contrato',
-    'elaboracion de documento simple', 'asesoria prevencional'
-];
+var allowedDocs = [ /* 11 tipos permitidos */ ];
 var asesoriasRegistradas = [];
 
 function normalizarDoc(texto) {
@@ -382,19 +383,13 @@ function documentoPermitido(doc) {
     return allowedDocs.indexOf(normalizarDoc(doc)) !== -1;
 }
 
-// Submit del formulario
+// Submit del formulario -> POST 'crear' con $(this).serialize() (ciudadano,
+// cedula, documento, descripcion, fecha) y refresco del historial
 $(document).on('submit', '#asesoriaForm', function (e) {
     e.preventDefault();
-    var ciudadano = $('#ciudadano').val().trim();
-    var cedula = $('#cedula').val().trim();
-    var documento = $('#documento').val().trim();
-
-    if (documentoPermitido(documento)) {
-        // Registrar como permitido
-    } else {
-        // Derivar a oficina oficial
-    }
-    actualizarHistorial();
+    $.post(API + 'crear', $(this).serialize(), function (r) {
+        ...
+    });
 });
 
 // Validacion en tiempo real
@@ -423,12 +418,12 @@ $(document).on('input', '#documento', function () {
 | Tema oscuro/claro | Todos | `.attr()`, `localStorage` |
 | Reloj digital | Todos | `.text()`, `setInterval` |
 | Animacion metricas | Dashboard | `.animate()` |
-| Busqueda tablas | Inventario, Proveedores, Activos | `.each()`, `.toggle()` |
-| Filtro por estado | Inventario, Proveedores | `.show()`, `.hide()` |
-| Carrito POS | Ventas | Clases, eventos, animaciones |
-| Toggle estaciones | Cyber | `.addClass()`, `.removeClass()`, `.animate()` |
+| Busqueda tablas | Todos los modulos (DataTables) | `EIS.datatable*`, `.dataTable()`, `debounce` |
+| Filtro por estado | Inventario, Proveedores, Roles | `EIS.datatableWireColumnFilter` |
+| Carrito POS | Ventas | Clases, eventos, `$.post('registrar')` |
+| Sesiones Cyber | Cyber | `.getJSON('estaciones')`, `$.post('iniciar'/'finalizar')` |
 | Filtro estaciones | Cyber | `.slideDown()`, `.hide()` |
-| Validacion legal | Asesorias | `.val()`, `.html()`, `.prop()` |
+| Validacion legal | Asesorias | `.val()`, `.html()`, `.prop()` + `$.post('crear')` |
 | Paginacion | Inventario, Proveedores | `.closest()`, `.find()` |
 | Notificaciones | Todas | `M.toast()` |
 | Volver arriba | Todas | `.animate()`, `.scrollTop()` |
@@ -474,6 +469,6 @@ El tema se controla mediante el atributo `data-theme` en `<html>`:
 
 ---
 
-**Documentacion**: Junio 2026
-**Version**: 2.2
+**Documentacion**: Junio 2026 (actualizada Sept 2026)
+**Version**: 2.3
 

@@ -39,6 +39,7 @@ class Activo extends Model
         $this->validateNotEmpty($marca, 'marca');
         $this->validateMinLength($marca, 'marca', self::MIN_MARCA);
         $this->validateLength($marca, 'marca', self::MAX_MARCA);
+        $this->validarLibre($marca, 'marca');
         $this->marca = $marca;
     }
 
@@ -52,6 +53,7 @@ class Activo extends Model
         $descripcion = $this->sanitizeString($descripcion);
         $this->validateNotEmpty($descripcion, 'descripción');
         $this->validateLength($descripcion, 'descripción', self::MAX_DESCRIPCION);
+        $this->validarSinControl($descripcion, 'descripción');
         $this->descripcion = $descripcion;
     }
 

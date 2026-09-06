@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Router;
+use App\Core\Validator;
 use App\Models\Inventario;
 
 class InventarioController
@@ -96,7 +97,7 @@ class InventarioController
 
     private function buscar(): void
     {
-        $termino = trim($_POST['termino'] ?? '');
+        $termino = Validator::busqueda($_POST['termino'] ?? '', 'búsqueda');
         if ($termino === '') {
             $productos = $this->model->obtenerProductos();
         } else {
@@ -112,36 +113,15 @@ class InventarioController
             return;
         }
 
-        $codigo       = trim($_POST['codigo'] ?? '');
-        $nombre       = trim($_POST['nombre'] ?? '');
-        $descripcion  = trim($_POST['descripcion'] ?? '');
-        $categoria_id = (int)($_POST['categoria_id'] ?? 0);
-        $stock        = (int)($_POST['stock'] ?? 0);
-        $stock_minimo = (int)($_POST['stock_minimo'] ?? 5);
-        $costo_compra = (float)($_POST['costo_compra'] ?? 0);
-        $precio_venta = (float)($_POST['precio_venta'] ?? 0);
+        $codigo       = Validator::texto($_POST['codigo'] ?? null, 'código', ['required' => true, 'max' => 50, 'pattern' => Validator::PATTERN_CODIGO, 'patternMessage' => 'El código del producto contiene caracteres no permitidos']);
+        $nombre       = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100]);
+        $descripcion  = Validator::texto($_POST['descripcion'] ?? null, 'descripción', ['required' => false, 'max' => 1000]);
+        $categoria_id = Validator::entero($_POST['categoria_id'] ?? null, 'categoría', ['required' => true, 'min' => 1]);
+        $stock        = Validator::entero($_POST['stock'] ?? null, 'stock', ['required' => true, 'min' => 0]);
+        $stock_minimo = Validator::entero($_POST['stock_minimo'] ?? 5, 'stock mínimo', ['required' => true, 'min' => 1]);
+        $costo_compra = Validator::decimal($_POST['costo_compra'] ?? 0, 'costo de compra', ['required' => false, 'min' => 0]);
+        $precio_venta = Validator::decimal($_POST['precio_venta'] ?? null, 'precio de venta', ['required' => true, 'min' => 0.01]);
 
-        if (empty($codigo) || empty($nombre) || !$categoria_id) {
-            echo json_encode(['success' => false, 'error' => 'Complete todos los campos obligatorios']);
-            return;
-        }
-
-        if ($stock < 0) {
-            echo json_encode(['success' => false, 'error' => 'El stock no puede ser negativo']);
-            return;
-        }
-        if ($stock_minimo < 1) {
-            echo json_encode(['success' => false, 'error' => 'El stock mínimo debe ser al menos 1']);
-            return;
-        }
-        if ($costo_compra < 0) {
-            echo json_encode(['success' => false, 'error' => 'El costo de compra no puede ser negativo']);
-            return;
-        }
-        if ($precio_venta <= 0) {
-            echo json_encode(['success' => false, 'error' => 'El precio de venta debe ser mayor a 0']);
-            return;
-        }
         if ($costo_compra > 0 && $precio_venta < $costo_compra) {
             echo json_encode(['success' => false, 'error' => 'El precio de venta no puede ser menor al costo de compra']);
             return;
@@ -167,37 +147,16 @@ class InventarioController
             return;
         }
 
-        $id           = (int)($_POST['id'] ?? 0);
-        $codigo       = trim($_POST['codigo'] ?? '');
-        $nombre       = trim($_POST['nombre'] ?? '');
-        $descripcion  = trim($_POST['descripcion'] ?? '');
-        $categoria_id = (int)($_POST['categoria_id'] ?? 0);
-        $stock        = (int)($_POST['stock'] ?? 0);
-        $stock_minimo = (int)($_POST['stock_minimo'] ?? 5);
-        $costo_compra = (float)($_POST['costo_compra'] ?? 0);
-        $precio_venta = (float)($_POST['precio_venta'] ?? 0);
+        $id           = Validator::id($_POST['id'] ?? null, 'ID del producto');
+        $codigo       = Validator::texto($_POST['codigo'] ?? null, 'código', ['required' => true, 'max' => 50, 'pattern' => Validator::PATTERN_CODIGO, 'patternMessage' => 'El código del producto contiene caracteres no permitidos']);
+        $nombre       = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100]);
+        $descripcion  = Validator::texto($_POST['descripcion'] ?? null, 'descripción', ['required' => false, 'max' => 1000]);
+        $categoria_id = Validator::entero($_POST['categoria_id'] ?? null, 'categoría', ['required' => true, 'min' => 1]);
+        $stock        = Validator::entero($_POST['stock'] ?? null, 'stock', ['required' => true, 'min' => 0]);
+        $stock_minimo = Validator::entero($_POST['stock_minimo'] ?? 5, 'stock mínimo', ['required' => true, 'min' => 1]);
+        $costo_compra = Validator::decimal($_POST['costo_compra'] ?? 0, 'costo de compra', ['required' => false, 'min' => 0]);
+        $precio_venta = Validator::decimal($_POST['precio_venta'] ?? null, 'precio de venta', ['required' => true, 'min' => 0.01]);
 
-        if (!$id || empty($codigo) || empty($nombre) || !$categoria_id) {
-            echo json_encode(['success' => false, 'error' => 'Complete todos los campos obligatorios']);
-            return;
-        }
-
-        if ($stock < 0) {
-            echo json_encode(['success' => false, 'error' => 'El stock no puede ser negativo']);
-            return;
-        }
-        if ($stock_minimo < 1) {
-            echo json_encode(['success' => false, 'error' => 'El stock mínimo debe ser al menos 1']);
-            return;
-        }
-        if ($costo_compra < 0) {
-            echo json_encode(['success' => false, 'error' => 'El costo de compra no puede ser negativo']);
-            return;
-        }
-        if ($precio_venta <= 0) {
-            echo json_encode(['success' => false, 'error' => 'El precio de venta debe ser mayor a 0']);
-            return;
-        }
         if ($costo_compra > 0 && $precio_venta < $costo_compra) {
             echo json_encode(['success' => false, 'error' => 'El precio de venta no puede ser menor al costo de compra']);
             return;
@@ -243,11 +202,7 @@ class InventarioController
             return;
         }
 
-        $nombre = trim($_POST['nombre'] ?? '');
-        if (empty($nombre)) {
-            echo json_encode(['success' => false, 'error' => 'El nombre es obligatorio']);
-            return;
-        }
+        $nombre = Validator::texto($_POST['nombre'] ?? null, 'nombre de categoría', ['required' => true, 'max' => 100]);
         $resultado = $this->model->crearCategoria($nombre);
         echo json_encode(
             $resultado
@@ -263,12 +218,8 @@ class InventarioController
             return;
         }
 
-        $id = (int)($_POST['id'] ?? 0);
-        $nombre = trim($_POST['nombre'] ?? '');
-        if (!$id || empty($nombre)) {
-            echo json_encode(['success' => false, 'error' => 'ID y nombre son obligatorios']);
-            return;
-        }
+        $id = Validator::id($_POST['id'] ?? null, 'ID de la categoría');
+        $nombre = Validator::texto($_POST['nombre'] ?? null, 'nombre de categoría', ['required' => true, 'max' => 100]);
         $resultado = $this->model->actualizarCategoria($id, $nombre);
         echo json_encode(
             $resultado
@@ -284,11 +235,7 @@ class InventarioController
             return;
         }
 
-        $id = (int)($_POST['id'] ?? 0);
-        if (!$id) {
-            echo json_encode(['success' => false, 'error' => 'ID no válido']);
-            return;
-        }
+        $id = Validator::id($_POST['id'] ?? null, 'ID de la categoría');
         $resultado = $this->model->eliminarCategoria($id);
         echo json_encode(
             $resultado

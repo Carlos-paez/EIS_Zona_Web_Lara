@@ -6,7 +6,11 @@ namespace App\Core;
  * Generador mínimo de PDF válido en PHP puro (sin librerías externas).
  *
  * Produce un PDF con texto y una tabla sencilla, con soporte básico para
- * caracteres Latin-1. Es suficiente para reportes de negocio simples.
+ * caracteres Latin-1 y numeración de páginas. Es suficiente para reportes
+ * de negocio simples.
+ *
+ * Coordenadas lógicas: origen arriba-izquierda, medidas en milímetros.
+ * Internamente se traducen a las coordenadas ascendentes del PDF.
  */
 class PdfBuilder
 {
@@ -15,11 +19,11 @@ class PdfBuilder
     private float $marginLeft;
     private float $marginTop;
     private float $maxWidth;
-    private float $cursorX;
     private float $cursorY;
-    private int $page;
-    private string $content = '';
     private float $fontSize;
+
+    /** @var string[] Contenido (stream) por página. */
+    private array $pages;
 
     private const UNITS = 0.352778; // 1 punto = 0.352778 mm aprox.
 
@@ -30,10 +34,9 @@ class PdfBuilder
         $this->marginLeft = 15;
         $this->marginTop  = 20;
         $this->maxWidth   = $this->pageWidth - $this->marginLeft * 2;
-        $this->cursorX    = $this->marginLeft;
         $this->cursorY    = $this->marginTop;
-        $this->page       = 1;
         $this->fontSize   = 11;
+        $this->pages      = ['']; // contenido de la página actual es el último elemento
     }
 
     /**
@@ -46,20 +49,21 @@ class PdfBuilder
     public function addText(string $texto, float $size = 11, bool $bold = false): void
     {
         $this->fontSize = $size;
-        $alto = $size * 0.55;
+        $alto = $size * 0.55 + 3;
         if ($this->cursorY + $alto > $this->pageHeight - 25) {
             $this->newPage();
         }
-        $state = $bold ? ['F1' => 1] : [];
-        $this->content .= sprintf(
+
+        // y ascendente del PDF para una línea lógica "cursorY" (desde arriba)
+        $py = $this->pageHeight - $this->cursorY;
+        $this->c(sprintf(
             "BT /F%d %s Tf %s Td (%s) Tj ET\n",
             $bold ? 2 : 1,
             $this->num($size * self::UNITS),
-            $this->num($this->cursorX) . ' ' . $this->num($this->cursorY),
+            $this->num($this->marginLeft) . ' ' . $this->num($py),
             $this->escape($texto)
-        );
-        $this->cursorY -= $alto + 3;
-        $this->cursorX = $this->marginLeft;
+        ));
+        $this->cursorY += $alto;
     }
 
     /**
@@ -89,44 +93,41 @@ class PdfBuilder
             $maxChars = (int)floor(($colWidth - $pad * 2) / max(0.1, $charWidth));
             $lineas[$idx] = $this->envolver($texto, $maxChars);
         }
-        $altura = max(array_map('count', $lineas)) * ($this->fontSize * 0.5) + $pad * 2;
-        $altoMax = $this->fontSize * 0.55;
+        $altoLinea = $this->fontSize * 0.5 + $pad;
+        $altura = max(array_map('count', $lineas)) * $altoLinea + $pad;
 
-        if ($this->cursorY - $altura < 25) {
+        if ($this->cursorY + $altura > $this->pageHeight - 25) {
             $this->newPage();
         }
 
-        $filaBottom = $this->cursorY - $altura;
+        $filaTop = $this->cursorY;
 
-        // Borde de la celda
+        // Borde de las celdas (rect con y ascendente del PDF)
         $x = $this->marginLeft;
         foreach ($valores as $idx => $valor) {
-            $this->rect($x, $filaBottom, $colWidth, $altura);
+            $this->rect($x, $this->pageHeight - ($filaTop + $altura), $colWidth, $altura);
             $x += $colWidth;
         }
 
-        // Texto
+        // Texto: la primera línea se coloca cerca del borde superior de la celda
         $tx = $this->marginLeft + $pad;
-        $ty = $this->cursorY - $pad - $altoMax;
+        $ty = $filaTop + $pad + $this->fontSize * 0.55;
         foreach ($lineas as $idx => $lineasTexto) {
-            $ly = $ty;
-            $lx = $this->marginLeft + $pad;
             foreach ($lineasTexto as $linea) {
-                $this->content .= sprintf(
+                $this->c(sprintf(
                     "BT /F%d %s Tf %s Td (%s) Tj ET\n",
                     $header ? 2 : 1,
                     $this->num($this->fontSize * self::UNITS),
-                    $this->num($lx) . ' ' . $this->num($ly),
+                    $this->num($tx) . ' ' . $this->num($this->pageHeight - $ty),
                     $this->escape($linea)
-                );
-                $ly -= $altoMax;
-                $lx = $tx;
+                ));
+                $ty += $altoLinea;
             }
             $tx += $colWidth;
-            $ty = $this->cursorY - $pad - $altoMax;
+            $ty = $filaTop + $pad + $this->fontSize * 0.55;
         }
 
-        $this->cursorY = $filaBottom - $this->fontSize * 0.2;
+        $this->cursorY = $filaTop + $altura + $this->fontSize * 0.2;
     }
 
     private function envolver(string $texto, int $maxChars): array
@@ -155,20 +156,35 @@ class PdfBuilder
 
     private function rect(float $x, float $y, float $w, float $h): void
     {
-        $this->content .= sprintf("%s %s %s %s re S\n", $this->num($x), $this->num($y), $this->num($w), $this->num($h));
+        $this->c(sprintf("%s %s %s %s re S\n", $this->num($x), $this->num($y), $this->num($w), $this->num($h)));
     }
 
     private function newPage(): void
     {
-        $this->page++;
-        $this->content .= "Q\n";
-        $this->content .= sprintf("0.5 0.5 0.5 rg\n");
-        $this->content .= sprintf("BT /F1 8 Tf %s Td (Pagina %d) Tj ET\n", $this->num($this->marginLeft) . ' ' . $this->num($this->pageHeight - 15), $this->page);
-        $this->content .= "0 0 0 rg\n";
-        $this->content .= "1 0 0 1 0 0 cm\n";
-        $this->content .= sprintf("q\n");
-        $this->cursorY = $this->pageHeight - 30;
-        $this->cursorX = $this->marginLeft;
+        $this->sealCurrentPage();
+        $this->pages[] = '';
+        $this->cursorY = $this->marginTop;
+    }
+
+    private function sealCurrentPage(): void
+    {
+        $idx = count($this->pages) - 1;
+        $this->pages[$idx] .= $this->pageFooter(count($this->pages));
+    }
+
+    private function pageFooter(int $pagina): string
+    {
+        return sprintf(
+            "0.5 0.5 0.5 rg\nBT /F1 %s Tf %s Td (%s) Tj ET\n0 0 0 rg\n",
+            $this->num(8 * self::UNITS),
+            $this->num($this->marginLeft) . ' ' . $this->num(15),
+            $this->escape('Página ' . $pagina)
+        );
+    }
+
+    private function c(string $linea): void
+    {
+        $this->pages[count($this->pages) - 1] .= $linea;
     }
 
     private function escape(string $texto): string
@@ -194,15 +210,44 @@ class PdfBuilder
      */
     public function output(): string
     {
+        $this->sealCurrentPage();
+
+        $n = count($this->pages);
+
+        // Estructura de objetos:
+        //   1 = Catalog, 2 = Pages
+        //   páginas: 2*i+1, streams: 2*i+2  (i = 1..n)
+        //   fuentes: después de todos los streams
+        $fontReg = 2 + 2 * $n + 1;
+        $fontBold = $fontReg + 1;
+
         $objects = [];
         $objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
-        $objects[2] = "<< /Type /Pages /Kids [3 0 R] /Count 1 >>";
-        $objects[3] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " . $this->num($this->pageWidth) . " " . $this->num($this->pageHeight) . "] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents " . 6 . " 0 R >>";
-        $objects[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
-        $objects[5] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>";
-        $objects[6] = "<< /Length " . strlen($this->content) . " >>\nstream\n" . $this->content . "endstream";
 
-        $pdf  = "%PDF-1.4\n";
+        $kids = [];
+        for ($i = 1; $i <= $n; $i++) {
+            $kids[] = (2 + 2 * $i - 1) . ' 0 R';
+        }
+        $objects[2] = sprintf("<< /Type /Pages /Kids [%s] /Count %d >>", implode(' ', $kids), $n);
+
+        for ($i = 1; $i <= $n; $i++) {
+            $pageId = 2 + 2 * $i - 1;
+            $contId = 2 + 2 * $i;
+            $objects[$pageId] = sprintf(
+                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %s %s] /Resources << /Font << /F1 %d 0 R /F2 %d 0 R >> >> /Contents %d 0 R >>",
+                $this->num($this->pageWidth),
+                $this->num($this->pageHeight),
+                $fontReg,
+                $fontBold,
+                $contId
+            );
+            $objects[$contId] = "<< /Length " . strlen($this->pages[$i - 1]) . " >>\nstream\n" . $this->pages[$i - 1] . "endstream";
+        }
+
+        $objects[$fontReg] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
+        $objects[$fontBold] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>";
+
+        $pdf = "%PDF-1.4\n";
         $offsets = [];
         foreach ($objects as $id => $body) {
             $offsets[$id] = strlen($pdf);

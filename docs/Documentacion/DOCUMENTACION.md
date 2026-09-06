@@ -21,7 +21,7 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 
 **Caracteristicas tecnicas destacadas**:
 - Assets 100% locales (sin dependencia de CDN)
-- JavaScript modular en 15 archivos especializados mas el motor de jQuery DataTables
+- JavaScript modular en 16 archivos especializados mas el motor de jQuery DataTables
 - Service Worker para funcionamiento offline
 - PWA con manifest.json
 - Tema oscuro/claro con persistencia en localStorage
@@ -29,7 +29,8 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 - Namespace `App\Core`, `App\Models`, `App\Controllers` con autoloading PSR-4
 - Patron Singleton para conexion PDO (clase `Database`)
 - Clase base abstracta `Model` con helpers de validacion reutilizables
-- 12 controladores con namespace para CRUD via AJAX
+- Clase final `Validator` (`App\Core\Validator`) con reglas estaticas por campo
+- 13 controladores con namespace para CRUD via AJAX
 - Seguridad: CSRF tokens, XSS sanitizacion, session hardening, validacion backend completa
 
 ---
@@ -53,22 +54,22 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
    |
 8. dispatchAction(): Instancia el controlador segun self::CONTROLLERS[$pagina] y ejecuta handle()
    |
-9. ¿Es accion de auth? (login_validate/logout) -> AuthController
+9. ¿Es ?pagina=login con intencion de logout (logout=1)? -> Router::logout()
    |
-10. Si no es ninguna accion especial -> render()
+10. ¿Es ?pagina=login_validate por POST? -> AuthController::login()
    |
-11. render(): Verifica si el usuario esta logueado
+11. Si no es ninguna accion especial -> render()
    |
-12. Si no esta logueado Y la pagina no es publica -> Redirige a login
+12. render(): Si no esta logueado Y la pagina no es publica -> Redirige a login
    |
-13. Si la pagina es publica (login) -> Carga directa
+13. Si la pagina es publica (login/login_validate) -> Carga directa
    |
 14. Si es pagina autenticada -> render(): Carga layout.php que incluye:
     |  - CSRF token en window.EIS.csrfToken y <input name="csrf_token">
-    |  - Sidebar con Materialize Sidenav (13 modulos)
+    |  - Sidebar con Materialize Sidenav (12 modulos)
     |  - Header con nav, reloj y notificaciones
     |  - Contenido especifico de la vista
-    |  - Scripts: Materialize JS + 14 modulos JS segun pagina
+    |  - Scripts: Materialize JS + modulos JS segun pagina
     |  - Service Worker registration
     |
 15. Si el archivo no existe -> Muestra error 404
@@ -85,12 +86,15 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 | src/index.php | 21 | Front Controller (autoloader + Router OOP) |
 | src/Config/database.php | 46 | Configuracion BD (legacy) |
 | src/app/core/Database.php | 81 | Conexion PDO Singleton (moderna) |
+| src/app/core/Validator.php | �– | Clase final con reglas de validacion estaticas por campo (cedula, RIF, username, precios, etc.) |
+| src/app/core/Exporter.php | �– | Exportacion de reportes a CSV, Excel (XLS) y PDF |
+| src/app/core/PdfBuilder.php | �– | Generador de PDF A4 sin librerias externas |
 | src/app/core/Model.php | 200+ | Clase base abstracta con helpers de validacion |
 | src/app/core/router.php | — | Enrutador OOP (clase Router, CSRF tokens, mapa CONTROLLERS, dispatchAction, auth, vistas) |
 | src/app/template/layout.php | 201 | Layout maestro con CSRF token + JS condicional (14 modulos JS) |
 | src/app/Controllers/AuthController.php | — | Controlador login/logout con session_regenerate_id |
 | src/app/Controllers/ClienteController.php | — | Controlador AJAX clientes |
-| src/app/Controllers/inventarioController.php | — | Controlador AJAX inventario |
+| src/app/Controllers/InventarioController.php | — | Controlador AJAX inventario |
 | src/app/Controllers/ProveedorController.php | — | Controlador AJAX proveedores (solicitudes) |
 | src/app/Controllers/ProveedorGestionController.php | — | Controlador AJAX proveedores (gestion) |
 | src/app/Controllers/RolController.php | — | Controlador AJAX roles/permisos |
@@ -100,6 +104,7 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 | src/app/Controllers/DashboardController.php | — | Controlador AJAX dashboard |
 | src/app/Controllers/ReporteController.php | — | Controlador AJAX reportes |
 | src/app/Controllers/VentaController.php | — | Controlador AJAX ventas (POS) |
+| src/app/Controllers/UsuarioController.php | — | Controlador AJAX usuarios (v4.x, nuevo) |
 | src/app/Models/Cliente.php | — | Modelo POO clientes |
 | src/app/Models/Inventario.php | — | Modelo POO inventario (namespace) |
 | src/app/Models/Usuario.php | — | Modelo POO usuarios |
@@ -147,10 +152,15 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 | src/Public/js/app.inventario.js | — | CRUD inventario via AJAX |
 | src/Public/js/app.roles.js | — | CRUD roles/permisos via AJAX |
 | src/Public/js/app.proveedores.js | — | CRUD proveedores via AJAX |
+| src/Public/js/app.proveedores-gestion.js | — | CRUD proveedores (gestion) via AJAX |
+| src/Public/js/app.clientes.js | — | CRUD clientes via AJAX |
+| src/Public/js/app.activos.js | — | CRUD activos via AJAX |
+| src/Public/js/app.reportes.js | — | Generacion de reportes via AJAX |
+| src/Public/js/app.usuarios.js | — | CRUD usuarios via AJAX (v4.x, nuevo) |
 | src/manifest.json | 15 | Manifiesto PWA |
 | src/sw.js | 83 | Service Worker |
 | src/offline.php | 43 | Pagina offline |
-| src/Database/estructura.sql | 243 | Esquema BD v3.0 (21 tablas) |
+| src/Database/estructura.sql | 286 | Esquema BD v3.0 (21 tablas) |
 | src/Database/seed_data.sql | — | Datos prueba |
 | src/Database/seed_data_masivo.sql | — | Datos masivos prueba |
 | src/Database/reportes_ejemplo.sql | — | Consultas ejemplo reportes |
@@ -452,7 +462,7 @@ Todos heredan de `App\Core\Model` y usan `$this->db` (conexion PDO Singleton).
 |-------|---------|----------|
 | `AuthController` | `AuthController.php` | `login()` — valida credenciales vs BD, `logout()` — destruye sesion + session_regenerate_id |
 | `ClienteController` | `ClienteController.php` | `handle()` — CRUD clientes via AJAX con validacion |
-| `InventarioController` | `inventarioController.php` | `handle()` — 10+ acciones CRUD via AJAX |
+| `InventarioController` | `InventarioController.php` | `handle()` — 10+ acciones CRUD via AJAX |
 | `RolController` | `RolController.php` | `handle()` — CRUD roles y permisos via AJAX con proteccion admin |
 | `ProveedorController` | `ProveedorController.php` | `handle()` — CRUD proveedores y ordenes via AJAX |
 | `ProveedorGestionController` | `ProveedorGestionController.php` | `handle()` — CRUD proveedores (gestion) via AJAX |
@@ -462,6 +472,7 @@ Todos heredan de `App\Core\Model` y usan `$this->db` (conexion PDO Singleton).
 | `DashboardController` | `DashboardController.php` | `handle()` — metricas del dashboard via AJAX |
 | `ReporteController` | `ReporteController.php` | `handle()` — generacion de reportes via AJAX |
 | `VentaController` | `VentaController.php` | `handle()` — ventas POS via AJAX |
+| `UsuarioController` | `UsuarioController.php` | `handle()` — CRUD usuarios, estados, password y roles via AJAX |
 
 **Seguridad en controladores:**
 - CSRF token en todas las peticiones AJAX
@@ -486,11 +497,11 @@ Pagina de login con diseno Material Design. NO usa el layout (pagina publica).
 
 ---
 
-### 7. `src/app/Views/login_validate.php` (30 lineas)
+### 7. `src/app/Views/login_validate.php` (19 lineas)
 
-Procesa la autenticacion con credenciales hardcodeadas (admin/1234).
-- Si exito: `$_SESSION['logged_in'] = true`, redirige a dashboard
-- Si falla: redirige a `?pagina=login&error=1`
+Es una vista publica que **nunca debe renderizarse directamente**: si alguien accede a `?pagina=login_validate` por GET, redirige a `?pagina=login`. La autenticacion real ocurre en `AuthController::login()` (POST), que verifica CSRF, username y contraseña contra la tabla `usuarios` (hash bcrypt con `password_hash`).
+- Si exito: `session_regenerate_id(true)`, `$_SESSION['logged_in']`, `user_id`, `username`, `nombre`, redirige a dashboard
+- Si falla (usuario/contraseña/CSRF): redirige a `?pagina=login&error=1`
 
 ---
 
@@ -511,16 +522,15 @@ Catalogo de productos desde BD con carrito modal. Toda la logica en `app.pos.js`
 #### 8.3 `ciberControl.php` (133 lineas) - CONTROL DE CYBERCAFE (FUNCIONAL CON BD)
 Estaciones organizadas en 3 zonas (Gamer, Estandar, VIP) con estados disponible/ocupada/mantenimiento. Conectado a BD via `CiberController.php` + `CiberControl.php`/`CiberModel.php` para registrar sesiones en `sesion_ciber`.
 
-#### 8.4 `inventario.php` (474 lineas) - GESTION DE INVENTARIO (FUNCIONAL CON BD)
-Modulo completo conectado a la base de datos via `inventario.php` (modelo POO). Incluye:
+#### 8.4 `inventario.php` (590 lineas) - GESTION DE INVENTARIO (FUNCIONAL CON BD)
+Modulo completo conectado a la base de datos via `Inventario.php` (modelo POO). Incluye:
 - **KPIs**: 4 tarjetas con total de productos, stock critico, stock bajo y valor total (desde BD)
 - **Tabla de productos**: Listado completo con estado, stock, precios (desde BD)
 - **Filtros**: Busqueda por texto con debounce + filtro por estado (OK, Critico, Sin stock)
 - **CRUD completo**: Crear, editar y eliminar productos via AJAX
-- **Movimientos de stock**: Entrada y salida con actualizacion de stock y bitacora
-- **Historial**: Visualizacion de movimientos por producto
-- **3 modales**: Producto (crear/editar), Movimientos (historial), Stock (entrada/salida)
-- **JS**: `app.inventario.js` (450 lineas) para todas las operaciones AJAX
+- **Categorias**: Crear, editar y eliminar categorias via AJAX (`crearCategoria`, `actualizarCategoria`, `eliminarCategoria`)
+- **3 modales**: Producto (crear/editar), Categoria, Stock
+- **JS**: `app.inventario.js` para todas las operaciones AJAX
 
 #### 8.5 `proveedores.php` — SOLICITUDES (FUNCIONAL CON BD)
 Gestion de proveedores y ordenes de compra conectada a BD via `Proveedor.php` + `ProveedorController.php` + `app.proveedores.js`. Incluye:
@@ -549,11 +559,13 @@ Formulario de registro con validacion de documentos permitidos (11 tipos). Toda 
 Pagina alternativa con diseno tipo tarjeta, estilo independiente, enlaces a 7 modulos.
 
 #### 8.10 `usuarios.php` — USUARIOS (FUNCIONAL CON BD)
-Gestion de usuarios conectada a BD via `AuthController.php` + `app.core.js`. Incluye:
+Gestion de usuarios conectada a BD via `UsuarioController.php` (dto nuevo controlador) + `app.usuarios.js`. Incluye:
 - **Crear usuarios**: Formulario con nombre, usuario, email, rol, contraseña
 - **Listado**: Tabla con todos los usuarios del sistema
 - **Editar/Eliminar**: Acciones via AJAX
-- **Roles**: Asignacion de rol desde un select poblado desde BD
+- **Activar/Desactivar**: Cambio de `estatus` via AJAX
+- **Cambiar password**: Actualizacion de hash via AJAX
+- **Roles**: Asignacion de rol desde un select poblado desde BD (`action=roles`)
 
 #### 8.11 `roles.php` — ROLES Y PERMISOS (FUNCIONAL CON BD)
 Gestion de roles y permisos conectada a BD via `Rol.php` + `RolController.php` + `app.roles.js`. Incluye:
@@ -568,7 +580,7 @@ Gestion de roles y permisos conectada a BD via `Rol.php` + `RolController.php` +
 
 ### Arquitectura
 
-El monolito `app.js` original se dividio en **15 archivos modulares** organizados por funcionalidad, mas el motor de **jQuery DataTables** (local):
+El monolito `app.js` original se dividio en **16 archivos modulares** organizados por funcionalidad, mas el motor de **jQuery DataTables** (local):
 
 | Archivo | Proposito | Carga |
 |---------|-----------|-------|
@@ -590,6 +602,7 @@ El monolito `app.js` original se dividio en **15 archivos modulares** organizado
 | `app.clientes.js` | CRUD clientes via AJAX | Solo clientes |
 | `app.activos.js` | CRUD activos via AJAX | Solo activos |
 | `app.reportes.js` | Generacion de reportes via AJAX | Solo reportes |
+| `app.usuarios.js` | CRUD usuarios via AJAX (nuevo en v4.x) | Solo usuarios |
 
 ### app.core.js - Funciones Compartidas
 
@@ -927,6 +940,21 @@ ALTER TABLE roles
 
 ---
 
+## Correcciones v4.2 (verificación extremo a extremo)
+
+> Verificación HTTP completa de todos los módulos (login, 35 endpoints AJAX GET, CRUD de los 10 módulos, 5 reportes y sus exportaciones).
+
+| # | Modulo | Archivo | Correccion |
+|---|--------|---------|-----------|
+| 1 | Roles | `Rol.php` `eliminarRol()` | El borrado de un rol con permisos asignados fallaba por FK de `permisos_rol`. Ahora elimina primero `permisos_rol` y luego `roles` dentro de una transacción con rollback en caso de error |
+| 2 | BD local | `roles` | Aplicada la migración v4.1 (`descripcion` + `created_at`) a la base de datos local `zona_web_lara` |
+| 3 | Inventario | `Inventario.php` | `obtenerCategorias()` devuelve `nombre_categoria AS nombre`; el frontend y el contrato AJAX usan el campo `nombre` |
+| 4 | Frontend↔Backend | varios | Verificado que los parámetros JS coinciden con los del backend: `permisosRol` usa `rol_id`, `lineas` usa `orden_id`, `guardarPermisos` serializa `permisos[]`, `listar` de asesorías devuelve `cedula` |
+
+**Resultado de pruebas (suite `test_crud.ps1`):** 70/70 pruebas PASS tras las correcciones.
+
+---
+
 ## Conclusiones y Recomendaciones
 
 ### Estado Actual
@@ -936,14 +964,15 @@ El proyecto cuenta con **todos los modulos conectados a la BD** y arquitectura O
 - **Router OOP**: Clase `Router` con mapa `CONTROLLERS` + `dispatchAction()` + auth + vistas + CSRF tokens
 - **Database Singleton**: Clase `Database` con patron Singleton para PDO
 - **Modelo base**: Clase abstracta `Model` con helpers de validacion (non-empty, min-length, FK existence, duplicates, patterns)
-- **12 controladores** con namespace: Auth, Cliente, Inventario, Venta, Rol, Proveedor, ProveedorGestion, Asesoria, Ciber, Dashboard, Reporte, Activo
+- **Validador central**: Clase final `Validator` con reglas estáticas reutilizables en todos los modelos y `AuthController`
+- **13 controladores** con namespace: Auth, Usuario, Cliente, Inventario, Venta, Rol, Proveedor, ProveedorGestion, Asesoria, Ciber, Dashboard, Reporte, Activo
 - **13 modelos POO**: Cliente, Inventario, Usuario, Proveedor, ProveedorGestion, Rol, Asesoria, Activo, Venta, Reporte, Dashboard, CiberControl, CiberModel
-- **Navegacion funcional** con sidebar responsivo (13 modulos)
+- **Navegacion funcional** con sidebar responsivo (12 modulos)
 - **Login con BD**: Autenticacion via AuthController + password_verify + session_regenerate_id
 - **Modulos conectados a BD**: Clientes, Inventario, Ventas, Cyber, Usuarios, Roles/Permisos, Proveedores, Activos, Asesorias, Reportes, Dashboard
 - **Seguridad completa**: CSRF tokens, XSS sanitizacion, session hardening, prepared statements, validacion backend
 - **Tema oscuro/claro** con persistencia
-- **JavaScript modular** en 15 archivos especializados mas el motor de jQuery DataTables
+- **JavaScript modular** en 16 archivos especializados mas el motor de jQuery DataTables
 - **Tablas con DataTables**: ordenamiento, paginacion y busqueda en las tablas principales de todos los modulos
 - **Assets 100% locales** (sin dependencia de CDN)
 - **Service Worker** para funcionamiento offline
@@ -956,7 +985,7 @@ El proyecto cuenta con **todos los modulos conectados a la BD** y arquitectura O
 
 ---
 
-**Documentacion generada**: Julio 2026 (actualizada Sept 2026, v4.1)
-**Version**: 4.1
+**Documentacion generada**: Julio 2026 (actualizada Sept 2026, v4.2)
+**Version**: 4.2
 **Autor**: Carlos Paez Guerra
 

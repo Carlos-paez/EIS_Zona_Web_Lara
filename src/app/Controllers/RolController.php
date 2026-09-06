@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Router;
+use App\Core\Validator;
 use App\Models\Rol;
 
 class RolController
@@ -61,11 +62,7 @@ class RolController
 
     private function detalle(): void
     {
-        $id = (int)($_GET['id'] ?? 0);
-        if (!$id) {
-            echo json_encode(['success' => false, 'error' => 'ID no válido']);
-            return;
-        }
+        $id = Validator::id($_GET['id'] ?? null, 'ID del rol');
         $rol = $this->model->obtenerRolPorId($id);
         if ($rol) {
             echo json_encode(['success' => true, 'data' => $rol]);
@@ -108,13 +105,9 @@ class RolController
             return;
         }
 
-        $id = (int)($_POST['id'] ?? 0);
-        $nombre_rol = trim($_POST['nombre'] ?? '');
-        $descripcion = trim($_POST['descripcion'] ?? '');
-        if (!$id || empty($nombre_rol)) {
-            echo json_encode(['success' => false, 'error' => 'Complete todos los campos obligatorios']);
-            return;
-        }
+        $id = Validator::id($_POST['id'] ?? null, 'ID del rol');
+        $nombre_rol = Validator::texto($_POST['nombre'] ?? null, 'nombre de rol', ['required' => true, 'min' => 2, 'max' => 50]);
+        $descripcion = Validator::texto($_POST['descripcion'] ?? null, 'descripción', ['required' => false, 'max' => 500]);
 
         if ($this->model->existeNombreRol($nombre_rol, $id)) {
             echo json_encode(['success' => false, 'error' => 'Ya existe otro rol con ese nombre']);
@@ -136,11 +129,7 @@ class RolController
             return;
         }
 
-        $id = (int)($_POST['id'] ?? 0);
-        if (!$id) {
-            echo json_encode(['success' => false, 'error' => 'ID no válido']);
-            return;
-        }
+        $id = Validator::id($_POST['id'] ?? null, 'ID del rol');
         if ($id === 1) {
             echo json_encode(['success' => false, 'error' => 'No se puede eliminar el rol de Administrador']);
             return;
@@ -161,11 +150,7 @@ class RolController
 
     private function permisosRol(): void
     {
-        $rol_id = (int)($_GET['rol_id'] ?? 0);
-        if (!$rol_id) {
-            echo json_encode(['success' => false, 'error' => 'ID de rol no válido']);
-            return;
-        }
+        $rol_id = Validator::id($_GET['rol_id'] ?? null, 'ID del rol');
         $permisos = $this->model->obtenerPermisosPorRol($rol_id);
         echo json_encode(['success' => true, 'data' => $permisos]);
     }
@@ -177,13 +162,12 @@ class RolController
             return;
         }
 
-        $rol_id = (int)($_POST['rol_id'] ?? 0);
-        $permiso_ids = isset($_POST['permisos']) ? array_map('intval', (array)$_POST['permisos']) : [];
-
-        if (!$rol_id) {
-            echo json_encode(['success' => false, 'error' => 'ID de rol no válido']);
-            return;
+        $rol_id = Validator::id($_POST['rol_id'] ?? null, 'ID del rol');
+        $permiso_ids = isset($_POST['permisos']) ? array_values((array)$_POST['permisos']) : [];
+        foreach ($permiso_ids as $p) {
+            Validator::entero($p, 'permiso', ['required' => true, 'min' => 1]);
         }
+
         $resultado = $this->model->guardarPermisosRol($rol_id, $permiso_ids);
         echo json_encode(
             $resultado
@@ -212,12 +196,8 @@ class RolController
             return;
         }
 
-        $usuario_id = (int)($_POST['usuario_id'] ?? 0);
-        $rol_id = (int)($_POST['rol_id'] ?? 0);
-        if (!$usuario_id || !$rol_id) {
-            echo json_encode(['success' => false, 'error' => 'Datos no válidos']);
-            return;
-        }
+        $usuario_id = Validator::id($_POST['usuario_id'] ?? null, 'ID del usuario');
+        $rol_id = Validator::id($_POST['rol_id'] ?? null, 'ID del rol');
         if ($rol_id === 1) {
             echo json_encode(['success' => false, 'error' => 'No se puede asignar el rol de Administrador directamente']);
             return;

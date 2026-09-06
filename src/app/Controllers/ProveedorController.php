@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Router;
+use App\Core\Validator;
 use App\Models\Proveedor;
 
 class ProveedorController
@@ -83,11 +84,7 @@ class ProveedorController
 
     private function detalle(): void
     {
-        $id = (int)($_GET['id'] ?? 0);
-        if (!$id) {
-            echo json_encode(['success' => false, 'error' => 'ID no válido']);
-            return;
-        }
+        $id = Validator::id($_GET['id'] ?? null, 'ID de la solicitud');
         $orden = $this->model->obtenerOrdenPorId($id);
         if ($orden) {
             echo json_encode(['success' => true, 'data' => $orden]);
@@ -115,20 +112,10 @@ class ProveedorController
             return;
         }
 
-        $numero       = trim($_POST['numero'] ?? '');
-        $fecha        = trim($_POST['fecha'] ?? '');
-        $fk_proveedor = (int)($_POST['fk_proveedor'] ?? 0);
-        $fk_status    = (int)($_POST['fk_status'] ?? 0);
-
-        if (empty($numero) || empty($fecha) || !$fk_proveedor || !$fk_status) {
-            echo json_encode(['success' => false, 'error' => 'Complete todos los campos obligatorios']);
-            return;
-        }
-
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
-            echo json_encode(['success' => false, 'error' => 'Formato de fecha inválido (use YYYY-MM-DD)']);
-            return;
-        }
+        $numero       = Validator::numeroOrden($_POST['numero'] ?? null, 'número de orden');
+        $fecha        = Validator::fecha($_POST['fecha'] ?? null, 'fecha', ['required' => true]);
+        $fk_proveedor = Validator::id($_POST['fk_proveedor'] ?? null, 'proveedor');
+        $fk_status    = Validator::id($_POST['fk_status'] ?? null, 'estado');
 
         if (!$this->model->existeProveedor($fk_proveedor)) {
             echo json_encode(['success' => false, 'error' => 'El proveedor seleccionado no existe']);
@@ -154,21 +141,11 @@ class ProveedorController
             return;
         }
 
-        $id           = (int)($_POST['id'] ?? 0);
-        $numero       = trim($_POST['numero'] ?? '');
-        $fecha        = trim($_POST['fecha'] ?? '');
-        $fk_proveedor = (int)($_POST['fk_proveedor'] ?? 0);
-        $fk_status    = (int)($_POST['fk_status'] ?? 0);
-
-        if (!$id || empty($numero) || empty($fecha) || !$fk_proveedor || !$fk_status) {
-            echo json_encode(['success' => false, 'error' => 'Complete todos los campos obligatorios']);
-            return;
-        }
-
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
-            echo json_encode(['success' => false, 'error' => 'Formato de fecha inválido (use YYYY-MM-DD)']);
-            return;
-        }
+        $id           = Validator::id($_POST['id'] ?? null, 'ID de la solicitud');
+        $numero       = Validator::numeroOrden($_POST['numero'] ?? null, 'número de orden');
+        $fecha        = Validator::fecha($_POST['fecha'] ?? null, 'fecha', ['required' => true]);
+        $fk_proveedor = Validator::id($_POST['fk_proveedor'] ?? null, 'proveedor');
+        $fk_status    = Validator::id($_POST['fk_status'] ?? null, 'estado');
 
         if (!$this->model->existeProveedor($fk_proveedor)) {
             echo json_encode(['success' => false, 'error' => 'El proveedor seleccionado no existe']);
@@ -194,11 +171,7 @@ class ProveedorController
             return;
         }
 
-        $id = (int)($_POST['id'] ?? 0);
-        if (!$id) {
-            echo json_encode(['success' => false, 'error' => 'ID no válido']);
-            return;
-        }
+        $id = Validator::id($_POST['id'] ?? null, 'ID de la solicitud');
         $resultado = $this->model->eliminarOrden($id);
         echo json_encode(
             $resultado
@@ -209,11 +182,7 @@ class ProveedorController
 
     private function lineas(): void
     {
-        $orden_id = (int)($_GET['orden_id'] ?? 0);
-        if (!$orden_id) {
-            echo json_encode(['success' => false, 'error' => 'ID de orden no válido']);
-            return;
-        }
+        $orden_id = Validator::id($_GET['orden_id'] ?? null, 'ID de la solicitud');
         $lineas = $this->model->obtenerLineas($orden_id);
         $orden = $this->model->obtenerOrdenPorId($orden_id);
         echo json_encode(['success' => true, 'data' => ['lineas' => $lineas, 'orden' => $orden]]);
@@ -226,15 +195,10 @@ class ProveedorController
             return;
         }
 
-        $orden_id    = (int)($_POST['orden_id'] ?? 0);
-        $producto_id = (int)($_POST['producto_id'] ?? 0);
-        $cantidad    = (int)($_POST['cantidad'] ?? 0);
-        $precio      = (float)($_POST['precio'] ?? 0);
-
-        if (!$orden_id || !$producto_id || $cantidad <= 0 || $precio <= 0) {
-            echo json_encode(['success' => false, 'error' => 'Datos de línea no válidos']);
-            return;
-        }
+        $orden_id    = Validator::id($_POST['orden_id'] ?? null, 'ID de la solicitud');
+        $producto_id = Validator::id($_POST['producto_id'] ?? null, 'producto');
+        $cantidad    = Validator::entero($_POST['cantidad'] ?? null, 'cantidad', ['required' => true, 'min' => 1, 'max' => 99999]);
+        $precio      = Validator::decimal($_POST['precio'] ?? null, 'precio', ['required' => true, 'min' => 0.01]);
 
         $resultado = $this->model->agregarLinea($orden_id, $producto_id, $cantidad, $precio);
         echo json_encode(
@@ -251,11 +215,7 @@ class ProveedorController
             return;
         }
 
-        $id = (int)($_POST['id'] ?? 0);
-        if (!$id) {
-            echo json_encode(['success' => false, 'error' => 'ID no válido']);
-            return;
-        }
+        $id = Validator::id($_POST['id'] ?? null, 'ID de la línea');
         $resultado = $this->model->eliminarLinea($id);
         echo json_encode(
             $resultado

@@ -28,8 +28,8 @@ Son arrays nativos del lenguaje accesibles desde cualquier ámbito. La aplicaci�
 
 | Variable | Propósito | Archivos donde se usa |
 |---|---|---|
-| `$_GET` | Parámetros de la URL (query string). Contiene `pagina`, `action`, `id`, `error`, `orden_id`, `rol_id`, `termino` | `router.php`, `login.php`, `InventarioController.php`, `ProveedorController.php`, `RolController.php` |
-| `$_POST` | Datos enviados mediante formularios HTTP POST. Contiene credenciales de login, datos CRUD de productos, órdenes, roles, etc. | `AuthController.php`, `InventarioController.php`, `ProveedorController.php`, `RolController.php` |
+| `$_GET` | Parámetros de la URL (query string). Contiene `pagina`, `action`, `id`, `error`, `orden_id`, `rol_id`, `termino`, `cedula`, `logout` | Todos los controladores AJAX (vía `Router::dispatchAction()`), `router.php`, `login.php` |
+| `$_POST` | Datos enviados mediante formularios HTTP POST o AJAX. Contiene credenciales de login, CSRF y los campos CRUD de todos los módulos | Todos los controladores AJAX, `AuthController.php` |
 | `$_SESSION` | Variables de sesión persistentes del lado del servidor. Contiene datos del usuario autenticado. | `router.php`, `AuthController.php`, `layout.php` |
 | `$_SERVER['REQUEST_METHOD']` | Método HTTP de la petición (`GET` o `POST`). Se usa para validar que el login solo acepte POST. | `AuthController.php` |
 
@@ -38,42 +38,61 @@ Son arrays nativos del lenguaje accesibles desde cualquier ámbito. La aplicaci�
 | Clave | Tipo | Descripción | Valores posibles |
 |---|---|---|---|
 | `pagina` | `string` | Nombre de la vista o acción a ejecutar | `login`, `dashboard`, `inventario`, `ventas`, `proveedores`, `proveedores-gestion`, `clientes`, `ciberControl`, `reportes`, `activos`, `asesorias`, `usuarios`, `roles`, `login_validate`, `logout`, `menu` |
-| `action` | `string` | Acción JSON específica para controladores AJAX | `listar`, `crear`, `actualizar`, `eliminar`, `detalle`, `kpis`, `categorias`, `buscar`, `proveedores`, `productos`, `statuses`, `lineas`, `agregarLinea`, `eliminarLinea`, `guardarProveedor`, `eliminarProveedor`, `proveedorPorId`, `permisos`, `permisosRol`, `guardarPermisos`, `usuarios`, `asignarRol` |
+| `action` | `string` | Acción JSON específica para controladores AJAX | **Dashboard:** `kpis`. **Inventario:** `listar`, `kpis`, `categorias`, `detalle`, `buscar`, `crear`, `actualizar`, `eliminar`, `crearCategoria`, `actualizarCategoria`, `eliminarCategoria`. **Ventas:** `productos`, `clientes`, `buscarCliente`, `registrar`. **Ciber:** `estaciones`, `tarifas`, `buscarCliente`, `iniciar`, `finalizar`, `estadisticas`, `historial`, `tiposActivo`, `obtenerPC`, `crearPC`, `actualizarPC`, `eliminarPC`, `cambiarEstadoPC`. **Proveedores:** `listar`, `kpis`, `detalle`, `productos`, `statuses`, `crear`, `actualizar`, `eliminar`, `lineas`, `agregarLinea`, `eliminarLinea`, `siguienteNumero`. **Proveedores-Gestión:** `listar`, `detalle`, `crear`, `actualizar`, `eliminar`, `kpis`. **Clientes:** `listar`, `detalle`, `crear`, `actualizar`, `eliminar`, `kpis`. **Asesorías:** `listar`, `detalle`, `buscar`, `crear`, `actualizar`, `eliminar`, `kpis`. **Activos:** `listar`, `detalle`, `crear`, `actualizar`, `estado`, `eliminar`, `kpis`, `tipos`. **Reportes:** `kpis`, `consultar`, `exportar`. **Roles:** `listar`, `detalle`, `crear`, `actualizar`, `eliminar`, `permisos`, `permisosRol`, `guardarPermisos`, `usuarios`, `asignarRol`. **Usuarios:** `listar`, `detalle`, `kpis`, `roles`, `crear`, `actualizar`, `estado`, `eliminar`, `password` |
 | `id` | `int` | ID del registro a consultar | Entero positivo |
 | `rol_id` | `int` | ID del rol para consultar permisos | Entero positivo |
 | `orden_id` | `int` | ID de la orden para consultar líneas | Entero positivo |
+| `cedula` | `string` | Cédula exacta o fragmento para buscar clientes/asesorías | Cadena de 5-20 caracteres |
+| `termino` | `string` | Término de búsqueda (productos, asesorías) | Cadena |
+| `logout` | `int` | Bandera para cerrar sesión desde `?pagina=login&logout=1` | `1` |
 | `error` | `int` | Indicador de error de autenticación | `1` |
 
 ### 1.2 Parámetros de `$_POST`
 
 | Clave | Tipo | Descripción | Controlador |
 |---|---|---|---|
+| `csrf_token` | `string` | Token CSRF (obligatorio en todo POST) | Todos los controladores (verificado con `Router::verifyCsrfToken()`) |
 | `username` | `string` | Nombre de usuario para login | `AuthController` |
-| `password` | `string` | Contraseña para login | `AuthController` |
+| `password` | `string` | Contraseña para login / nueva contraseña de usuario | `AuthController`, `UsuarioController` |
 | `codigo` | `string` | Código de producto | `InventarioController` |
-| `nombre` | `string` | Nombre de producto/rol/proveedor | `InventarioController`, `RolController`, `ProveedorController` |
-| `descripcion` | `string` | Descripción de producto/asesoría | `InventarioController` |
+| `nombre` | `string` | Nombre de producto/rol/proveedor/cliente/asesoría/categoría | Varios controladores |
+| `apellido` | `string` | Apellido de cliente/usuario | `ClienteController`, `UsuarioController` |
+| `descripcion` | `string` | Descripción de producto/asesoría/rol/marca de activo | Varios controladores |
 | `categoria_id` | `int` | ID de categoría de producto | `InventarioController` |
 | `stock` | `int` | Cantidad en stock | `InventarioController` |
 | `stock_minimo` | `int` | Stock mínimo permitido | `InventarioController` |
 | `costo_compra` | `float` | Precio de compra | `InventarioController` |
 | `precio_venta` | `float` | Precio de venta | `InventarioController` |
-| `id` | `int` | ID del registro a modificar/eliminar | `InventarioController`, `ProveedorController`, `RolController` |
-| `termino` | `string` | Término de búsqueda de productos | `InventarioController` |
+| `id` | `int` | ID del registro a modificar/eliminar/consultar | Casi todos los controladores |
+| `termino` | `string` | Término de búsqueda de productos/asesorías | `InventarioController`, `AsesoriaController` |
 | `numero` | `string` | Número de orden de compra | `ProveedorController` |
 | `fecha` | `string` | Fecha de la orden (YYYY-MM-DD) | `ProveedorController` |
 | `fk_proveedor` | `int` | ID del proveedor | `ProveedorController` |
 | `fk_status` | `int` | ID del estado de la orden | `ProveedorController` |
 | `orden_id` | `int` | ID de la orden para líneas | `ProveedorController` |
 | `producto_id` | `int` | ID del producto en línea | `ProveedorController` |
-| `cantidad` | `int` | Cantidad solicitada | `ProveedorController` |
+| `cantidad` | `int` | Cantidad solicitada / cantidad de línea de venta | `ProveedorController`, `VentaController` |
 | `precio` | `float` | Precio unitario en línea | `ProveedorController` |
-| `rif` | `string` | RIF del proveedor | `ProveedorController` |
-| `email` | `string` | Email del proveedor | `ProveedorController` |
-| `telefono` | `string` | Teléfono del proveedor | `ProveedorController` |
-| `rol_id` | `int` | ID del rol | `RolController` |
-| `usuario_id` | `int` | ID del usuario | `RolController` |
-| `permisos` | `array` | IDs de permisos a asignar | `RolController` |
+| `items` | `string` | JSON `[{id, cantidad}]` del carrito de venta | `VentaController` |
+| `ciudadano` | `string` | Nombre del ciudadano (venta/sesión cyber) | `VentaController`, `CiberController` |
+| `cedula` | `string` | Cédula del cliente (venta/sesión cyber/asesoría) | `VentaController`, `CiberController`, `AsesoriaController`, `ClienteController` |
+| `direccion` | `string` | Dirección del cliente | `VentaController`, `CiberController`, `AsesoriaController`, `ClienteController` |
+| `telefono` | `string` | Teléfono del cliente | Igual que `direccion` |
+| `rif` | `string` | RIF del proveedor | `ProveedorController`, `ProveedorGestionController` |
+| `email` | `string` | Email del proveedor/cliente | `ProveedorController`, `ProveedorGestionController`, `ClienteController` |
+| `estatus` | `int` | Estado activo/inactivo (usuario/activo) | `UsuarioController`, `ActivoController` |
+| `marca` | `string` | Marca del activo / PC de cyber | `ActivoController`, `CiberController` |
+| `tipo_activo_id` | `int` | ID del tipo de activo | `ActivoController`, `CiberController` |
+| `activa` | `int` | Si el activo/PC está activo (`1`/`0`) | `ActivoController`, `CiberController` |
+| `is_ciber` | `int` | Si el activo es estación de cyber | `ActivoController` |
+| `rol_id` | `int` | ID del rol (permisos/asignación) | `RolController` |
+| `usuario_id` | `int` | ID del usuario | `RolController`, `UsuarioController` |
+| `permisos` | `array` | IDs de permisos a asignar (se serializan como `permisos[]=`) | `RolController` |
+| `nombre_rol` | `string` | Nombre del rol | `RolController` |
+| `user_name` | `string` | Nombre de usuario | `UsuarioController` |
+| `tipo_asesoria_id` | `int` | ID del tipo de asesoría | `AsesoriaController` |
+| `tipo_reporte` | `string` | Tipo de reporte a consultar/exportar | `ReporteController` |
+| `formato` | `string` | Formato de exportación (`csv`, `excel`, `pdf`) | `ReporteController` |
 
 ---
 
@@ -88,7 +107,7 @@ La sesión se inicia en `Router::__construct()` mediante `session_start()`.
 | `$_SESSION['username']` | `string` | Nombre de usuario (`user_name`) del autenticado | `AuthController::login()` | Potencialmente en vistas |
 | `$_SESSION['nombre']` | `string` | Nombre completo del usuario autenticado | `AuthController::login()` | Potencialmente en vistas |
 
-La sesión se destruye completamente con `session_destroy()` en `AuthController::logout()`.
+La sesión se destruye completamente con `session_destroy()` en `Router::logout()` (invocado vía `?pagina=login&logout=1`).
 
 ---
 
@@ -162,14 +181,26 @@ Archivo: `src/app/core/router.php`
 | `Router::$pagina` | `string` | `private` | Nombre de la página solicitada, resuelta y validada mediante `resolvePage()` |
 | `$_SESSION['csrf_token']` | `string` | superglobal | Token CSRF generado una sola vez por sesión con `bin2hex(random_bytes(32))`, inyectado en `window.EIS.csrfToken` y `<input name="csrf_token">`, verificado con `Router::verifyCsrfToken()` |
 
-La clase también define la **constante** `CONTROLLERS` (mapa `pagina => clase` con los 12 controladores AJAX) que se usa en `dispatchAction()` para resolver el controlador según la página.
+La clase también define las constantes `PUBLIC_PAGES = ['login', 'login_validate']`, `PAGE_TITLES`, `PAGE_EXTRA_HEADERS` y **`CONTROLLERS`** (mapa `pagina => clase` con los **12 controladores AJAX**) que se usa en `dispatchAction()` para resolver el controlador según la página:
+
+```php
+'clientes' => ClienteController::class, 'inventario' => InventarioController::class,
+'ventas' => VentaController::class, 'roles' => RolController::class,
+'proveedores' => ProveedorController::class, 'proveedores-gestion' => ProveedorGestionController::class,
+'asesorias' => AsesoriaController::class, 'ciberControl' => CiberController::class,
+'activos' => ActivoController::class, 'dashboard' => DashboardController::class,
+'reportes' => ReporteController::class, 'usuarios' => UsuarioController::class,
+```
+
+Los métodos principales del enrutador son: `handle()` (procesa toda la solicitud), `resolvePagina()`, `dispatchAction()`, `logout()`, `render()`, `verifyCsrfToken()` (estático) y `redirect()`.
 
 ### 6.2 Variables locales del método `render()`
 
 | Variable | Tipo | Valor | Descripción |
 |---|---|---|---|
-| `$publicPages` | `array` | `['login']` | Lista de páginas que no requieren autenticación |
-| `$rutaVista` | `string` | `__DIR__ . '/../Views/' . $this->pagina . '.php'` | Ruta absoluta al archivo de la vista |
+| `$rutaVista` | `string` | `$this->viewsDir() . $this->pagina . '.php'` | Ruta absoluta al archivo de la vista |
+
+La lista de páginas públicas es la constante `PUBLIC_PAGES = ['login', 'login_validate']`; `render()` la consume internamente. Además, `render()` expone las variables `$pageTitle`, `$headerExtra`, `$contentView` y `$pagina` que recibe `layout.php` (ver sección 6.3).
 
 ### 6.3 Variables locales del método `renderWithLayout()`
 
@@ -254,52 +285,101 @@ Estas variables son **inyectadas** por `Router::renderWithLayout()` antes de inc
 | `$password` | `$_POST['password'] ?? ''` | Contraseña del formulario |
 | `$usuario` | `$this->model->autenticar($username, $password)` | Resultado de la autenticación: array con datos del usuario o `false` |
 
-### 8.2 `InventarioController` (`src/app/Controllers/inventarioController.php`)
+### 8.2 `InventarioController` (`src/app/Controllers/InventarioController.php`)
 
 | Variable | Tipo | Visibilidad | Descripción |
 |---|---|---|---|
 | `InventarioController::$model` | `Inventario` | `private` | Instancia del modelo `Inventario` |
 
-**Variables locales del método `handle()`:**
+Expone el método `handle()` que despacha `$action = $_GET['action'] ?? ''` sobre productos (`listar`, `kpis`, `categorias`, `detalle`, `buscar`, `crear`, `actualizar`, `eliminar`) y categorías (`crearCategoria`, `actualizarCategoria`, `eliminarCategoria`). Variables locales de `crear()`/`actualizar()` provienen de `$_POST` con `??`: `$codigo`, `$nombre`, `$descripcion` (string); `$categoria_id`, `$stock`, `$stock_minimo` (int); `$costo_compra`, `$precio_venta` (float); más `$id` (int) en `actualizar()`/`eliminar()`/`detalle()`.
 
-| Variable | Origen | Descripción |
-|---|---|---|
-| `$action` | `$_GET['action'] ?? ''` | Acción AJAX a ejecutar |
+### 8.3 `VentaController` (`src/app/Controllers/VentaController.php`)
 
-**Variables locales del método `crear()`:**
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `VentaController::$model` | `Venta` | `private` | Instancia del modelo `Venta` |
 
-Todas provienen de `$_POST` con operador `??`:
-- `$codigo`, `$nombre`, `$descripcion` (string)
-- `$categoria_id`, `$stock`, `$stock_minimo` (int)
-- `$costo_compra`, `$precio_venta` (float)
-- `$resultado` (bool) - Resultado del modelo
+Acciones: `productos`, `clientes`, `buscarCliente`, `registrar`. En `registrar()` las variables provienen de `$_POST`: `$items` (JSON decodificado con `json_decode`), `$ciudadano`, `$cedula`, `$direccion`, `$telefono`, y el `$usuarioId = $_SESSION['user_id']`.
 
-**Variables locales del método `actualizar()`:**
+### 8.4 `CiberController` (`src/app/Controllers/CiberController.php`)
 
-Mismas que `crear()` más `$id` (int).
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `CiberController::$model` | `CiberControl` | `private` | Instancia del modelo `CiberControl` |
 
-**Variables locales del método `eliminar()`:**
+Acciones: `estaciones`, `tarifas`, `buscarCliente`, `iniciar`, `finalizar`, `estadisticas`, `historial`, `tiposActivo`, `obtenerPC`, `crearPC`, `actualizarPC`, `eliminarPC`, `cambiarEstadoPC`. Variables de `$_GET`/`$_POST`: `$id`, `$marca`, `$descripcion`, `$tipo_activo_id`, `$activa`, `$activoId`, `$tarifaId`, `$tiempoUso`, `$ciudadano`, `$cedula`, `$direccion`, `$telefono`.
 
-- `$id` (int) - ID del producto
-- `$resultado` (bool) - Resultado del modelo
-
-### 8.3 `ProveedorController` (`src/app/Controllers/ProveedorController.php`)
+### 8.5 `ProveedorController` (`src/app/Controllers/ProveedorController.php`)
 
 | Variable | Tipo | Visibilidad | Descripción |
 |---|---|---|---|
 | `ProveedorController::$model` | `Proveedor` | `private` | Instancia del modelo `Proveedor` |
 
-Variables locales similares a `InventarioController`, usando `$_GET` y `$_POST` para:
-- `$action`, `$id`, `$numero`, `$fecha`, `$fk_proveedor`, `$fk_status`, `$orden_id`, `$producto_id`, `$cantidad`, `$precio`, `$rif`, `$nombre`, `$email`, `$telefono`
+Acciones: `listar`, `kpis`, `detalle`, `productos`, `statuses`, `crear`, `actualizar`, `eliminar`, `lineas`, `agregarLinea`, `eliminarLinea`, `siguienteNumero`. Variables de `$_GET`/`$_POST`: `$action`, `$id`, `$numero`, `$fecha`, `$fk_proveedor`, `$fk_status`, `$orden_id`, `$producto_id`, `$cantidad`, `$precio`, `$rif`, `$nombre`, `$email`, `$telefono`.
 
-### 8.4 `RolController` (`src/app/Controllers/RolController.php`)
+### 8.6 `ProveedorGestionController` (`src/app/Controllers/ProveedorGestionController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `ProveedorGestionController::$model` | `ProveedorGestion` | `private` | Instancia del modelo `ProveedorGestion` |
+
+Acciones: `listar`, `detalle`, `crear`, `actualizar`, `eliminar`, `kpis`. Variables de `$_GET`/`$_POST`: `$id`, `$rif`, `$nombre`, `$email`, `$telefono`, `$direccion`.
+
+### 8.7 `ClienteController` (`src/app/Controllers/ClienteController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `ClienteController::$model` | `Cliente` | `private` | Instancia del modelo `Cliente` |
+
+Acciones: `listar`, `detalle`, `crear`, `actualizar`, `eliminar`, `kpis`. Variables de `$_GET`/`$_POST`: `$id`, `$cedula`, `$nombre`, `$apellido`, `$direccion`, `$telefono`, `$email`.
+
+### 8.8 `AsesoriaController` (`src/app/Controllers/AsesoriaController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `AsesoriaController::$model` | `Asesoria` | `private` | Instancia del modelo `Asesoria` |
+
+Acciones: `listar`, `detalle`, `buscar`, `crear`, `actualizar`, `eliminar`, `kpis`. Variables de `$_GET`/`$_POST`: `$id`, `$ciudadano`, `$cedula`, `$documento`, `$descripcion`, `$direccion`, `$telefono`, `$tipo_asesoria_id`, `$termino`, `$fk_asesoria`.
+
+### 8.9 `ActivoController` (`src/app/Controllers/ActivoController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `ActivoController::$model` | `Activo` | `private` | Instancia del modelo `Activo` |
+
+Acciones: `listar`, `detalle`, `crear`, `actualizar`, `estado`, `eliminar`, `kpis`, `tipos`. Variables de `$_GET`/`$_POST`: `$id`, `$marca`, `$descripcion`, `$tipo_activo_id`, `$activa`, `$is_ciber`.
+
+### 8.10 `ReporteController` (`src/app/Controllers/ReporteController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `ReporteController::$model` | `Reporte` | `private` | Instancia del modelo `Reporte` |
+
+Acciones: `kpis`, `consultar`, `exportar`. Variables de `$_GET`/`$_POST`: `$tipo_reporte`, `$fecha_desde`, `$fecha_hasta`, `$estado`, `$formato` (`csv`, `excel`, `pdf`). Las exportaciones delegan en `App\Core\Exporter`.
+
+### 8.11 `RolController` (`src/app/Controllers/RolController.php`)
 
 | Variable | Tipo | Visibilidad | Descripción |
 |---|---|---|---|
 | `RolController::$model` | `Rol` | `private` | Instancia del modelo `Rol` |
 
-Variables locales usando `$_GET` y `$_POST` para:
-- `$action`, `$id`, `$nombre_rol`, `$rol_id`, `$permiso_ids`, `$usuario_id`
+Acciones: `listar`, `detalle`, `crear`, `actualizar`, `eliminar`, `permisos`, `permisosRol`, `guardarPermisos`, `usuarios`, `asignarRol`. Variables de `$_GET`/`$_POST`: `$action`, `$id`, `$nombre_rol`, `$descripcion`, `$rol_id`, `$permiso_ids` (lee `$_POST['permisos'] ?? []`), `$usuario_id`.
+
+### 8.12 `UsuarioController` (`src/app/Controllers/UsuarioController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `UsuarioController::$model` | `Usuario` | `private` | Instancia del modelo `Usuario` |
+
+Acciones: `listar`, `detalle`, `kpis`, `roles`, `crear`, `actualizar`, `estado`, `eliminar`, `password`. Variables de `$_GET`/`$_POST`: `$id`, `$user_name`, `$nombre`, `$apellido`, `$email`, `$password`, `$estatus`, `$rol_id`.
+
+### 8.13 `DashboardController` (`src/app/Controllers/DashboardController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `DashboardController::$model` | `Dashboard` | `private` | Instancia del modelo `Dashboard` |
+
+Acción única: `kpis`, que devuelve los indicadores agregados del dashboard.
 
 ---
 
@@ -393,12 +473,14 @@ Además, las vistas que realizan peticiones AJAX utilizan `$_GET`, `$_POST` y `$
 
 ### 12.1 Vista `login_validate.php`
 
-Esta vista es una trampa de seguridad. Solo contiene:
+Es una página **pública** que nunca debe renderizarse directamente: `Router::handle()` detecta `?pagina=login_validate` con método `POST` y delega en `AuthController::login()`. Si se accede sin POST, la vista solo contiene:
 
 | Variable | Propósito |
 |---|---|
 | `header('Location: ?pagina=login')` | Redirige al login si se accede directamente sin POST |
 | `exit` | Termina la ejecución |
+
+La autenticación real ocurre en `AuthController::login()` (valida CSRF, usuario y contraseña contra la tabla `usuarios` con `password_hash`).
 
 ---
 
@@ -421,6 +503,9 @@ Esta vista es una trampa de seguridad. Solo contiene:
 | `PDO::ATTR_DEFAULT_FETCH_MODE` | Atributo PDO para modo de obtención de resultados |
 | `PDO::FETCH_ASSOC` | Valor que indica devolver resultados como array asociativo |
 | `PDO::ATTR_EMULATE_PREPARES` | Atributo PDO para emulación de consultas preparadas |
+| `PASSWORD_DEFAULT` | Algoritmo por defecto para `password_hash()` en `cli/create_user.php` |
+| `random_bytes()` | Generador criptográficamente seguro usado para el token CSRF (`bin2hex(random_bytes(32))`) |
+| `hash_equals()` | Comparación constante de cadenas para verificar el token CSRF sin vulnerabilidad de tiempo |
 
 ### 13.3 Constantes del manifiesto PWA (`src/manifest.json`)
 
@@ -442,11 +527,11 @@ Esta vista es una trampa de seguridad. Solo contiene:
 | **Superglobal** | `$_GET`, `$_POST`, `$_SESSION`, `$_SERVER` |
 | **Global (procedural)** | `$host`, `$db`, `$user`, `$pass`, `$charset`, `$dns`, `$options`, `$pdo` |
 | **Estático de clase** | `Database::$instance` |
-| **Propiedades de instancia** | `Model::$db`, `Router::$pagina`, `AuthController::$model`, `InventarioController::$model`, `ProveedorController::$model`, `RolController::$model` |
+| **Propiedades de instancia** | `Model::$db`, `Router::$pagina`, y `::$model` en los 13 controladores (`AuthController`, `UsuarioController`, `RolController`, `VentaController`, `ClienteController`, `InventarioController`, `ProveedorController`, `ProveedorGestionController`, `ReporteController`, `DashboardController`, `CiberController`, `ActivoController`, `AsesoriaController`) |
 | **Variables de template** | `$pageTitle`, `$pagina`, `$headerExtra`, `$contentView` |
 | **CLI (local)** | `$longopts`, `$options`, `$username`, `$password`, `$nombre`, `$apellido`, `$email`, `$db`, `$hash`, `$check`, `$stmt`, `$userId` |
 | **Service Worker (JS)** | `CACHE_NAME`, `STATIC_ASSETS` |
 
 ---
 
-*Documentación generada el 2026-07-09 - EIS System (Zona Web Lara)*
+*Documentación generada el 2026-07-09 - EIS System (Zona Web Lara). Actualizado el 2026-09-05 (13 controladores, nueva clase `Validator`, `UsuarioController`, acciones de todos los módulos).*

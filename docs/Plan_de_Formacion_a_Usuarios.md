@@ -1,6 +1,6 @@
 # Plan de Formación a Usuarios — EIS System (Zona Web Lara)
 
-> **Actualizado (Agosto 2026):** Documento de planificación histórica. El proyecto se encuentra en fase de construcción avanzada: 12 controladores, 13 modelos POO y 21 tablas de base de datos, todos los módulos conectados a la base de datos.
+> **Actualizado (Agosto 2026):** Documento de planificación histórica. El proyecto se encuentra en fase de construcción avanzada: 13 controladores (12 AJAX + `AuthController`), 13 modelos POO y 21 tablas de base de datos, todos los módulos conectados a la base de datos.
 
 ## Objetivo
 

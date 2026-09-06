@@ -55,6 +55,7 @@ class Asesoria extends Model
         $this->validateNotEmpty($cedula, 'cédula');
         $this->validateMinLength($cedula, 'cédula', self::MIN_CEDULA);
         $this->validateLength($cedula, 'cédula', self::MAX_CEDULA);
+        $this->validatePattern($cedula, '/^[0-9A-Za-z][0-9A-Za-z.\-\s]{3,18}[0-9A-Za-z]$/', 'La cédula no tiene un formato válido');
         $this->cedula = $cedula;
     }
 
@@ -69,6 +70,7 @@ class Asesoria extends Model
         $this->validateNotEmpty($nombre, 'nombre');
         $this->validateMinLength($nombre, 'nombre', self::MIN_NOMBRE);
         $this->validateLength($nombre, 'nombre', self::MAX_NOMBRE);
+        $this->validarLibre($nombre, 'nombre');
         $this->nombre = $nombre;
     }
 
@@ -81,6 +83,7 @@ class Asesoria extends Model
     {
         $apellido = $this->sanitizeString($apellido);
         $this->validateLength($apellido, 'apellido', self::MAX_APELLIDO);
+        $this->validarLibre($apellido, 'apellido');
         $this->apellido = $apellido;
     }
 
@@ -94,6 +97,7 @@ class Asesoria extends Model
         $documento = $this->sanitizeString($documento);
         $this->validateNotEmpty($documento, 'tipo de documento');
         $this->validateLength($documento, 'tipo de documento', self::MAX_DOCUMENTO);
+        $this->validarLibre($documento, 'tipo de documento');
         $this->documento = $documento;
     }
 
@@ -107,6 +111,7 @@ class Asesoria extends Model
         $descripcion = $this->sanitizeString($descripcion);
         $this->validateNotEmpty($descripcion, 'descripción');
         $this->validateLength($descripcion, 'descripción', self::MAX_DESCRIPCION);
+        $this->validarSinControl($descripcion, 'descripción');
         $this->descripcion = $descripcion;
     }
 
@@ -465,8 +470,8 @@ class Asesoria extends Model
     private function validarFecha(string $fecha): string
     {
         $fecha = trim($fecha);
-        if ($fecha !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
-            throw new \InvalidArgumentException('Formato de fecha inválido (use YYYY-MM-DD)');
+        if ($fecha !== '') {
+            $this->validateFecha($fecha, 'fecha');
         }
         return $fecha;
     }

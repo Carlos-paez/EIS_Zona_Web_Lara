@@ -14,6 +14,7 @@ use App\Controllers\AsesoriaController;
 use App\Controllers\CiberController;
 use App\Controllers\DashboardController;
 use App\Controllers\ReporteController;
+use App\Controllers\UsuarioController;
 
 /**
  * Enrutador principal (Front Controller).
@@ -66,6 +67,7 @@ class Router
         'activos'            => ActivoController::class,
         'dashboard'          => DashboardController::class,
         'reportes'           => ReporteController::class,
+        'usuarios'           => UsuarioController::class,
     ];
 
     /** @var string Página actual resuelta. */

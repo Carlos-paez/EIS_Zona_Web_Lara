@@ -44,6 +44,7 @@ class Inventario extends Model
         $this->validateNotEmpty($codigo, 'código');
         $this->validateMinLength($codigo, 'código', self::MIN_CODIGO);
         $this->validateLength($codigo, 'código', self::MAX_CODIGO);
+        $this->validatePattern($codigo, '/^[A-Za-z0-9][A-Za-z0-9_.\-\/#\s]{0,49}$/', 'El código del producto contiene caracteres no permitidos');
         $this->codigo = $codigo;
     }
 
@@ -80,7 +81,11 @@ class Inventario extends Model
 
     public function setStock(int $stock): void
     {
-        $this->stock = max(0, $this->sanitizeInt($stock));
+        $stock = $this->sanitizeInt($stock);
+        if ($stock < 0) {
+            throw new \InvalidArgumentException('El stock no puede ser negativo');
+        }
+        $this->stock = $stock;
     }
 
     public function getStockMinimo(): int
@@ -90,7 +95,11 @@ class Inventario extends Model
 
     public function setStockMinimo(int $stockMinimo): void
     {
-        $this->stockMinimo = max(1, $this->sanitizeInt($stockMinimo));
+        $stockMinimo = $this->sanitizeInt($stockMinimo);
+        if ($stockMinimo < 1) {
+            throw new \InvalidArgumentException('El stock mínimo debe ser al menos 1');
+        }
+        $this->stockMinimo = $stockMinimo;
     }
 
     public function getPrecioCompra(): float
@@ -100,7 +109,11 @@ class Inventario extends Model
 
     public function setPrecioCompra(float $precioCompra): void
     {
-        $this->precioCompra = max(0.0, $this->sanitizeFloat($precioCompra));
+        $precioCompra = $this->sanitizeFloat($precioCompra);
+        if ($precioCompra < 0.0) {
+            throw new \InvalidArgumentException('El costo de compra no puede ser negativo');
+        }
+        $this->precioCompra = $precioCompra;
     }
 
     public function getPrecioVenta(): float

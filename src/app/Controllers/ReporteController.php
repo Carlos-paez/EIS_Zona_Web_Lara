@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Core\Exporter;
 use App\Core\Router;
+use App\Core\Validator;
 use App\Models\Reporte;
 
 /**
@@ -96,9 +97,8 @@ class ReporteController
 
     private function validarRango(string $desde, string $hasta): void
     {
-        if ($desde === '' || $hasta === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $desde) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $hasta)) {
-            throw new \InvalidArgumentException('Debe indicar un rango de fechas válido (YYYY-MM-DD)');
-        }
+        $desde = Validator::fecha($desde, 'fecha inicial', ['required' => true]);
+        $hasta = Validator::fecha($hasta, 'fecha final', ['required' => true]);
         if ($hasta < $desde) {
             throw new \InvalidArgumentException('La fecha inicial no puede ser posterior a la final');
         }

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Router;
+use App\Core\Validator;
 use App\Models\ProveedorGestion;
 
 class ProveedorGestionController
@@ -87,20 +88,10 @@ class ProveedorGestionController
             return;
         }
 
-        $rif      = trim($_POST['rif'] ?? '');
-        $nombre   = trim($_POST['nombre'] ?? '');
-        $email    = trim($_POST['email'] ?? '');
-        $telefono = trim($_POST['telefono'] ?? '');
-
-        if (empty($rif) || empty($nombre)) {
-            echo json_encode(['success' => false, 'error' => 'RIF y Nombre son obligatorios']);
-            return;
-        }
-
-        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            echo json_encode(['success' => false, 'error' => 'El formato del email no es válido']);
-            return;
-        }
+        $rif      = Validator::rif($_POST['rif'] ?? null, 'RIF');
+        $nombre   = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos']);
+        $email    = Validator::email($_POST['email'] ?? null, 'email');
+        $telefono = Validator::telefono($_POST['telefono'] ?? null, 'teléfono');
 
         if ($this->model->existeRif($rif)) {
             echo json_encode(['success' => false, 'error' => 'Ya existe un proveedor con ese RIF']);
@@ -122,21 +113,11 @@ class ProveedorGestionController
             return;
         }
 
-        $id       = (int)($_POST['id'] ?? 0);
-        $rif      = trim($_POST['rif'] ?? '');
-        $nombre   = trim($_POST['nombre'] ?? '');
-        $email    = trim($_POST['email'] ?? '');
-        $telefono = trim($_POST['telefono'] ?? '');
-
-        if (!$id || empty($rif) || empty($nombre)) {
-            echo json_encode(['success' => false, 'error' => 'ID, RIF y Nombre son obligatorios']);
-            return;
-        }
-
-        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            echo json_encode(['success' => false, 'error' => 'El formato del email no es válido']);
-            return;
-        }
+        $id       = Validator::id($_POST['id'] ?? null, 'ID del proveedor');
+        $rif      = Validator::rif($_POST['rif'] ?? null, 'RIF');
+        $nombre   = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos']);
+        $email    = Validator::email($_POST['email'] ?? null, 'email');
+        $telefono = Validator::telefono($_POST['telefono'] ?? null, 'teléfono');
 
         if ($this->model->existeRif($rif, $id)) {
             echo json_encode(['success' => false, 'error' => 'Ya existe otro proveedor con ese RIF']);
@@ -158,11 +139,7 @@ class ProveedorGestionController
             return;
         }
 
-        $id = (int)($_POST['id'] ?? 0);
-        if (!$id) {
-            echo json_encode(['success' => false, 'error' => 'ID no válido']);
-            return;
-        }
+        $id = Validator::id($_POST['id'] ?? null, 'ID del proveedor');
         $resultado = $this->model->eliminarProveedor($id);
         echo json_encode(
             $resultado

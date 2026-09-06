@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Router;
+use App\Core\Validator;
 use App\Models\Cliente;
 use App\Models\Venta;
 
@@ -62,7 +63,7 @@ class VentaController
 
     private function buscarCliente(): void
     {
-        $cedula = trim($_GET['cedula'] ?? '');
+        $cedula = Validator::texto($_GET['cedula'] ?? '', 'cédula', ['required' => false, 'max' => 20]);
         if ($cedula === '') {
             echo json_encode(['success' => true, 'data' => null]);
             return;
@@ -78,22 +79,11 @@ class VentaController
             return;
         }
 
-        $ciudadano = trim($_POST['ciudadano'] ?? '');
-        $cedula    = trim($_POST['cedula'] ?? '');
-        $direccion = trim($_POST['direccion'] ?? '');
-        $telefono  = trim($_POST['telefono'] ?? '');
-
-        if (empty($ciudadano) || empty($cedula)) {
-            echo json_encode(['success' => false, 'error' => 'Nombre y cédula del cliente son obligatorios']);
-            return;
-        }
-
-        $itemsRaw = $_POST['items'] ?? '[]';
-        $items = json_decode((string)$itemsRaw, true);
-        if (!is_array($items) || empty($items)) {
-            echo json_encode(['success' => false, 'error' => 'El carrito está vacío']);
-            return;
-        }
+        $ciudadano = Validator::texto($_POST['ciudadano'] ?? null, 'nombre del cliente', ['required' => true, 'min' => 2, 'max' => 100]);
+        $cedula    = Validator::cedula($_POST['cedula'] ?? null, 'cédula');
+        $direccion = Validator::texto($_POST['direccion'] ?? null, 'dirección', ['required' => false, 'max' => 500]);
+        $telefono  = Validator::telefono($_POST['telefono'] ?? null, 'teléfono');
+        $items     = Validator::itemsVenta($_POST['items'] ?? '');
 
         $usuarioId = (int)($_SESSION['user_id'] ?? 0);
 

@@ -41,6 +41,7 @@ class ProveedorGestion extends Model
         $this->validateNotEmpty($rif, 'RIF');
         $this->validateMinLength($rif, 'RIF', self::MIN_RIF);
         $this->validateLength($rif, 'RIF', self::MAX_RIF);
+        $this->validatePattern($rif, '/^[0-9A-Za-z][0-9A-Za-z.\-\s]{3,18}[0-9A-Za-z]$/', 'El RIF no tiene un formato válido');
         $this->rif = $rif;
     }
 
@@ -55,6 +56,7 @@ class ProveedorGestion extends Model
         $this->validateNotEmpty($nombre, 'nombre');
         $this->validateMinLength($nombre, 'nombre', self::MIN_NOMBRE);
         $this->validateLength($nombre, 'nombre', self::MAX_NOMBRE);
+        $this->validarLibre($nombre, 'nombre');
         $this->nombre = $nombre;
     }
 
@@ -85,6 +87,7 @@ class ProveedorGestion extends Model
         $telefono = $this->sanitizeString($telefono);
         $this->validateNotEmpty($telefono, 'teléfono');
         $this->validateLength($telefono, 'teléfono', self::MAX_TELEFONO);
+        $this->validateTelefono($telefono, 'teléfono');
         $this->telefono = $telefono;
     }
 

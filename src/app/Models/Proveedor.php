@@ -51,6 +51,7 @@ class Proveedor extends Model
         $numero = $this->sanitizeString($numero);
         $this->validateNotEmpty($numero, 'número de orden');
         $this->validateLength($numero, 'número de orden', self::MAX_NUMERO);
+        $this->validatePattern($numero, '/^[A-Za-z0-9][A-Za-z0-9._\-\/\s]{0,49}$/', 'El número de orden contiene caracteres no permitidos');
         $this->numero = $numero;
     }
 
@@ -122,6 +123,7 @@ class Proveedor extends Model
     public function setCantidad(int $cantidad): void
     {
         $this->validateGreaterOrEqual((float)$cantidad, 'cantidad', 1);
+        $this->validateMax((float)$cantidad, 'cantidad', 99999);
         $this->cantidad = $this->sanitizeInt($cantidad);
     }
 
@@ -133,6 +135,7 @@ class Proveedor extends Model
     public function setPrecio(float $precio): void
     {
         $this->validatePositive($precio, 'precio');
+        $this->validateMax($precio, 'precio', 99999999.99);
         $this->precio = $this->sanitizeFloat($precio);
     }
 
@@ -430,6 +433,13 @@ class Proveedor extends Model
         $this->setCantidad($cantidad);
         $this->setPrecio($precio);
 
+        if (!$this->existeOrden($this->ordenId)) {
+            throw new \InvalidArgumentException('La orden de abastecimiento no existe');
+        }
+        if (!$this->existeProducto($this->productoId)) {
+            throw new \InvalidArgumentException('El producto seleccionado no existe');
+        }
+
         $sql = "INSERT INTO lineas_abastecimiento (cantidad, precio, fk_orden_abastecimiento, fk_producto) VALUES (?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(1, $this->cantidad, PDO::PARAM_INT);
@@ -500,11 +510,29 @@ class Proveedor extends Model
         return (int)$stmt->fetch()['total'] > 0;
     }
 
+    public function existeOrden(int $id): bool
+    {
+        $id = $this->sanitizeInt($id);
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM orden_abastecimiento WHERE id = ?");
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return (int)$stmt->fetch()['total'] > 0;
+    }
+
+    public function existeProducto(int $id): bool
+    {
+        $id = $this->sanitizeInt($id);
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM productos WHERE id = ?");
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return (int)$stmt->fetch()['total'] > 0;
+    }
+
     private function validarFecha(string $fecha): string
     {
         $fecha = trim($fecha);
-        if ($fecha !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
-            throw new \InvalidArgumentException('Formato de fecha inválido (use YYYY-MM-DD)');
+        if ($fecha !== '') {
+            $this->validateFecha($fecha, 'fecha');
         }
         return $fecha;
     }

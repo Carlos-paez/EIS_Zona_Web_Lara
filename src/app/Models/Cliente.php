@@ -44,6 +44,7 @@ class Cliente extends Model
         $this->validateNotEmpty($cedula, 'cédula');
         $this->validateMinLength($cedula, 'cédula', self::MIN_CEDULA);
         $this->validateLength($cedula, 'cédula', self::MAX_CEDULA);
+        $this->validatePattern($cedula, '/^[0-9A-Za-z][0-9A-Za-z.\-\s]{3,18}[0-9A-Za-z]$/', 'La cédula no tiene un formato válido');
         $this->cedula = $cedula;
     }
 
@@ -58,6 +59,7 @@ class Cliente extends Model
         $this->validateNotEmpty($nombre, 'nombre');
         $this->validateMinLength($nombre, 'nombre', self::MIN_NOMBRE);
         $this->validateLength($nombre, 'nombre', self::MAX_NOMBRE);
+        $this->validarLibre($nombre, 'nombre');
         $this->nombre = $nombre;
     }
 
@@ -72,6 +74,7 @@ class Cliente extends Model
         $this->validateNotEmpty($apellido, 'apellido');
         $this->validateMinLength($apellido, 'apellido', self::MIN_APELLIDO);
         $this->validateLength($apellido, 'apellido', self::MAX_APELLIDO);
+        $this->validarLibre($apellido, 'apellido');
         $this->apellido = $apellido;
     }
 
@@ -84,6 +87,7 @@ class Cliente extends Model
     {
         $direccion = $this->sanitizeString($direccion);
         $this->validateLength($direccion, 'dirección', self::MAX_DIRECCION);
+        $this->validarSinControl($direccion, 'dirección');
         $this->direccion = $direccion;
     }
 
@@ -96,6 +100,7 @@ class Cliente extends Model
     {
         $telefono = $this->sanitizeString($telefono);
         $this->validateLength($telefono, 'teléfono', self::MAX_TELEFONO);
+        $this->validateTelefono($telefono, 'teléfono');
         $this->telefono = $telefono;
     }
 

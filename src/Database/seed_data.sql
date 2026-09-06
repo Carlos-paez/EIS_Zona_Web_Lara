@@ -141,12 +141,12 @@ INSERT INTO rol_usuarios (fk_rol, rol) VALUES
 -- USUARIOS
 -- ============================================================
 INSERT INTO usuarios (nombre, apellido, user_name, password_hash, email, estatus, fk_rol_usuario) VALUES
-('Admin', 'Principal', 'admin', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'admin@zonaweb.com', 'activo', 1),
-('Juan', 'Peralta', 'jperalta', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'jperalta@zonaweb.com', 'activo', 2),
-('María', 'Fernández', 'mfernandez', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'mfernandez@zonaweb.com', 'activo', 2),
-('Carlos', 'Rivas', 'crivas', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'crivas@zonaweb.com', 'activo', 3),
-('Ana', 'Mendoza', 'amendoza', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'amendoza@zonaweb.com', 'activo', 4),
-('Pedro', 'García', 'pgarcia', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'pgarcia@zonaweb.com', 'activo', 5);
+('Admin', 'Principal', 'admin', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'admin@zonaweb.com', '1', 1),
+('Juan', 'Peralta', 'jperalta', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'jperalta@zonaweb.com', '1', 2),
+('María', 'Fernández', 'mfernandez', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'mfernandez@zonaweb.com', '1', 2),
+('Carlos', 'Rivas', 'crivas', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'crivas@zonaweb.com', '1', 3),
+('Ana', 'Mendoza', 'amendoza', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'amendoza@zonaweb.com', '1', 4),
+('Pedro', 'García', 'pgarcia', '$2y$10$kTT14tkjYsPzfwqMamoF9.67Kh1M5YJAH9a3xcs6dCCk7nXYReEF.', 'pgarcia@zonaweb.com', '1', 5);
 
 -- ============================================================
 -- PERMISOS_ROL (Administrador tiene todos los permisos)

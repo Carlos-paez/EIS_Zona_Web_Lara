@@ -102,9 +102,12 @@ class CiberControl extends Model
         $this->validateNotEmpty($ciudadano, 'nombre del cliente');
         $this->validateNotEmpty($cedula, 'cédula');
         $this->validateLength($cedula, 'cédula', self::MAX_CEDULA);
+        $this->validateMinLength($cedula, 'cédula', 5);
+        $this->validatePattern($cedula, '/^[0-9A-Za-z][0-9A-Za-z.\-\s]{3,18}[0-9A-Za-z]$/', 'La cédula no tiene un formato válido');
         $this->validateLength($ciudadano, 'nombre del cliente', self::MAX_NOMBRE);
         $this->validateLength($direccion, 'dirección', self::MAX_DIRECCION);
         $this->validateLength($telefono, 'teléfono', self::MAX_TELEFONO);
+        $this->validateTelefono($telefono, 'teléfono');
         $this->validateLength($tiempoUso, 'tiempo de uso', self::MAX_TIEMPO_USO);
 
         if ($activoId <= 0 || $tarifaId <= 0) {
@@ -112,6 +115,10 @@ class CiberControl extends Model
         }
         if ($tiempoUso === '' || !preg_match('/^\d{1,3}:\d{2}:\d{2}$/', $tiempoUso)) {
             throw new \InvalidArgumentException('El tiempo de uso debe tener formato HH:MM:SS');
+        }
+        [$h, $m, $s] = array_map('intval', explode(':', $tiempoUso));
+        if ($m > 59 || $s > 59) {
+            throw new \InvalidArgumentException('El tiempo de uso debe tener minutos y segundos entre 00 y 59');
         }
 
         $nombre_partes = explode(' ', $ciudadano, 2);
@@ -229,7 +236,15 @@ class CiberControl extends Model
         $activa      = $activa ? 1 : 0;
 
         $this->validateNotEmpty($marca, 'marca');
+        $this->validateLength($marca, 'marca', 100);
+        $this->validarLibre($marca, 'marca', 2, 100);
         $this->validateNotEmpty($descripcion, 'descripción');
+        $this->validateLength($descripcion, 'descripción', 1000);
+        $this->validarSinControl($descripcion, 'descripción');
+
+        if ($tipoActivoId <= 0 || !$this->existeTipoActivo($tipoActivoId)) {
+            throw new \InvalidArgumentException('Debes seleccionar un tipo de PC válido');
+        }
 
         $stmt = $this->db->prepare("
             SELECT COUNT(*) FROM activos
@@ -272,7 +287,18 @@ class CiberControl extends Model
         $activa      = $activa ? 1 : 0;
 
         $this->validateNotEmpty($marca, 'marca');
+        $this->validateLength($marca, 'marca', 100);
+        $this->validarLibre($marca, 'marca', 2, 100);
         $this->validateNotEmpty($descripcion, 'descripción');
+        $this->validateLength($descripcion, 'descripción', 1000);
+        $this->validarSinControl($descripcion, 'descripción');
+
+        if ($id <= 0) {
+            throw new \InvalidArgumentException('ID no válido');
+        }
+        if ($tipoActivoId <= 0 || !$this->existeTipoActivo($tipoActivoId)) {
+            throw new \InvalidArgumentException('Debes seleccionar un tipo de PC válido');
+        }
 
         $stmt = $this->db->prepare("
             SELECT COUNT(*) FROM activos
@@ -397,5 +423,14 @@ class CiberControl extends Model
         $stmt->bindParam(1, $sesionId, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->rowCount() > 0;
+    }
+
+    private function existeTipoActivo(int $id): bool
+    {
+        $id = $this->sanitizeInt($id);
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM tipo_activo WHERE id = ?");
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return (int)$stmt->fetchColumn() > 0;
     }
 }

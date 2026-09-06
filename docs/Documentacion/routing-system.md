@@ -14,14 +14,15 @@ src/
 ├── app/
 │   ├── core/
 │   │   ├── Database.php         ← Conexion PDO Singleton
-│   │   ├── Exporter.php         ← Exportaciones CSV
+│   │   ├── Exporter.php         ← Exportaciones CSV/Excel/PDF
 │   │   ├── Model.php            ← Clase base abstracta con helpers de validacion
+│   │   ├── Validator.php        ← Clase final con reglas de validacion estaticas
 │   │   ├── PdfBuilder.php       ← Generacion de PDF para reportes
 │   │   └── router.php           ← Enrutador OOP (clase Router, mapa CONTROLLERS, dispatchAction, CSRF)
-│   ├── Controllers/             ← 12 controladores con namespace
+│   ├── Controllers/             ← 13 controladores con namespace
 │   │   ├── AuthController.php   ← Login/logout con sesiones + CSRF + session_regenerate_id
 │   │   ├── ClienteController.php← Controlador AJAX clientes
-│   │   ├── inventarioController.php ← Controlador AJAX inventario
+│   │   ├── InventarioController.php ← Controlador AJAX inventario
 │   │   ├── ProveedorController.php  ← Controlador AJAX proveedores (solicitudes)
 │   │   ├── ProveedorGestionController.php ← Controlador AJAX proveedores (gestion)
 │   │   ├── RolController.php    ← Controlador AJAX roles/permisos
@@ -30,7 +31,8 @@ src/
 │   │   ├── CiberController.php  ← Controlador AJAX cybercafe
 │   │   ├── DashboardController.php← Controlador AJAX dashboard
 │   │   ├── ReporteController.php← Controlador AJAX reportes
-│   │   └── VentaController.php  ← Controlador AJAX ventas (POS)
+│   │   ├── VentaController.php  ← Controlador AJAX ventas (POS)
+│   │   └── UsuarioController.php← Controlador AJAX usuarios (nuevo)
 │   ├── Models/                  ← 13 modelos POO
 │   │   ├── Cliente.php          ← Modelo POO clientes
 │   │   ├── Inventario.php       ← Modelo POO inventario (namespace)
@@ -268,16 +270,15 @@ class Router
 
 | Metodo | Explicacion |
 |--------|-------------|
-| `__construct()` | Inicia sesion, genera CSRF token (`bin2hex(random_bytes(32))`), resuelve `$pagina` |
+| `__construct()` | Inicia sesion (si no existe) y genera el CSRF token una sola vez por sesion (`bin2hex(random_bytes(32))`) |
 | `handle()` | Metodo principal: determina el tipo de peticion y ejecuta la accion |
-| `CONTROLLERS` | Mapa `pagina => clase` que centraliza los 12 controladores |
-| `resolvePage()` | Lee `$_GET["pagina"]`, valida con regex, retorna el nombre (default: "login") |
+| `CONTROLLERS` | Mapa `pagina => clase` que centraliza los 12 controladores AJAX (13 archivos con `AuthController`) |
+| `resolvePagina()` | Lee `$_GET["pagina"]`, valida con regex `/^[a-zA-Z0-9_-]+$/`, retorna el nombre (default: "login") |
 | `dispatchAction()` | Si la pagina esta en `CONTROLLERS` y hay `action`, instancia el controlador y ejecuta `handle()` |
-| `isAuthAction()` | True si pagina='login_validate' o 'logout' |
-| `runAuthAction()` | Instancia `AuthController` y llama `login()` o `logout()` |
-| `render()` | Verifica auth, determina si es publica o protegida, y renderiza (vista o layout) |
-| `renderWithLayout()` | Prepara variables ($pageTitle, $headerExtra, $contentView) e incluye layout.php |
-| `requireAuth()` | Verifica `$_SESSION['logged_in']`, si no existe: JSON error + exit |
+| `logout()` | Cierra sesion (`session_regenerate_id` + `session_destroy`) desde `?pagina=login&logout=1` |
+| `render()` | Renderiza vistas publicas directas y protegidas con layout (prepara `$pageTitle`, `$headerExtra`, `$contentView`) |
+| `verifyCsrfToken()` | Estatico: compara el token con `hash_equals()` contra `$_SESSION['csrf_token']` |
+| `redirect()` | Envia `header('Location: ?pagina=...')` |
 
 ### Mejoras sobre la version procedural
 
@@ -286,12 +287,12 @@ class Router
 | **Tipo** | Script procedural (75 lineas) | Clase con namespace |
 | **Autoloader** | No usado | Composer PSR-4 |
 | **AJAX** | Solo inventario | 12 controladores via mapa `CONTROLLERS` + `dispatchAction()` |
-| **Auth** | login_validate.php (vista) | AuthController con login()/logout() + session_regenerate_id |
+| **Auth** | login_validate.php (vista) | AuthController con login() + Router::logout() + session_regenerate_id |
 | **CSRF** | No implementado | `bin2hex(random_bytes(32))` en constructor + `<input name="csrf_token">` |
-| **Seguridad AJAX** | No verificaba auth | `requireAuth()` con respuesta JSON |
-| **Logout** | No implementado | `AuthController::logout()` |
-| **Titulos** | 9 modulos | 13 modulos |
-| **Validacion** | Sin helpers | Model.php: non-empty, min-length, pattern, FK existence, duplicates |
+| **Seguridad AJAX** | No verificaba auth | Control de acceso en `handle()` con redireccion a login |
+| **Logout** | No implementado | `Router::logout()` via `?pagina=login&logout=1` |
+| **Titulos** | 9 modulos | 12 modulos (constante `PAGE_TITLES`) |
+| **Validacion** | Sin helpers | `Model.php` (helpers) + clase final `Validator` (reglas estaticas) |
 
 ---
 
@@ -359,9 +360,9 @@ class Router
 | Parametro | Vista/Controlador | Publica? | JS Adicional |
 |-----------|-------------------|----------|-------------|
 | `login` | `login.php` | Si | Ninguno |
-| `login_validate` | `AuthController::login()` | No (POST) | Ninguno |
-| `logout` | `AuthController::logout()` | No | Ninguno |
-| `dashboard` | `dashboard.php` | No | Ninguno |
+| `login&logout=1` | `Router::logout()` | Si | Ninguno |
+| `login_validate` (POST) | `AuthController::login()` | Si | Ninguno |
+| `dashboard` | `dashboard.php` | No | `app.reportes.js`? No — ninguno (KPIs via `app.reportes.js` no; dashboard usa `app.core/init/ui`) |
 | `inventario` | `inventario.php` | No | `app.inventario.js` |
 | `inventario&action=X` | `InventarioController::handle()` | No | (AJAX) |
 | `ventas` | `ventas.php` | No | `app.pos.js` |
@@ -375,7 +376,8 @@ class Router
 | `reportes` | `reportes.php` | No | `app.reportes.js` |
 | `activos` | `activos.php` | No | `app.activos.js` |
 | `asesorias` | `asesorias.php` | No | `app.legal.js` |
-| `usuarios` | `usuarios.php` | No | Ninguno |
+| `usuarios` | `usuarios.php` | No | `app.usuarios.js` |
+| `usuarios&action=X` | `UsuarioController::handle()` | No | (AJAX) |
 | `roles` | `roles.php` | No | `app.roles.js` |
 | `roles&action=X` | `RolController::handle()` | No | (AJAX) |
 | `menu` | `menu.php` | No | Ninguno |
@@ -502,7 +504,7 @@ Usuario: GET /src/?pagina=ventas
 |---------|---------------------------|--------------|
 | **Enrutador** | `Router` clase con namespace, OOP | Framework (Laravel, Symfony) con routing DSL |
 | **Punto de entrada** | `autoload.php` + `new Router()` + `->handle()` | Igual, pero con contenedor DI |
-| **Controladores** | 12 controladores con namespace, metodo `handle()` | Controladores con acciones por metodo |
+| **Controladores** | 13 controladores con namespace, metodo `handle()` | Controladores con acciones por metodo |
 | **Layout** | `template/layout.php` | `Views/layouts/main.php` |
 | **Vistas** | `Views/dashboard.php` (plano) | `Views/dashboard/index.php` (subdirectorios) |
 | **Autoloader** | Composer PSR-4 | Igual |
@@ -543,11 +545,13 @@ Usuario: GET /src/?pagina=ventas
 | CRUD clientes via AJAX (crear, editar, eliminar) | PASS |
 | CRUD proveedores-gestion via AJAX (crear, editar, eliminar) | PASS |
 | Login con usuario de BD via AuthController::login() | PASS |
-| Logout via AuthController::logout() | PASS |
+| Logout via `?pagina=login&logout=1` (Router::logout) | PASS |
 | CSRF token se genera y valida en todas las peticiones | PASS |
 | Autoloader de Composer (PSR-4) funciona | PASS |
 
+**Verificación extremo a extremo (v4.2, suite `test_crud.ps1`):** 70/70 PASS sobre los 13 controladores y todos los módulos (35 endpoints AJAX GET, CRUD de clientes/inventario/proveedores/activos/roles/usuarios/asesorías/ventas/cyber, 5 reportes + exportaciones CSV/Excel/PDF y eliminación de roles con permisos).
+
 ---
 
-**Documentacion**: Julio 2026
+**Documentacion**: Julio 2026 (actualizada Sept 2026)
 

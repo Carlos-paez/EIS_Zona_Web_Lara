@@ -22,6 +22,8 @@
 9. [Módulo Activos Fijos](#9-módulo-activos-fijos)
 10. [Módulo Cybercafé](#10-módulo-cybercafé)
 11. [Módulo Asesoría Legal](#11-módulo-asesoría-legal)
+12. [Módulo Usuarios](#12-módulo-usuarios)
+13. [Módulo Roles y Permisos](#13-módulo-roles-y-permisos)
 
 ---
 
@@ -54,8 +56,9 @@ eis_zona_web_lara/
 │   │   │   ├── router.php               # Enrutador OOP (Front Controller)
 │   │   │   ├── Exporter.php             # Exportación CSV/Excel/PDF
 │   │   │   └── PdfBuilder.php           # Generador de PDF mínimo
-│   │   ├── Controllers/                 # 12 controladores
+│   │   ├── Controllers/                 # 13 controladores
 │   │   │   ├── AuthController.php           # Login/logout
+│   │   │   ├── UsuarioController.php        # CRUD usuarios, estados, password
 │   │   │   ├── ClienteController.php        # CRUD clientes
 │   │   │   ├── InventarioController.php     # CRUD inventario
 │   │   │   ├── VentaController.php          # POS
@@ -69,11 +72,11 @@ eis_zona_web_lara/
 │   │   │   └── ReporteController.php        # Reportes/exportación
 │   │   ├── Models/                     # 13 POO + 2 legacy
 │   │   ├── template/
-│   │   │   └── layout.php               # Layout maestro (13 módulos)
+│   │   │   └── layout.php               # Layout maestro (12 módulos)
 │   │   └── Views/                       # 15 vistas
 │   └── Public/
 │       ├── css/                        # styles, login, materialize, material-icons (locales)
-│       ├── js/                         # jquery + materialize + 15 módulos app.*.js
+│       ├── js/                         # jquery + materialize + 16 módulos app.*.js
 │       └── fonts/                      # MaterialIcons-Regular.ttf (local)
 ├── docs/                               # Documentación detallada
 └── vendor/                             # Composer dependencies
@@ -85,8 +88,8 @@ eis_zona_web_lara/
 |------|-----------|-----------------|
 | **Model** | `src/app/Models/*.php` | Lógica de negocio, acceso a datos con PDO prepared statements, validación con helpers reutilizables |
 | **View** | `src/app/Views/*.php` | Presentación HTML, datos del modelo |
-| **Controller** | `src/app/Controllers/*.php` (12) | Orquestación: recibe request AJAX, valida, llama a modelos, retorna JSON |
-| **Core** | `src/app/core/` (Database, Model, Router, Exporter, PdfBuilder) | Conexión Singleton, clase base, enrutamiento con CSRF, exportación |
+| **Controller** | `src/app/Controllers/*.php` (13) | Orquestación: recibe request AJAX, valida, llama a modelos, retorna JSON |
+| **Core** | `src/app/core/` (Database, Model, **Validator**, Router, Exporter, PdfBuilder) | Conexión Singleton, clase base + reglas de validación, enrutamiento con CSRF, exportación |
 | **Config** | `src/Config/database.php` | Conexión PDO legacy |
 
 ### 1.3 Principios PDO Estricto
@@ -301,6 +304,36 @@ php src/cli/create_user.php --username=admin --password=1234 --nombre="Administr
 
 ---
 
+## 12. Módulo Usuarios
+
+### 12.1 Archivos
+- `usuarios.php` — vista
+- `UsuarioController` (nuevo) — `listar`, `detalle`, `kpis`, `roles`, `crear`, `actualizar`, `estado`, `eliminar`, `password`
+- `Usuario` model + `rol_usuarios` (rol del usuario)
+
+### 12.2 Funcionalidad
+- CRUD de usuarios (`user_name` único, `password_hash`, `estatus` 1/0)
+- Activar/desactivar (`estado`) y cambio de contraseña (`password`) via AJAX
+- Selector de rol poblado desde BD (`action=roles`); `usuarios` historico se gestionaba con `app.core.js`/`crud_users.php`, hoy con `app.usuarios.js`
+
+---
+
+## 13. Módulo Roles y Permisos
+
+### 13.1 Archivos
+- `roles.php` — vista
+- `RolController` — `listar`, `detalle`, `crear`, `actualizar`, `eliminar`, `permisos`, `permisosRol`, `guardarPermisos`, `usuarios`, `asignarRol`
+- `Rol` model (incluye `descripcion`/`created_at`)
+
+### 13.2 Funcionalidad
+- CRUD de roles con validación de unicidad y protección del rol Administrador (id=1)
+- Asignación de permisos via `guardarPermisos` (`permisos[]` serializado por jQuery)
+- `eliminarRol()` borra primero `permisos_rol` y luego `roles` en transacción (corrección v4.2, FK de `permisos_rol`)
+- Asignación de rol a usuario (`asignarRol` → `rol_usuarios`)
+- Verificación extremo a extremo: roles + permisos 100% funcionales (suite v4.2)
+
+---
+
 ## Apéndice A: Temas (Claro/Oscuro)
 
 Persistencia vía `localStorage`; toggle en la sidebar; CSS variables con `[data-theme="dark"]`.
@@ -313,5 +346,5 @@ de descarga. `PdfBuilder` genera un PDF mínimo y válido (texto + tabla).
 ---
 
 *Documento de análisis técnico — EIS System (Zona Web Lara)*  
-*Última actualización: Agosto 2026 — todos los módulos funcionales con BD (MVC + AJAX + exportación)*  
-*Arquitectura: MVC + POO + PDO estricto | Base de datos: MySQL 8+ / InnoDB / utf8mb4*
+*Última actualización: Septiembre 2026 — todos los módulos funcionales con BD (MVC + AJAX + exportación; 70/70 pruebas CRUD)*  
+*Arquitectura: MVC + POO + PDO estricto | Base de datos: MySQL 8+ / InnoDB / utf8mb4 | 13 controladores, 21 tablas*

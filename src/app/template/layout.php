@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <!-- ============================================================
      LAYOUT PRINCIPAL (MASTER TEMPLATE)
      Este archivo define la estructura HTML común a todas las
@@ -208,6 +208,7 @@
     <script>
     window.EIS = window.EIS || {};
     window.EIS.csrfToken = '<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>';
+    window.EIS.userId = '<?php echo (int)($_SESSION['user_id'] ?? 0); ?>';
     $.ajaxSetup({
         beforeSend: function(xhr, settings) {
             if (settings.type === 'POST' || settings.type === 'post') {
@@ -272,6 +273,11 @@
     <!-- Módulo de Gestión de Activos -->
     <?php if ($pagina === 'activos'): ?>
     <script src="Public/js/app.activos.js"></script>
+    <?php endif; ?>
+
+    <!-- Módulo de Usuarios -->
+    <?php if ($pagina === 'usuarios'): ?>
+    <script src="Public/js/app.usuarios.js"></script>
     <?php endif; ?>
 
     <!-- Toggle del submenú de Solicitudes -->

@@ -154,9 +154,9 @@ flowchart TB
 
 | `?pagina=login` | 🔓 Pública | `login.php` | Formulario de acceso |
 
-| `?pagina=login_validate` | 🔒 POST | `AuthController::login()` | Valida credenciales vs BD con password_verify |
+| `?pagina=login_validate` | 🔒 POST (Pública) | `AuthController::login()` | Valida credenciales vs BD con password_verify |
 
-| `?pagina=logout` | 🔒 GET | `AuthController::logout()` | Destruye sesión, redirige a login |
+| `?pagina=login&logout=1` | 🔒 GET | `Router::logout()` | Destruye sesión, redirige a login |
 
 | `?pagina=dashboard` | 🔒 Privada | `dashboard.php` | Panel de control con KPIs |
 
@@ -250,7 +250,7 @@ INICIO
 
 3. **Router** (`router.php` - clase `Router` en `App\Core`):
 
- - `resolvePage()`: Sanitiza `?pagina=` (regex `^[a-zA-Z0-9_-]+$`)
+ - `resolvePagina()`: Sanitiza `?pagina=` (regex `^[a-zA-Z0-9_-]+$`)
 
  - `handle()`: Determina el tipo de petición:
 

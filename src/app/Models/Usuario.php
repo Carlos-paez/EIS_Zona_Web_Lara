@@ -44,6 +44,7 @@ class Usuario extends Model
         $this->validateNotEmpty($userName, 'nombre de usuario');
         $this->validateMinLength($userName, 'nombre de usuario', self::MIN_USERNAME);
         $this->validateLength($userName, 'nombre de usuario', self::MAX_USERNAME);
+        $this->validatePattern($userName, '/^[A-Za-z0-9][A-Za-z0-9_.\-]{0,49}$/', 'El nombre de usuario solo puede contener letras, números, puntos, guiones y guiones bajos');
         $this->userName = $userName;
     }
 
@@ -66,6 +67,7 @@ class Usuario extends Model
     {
         $nombre = $this->sanitizeString($nombre);
         $this->validateLength($nombre, 'nombre', self::MAX_NOMBRE);
+        $this->validarLibre($nombre, 'nombre');
         $this->nombre = $nombre;
     }
 
@@ -78,6 +80,7 @@ class Usuario extends Model
     {
         $apellido = $this->sanitizeString($apellido);
         $this->validateLength($apellido, 'apellido', self::MAX_APELLIDO);
+        $this->validarLibre($apellido, 'apellido');
         $this->apellido = $apellido;
     }
 
@@ -149,32 +152,41 @@ class Usuario extends Model
         if (mb_strlen($password) < self::MIN_PASSWORD) {
             throw new \InvalidArgumentException("La contraseña debe tener al menos " . self::MIN_PASSWORD . " caracteres");
         }
+        if (strlen($password) > 72) {
+            throw new \InvalidArgumentException("La contraseña no puede exceder 72 caracteres");
+        }
         return password_hash($password, PASSWORD_BCRYPT);
     }
 
-    public function crear(string $user_name, string $password, string $nombre, string $apellido, string $email): bool
+    public function crear(string $user_name, string $password, string $nombre, string $apellido, string $email, ?int $fk_rol_usuario = null): bool
     {
         $this->setUserName($user_name);
         $this->setNombre($nombre);
         $this->setApellido($apellido);
         $this->setEmail($email);
+        $this->setFkRolUsuario($fk_rol_usuario);
+        if ($fk_rol_usuario !== null && !$this->existeRolUsuario($fk_rol_usuario)) {
+            throw new \InvalidArgumentException('El rol seleccionado no existe');
+        }
         $hash = $this->hashPassword($password);
 
-        $sql = "INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email, estatus) VALUES (?, ?, ?, ?, ?, '1')";
+        $sql = "INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email, estatus, fk_rol_usuario) VALUES (?, ?, ?, ?, ?, '1', ?)";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(1, $this->userName, PDO::PARAM_STR);
         $stmt->bindParam(2, $hash, PDO::PARAM_STR);
         $stmt->bindParam(3, $this->nombre, PDO::PARAM_STR);
         $stmt->bindParam(4, $this->apellido, PDO::PARAM_STR);
         $stmt->bindParam(5, $this->email, PDO::PARAM_STR);
+        $stmt->bindParam(6, $this->fkRolUsuario, PDO::PARAM_INT);
         return $stmt->execute();
     }
 
     public function obtenerTodos(): array
     {
         $stmt = $this->db->query("
-            SELECT u.id, u.user_name AS username, u.nombre, u.apellido, u.email, u.estatus AS activo,
-                   ru.rol, r.nombre_rol AS rol_nombre
+            SELECT u.id, u.user_name AS username, u.nombre, u.apellido, u.email,
+                   CASE WHEN u.estatus IN ('1','activo') THEN '1' ELSE '0' END AS activo,
+                   ru.rol, r.nombre_rol AS rol_nombre, u.fk_rol_usuario
             FROM usuarios u
             LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
             LEFT JOIN roles r ON ru.fk_rol = r.id
@@ -187,7 +199,8 @@ class Usuario extends Model
     {
         $id = $this->sanitizeInt($id);
         $stmt = $this->db->prepare("
-            SELECT u.*, ru.rol, r.nombre_rol AS rol_nombre
+            SELECT u.*, ru.rol, r.nombre_rol AS rol_nombre,
+                   CASE WHEN u.estatus IN ('1','activo') THEN '1' ELSE '0' END AS estatus_num
             FROM usuarios u
             LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
             LEFT JOIN roles r ON ru.fk_rol = r.id
@@ -206,11 +219,56 @@ class Usuario extends Model
             FROM usuarios u
             LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
             LEFT JOIN roles r ON ru.fk_rol = r.id
-            WHERE u.user_name = ? AND u.estatus = '1'
+            WHERE u.user_name = ? AND u.estatus IN ('1','activo')
         ");
         $stmt->bindParam(1, $username, PDO::PARAM_STR);
         $stmt->execute();
         return $stmt->fetch();
+    }
+
+    public function existeUsername(string $username, ?int $excludeId = null): bool
+    {
+        $username = $this->sanitizeString($username);
+        $sql = "SELECT COUNT(*) FROM usuarios WHERE user_name = ?";
+        if ($excludeId !== null) {
+            $excludeId = $this->sanitizeInt($excludeId);
+            $sql .= " AND id != ?";
+        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(1, $username, PDO::PARAM_STR);
+        if ($excludeId !== null) {
+            $stmt->bindParam(2, $excludeId, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    public function cambiarEstado(int $id, bool $activo): bool
+    {
+        $id = $this->sanitizeInt($id);
+        if ($id <= 0) {
+            throw new \InvalidArgumentException('ID de usuario no válido');
+        }
+        $estatus = $activo ? '1' : '0';
+        $stmt = $this->db->prepare("UPDATE usuarios SET estatus = ? WHERE id = ?");
+        $stmt->bindParam(1, $estatus, PDO::PARAM_STR);
+        $stmt->bindParam(2, $id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    public function obtenerRolesAsignables(): array
+    {
+        $stmt = $this->db->query("SELECT id, rol AS nombre FROM rol_usuarios ORDER BY rol");
+        return $stmt->fetchAll();
+    }
+
+    private function existeRolUsuario(int $id): bool
+    {
+        $id = $this->sanitizeInt($id);
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM rol_usuarios WHERE id = ?");
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return (int)$stmt->fetchColumn() > 0;
     }
 
     public function autenticar(string $username, string $password): array|false

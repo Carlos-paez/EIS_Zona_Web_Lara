@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Router;
+use App\Core\Validator;
 use App\Models\Asesoria;
 
 class AsesoriaController
@@ -83,11 +84,7 @@ class AsesoriaController
 
     private function detalle(): void
     {
-        $id = (int)($_GET['id'] ?? 0);
-        if (!$id) {
-            echo json_encode(['success' => false, 'error' => 'ID no válido']);
-            return;
-        }
+        $id = Validator::id($_GET['id'] ?? null, 'ID de la asesoría');
         $asesoria = $this->model->obtenerPorId($id);
         if ($asesoria) {
             echo json_encode(['success' => true, 'data' => $asesoria]);
@@ -103,6 +100,10 @@ class AsesoriaController
             echo json_encode(['success' => true, 'data' => []]);
             return;
         }
+        if (!preg_match(Validator::PATTERN_CEDULA, $cedula)) {
+            echo json_encode(['success' => false, 'error' => 'La cédula no tiene un formato válido']);
+            return;
+        }
         $resultados = $this->model->buscarPorCedula($cedula);
         echo json_encode(['success' => true, 'data' => $resultados]);
     }
@@ -114,17 +115,12 @@ class AsesoriaController
             return;
         }
 
-        $ciudadano   = trim($_POST['ciudadano'] ?? '');
-        $cedula      = trim($_POST['cedula'] ?? '');
-        $documento   = trim($_POST['documento'] ?? '');
-        $descripcion = trim($_POST['descripcion'] ?? '');
-        $direccion   = trim($_POST['direccion'] ?? '');
-        $telefono    = trim($_POST['telefono'] ?? '');
-
-        if (empty($ciudadano) || empty($cedula) || empty($documento)) {
-            echo json_encode(['success' => false, 'error' => 'Ciudadano, cédula y tipo de documento son obligatorios']);
-            return;
-        }
+        $ciudadano   = Validator::texto($_POST['ciudadano'] ?? null, 'ciudadano', ['required' => true, 'min' => 2, 'max' => 200, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El ciudadano contiene caracteres no permitidos']);
+        $cedula      = Validator::cedula($_POST['cedula'] ?? null, 'cédula');
+        $documento   = Validator::texto($_POST['documento'] ?? null, 'tipo de documento', ['required' => true, 'min' => 1, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El tipo de documento contiene caracteres no permitidos']);
+        $descripcion = Validator::texto($_POST['descripcion'] ?? null, 'descripción', ['required' => false, 'max' => 1000]);
+        $direccion   = Validator::texto($_POST['direccion'] ?? null, 'dirección', ['required' => false, 'max' => 500]);
+        $telefono    = Validator::telefono($_POST['telefono'] ?? null, 'teléfono');
 
         $resultado = $this->model->crear($ciudadano, $cedula, $documento, $descripcion, $direccion, $telefono);
         echo json_encode(
@@ -141,14 +137,9 @@ class AsesoriaController
             return;
         }
 
-        $id          = (int)($_POST['id'] ?? 0);
-        $documento   = trim($_POST['documento'] ?? '');
-        $descripcion = trim($_POST['descripcion'] ?? '');
-
-        if (!$id || empty($documento)) {
-            echo json_encode(['success' => false, 'error' => 'ID y tipo de documento son obligatorios']);
-            return;
-        }
+        $id          = Validator::id($_POST['id'] ?? null, 'ID de la asesoría');
+        $documento   = Validator::texto($_POST['documento'] ?? null, 'tipo de documento', ['required' => true, 'min' => 1, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El tipo de documento contiene caracteres no permitidos']);
+        $descripcion = Validator::texto($_POST['descripcion'] ?? null, 'descripción', ['required' => false, 'max' => 1000]);
 
         $resultado = $this->model->actualizar($id, $documento, $descripcion);
         echo json_encode(
@@ -165,11 +156,7 @@ class AsesoriaController
             return;
         }
 
-        $id = (int)($_POST['id'] ?? 0);
-        if (!$id) {
-            echo json_encode(['success' => false, 'error' => 'ID no válido']);
-            return;
-        }
+        $id = Validator::id($_POST['id'] ?? null, 'ID de la asesoría');
         $resultado = $this->model->eliminar($id);
         echo json_encode(
             $resultado

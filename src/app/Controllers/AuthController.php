@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Router;
+use App\Core\Validator;
 use App\Models\Usuario;
 
 class AuthController
@@ -39,7 +40,14 @@ class AuthController
         $username = trim($_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
 
-        if (empty($username) || empty($password)) {
+        try {
+            $username = Validator::username($username, 'usuario');
+        } catch (\InvalidArgumentException) {
+            header('Location: ?pagina=login&error=1');
+            exit;
+        }
+
+        if (empty($password)) {
             header('Location: ?pagina=login&error=1');
             exit;
         }

@@ -12,6 +12,8 @@ class Venta extends Model
     private const MAX_APELLIDO  = 100;
     private const MAX_DIRECCION = 500;
     private const MAX_TELEFONO  = 20;
+    private const MAX_CANTIDAD  = 99999;
+    private const MAX_ITEMS     = 200;
 
     /**
      * Obtiene los productos disponibles para la venta (con stock > 0).
@@ -51,12 +53,18 @@ class Venta extends Model
         $this->validateNotEmpty($ciudadano, 'nombre del cliente');
         $this->validateNotEmpty($cedula, 'cédula');
         $this->validateLength($cedula, 'cédula', self::MAX_CEDULA);
+        $this->validateMinLength($cedula, 'cédula', 5);
+        $this->validatePattern($cedula, '/^[0-9A-Za-z][0-9A-Za-z.\-\s]{3,18}[0-9A-Za-z]$/', 'La cédula no tiene un formato válido');
         $this->validateLength($ciudadano, 'nombre del cliente', self::MAX_NOMBRE);
         $this->validateLength($direccion, 'dirección', self::MAX_DIRECCION);
         $this->validateLength($telefono, 'teléfono', self::MAX_TELEFONO);
+        $this->validateTelefono($telefono, 'teléfono');
 
         if (empty($items)) {
             throw new \InvalidArgumentException('El carrito está vacío');
+        }
+        if (count($items) > self::MAX_ITEMS) {
+            throw new \InvalidArgumentException('El carrito excede el máximo de ' . self::MAX_ITEMS . ' ítems permitidos');
         }
 
         // Separa el nombre completo en nombre y apellido (máximo 2 partes)
@@ -97,13 +105,21 @@ class Venta extends Model
             $sqlPrecio = "SELECT precio_venta, stock FROM productos WHERE id = ?";
             $stmtPrecio = $this->db->prepare($sqlPrecio);
 
+            $vistos = [];
+
             foreach ($items as $item) {
                 $productoId = (int)($item['id'] ?? 0);
                 $cantidad   = (int)($item['cantidad'] ?? 0);
 
-                if ($productoId <= 0 || $cantidad < 1) {
+                if ($productoId <= 0 || $cantidad < 1 || $cantidad > self::MAX_CANTIDAD) {
                     throw new \InvalidArgumentException('Ítem de venta no válido');
                 }
+
+                // Evita productos duplicados en la misma venta
+                if (isset($vistos[$productoId])) {
+                    throw new \InvalidArgumentException('Un producto se repite en el carrito');
+                }
+                $vistos[$productoId] = true;
 
                 // Precio y stock tomados de la base de datos (no del cliente)
                 $stmtPrecio->bindParam(1, $productoId, PDO::PARAM_INT);

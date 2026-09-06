@@ -121,9 +121,23 @@ class Rol extends Model
         $stmt->execute();
         $fila = $stmt->fetch();
         if ((int)$fila['total'] > 0) return false;
-        $stmt = $this->db->prepare("DELETE FROM roles WHERE id = ?");
-        $stmt->bindParam(1, $id, PDO::PARAM_INT);
-        return $stmt->execute();
+
+        try {
+            $this->db->beginTransaction();
+            $stmt = $this->db->prepare("DELETE FROM permisos_rol WHERE fk_rol = ?");
+            $stmt->bindParam(1, $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $stmt = $this->db->prepare("DELETE FROM roles WHERE id = ?");
+            $stmt->bindParam(1, $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $this->db->commit();
+            return true;
+        } catch (\Exception $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            return false;
+        }
     }
 
     public function obtenerPermisos(): array
@@ -146,7 +160,27 @@ class Rol extends Model
     public function guardarPermisosRol(int $rol_id, array $permiso_ids): bool
     {
         $rol_id = $this->sanitizeInt($rol_id);
+        if ($rol_id <= 0) {
+            throw new \InvalidArgumentException('ID de rol no válido');
+        }
+        if (!$this->existeEnTabla('roles', $rol_id)) {
+            throw new \InvalidArgumentException('El rol seleccionado no existe');
+        }
+        if (count($permiso_ids) > 200) {
+            throw new \InvalidArgumentException('Se excedió el máximo de permisos permitidos');
+        }
+
+        // Lista blanca de permisos existentes: los IDs se filtran contra la BD.
+        $permiso_ids = array_values(array_filter($permiso_ids, fn($v) => is_int($v) || (is_string($v) && preg_match('/^\d+$/', trim($v)))));
         $permiso_ids = array_map('intval', $permiso_ids);
+        $permiso_ids = array_values(array_unique($permiso_ids));
+
+        $stmtIds = $this->db->query("SELECT id FROM permisos");
+        $permitidos = array_map('intval', array_column($stmtIds->fetchAll(), 'id'));
+
+        $permiso_ids = array_values(array_filter($permiso_ids, function (int $pid) use ($permitidos) {
+            return $pid > 0 && in_array($pid, $permitidos, true);
+        }));
 
         $this->db->beginTransaction();
         try {
@@ -157,8 +191,8 @@ class Rol extends Model
                 $sql = "INSERT INTO permisos_rol (fk_rol, fk_permiso) VALUES (?, ?)";
                 $stmt = $this->db->prepare($sql);
                 $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
-                $stmt->bindParam(2, $pid, PDO::PARAM_INT);
                 foreach ($permiso_ids as $pid) {
+                    $stmt->bindParam(2, $pid, PDO::PARAM_INT);
                     $stmt->execute();
                 }
             }
@@ -193,6 +227,16 @@ class Rol extends Model
     {
         $usuario_id = $this->sanitizeInt($usuario_id);
         $rol_id = $this->sanitizeInt($rol_id);
+
+        if ($usuario_id <= 0 || $rol_id <= 0) {
+            throw new \InvalidArgumentException('Datos no válidos');
+        }
+        if (!$this->existeEnTabla('usuarios', $usuario_id)) {
+            throw new \InvalidArgumentException('El usuario seleccionado no existe');
+        }
+        if (!$this->existeEnTabla('roles', $rol_id)) {
+            throw new \InvalidArgumentException('El rol seleccionado no existe');
+        }
 
         // usuarios.fk_rol_usuario referencia rol_usuarios.id (no roles.id).
         // Buscamos el rol_usuarios.id correspondiente al rol seleccionado.

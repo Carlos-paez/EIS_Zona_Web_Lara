@@ -5,7 +5,7 @@
 EIS System es una aplicacion web de gestion empresarial desarrollada en **PHP 8.x vanilla** con
 **Materialize CSS 1.0.0** y **jQuery 3.7.1**. Utiliza un patron **Front Controller** con enrutador
 OOP (clase `Router`), arquitectura **MVC** con namespaces PSR-4 (Composer), layout maestro y
-JavaScript modular (15 modulos). Todos los assets son locales (sin CDN) y cuenta con Service Worker
+JavaScript modular (16 modulos). Todos los assets son locales (sin CDN) y cuenta con Service Worker
 para funcionamiento offline (PWA).
 
 Los **13 modulos** estan conectados a la base de datos MySQL (`zona_web_lara`): cada uno dispone de
@@ -19,7 +19,7 @@ modelo POO + controlador + vista + JS.
 - **XSS Sanitizacion**: `escHtml()` en JS, `htmlspecialchars()` en PHP
 - **Session Hardening**: `session_regenerate_id(true)` en login/logout
 - **Prepared Statements**: PDO con `ATTR_EMULATE_PREPARES => false`, uso de `bindParam`
-- **Validacion Backend**: helpers reutilizables en `Model.php`
+- **Validacion Backend**: helpers reutilizables en `Model.php` + clase final `Validator` (`App\Core\Validator`) con reglas estáticas por campo (cedula, RIF, username, precios, stock, etc.)
 - **Operaciones transaccionales**: `beginTransaction()/commit()/rollback()` en ventas, asesorias y sesiones cyber
 
 ## Arquitectura
@@ -29,8 +29,8 @@ modelo POO + controlador + vista + JS.
 - `Router` clase en `App\Core` gestiona enrutamiento, autenticacion, CSRF tokens, rutas AJAX y vistas
 - Despacho AJAX: la tabla `CONTROLLERS` mapea `pagina => controlador`; las peticiones
   `?pagina=X&action=Y` se derivan al metodo `handle()` del controlador correspondiente
-- 12 controladores: Cliente, Inventario, Venta, Rol, Proveedor, ProveedorGestion, Asesoria,
-  Ciber, Activo, Dashboard, Reporte, Auth
+- 13 controladores: Auth, Usuario, Cliente, Inventario, Venta, Rol, Proveedor, ProveedorGestion,
+  Asesoria, Ciber, Activo, Dashboard, Reporte
 - Las vistas publicas (`login`, `login_validate`) se cargan directas; las protegidas dentro del layout
 - `handle()` ejecuta `match ($action)` y retorna JSON `{success, data?, error?, message?}`
 
@@ -70,11 +70,13 @@ src/
 │   ├── core/
 │   │   ├── Database.php         # Conexion PDO Singleton (moderna)
 │   │   ├── Model.php            # Clase base abstracta con helpers de validacion
+│   │   ├── Validator.php        # Clase final con reglas estáticas de validacion por campo
 │   │   ├── router.php           # Enrutador OOP (Front Controller)
 │   │   ├── Exporter.php         # Exportacion CSV/Excel/PDF
 │   │   └── PdfBuilder.php       # Generador de PDF minimo
-│   ├── Controllers/             # 12 controladores (auth, json AJAX + render)
+│   ├── Controllers/             # 13 controladores (auth, json AJAX + render)
 │   │   ├── AuthController.php           # Login/logout
+│   │   ├── UsuarioController.php        # CRUD usuarios, estados y password
 │   │   ├── ClienteController.php        # CRUD clientes
 │   │   ├── InventarioController.php     # CRUD inventario
 │   │   ├── VentaController.php          # POS (productos, clientes, registrar venta)
@@ -95,7 +97,7 @@ src/
 │   │   ├── crud_users.php       # legacy procedural
 │   │   └── crud_asesorias.php   # legacy procedural
 │   ├── template/
-│   │   └── layout.php           # Layout maestro (sidebar 13 modulos)
+│   │   └── layout.php           # Layout maestro (sidebar 12 modulos)
 │   └── Views/                   # 15 vistas
 │       ├── login.php, login_validate.php, menu.php
 │       ├── dashboard.php, inventario.php, ventas.php
@@ -123,7 +125,7 @@ src/
 - JS: jquery-3.7.1.min.js (en head)
 
 ### Sidebar (Materialize Sidenav)
-- 13 modulos: Dashboard, Inventario, Ventas (POS), Clientes, Proveedores (Ordenes/Proveedores),
+- 12 modulos: Dashboard, Inventario, Ventas (POS), Clientes, Proveedores (Ordenes/Proveedores),
   Cyber, Reportes, Activos, Asesoria Legal, Usuarios, Roles y Permisos, Cerrar Sesion
 - Theme toggle (oscuro/claro con localStorage)
 - Clase `active` en el item correspondiente segun `$pagina`
@@ -138,15 +140,16 @@ src/
 ### Scripts Cargados y CSRF
 - Siempre: materialize.min.js, jquery.dataTables.min.js, dataTables.materialize.js, app.core.js, app.init.js, app.selects.js, app.tables.js, app.ui.js
 - Condicional por modulo: app.pos.js, app.cyber.js, app.legal.js, app.inventario.js, app.roles.js,
-  app.proveedores.js, app.proveedores-gestion.js, app.clientes.js, app.activos.js, app.reportes.js, etc.
+  app.proveedores.js, app.proveedores-gestion.js, app.clientes.js, app.activos.js, app.reportes.js,
+  app.usuarios.js
 - Inyecta `window.EIS.csrfToken` y `$.ajaxSetup` agrega el token a cada POST AJAX
 - Service Worker: `navigator.serviceWorker.register('sw.js')`
 
 ## JavaScript Modular
 
 Nombres: `app.core, app.init, app.selects, app.tables, app.ui, app.pos, app.cyber, app.legal, app.inventario,
-app.roles, app.proveedores, app.proveedores-gestion, app.clientes, app.activos, app.reportes`
-(+ `app.js`) y el motor de tables `jquery.dataTables.min.js` + `dataTables.materialize.js`.
+app.roles, app.proveedores, app.proveedores-gestion, app.clientes, app.activos, app.reportes, app.usuarios`
+(+ `app.js` legacy) y el motor de tables `jquery.dataTables.min.js` + `dataTables.materialize.js`.
 
 - **app.core.js**: namespace `EIS`, `debounce()`, `EIS.toast()`, `escHtml()` y los helpers de DataTables `EIS.datatable*`
 - **app.init.js**: Materialize init, reloj, tema oscuro/claro, animaciones
@@ -209,7 +212,7 @@ app.roles, app.proveedores, app.proveedores-gestion, app.clientes, app.activos, 
 | activos | activos.php | activos, tables | Activo | Protegida |
 | asesorias | asesorias.php | legal | Asesoria | Protegida |
 | menu | menu.php | init, ui | - | Protegida |
-| usuarios | usuarios.php | core | Auth | Protegida |
+| usuarios | usuarios.php | usuarios, tables | Usuario | Protegida |
 | roles | roles.php | roles | Rol | Protegida |
 
 ## Tecnologias
@@ -219,6 +222,7 @@ app.roles, app.proveedores, app.proveedores-gestion, app.clientes, app.activos, 
 - PDO MySQL (prepared statements reales, utf8mb4)
 - Composer (autoloading PSR-4)
 - `Model.php`: base abstracta con helpers de validacion
+- `Validator.php`: clase final con reglas de validacion estaticas
 - `Database.php`: Singleton PDO
 - `Exporter.php` + `PdfBuilder.php`: exportacion CSV/Excel/PDF sin dependencias
 
@@ -235,5 +239,5 @@ app.roles, app.proveedores, app.proveedores-gestion, app.clientes, app.activos, 
 
 ---
 
-**Version**: 4.0
-**Agosto 2026**
+**Version**: 4.2
+**Septiembre 2026**
