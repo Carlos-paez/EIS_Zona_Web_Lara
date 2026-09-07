@@ -85,7 +85,7 @@ EIS_Zona_Web_Lara/
 │   ├── index.php                       # ← Punto de entrada: TODAS las peticiones pasan aquí
 │   ├── .htaccess                       # Reglas de Apache para URLs limpias
 │   ├── manifest.json                   # Datos de la app para instalarse como PWA
-│   ├── sw.js                           # Service Worker (permite la app offline)
+│   ├── sw.js                           # Service Worker (caché offline Stale-While-Revalidate, CACHE_NAME v5; subir la versión invalida scripts corregidos)
 │   ├── Config/
 │   │   └── database.php                # Config de conexión (versión legacy)
 │   ├── app/

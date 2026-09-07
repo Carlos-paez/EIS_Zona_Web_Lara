@@ -1,6 +1,7 @@
 # Documentación del Diseño Conceptual de Base de Datos - Sistema ZWL v2.0
 
 > **Actualizado (Agosto 2026):** Documento de diseño histórico. La base de datos final implementada contiene **21 tablas** y todos los módulos están conectados a ella.
+> **Versión 4.3 (Septiembre 2026):** Corrección de dos bugs en la barra de búsqueda de selects de Materialize (bloqueo de cierre en fase de captura + bloqueo del typeahead) y versionado de caché del Service Worker (`eis-cache-v5`).
 
 ## 1. Introducción
 

@@ -154,7 +154,15 @@ app.roles, app.proveedores, app.proveedores-gestion, app.clientes, app.activos, 
 
 - **app.core.js**: namespace `EIS`, `debounce()`, `EIS.toast()`, `escHtml()` y los helpers de DataTables `EIS.datatable*`
 - **app.init.js**: Materialize init, reloj, tema oscuro/claro, animaciones
-- **app.selects.js**: barra de busqueda en los selects (dropdowns) de Materialize
+- **app.selects.js**: barra de busqueda en los selects (dropdowns) de Materialize (inyeccion idempotente,
+  filtro en tiempo real con aviso "Sin resultados", `restablecerBusqueda()` al abrir el menú y utilidades
+  `EIS.habilitarBusquedaEnSelects()` / `EIS.activarBusquedaEnSelect(selector, placeholder)`). 
+  **Corrección v4.3**: Materialize 1.0.0 cierra el desplegable al hacer clic en la barra porque registra su
+  handler de cierre en `document.body` en **fase de captura**; se añadió un bloqueador en fase de captura
+  sobre `document` (ancestro de `body`) con `e.stopPropagation()` para `click`/`touchend` dentro de
+  `.eis-select-search`. Además el typeahead del dropdown (`_handleDropdownKeydown`) robaba el foco al escribir:
+  se corrigió con handlers `keydown`/`keyup` con `e.stopPropagation()` en el input de búsqueda (el input está
+  dentro del `<ul>`, así el teclado no llega al dropdown).
 - **app.tables.js**: punto de extension generico; la busqueda, filtro por estado y paginacion las gestiona DataTables
 - **app.ui.js**: notificaciones, botones, tooltips
 - **DataTables**: las tablas principales de cada modulo se inicializan con `EIS.datatable()` (ordenamiento, paginacion, busqueda); los re-render por AJAX se sincronizan con `EIS.datatableRefresh()` y las barras de busqueda/filtros existentes se conectan con `EIS.datatableWireSearch()`/`EIS.datatableWireColumnFilter()`. Tema adaptado en `dataTables.materialize.css`
@@ -177,8 +185,11 @@ app.roles, app.proveedores, app.proveedores-gestion, app.clientes, app.activos, 
 
 ### Service Worker (sw.js)
 - Cachea assets estaticos en la instalacion
-- Estrategia Cache First para CSS/JS/fuentes/manifest
+- Estrategia Stale-While-Revalidate con `CACHE_NAME = 'eis-cache-v5'`
 - Network First con fallback a `offline.php` para navegacion
+- **Mecanismo de invalidacion (v4.3)**: cuando se corrige un JS servido por el SW hay que subir
+  `CACHE_NAME` (p. ej. v4→v5, y a futuro v6/v7...) para que el navegador reemplace el SW y deje de
+  servir el script viejo. Se aplicó tras corregir `app.selects.js`
 
 ### Manifest / Offline
 - `name: "EIS System"`, `display: standalone`, `theme_color: #1a237e`
@@ -241,5 +252,5 @@ app.roles, app.proveedores, app.proveedores-gestion, app.clientes, app.activos, 
 
 ---
 
-**Version**: 4.2
+**Version**: 4.3
 **Septiembre 2026**

@@ -850,5 +850,5 @@ flowchart LR
 
 ---
 
-> **Documentación generada para el sistema EIS Zona Web Lara (ZWL) v2.2**
+> **Documentación generada para el sistema EIS Zona Web Lara (ZWL) v4.3**
 > *"Explicado como si tuvieras 0 experiencia en programación"*

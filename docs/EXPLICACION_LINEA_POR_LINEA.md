@@ -969,7 +969,7 @@ Este archivo centraliza el esqueleto HTML, la barra lateral (*sidebar*), menús 
 197:     }
 198:     </script>
 ```
-* **Líneas 192-198**: Script de soporte para Aplicaciones Web Progresivas (PWA). Verifica si la característica nativa `serviceWorker` está disponible en el navegador del cliente. De estar soportada, registra asíncronamente el archivo `sw.js` para cachear recursos críticos (CSS, JS, Fuentes locales) y permitir el funcionamiento y visualización del sistema de manera independiente a la existencia de conexión a internet.
+* **Líneas 192-198**: Script de soporte para Aplicaciones Web Progresivas (PWA). Verifica si la característica nativa `serviceWorker` está disponible en el navegador del cliente. De estar soportada, registra asíncronamente el archivo `sw.js` para cachear recursos críticos (CSS, JS, Fuentes locales) y permitir el funcionamiento y visualización del sistema de manera independiente a la existencia de conexión a internet. El propio `sw.js` usa la estrategia **Stale-While-Revalidate** con `CACHE_NAME = 'eis-cache-v5'`; subir `CACHE_NAME` invalida los scripts corregidos (v4→v5 ya hecho tras corregir `app.selects.js`, y así sucesivamente en futuras versiones).
 
 ---
 

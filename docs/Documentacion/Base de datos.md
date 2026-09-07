@@ -2094,5 +2094,5 @@ Usuario 2: UPDATE stock = 10 - 5 = 5 ❌ (debería ser 7 - 5 = 2)
 ---
 
 > **Documento generado para asesoría sobre diseño de base de datos**  
-> Sistema Zona Web Lara v3.0 — EIS  
+> Sistema Zona Web Lara v4.3 — EIS  
 > 27 tablas · 21 relaciones directas · vistas calculadas en PHP · lógica transaccional en PDO

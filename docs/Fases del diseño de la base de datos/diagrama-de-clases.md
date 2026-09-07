@@ -1,6 +1,7 @@
 ﻿# Diagrama de Clases — EIS Zona Web Lara (Arquitectura MVC)
 
 > **Actualizado (Agosto 2026):** Documento de diseño histórico. La implementación final cuenta con **13 controladores (12 AJAX + `AuthController`) y 15 modelos (12 POO + 3 legacy)**.
+> **Versión 4.3 (Septiembre 2026):** Corrección de dos bugs en la barra de búsqueda de selects de Materialize (bloqueo de cierre en fase de captura + bloqueo del typeahead) y versionado de caché del Service Worker (`eis-cache-v5`).
 
 ## Estado Actual (Clases PHP con Namespace — Patrón MVC)
 

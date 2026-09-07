@@ -617,5 +617,5 @@ Usuario: GET /src/?pagina=ventas
 
 ---
 
-**Documentacion**: Julio 2026 (actualizada Sept 2026)
+**Documentacion**: Julio 2026 (actualizada Sept 2026, v4.3 — fix en `app.selects.js`: la barra de búsqueda de los selects de Materialize ya no se cierra al hacer clic en ella y ya no roba el foco al escribir)
 

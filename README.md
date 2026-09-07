@@ -36,7 +36,7 @@ El sistema administra múltiples aspectos de un negocio: ventas (POS), inventari
 - **Prepared statements** con PDO (sin emulación) y **bindParam**
 - Validación backend estricta de tipos (`App\Core\Validator`) y helpers reutilizables (`App\Core\Model`)
 - Registro de errores sin exponer detalles al usuario: `App\Core\Logger` escribe en `src/logs/errores.md` (errores de PHP, excepciones y fatales vía `index.php`)
-- Barras de búsqueda en los menús desplegables (selects de Materialize) con filtro en tiempo real (`app.selects.js`)
+- Barras de búsqueda en los menús desplegables (selects de Materialize) con filtro en tiempo real (`app.selects.js`); corregidas en v4.3 para que el menú ya no se cierre al hacer clic en la barra (bloqueo en fase de captura) ni el typeahead robe el foco (`keydown`/`keyup` con `stopPropagation`)
 - Operaciones **transaccionales** (ventas, asesorías, sesiones cyber) con get-or-create centralizado de clientes
 - Exportadores sin dependencias: **CSV**, **Excel (HTML)** y **PDF** (generador propio, `Exporter` + `PdfBuilder`)
 - Assets 100% locales, **Service Worker** (caché offline), **Manifest PWA** y página `offline.php`
@@ -258,7 +258,7 @@ Navegador → src/.htaccess → src/index.php → App\Core\Router->handle()
 ### JavaScript Modular
 - **`app.core.js`** — namespace `EIS`, `debounce`, `EIS.toast`, `escHtml` (XSS), `EIS.formSelect` (re-inicialización de selects evitando el bug de doble `formSelect`) y la familia de helpers de **DataTables**: `EIS.datatable`, `EIS.datatableRefresh`, `EIS.datatableWireSearch`, `EIS.datatableWireColumnFilter`, `EIS.datatableDestroy`
 - **`app.init.js`** — inicia Materialize, reloj, tema oscuro/claro
-- **`app.selects.js`** — barra de búsqueda en los menús desplegables (selects) de Materialize con filtro en tiempo real; expone `EIS.habilitarBusquedaEnSelects()` y `EIS.activarBusquedaEnSelect(selector, placeholder)` para selects regenerados dinámicamente (p. ej. el de clientes del POS)
+- **`app.selects.js`** — barra de búsqueda en los menús desplegables (selects) de Materialize con filtro en tiempo real; expone `EIS.habilitarBusquedaEnSelects()` y `EIS.activarBusquedaEnSelect(selector, placeholder)` para selects regenerados dinámicamente (p. ej. el de clientes del POS). Incluye las correcciones v4.3: un bloqueador en **fase de captura** sobre `document` (Materialize 1.0.0 cierra el menú con un handler de `click` en `document.body` en captura, por lo que `stopPropagation` en burbuja no bastaba) y el bloqueo del typeahead (`keydown`/`keyup` con `stopPropagation` en el input), además de `restablecerBusqueda()` al abrir cada menú
 - **`app.tables.js`** — punto de extensión genérico; la búsqueda, filtro y paginación ya las gestiona **DataTables** en cada módulo (se mantiene sin handlers manuales para evitar conflictos)
 - **`app.ui.js`** — notificaciones, botones, tooltips
 - **`jquery.dataTables.min.js`** + **`dataTables.materialize.js`** + **`dataTables.materialize.css`** — motor DataTables (local), integración con tema Materialize oscuro/claro y configuración por defecto (lenguaje español, `pageLength` 10)
@@ -268,8 +268,9 @@ Navegador → src/.htaccess → src/index.php → App\Core\Router->handle()
 
 ### Offline / PWA
 - Assets locales (sin CDNs)
-- Service Worker (`sw.js`) con estrategia Cache First
+- Service Worker (`sw.js`) con estrategia **Stale-While-Revalidate** y caché versionada (`CACHE_NAME = 'eis-cache-v5'`)
 - Página offline (`offline.php`) y manifiesto (`manifest.json`)
+- Al corregir un JS servido por el SW hay que subir `CACHE_NAME` (v4→v5 ya hecho tras arreglar `app.selects.js`; futuro v6/v7...) para que el navegador reemplace el SW y no sirva el script obsoleto
 
 ---
 
@@ -326,6 +327,7 @@ Diseño conceptual, lógico y físico de la base de datos, ER y diagrama de clas
 - [x] Integrar jQuery DataTables en todas las tablas principales
 - [x] Módulo de Usuarios con controlador propio (`UsuarioController`) y manejo global de errores vía `Logger`
 - [x] Barras de búsqueda en los selects con placeholder personalizado (p. ej. clientes del POS)
+- [x] Corregir las barras de búsqueda de los selects (v4.3): menú ya no se cierra al hacer clic en la barra (bloqueo en fase de captura sobre `document`) y el typeahead ya no roba el foco; versionado de caché del Service Worker (`eis-cache-v5`)
 - [ ] Mover credenciales de BD a variables de entorno (`.env`)
 - [ ] Unificar modelos legacy (`CiberModel`, `crud_*`) con los POO modernos
 - [ ] Middleware de autenticación/CSRF como capa separada
@@ -362,6 +364,7 @@ Email: carlospaezguerra@gmail.com
 
 | Versión | Fecha | Descripción |
 |---------|-------|-------------|
+| 4.3 | Sep 2026 | Corrección de dos bugs en la **barra de búsqueda de selects** de Materialize (`app.selects.js`): Materialize 1.0.0 cerraba el menú al hacer clic en la barra porque su handler de cierre está en `document.body` en **fase de captura** (fix: bloqueador en captura sobre `document` con `stopPropagation` para `click`/`touchend` dentro de `.eis-select-search`) y el typeahead (`_handleDropdownKeydown`) robaba el foco al escribir (fix: `keydown`/`keyup` con `stopPropagation` en el input, con `restablecerBusqueda()` al abrir el menú). **Versionado de caché del Service Worker**: `sw.js` pasó a `eis-cache-v5` (Stale-While-Revalidate); subir `CACHE_NAME` obliga a reemplazar el SW y deja de servirse el script obsoleto. Verificado el selector de clientes del POS (`EIS.activarBusquedaEnSelect('#posClienteSelect', ...)`) |
 | 4.2 | Sep 2026 | Módulo **Usuarios** con controlador propio (`UsuarioController` + `app.usuarios.js`), **manejo global de errores** en `index.php` con `App\Core\Logger` (registro en `src/logs/errores.md`, respuesta genérica al usuario), **`Validator`** de coerción estricta de tipos, barras de búsqueda en selects de Materialize (`EIS.habilitarBusquedaEnSelects`, `EIS.activarBusquedaEnSelect`), pulido visual general y corrección del render de reportes/clientes del POS |
 | 4.1 | Sep 2026 | Integración de **jQuery DataTables** (local) en todas las tablas principales (ordenamiento, paginación y búsqueda): Inventario, Clientes, Activos, Roles, Usuarios, Proveedores, Asesorías, Reportes, Cyber historial y Dashboard; helpers `EIS.datatable*` en `app.core.js` y tema Materialize oscuro/claro; corrección de 7 bugs de funcionalidad: eliminación de handlers demo en `app.ui.js` (reportes y `.btn-nuevo`), campos `direccion`/`telefono` opcionales en clientes, checkbox `activa` corregido con `isset()` en activos, `asignarRolAUsuario()` resuelve `rol_usuarios.id`, soporte completo de `descripcion`/`created_at` en roles, e INSERT corregido de `cliente_asesoria` |
 | 4.x | Ago 2026 | Dashboard y Reportes conectados a datos reales con exportación (CSV/Excel/PDF vía `Exporter`/`PdfBuilder`); registro de clientes en POS; CRUD de Activos; CiberControl con sesiones iniciar/finalizar y CRUD de PCs |
@@ -375,4 +378,4 @@ Email: carlospaezguerra@gmail.com
 ---
 
 **Última actualización**: Septiembre 2026
-**Estado**: En desarrollo activo (rama `Carlos`). Todos los módulos funcionales con MVC + AJAX + BD + tablas con DataTables. Versión actual **4.2**: 13 controladores, 12 modelos POO, `Validator` + `Logger`, manejo global de errores y módulo de usuarios propio.
+**Estado**: En desarrollo activo (rama `Carlos`). Todos los módulos funcionales con MVC + AJAX + BD + tablas con DataTables. Versión actual **4.3**: 13 controladores, 12 modelos POO, `Validator` + `Logger`, manejo global de errores, módulo de usuarios propio y barras de búsqueda en selects corregidas (bloqueo en captura + typeahead) con caché del SW versionada (`eis-cache-v5`).

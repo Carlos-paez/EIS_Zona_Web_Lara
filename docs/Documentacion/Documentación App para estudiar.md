@@ -128,7 +128,7 @@ eis_zona_web_lara/
 
     ├── manifest.json          # Manifiesto PWA
 
-    ├── sw.js                  # Service Worker (caché offline)
+├── sw.js                  # Service Worker (caché offline, CACHE_NAME v5, Stale-While-Revalidate)
 
     ├── offline.php            # Página de fallo offline
 
@@ -238,7 +238,7 @@ eis_zona_web_lara/
 
         │   ├── app.init.js         # Inicialización Materialize, reloj, tema
 
-        │   ├── app.selects.js      # Barra de búsqueda en selects de Materialize
+        │   ├── app.selects.js      # Barra de búsqueda en selects de Materialize (fix v4.3: bloqueo en captura + typeahead)
 
         │   ├── app.tables.js       # Punto de extensión (búsqueda/filtro/paginación vía DataTables)
 

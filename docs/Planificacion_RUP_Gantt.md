@@ -1,6 +1,7 @@
 ﻿# Planificación de Desarrollo — EIS System (Zona Web Lara)
 
 > **Actualizado (Agosto 2026):** Documento de planificación histórica. El proyecto se encuentra en fase de construcción avanzada: 13 controladores (12 AJAX + `AuthController`), 15 modelos (12 POO + 3 legacy) y 21 tablas de base de datos, todos los módulos conectados a la base de datos.
+> **Versión 4.3 (Septiembre 2026):** Corrección de dos bugs en la barra de búsqueda de selects de Materialize (bloqueo de cierre en fase de captura + bloqueo del typeahead) y versionado de caché del Service Worker (`eis-cache-v5`).
 
 ## Metodología: RUP (Rational Unified Process)
 
@@ -149,10 +150,10 @@ gantt
 | IV. Transición | 7 | 18% |
 | **Total** | **39** | **100%** |
 
-## Estado Actual del Proyecto (Junio 2026)
+## Estado Actual del Proyecto (Septiembre 2026)
 
 | Estado | Módulos |
 |--------|---------|
-| **Completado** | Arquitectura base (Router, Database, Model), Autenticación, Inventario (CRUD + AJAX + BD), Asesoría Legal (backend), PWA (Service Worker + offline), Assets locales, Tema oscuro/claro |
-| **En desarrollo** | Resto de módulos (ventas, proveedores, cybercafé, activos, dashboard, reportes, usuarios) |
+| **Completado (v4.3)** | Arquitectura base (Router, Database, Model), Autenticación, Inventario (CRUD + AJAX + BD), Ventas/POS, Proveedores/Solicitudes, Cybercafé, Activos Fijos, Asesoría Legal, Usuarios/Roles, Dashboard, Reportes, PWA (Service Worker + offline), Assets locales, Tema oscuro/claro, Logger de errores global, Validator, barras de búsqueda en selects de Materialize (corregidas en v4.3) |
+| **En desarrollo** | — |
 | **Pendiente** | Seguridad (CSRF, hashing), pruebas formales, documentación completa, despliegue |

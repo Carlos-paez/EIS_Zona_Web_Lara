@@ -1,6 +1,7 @@
 ﻿# Planificación de Pruebas Funcionales e Instalación — EIS System (Zona Web Lara)
 
 > **Actualizado (Agosto 2026):** Documento de planificación histórica. El proyecto se encuentra en fase de construcción avanzada: 13 controladores (12 AJAX + `AuthController`), 15 modelos (12 POO + 3 legacy) y 21 tablas de base de datos, todos los módulos conectados a la base de datos.
+> **Versión 4.3 (Septiembre 2026):** Corrección de dos bugs en la barra de búsqueda de selects de Materialize (bloqueo de cierre en fase de captura + bloqueo del typeahead) y versionado de caché del Service Worker (`eis-cache-v5`).
 
 ## Alcance
 

@@ -84,6 +84,16 @@ $(function () {
             aplicarFiltro($ul, this.value.trim());
         });
 
+        // Evito que el typeahead del Dropdown de Materialize robe el foco.
+        // Al teclear, el handler _handleDropdownKeydown del <ul> busca la
+        // primera opción que empiece con la letra y llama _focusFocusedItem(),
+        // lo que saca el cursor del input de búsqueda. Como el input está
+        // DENTRO del <ul>, detengo la propagación de keydown/keyup para que
+        // el teclado no llegue al dropdown y el texto se escriba normalmente.
+        $bar.find('input').on('keydown keyup', function (e) {
+            e.stopPropagation();
+        });
+
         // Evito que el desplegable se cierre al interactuar con la barra.
         // Materialize cierra el menú (closeOnClick) mediante un handler de
         // "click" en document, así que detengo la propagación de ese click
@@ -147,6 +157,27 @@ $(function () {
             $ul.append('<li class="eis-select-no-results"><span>Sin resultados</span></li>');
         }
     }
+
+    // ---------------------------------------------------------------
+    // BLOQUEO DE CIERRE EN FASE DE CAPTURA
+    // Materialize 1.0.0 cierra los desplegables con un listener de
+    // "click" en document.body en FASE DE CAPTURA (tercer argumento
+    // true). Como la captura baja de document -> body -> ... -> li,
+    // ese handler se ejecuta ANTES de nuestros stopPropagation del li
+    // (fase de burbuja) y el menú se cierra al hacer clic en la barra
+    // de búsqueda. Para evitarlo, intercepto el evento en document
+    // (ancestro de body) con captura: si el clic/tap proviene de una
+    // barra .eis-select-search, detengo la propagación antes de que
+    // el handler de Materialize pueda programar el close().
+    // ---------------------------------------------------------------
+    ['click', 'touchend'].forEach(function (tipoEvento) {
+        document.addEventListener(tipoEvento, function (e) {
+            var objetivo = e.target;
+            if (objetivo && objetivo.closest && objetivo.closest('.eis-select-search')) {
+                e.stopPropagation();
+            }
+        }, true);
+    });
 
     // ---------------------------------------------------------------
     // EVENTO: Al enfocar/abrir cualquier select de Materialize,

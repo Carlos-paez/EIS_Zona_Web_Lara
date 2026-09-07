@@ -438,8 +438,10 @@ Son variables JavaScript globales del ámbito del Service Worker.
 
 | Variable | Tipo | Valor | Descripción |
 |---|---|---|---|
-| `CACHE_NAME` | `string` | `'eis-cache-v4'` | Nombre del caché para almacenar assets estáticos |
+| `CACHE_NAME` | `string` | `'eis-cache-v5'` | Nombre del caché para almacenar assets estáticos |
 | `STATIC_ASSETS` | `array` | Lista de rutas de archivos CSS, JS, fuentes e iconos | Assets a cachear durante la instalación del Service Worker |
+
+La estrategia de caché es **Stale-While-Revalidate**: se responde primero con lo cacheado y se revalida en segundo plano contra la red. **Mecanismo de invalidación**: para forzar la actualización de scripts corregidos hay que **subir `CACHE_NAME`** (v4→v5 ya hecho tras corregir `app.selects.js`; las futuras correcciones usarán v6, v7, etc.).
 
 ### Contenido de `STATIC_ASSETS`
 
@@ -478,6 +480,7 @@ El sistema expone un objeto global `EIS` (namespace) con funciones utilitarias c
 
 | Función | Descripción |
 |---|---|
+| `EIS.searchableSelectsReady` | Bandera (`boolean`) que indica si la barra de búsqueda ya se aplicó a los selects de Materialize (evita re-ejecuciones duplicadas) |
 | `EIS.toast(msg, color, icon)` | Muestra una notificación toast de Materialize (color e ícono por defecto: `indigo`, `check_circle`) |
 | `EIS.formSelect(sel)` | (Re)inicializa de forma segura un `<select>` de Materialize (destruye instancia previa para evitar duplicados) |
 | `EIS.limpiarErroresFormulario(form)` | Elimina mensajes de error y resaltados de validación de un formulario |
@@ -495,6 +498,11 @@ El sistema expone un objeto global `EIS` (namespace) con funciones utilitarias c
 |---|---|
 | `EIS.habilitarBusquedaEnSelects()` | Re-aplica la barra de búsqueda en todos los selects de Materialize existentes |
 | `EIS.activarBusquedaEnSelect(selector, placeholder)` | Inserta (o actualiza) la barra de búsqueda con un placeholder específico en el desplegable de un select concreto |
+
+**Correcciones aplicadas en v4.3 (app.selects.js):**
+
+1. **Bug 1 — el desplegable se cerraba al hacer clic en la barra de búsqueda:** Materialize 1.0.0 registra su handler de cierre en `document.body` con **fase de captura** (`addEventListener("click", handler, true)`). El fix instala un bloqueador también en fase de captura pero sobre `document` (ancestro de `body`) que ejecuta `e.stopPropagation()` para `click`/`touchend` cuando el objetivo está dentro de `.eis-select-search`.
+2. **Bug 2 — el typeahead robaba el foco al escribir:** el handler `_handleDropdownKeydown` del dropdown de Materialize capturaba las teclas. El fix añade `keydown`/`keyup` con `e.stopPropagation()` sobre el input de búsqueda para evitar que el typeahead robe el foco.
 
 ### 11.5.3 Funciones globales auxiliares (`app.core.js`)
 
@@ -594,9 +602,9 @@ La autenticación real ocurre en `AuthController::login()` (valida CSRF, usuario
 | **Variables de template** | `$pageTitle`, `$pagina`, `$headerExtra`, `$contentView` |
 | **CLI (local)** | `$longopts`, `$options`, `$username`, `$password`, `$nombre`, `$apellido`, `$email`, `$db`, `$hash`, `$check`, `$stmt`, `$userId` |
 | **Service Worker (JS)** | `CACHE_NAME`, `STATIC_ASSETS` |
-| **Namespace JS `EIS`** | `EIS.toast`, `EIS.formSelect`, `EIS.limpiarErroresFormulario`, `EIS.mostrarErroresFormulario`, `EIS.mostrarErrorAnexo`, `EIS.datatable`, `EIS.datatableRefresh`, `EIS.datatableWireSearch`, `EIS.datatableWireColumnFilter`, `EIS.datatableDestroy`, `EIS.habilitarBusquedaEnSelects`, `EIS.activarBusquedaEnSelect`, `window.EIS.csrfToken`, `window.EIS.userId` |
+| **Namespace JS `EIS`** | `EIS.toast`, `EIS.formSelect`, `EIS.limpiarErroresFormulario`, `EIS.mostrarErroresFormulario`, `EIS.mostrarErrorAnexo`, `EIS.datatable`, `EIS.datatableRefresh`, `EIS.datatableWireSearch`, `EIS.datatableWireColumnFilter`, `EIS.datatableDestroy`, `EIS.habilitarBusquedaEnSelects`, `EIS.activarBusquedaEnSelect`, `EIS.searchableSelectsReady`, `window.EIS.csrfToken`, `window.EIS.userId` |
 | **Globales JS (core)** | `debounce`, `filtrarTabla`, `eisDataTablesDisponible` |
 
 ---
 
-*Documentación generada el 2026-07-09 - EIS System (Zona Web Lara). Actualizado el 2026-09-06 (13 controladores, nueva clase `Validator`, `UsuarioController`, acciones de todos los módulos, namespace JS `EIS` con helpers DataTables y búsqueda en selects).*
+*Documentación generada el 2026-07-09 - EIS System (Zona Web Lara). Actualizado el 2026-09-06 (13 controladores, nueva clase `Validator`, `UsuarioController`, acciones de todos los módulos, namespace JS `EIS` con helpers DataTables y búsqueda en selects). Actualizado a v4.3: `CACHE_NAME = 'eis-cache-v5'` en `sw.js`, bandera `EIS.searchableSelectsReady` y fixes de `app.selects.js` (bloqueo en captura sobre `document` + typeahead con `stopPropagation`).*

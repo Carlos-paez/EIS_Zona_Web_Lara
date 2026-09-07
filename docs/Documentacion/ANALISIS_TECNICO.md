@@ -5,7 +5,7 @@
 **Frontend:** Materialize CSS 1.0.0 + jQuery 3.7.1 + JS modular  
 **Namespace:** `App\Core`, `App\Models`, `App\Controllers` (PSR-4)  
 **Seguridad:** CSRF tokens, XSS sanitización, session hardening, validación backend, prepared statements  
-**Estado:** Todos los módulos funcionales con BD (MVC + AJAX)
+**Estado:** v4.3 — Todos los módulos funcionales con BD (MVC + AJAX)
 
 ---
 
@@ -345,8 +345,29 @@ Persistencia vía `localStorage`; toggle en la sidebar; CSS variables con `[data
 `Exporter::csv()/excel()/pdf($titulo, $columnas, $filas)` construye el contenido y encabezados HTTP
 de descarga. `PdfBuilder` genera un PDF mínimo y válido (texto + tabla).
 
+## Apéndice C: Corrección v4.3 (barra de búsqueda en selects y cache del SW)
+
+- **`app.selects.js` (bug 1):** Materialize 1.0.0 cierra el desplegable al hacer clic en la barra de
+  búsqueda porque registra su handler de cierre con `document.body.addEventListener("click", handler, true)`
+  en **fase de captura**. El fix es un bloqueador en fase de captura sobre `document` (ancestro de `body`)
+  que hace `e.stopPropagation()` para `click`/`touchend` cuando el objetivo está dentro de `.eis-select-search`;
+  sin esto, `stopPropagation` en fase de burbuja no basta.
+- **`app.selects.js` (bug 2):** el typeahead del dropdown de Materialize (`_handleDropdownKeydown`) robaba el
+  foco al escribir. Fix: handlers `keydown`/`keyup` con `e.stopPropagation()` en el input de búsqueda (el input
+  está dentro del `<ul>`, así el teclado no llega al dropdown).
+- El módulo incluye además: inyección idempotente de la barra (placeholder "Buscar opción..."), filtro en tiempo
+  real (`aplicarFiltro` con aviso "Sin resultados"), `restablecerBusqueda()` al abrir el menú, y handlers
+  globales `focusin/click` en `.select-wrapper input.select-dropdown`. Utilidades públicas:
+  `EIS.habilitarBusquedaEnSelects()` y `EIS.activarBusquedaEnSelect(selector, placeholder)`.
+- **POS:** el selector de clientes del carrito (`ventas.php`, `#posClienteSelect`) usa
+  `EIS.activarBusquedaEnSelect('#posClienteSelect', 'Buscar cliente por nombre o cédula...')` tras cada
+  `formSelect()` (función `refrescarSelect` en `app.pos.js`) y al abrir el carrito (`#openCartBtn`).
+- **`sw.js`:** estrategia Stale-While-Revalidate con `CACHE_NAME = 'eis-cache-v5'`. Mecanismo de invalidación:
+  cuando se corrige un JS servido por el SW hay que subir `CACHE_NAME` (p. ej. v4→v5, y a futuro v6/v7...) para
+  que el navegador reemplace el SW y deje de servir el script viejo (aplicado tras corregir `app.selects.js`).
+
 ---
 
 *Documento de análisis técnico — EIS System (Zona Web Lara)*  
-*Última actualización: Septiembre 2026 — todos los módulos funcionales con BD (MVC + AJAX + exportación; 70/70 pruebas CRUD)*  
+*Última actualización: Septiembre 2026 (v4.3) — todos los módulos funcionales con BD (MVC + AJAX + exportación; 70/70 pruebas CRUD)*  
 *Arquitectura: MVC + POO + PDO estricto | Base de datos: MySQL 8+ / InnoDB / utf8mb4 | 13 controladores, 21 tablas*

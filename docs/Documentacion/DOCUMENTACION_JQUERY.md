@@ -24,7 +24,7 @@ La integracion incluyo:
 |---------|-----------|-------|
 | `Public/js/app.core.js` | Funciones compartidas: namespace EIS, debounce, EIS.toast y helpers `EIS.datatable*` | Siempre |
 | `Public/js/app.init.js` | Inicializacion Materialize, reloj, tema oscuro/claro, animaciones | Siempre |
-| `Public/js/app.selects.js` | Barra de busqueda en los selects (dropdowns) de Materialize | Siempre |
+| `Public/js/app.selects.js` | Barra de busqueda en los selects (dropdowns) de Materialize (con fixes v4.3: bloqueo en captura y typeahead) | Siempre |
 | `Public/js/app.tables.js` | Punto de extension generico (la busqueda/filtro/paginacion la gestiona DataTables) | Siempre |
 | `Public/js/app.ui.js` | Notificaciones, botones de accion, reportes, tooltips | Siempre |
 | `Public/js/jquery.dataTables.min.js` | Motor de DataTables 1.13.8 (local) | Siempre |
@@ -80,7 +80,7 @@ La integracion incluyo:
     dataTables.materialize.js (integracion DataTables + Materialize)
     app.core.js   (EIS, debounce, toast, EIS.datatable*)
     app.init.js   (Materialize init, reloj, tema, animaciones)
-    app.selects.js (barra de busqueda en selects de Materialize)
+    app.selects.js (barra de busqueda en selects de Materialize; v4.3: bloqueo en captura + typeahead)
     app.tables.js (punto de extension; la busqueda/filtro/paginacion la gestiona DataTables)
     app.ui.js     (Notificaciones, botones, reportes)
 
@@ -277,7 +277,7 @@ $(document).on('mouseenter', '.btn-floating, .tooltip-me', function () { ... });
 
 El POS es **completamente funcional con BD**: carga el catalogo de productos y el selector de
 clientes via AJAX (`$.getJSON(API + 'productos')`, `$.getJSON(API + 'clientes')` con
-`API = '?pagina=ventas&action='`), busca clientes por cédula y registra la orden con `$.post(API + 'registrar', {items, ciudadano, cedula, ...})`.
+`API = '?pagina=ventas&action='`), busca clientes por cédula y registra la orden con `$.post(API + 'registrar', {items, ciudadano, cedula, ...})`. El selector de clientes del carrito (`#posClienteSelect`) usa `EIS.activarBusquedaEnSelect('#posClienteSelect', 'Buscar cliente por nombre o cédula...')` tras cada `formSelect()` (`refrescarSelect`) y al abrir el carrito (`#openCartBtn`).
 
 ```javascript
 var posCart = [];      // Array de objetos {id, name, price}
@@ -405,6 +405,12 @@ $(document).on('input', '#documento', function () {
 });
 ```
 
+### 4.8 app.selects.js - Barra de Busqueda en Selects
+
+Inyecta de forma idempotente una barra de busqueda (placeholder "Buscar opción...") en los dropdowns de Materialize, con filtro en tiempo real (`aplicarFiltro`, aviso "Sin resultados"), `restablecerBusqueda()` al abrir el menú, y un handler global `focusin/click` en `.select-wrapper input.select-dropdown` que la inyecta en cualquier select. Utilidades públicas: `EIS.habilitarBusquedaEnSelects()` y `EIS.activarBusquedaEnSelect(selector, placeholder)`.
+
+> **Corrección v4.3:** Materialize 1.0.0 cierra el desplegable al hacer clic en la barra de búsqueda porque registra su handler de cierre con `document.body.addEventListener("click", handler, true)` en **fase de captura**. El fix es un bloqueador en fase de captura sobre `document` (ancestro de `body`) que hace `e.stopPropagation()` para `click`/`touchend` cuando el objetivo está dentro de `.eis-select-search`; sin esto, `stopPropagation` en fase de burbuja no basta. Además, el typeahead del dropdown (`_handleDropdownKeydown`) robaba el foco al escribir: se corrigió con handlers `keydown`/`keyup` con `e.stopPropagation()` en el input de búsqueda (el input está dentro del `<ul>`, así el teclado no llega al dropdown).
+
 ---
 
 ## 5. Funcionalidades jQuery por Modulo
@@ -470,5 +476,5 @@ El tema se controla mediante el atributo `data-theme` en `<html>`:
 ---
 
 **Documentacion**: Junio 2026 (actualizada Sept 2026)
-**Version**: 2.3
+**Version**: 4.3
 

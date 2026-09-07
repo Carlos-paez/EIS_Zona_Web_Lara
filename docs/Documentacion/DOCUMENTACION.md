@@ -141,7 +141,7 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 | src/Public/css/dataTables.materialize.css | — | Tema de DataTables adaptado a Materialize y tema oscuro/claro |
 | src/Public/js/app.core.js | — | Funciones compartidas (incluye helpers `EIS.datatable*`) |
 | src/Public/js/app.init.js | — | Inicializacion Materialize |
-| src/Public/js/app.selects.js | — | Barra de busqueda en selects de Materialize |
+| src/Public/js/app.selects.js | — | Barra de busqueda en selects de Materialize (con fixes v4.3: bloqueo en captura y typeahead) |
 | src/Public/js/jquery.dataTables.min.js | — | Motor jQuery DataTables 1.13.8 (local, sin CDN) |
 | src/Public/js/dataTables.materialize.js | — | Integracion de DataTables con Materialize y config por defecto (es/i18n) |
 | src/Public/js/app.tables.js | — | Punto de extension generico (la busqueda/filtro/paginacion la gestiona DataTables) |
@@ -598,7 +598,7 @@ El monolito `app.js` original se dividio en **17 archivos modulares** organizado
 |---------|-----------|-------|
 | `app.core.js` | Namespace EIS, debounce, `EIS.toast` y helpers `EIS.datatable*` | Siempre |
 | `app.init.js` | Init Materialize, reloj, tema, animaciones | Siempre |
-| `app.selects.js` | Barra de busqueda en los selects (dropdowns) de Materialize | Siempre |
+| `app.selects.js` | Barra de busqueda en los selects (dropdowns) de Materialize (con fixes v4.3: bloqueo en captura y typeahead) | Siempre |
 | `app.tables.js` | Punto de extension generico (la busqueda/filtro/paginacion la gestiona DataTables) | Siempre |
 | `app.ui.js` | Notificaciones, botones, tooltips | Siempre |
 | `jquery.dataTables.min.js` | Motor jQuery DataTables (ordenamiento/paginacion/busqueda) | Siempre |
@@ -656,6 +656,12 @@ $(function () {
 });
 ```
 
+### app.selects.js - Barra de Busqueda en Selects de Materialize
+
+Agrega una barra de busqueda (placeholder "Buscar opcion...") en los dropdowns de los selects de Materialize, con inyeccion idempotente, filtro en tiempo real (`aplicarFiltro` con aviso "Sin resultados"), `restablecerBusqueda()` al abrir el menu, y un handler global `focusin/click` en `.select-wrapper input.select-dropdown` que inyecta la barra y restablece el filtro en cualquier select. Expone las utilidades publicas `EIS.habilitarBusquedaEnSelects()` y `EIS.activarBusquedaEnSelect(selector, placeholder)`.
+
+> **Corrección v4.3:** Materialize 1.0.0 cierra el desplegable al hacer clic en la barra de búsqueda porque registra su handler de cierre con `document.body.addEventListener("click", handler, true)` en **fase de captura**. El fix es un bloqueador en fase de captura sobre `document` (ancestro de `body`) que hace `e.stopPropagation()` para `click`/`touchend` cuando el objetivo está dentro de `.eis-select-search`. Sin esto, `stopPropagation` en fase de burbuja no basta. Además, el typeahead del dropdown (`_handleDropdownKeydown`) robaba el foco al escribir: se corrigió con handlers `keydown`/`keyup` con `e.stopPropagation()` en el input de búsqueda (el input está dentro del `<ul>`, así el teclado no llega al dropdown).
+
 ### DataTables en los modulos
 
 Cada modulo inicializa su tabla con `EIS.datatable('#id-tabla')` y re-sincroniza el `<tbody>` tras re-render por AJAX con `EIS.datatableRefresh('#id-tabla')`. Las barras de busqueda y filtros existentes se conectan a las instancias:
@@ -702,6 +708,8 @@ $(function () {
     // #posSearch - Busqueda productos con debounce 200ms
 });
 ```
+
+El selector de clientes del carrito del POS (`ventas.php`, `#posClienteSelect`) usa `EIS.activarBusquedaEnSelect('#posClienteSelect', 'Buscar cliente por nombre o cédula...')` tras cada `formSelect()` (función `refrescarSelect`) y al abrir el carrito (`#openCartBtn`). El menú permanece abierto, el input recibe foco y filtra; la barra se reinyecta automáticamente porque `formSelect()` regenera el `<ul>`.
 
 ### app.cyber.js - Estaciones Cyber
 
@@ -799,7 +807,7 @@ Todos los recursos que antes se cargaban desde CDN ahora son locales:
 ### Service Worker (`sw.js`)
 
 ```javascript
-var CACHE_NAME = 'eis-cache-v4';
+var CACHE_NAME = 'eis-cache-v5';
 var STATIC_ASSETS = [
   'Public/css/material-icons.css', 'Public/css/materialize.min.css',
   'Public/css/styles.css', 'Public/css/dataTables.materialize.css',
@@ -817,6 +825,8 @@ var STATIC_ASSETS = [
 **Estrategia de cache**:
 - **Cache First** para assets estaticos (CSS, JS, fuentes)
 - **Network First** con fallback a `offline.php` para navegacion PHP
+
+**Versionado de cache (`eis-cache-v5`)**: se usa **Stale-While-Revalidate**. Para reemplazar la clave `CACHE_NAME` (por ejemplo v4→v5, y a futuro v6/v7...) cada vez que se corrige un JS servido por el Service Worker, evitando que el navegador siga sirviendo el script viejo desde la cache. Esto se aplicó tras corregir `app.selects.js`.
 
 ### Manifest (`src/manifest.json`)
 
@@ -967,6 +977,19 @@ ALTER TABLE roles
 
 ---
 
+## Correcciones v4.3 (barra de busqueda en selects y cache del SW)
+
+> Correcciones en el frontend de los dropdowns de Materialize y versionado de cache del Service Worker.
+
+| # | Modulo | Archivo | Correccion |
+|---|--------|---------|-----------|
+| 1 | Selects | `Public/js/app.selects.js` | Materialize 1.0.0 cierra el desplegable al hacer clic en la barra de busqueda (handler de cierre en `document.body` en **fase de captura**). Fix: bloqueador en fase de captura sobre `document` con `e.stopPropagation()` para `click`/`touchend` cuando el objetivo está dentro de `.eis-select-search` |
+| 2 | Selects | `Public/js/app.selects.js` | El typeahead del dropdown (`_handleDropdownKeydown`) robaba el foco al escribir. Fix: handlers `keydown`/`keyup` con `e.stopPropagation()` en el input de busqueda (el input está dentro del `<ul>`, así el teclado no llega al dropdown) |
+| 3 | POS | `ventas.php`, `app.pos.js` | Selector de clientes del carrito (`#posClienteSelect`) con `EIS.activarBusquedaEnSelect('#posClienteSelect', 'Buscar cliente por nombre o cédula...')` tras cada `formSelect()` (`refrescarSelect`) y al abrir el carrito. Verificado en navegador: el menú permanece abierto, el input recibe foco y filtra |
+| 4 | PWA | `sw.js` | Estrategia Stale-While-Revalidate con `CACHE_NAME = 'eis-cache-v5'`. Mecanismo de invalidación: al corregir un JS servido por el SW se sube `CACHE_NAME` (p. ej. v4→v5, y a futuro v6/v7...) para que el navegador reemplace el SW y deje de servir el script viejo. Se aplicó tras corregir `app.selects.js` |
+
+---
+
 ## Conclusiones y Recomendaciones
 
 ### Estado Actual
@@ -997,7 +1020,7 @@ El proyecto cuenta con **todos los modulos conectados a la BD** y arquitectura O
 
 ---
 
-**Documentacion generada**: Julio 2026 (actualizada Sept 2026, v4.2)
-**Version**: 4.2
+**Documentacion generada**: Julio 2026 (actualizada Sept 2026, v4.3)
+**Version**: 4.3
 **Autor**: Carlos Paez Guerra
 
