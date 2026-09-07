@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Logger;
 use App\Core\Router;
 use App\Models\CiberControl;
 
@@ -57,10 +58,12 @@ class CiberController
                 default         => $this->json(false, null, 'Acción no válida'),
             };
         } catch (\PDOException $e) {
+            Logger::error($e, 'Cyber (CiberController) - consulta SQL');
             echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
         } catch (\InvalidArgumentException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         } catch (\Exception $e) {
+            Logger::error($e, 'Cyber (CiberController)');
             echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
         }
     }
@@ -70,9 +73,11 @@ class CiberController
      */
     public function index(): void
     {
+        $estaciones = [];
         try {
             $estaciones = $this->model->listarEstaciones();
         } catch (\Throwable $e) {
+            Logger::error($e, 'Cyber - listar estaciones (vista)');
             $estaciones = [];
         }
 
@@ -95,6 +100,7 @@ class CiberController
         try {
             $clientes = $this->model->listarEstaciones();
         } catch (\Throwable $e) {
+            Logger::error($e, 'Cyber - listar clientes (vista)');
             $clientes = [];
         }
 
@@ -102,6 +108,7 @@ class CiberController
         try {
             $tarifas = $this->model->listarTarifas();
         } catch (\Throwable $e) {
+            Logger::error($e, 'Cyber - listar tarifas (vista)');
             $tarifas = [];
         }
 
@@ -109,6 +116,7 @@ class CiberController
         try {
             $tiposActivo = $this->model->listarTiposActivo();
         } catch (\Throwable $e) {
+            Logger::error($e, 'Cyber - listar tipos de activo (vista)');
             $tiposActivo = [];
         }
 
@@ -163,6 +171,18 @@ class CiberController
         }
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $errores = Validator::requeridos($_POST, [
+            'ciudadano'  => 'ciudadano',
+            'cedula'     => 'cédula',
+            'activo_id'  => 'equipo (PC)',
+            'tarifa_id'  => 'tarifa',
+            'tiempo_uso' => 'tiempo de uso',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
             return;
         }
 
@@ -286,6 +306,15 @@ class CiberController
             return;
         }
 
+        $errores = Validator::requeridos($_POST, [
+            'marca'          => 'marca',
+            'tipo_activo_id' => 'tipo de PC',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
+            return;
+        }
+
         $marca       = trim($_POST['marca'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
         $tipoActivo  = (int)($_POST['tipo_activo_id'] ?? 0);
@@ -315,6 +344,16 @@ class CiberController
         }
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $errores = Validator::requeridos($_POST, [
+            'id'             => 'ID de la PC',
+            'marca'          => 'marca',
+            'tipo_activo_id' => 'tipo de PC',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
             return;
         }
 

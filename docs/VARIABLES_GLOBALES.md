@@ -168,6 +168,20 @@ Archivo: `src/app/core/Database.php`
 |---|---|---|---|
 | `$router` | `Router` | `new Router()` | Instancia única del enrutador principal que maneja toda la solicitud |
 
+`index.php` (135 líneas) también configura el **manejo global de errores** antes de despachar la solicitud:
+
+| Función / directiva | Propósito |
+|---|---|
+| `error_reporting(E_ALL)` + `ini_set('display_errors', '0')` | Notifica y registra todos los errores sin exponerlos al navegador |
+| `ini_set('log_errors', '1')` + `ini_set('html_errors', '0')` | Registro de errores en el log de PHP |
+| `ob_start()` | Activa el buffer de salida (permite reemplazar respuestas parciales ante fallos fatales) |
+| `es_peticion_ajax()` | Helper global que detecta si la petición consume JSON (`X-Requested-With` o `action`) |
+| `limpiar_buffer_salida()` | Helper global que descarta el buffer de salida previo a un error |
+| `mostrar_error_generico($codigo = 500)` | Helper global que responde un error genérico (JSON para AJAX, HTML para páginas) |
+| `set_error_handler(...)` | Captura warnings/notices y los registra con `App\Core\Logger::error()` en `src/logs/errores.md` |
+| `set_exception_handler(...)` | Captura excepciones no manejadas, las registra y responde error 500 |
+| `register_shutdown_function(...)` | Detecta errores fatales (`E_ERROR`, `E_PARSE`, etc.) y los registra al terminar el script |
+
 ---
 
 ## 6. Variables de la Clase `Router`
@@ -202,18 +216,16 @@ Los métodos principales del enrutador son: `handle()` (procesa toda la solicitu
 
 La lista de páginas públicas es la constante `PUBLIC_PAGES = ['login', 'login_validate']`; `render()` la consume internamente. Además, `render()` expone las variables `$pageTitle`, `$headerExtra`, `$contentView` y `$pagina` que recibe `layout.php` (ver sección 6.3).
 
-### 6.3 Variables locales del método `renderWithLayout()`
+### 6.3 Variables que expone `Router::render()` al layout
 
 | Variable | Tipo | Descripción |
 |---|---|---|
 | `$pagina` | `string` | Alias de `$this->pagina` para usar directamente en `layout.php` |
-| `$titulos` | `array` | Mapa asociativo `[nombre_pagina => título_descriptivo]` para los títulos de cada sección |
-| `$extraHeaders` | `array` | Mapa asociativo con HTML adicional para el navbar de páginas específicas (ej: chips de estado en `ciberControl`) |
-| `$pageTitle` | `string` | Título de la página actual (del mapa `$titulos` o `'EIS System'` por defecto). Se pasa a `layout.php` |
-| `$headerExtra` | `string` | HTML de cabecera adicional (del mapa `$extraHeaders` o cadena vacía). Se pasa a `layout.php` |
+| `$pageTitle` | `string` | Título de la página actual (de la constante `Router::PAGE_TITLES` o `'EIS System'` por defecto). Se pasa a `layout.php` |
+| `$headerExtra` | `string` | HTML de cabecera adicional (de la constante `Router::PAGE_EXTRA_HEADERS` o cadena vacía). Se pasa a `layout.php` |
 | `$contentView` | `string` | Ruta absoluta a la vista específica. Se pasa a `layout.php` para ser incluida con `require` |
 
-#### Mapa de títulos (`$titulos`)
+#### Mapa de títulos (`Router::PAGE_TITLES`)
 
 ```php
 $titulos = [
@@ -227,20 +239,20 @@ $titulos = [
     'reportes'         => 'Reportes y Estadísticas',
     'activos'          => 'Gestión de Activos',
     'asesorias'        => 'Asesoría Legal',
-    'usuarios'         => 'Gestión de Usuarios',
-    'roles'            => 'Gestión de Roles y Permisos',
+    'usuarios'         => 'Configuración de Usuarios',
+    'roles'            => 'Roles y Permisos',
 ];
 ```
 
-#### Mapa de cabeceras extra (`$extraHeaders`)
+#### Mapa de cabeceras extra (`Router::PAGE_EXTRA_HEADERS`)
 
 ```php
 $extraHeaders = [
-    'ciberControl' => '<span class="chip ...">5 Disponibles</span><span class="chip ...">4 Ocupadas</span>',
+    'ciberControl' => '<span class="chip ...">Disponibles</span><span class="chip ...">Ocupadas</span>',
 ];
 ```
 
-### 6.4 Variables locales del método `resolvePage()`
+### 6.4 Variable local del método `resolvePagina()`
 
 | Variable | Tipo | Descripción |
 |---|---|---|
@@ -250,14 +262,14 @@ $extraHeaders = [
 
 ## 7. Variables del Layout Principal (`src/app/template/layout.php`)
 
-Estas variables son **inyectadas** por `Router::renderWithLayout()` antes de incluir el layout. Están en el ámbito global de `layout.php`.
+Estas variables son **inyectadas** por `Router::render()` antes de incluir el layout. Están en el ámbito global de `layout.php`.
 
 | Variable | Tipo | Origen | Descripción |
 |---|---|---|---|
-| `$pageTitle` | `string` | `Router::renderWithLayout()` | Título de la página para la etiqueta `<title>` y los encabezados del navbar |
-| `$pagina` | `string` | `Router::renderWithLayout()` | Identificador de la página actual. Se usa para aplicar la clase `active` en el menú lateral |
-| `$headerExtra` | `string` | `Router::renderWithLayout()` | HTML adicional para el navbar (ej: chips de estado). Se muestra solo si no está vacío |
-| `$contentView` | `string` | `Router::renderWithLayout()` | Ruta absoluta al archivo `.php` de la vista específica. Se incluye con `require $contentView` |
+| `$pageTitle` | `string` | `Router::render()` | Título de la página para la etiqueta `<title>` y los encabezados del navbar |
+| `$pagina` | `string` | `Router::render()` | Identificador de la página actual. Se usa para aplicar la clase `active` en el menú lateral |
+| `$headerExtra` | `string` | `Router::render()` | HTML adicional para el navbar (ej: chips de estado). Se muestra solo si no está vacío |
+| `$contentView` | `string` | `Router::render()` | Ruta absoluta al archivo `.php` de la vista específica. Se incluye con `require $contentView` |
 
 ### 7.1 Uso en el layout
 
@@ -458,9 +470,60 @@ offline.php
 
 ---
 
+## 11.5 Namespace JavaScript global `EIS`
+
+El sistema expone un objeto global `EIS` (namespace) con funciones utilitarias compartidas por todos los módulos. Se declara en `src/Public/js/app.core.js` (`var EIS = {}`) y se complementa en `src/Public/js/app.selects.js`. `window.EIS.csrfToken` se inyecta desde el layout para las peticiones AJAX.
+
+### 11.5.1 Funciones exportadas por `EIS` (`app.core.js`)
+
+| Función | Descripción |
+|---|---|
+| `EIS.toast(msg, color, icon)` | Muestra una notificación toast de Materialize (color e ícono por defecto: `indigo`, `check_circle`) |
+| `EIS.formSelect(sel)` | (Re)inicializa de forma segura un `<select>` de Materialize (destruye instancia previa para evitar duplicados) |
+| `EIS.limpiarErroresFormulario(form)` | Elimina mensajes de error y resaltados de validación de un formulario |
+| `EIS.mostrarErroresFormulario(form, data)` | Muestra errores de validación del servidor por campo y un panel de error global |
+| `EIS.mostrarErrorAnexo(form, errorSelector, data)` | Rellena un contenedor de error propio del formulario con el mensaje del servidor |
+| `EIS.datatable(selector, opts)` | Inicializa DataTables sobre una tabla (ignora filas de "sin datos" con `colspan`) |
+| `EIS.datatableRefresh(selector)` | Recarga filas del DOM después de re-renderizar el `<tbody>` por AJAX y redibuja |
+| `EIS.datatableWireSearch(selector, inputSelector)` | Conecta un input de búsqueda a la búsqueda global de DataTables (debounce 250 ms) |
+| `EIS.datatableWireColumnFilter(selector, selectSelector, columnIndex)` | Conecta un `<select>` a un filtro de columna de DataTables |
+| `EIS.datatableDestroy(selector)` | Destruye una instancia de DataTables envolviendo la tabla correctamente |
+
+### 11.5.2 Funciones exportadas por `EIS` (`app.selects.js`)
+
+| Función | Descripción |
+|---|---|
+| `EIS.habilitarBusquedaEnSelects()` | Re-aplica la barra de búsqueda en todos los selects de Materialize existentes |
+| `EIS.activarBusquedaEnSelect(selector, placeholder)` | Inserta (o actualiza) la barra de búsqueda con un placeholder específico en el desplegable de un select concreto |
+
+### 11.5.3 Funciones globales auxiliares (`app.core.js`)
+
+Además de `EIS`, `app.core.js` declara funciones globales:
+
+| Función | Descripción |
+|---|---|
+| `debounce(fn, delay)` | Limita la frecuencia de ejecución de una función (espera `delay` ms sin llamadas) |
+| `filtrarTabla(inputSelector, tableSelector, colIndex)` | Filtra filas de una tabla HTML según el texto de un campo (opcional por columna) |
+| `eisDataTablesDisponible()` | Comprueba si la librería DataTables está cargada |
+
+### 11.5.4 Propiedades inyectadas por el layout (`layout.php`)
+
+El layout inyecta en `window.EIS` las siguientes propiedades:
+
+| Propiedad | Origen | Descripción |
+|---|---|---|
+| `window.EIS.csrfToken` | `$_SESSION['csrf_token']` | Token CSRF para peticiones AJAX (se agrega automáticamente en los `$.ajax` de la app) |
+| `window.EIS.userId` | `$_SESSION['user_id']` | ID del usuario autenticado |
+
+> Nota: el helper `escHtml()` no forma parte del namespace `EIS`; está definido como función local en cada módulo (`app.cyber.js`, `app.legal.js`, `app.pos.js`, etc.) para el renderizado seguro de contenido dinámico (anti-XSS).
+
+> El **tema oscuro/claro** se gestiona en `app.init.js`: persiste en `localStorage` (`theme`) y se aplica mediante `data-theme="dark"` en el `<html>`, con toggles en `#themeToggle`. El **CRUD de usuarios** lo gestiona `app.usuarios.js` vía `UsuarioController`.
+
+---
+
 ## 12. Variables en las Vistas Protegidas
 
-Cada vista protegida (ej: `dashboard.php`, `inventario.php`, `ventas.php`, etc.) se incluye dentro de `layout.php` mediante `require $contentView`. Por herencia del ámbito, las vistas tienen acceso a las variables definidas en `Router::renderWithLayout()`:
+Cada vista protegida (ej: `dashboard.php`, `inventario.php`, `ventas.php`, etc.) se incluye dentro de `layout.php` mediante `require $contentView`. Por herencia del ámbito, las vistas tienen acceso a las variables definidas en `Router::render()`:
 
 | Variable | Disponible en vistas |
 |---|---|
@@ -531,7 +594,9 @@ La autenticación real ocurre en `AuthController::login()` (valida CSRF, usuario
 | **Variables de template** | `$pageTitle`, `$pagina`, `$headerExtra`, `$contentView` |
 | **CLI (local)** | `$longopts`, `$options`, `$username`, `$password`, `$nombre`, `$apellido`, `$email`, `$db`, `$hash`, `$check`, `$stmt`, `$userId` |
 | **Service Worker (JS)** | `CACHE_NAME`, `STATIC_ASSETS` |
+| **Namespace JS `EIS`** | `EIS.toast`, `EIS.formSelect`, `EIS.limpiarErroresFormulario`, `EIS.mostrarErroresFormulario`, `EIS.mostrarErrorAnexo`, `EIS.datatable`, `EIS.datatableRefresh`, `EIS.datatableWireSearch`, `EIS.datatableWireColumnFilter`, `EIS.datatableDestroy`, `EIS.habilitarBusquedaEnSelects`, `EIS.activarBusquedaEnSelect`, `window.EIS.csrfToken`, `window.EIS.userId` |
+| **Globales JS (core)** | `debounce`, `filtrarTabla`, `eisDataTablesDisponible` |
 
 ---
 
-*Documentación generada el 2026-07-09 - EIS System (Zona Web Lara). Actualizado el 2026-09-05 (13 controladores, nueva clase `Validator`, `UsuarioController`, acciones de todos los módulos).*
+*Documentación generada el 2026-07-09 - EIS System (Zona Web Lara). Actualizado el 2026-09-06 (13 controladores, nueva clase `Validator`, `UsuarioController`, acciones de todos los módulos, namespace JS `EIS` con helpers DataTables y búsqueda en selects).*

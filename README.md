@@ -25,7 +25,7 @@ El sistema administra múltiples aspectos de un negocio: ventas (POS), inventari
 | **Cyber Control** | `ciberControl.php` | `CiberControl` | `CiberController` | `app.cyber.js` | Estaciones, iniciar/finalizar sesiones, tarifas, CRUD de PCs |
 | **Activos Fijos** | `activos.php` | `Activo` | `ActivoController` | `app.activos.js` | CRUD activos, tipos, KPIs, estado ciber |
 | **Asesoría Legal** | `asesorias.php` | `Asesoria` | `AsesoriaController` | `app.legal.js` | CRUD asesorías, cliente get-or-create, KPIs |
-| **Usuarios** | `usuarios.php` | `Usuario` | `AuthController` | `app.core.js` | CRUD usuarios |
+| **Usuarios** | `usuarios.php` | `Usuario` | `UsuarioController` | `app.usuarios.js` | CRUD usuarios, estados y contraseñas |
 | **Roles y Permisos** | `roles.php` | `Rol` | `RolController` | `app.roles.js` | CRUD roles/permisos |
 | **Reportes** | `reportes.php` | `Reporte` | `ReporteController` | `app.reportes.js` | KPIs, consultas por rango y **exportación CSV/Excel/PDF** |
 
@@ -34,7 +34,9 @@ El sistema administra múltiples aspectos de un negocio: ventas (POS), inventari
 - Token **CSRF** único por sesión (`bin2hex(random_bytes(32))`) verificado en todas las mutaciones (`Router::verifyCsrfToken`)
 - Sanitización XSS (escapado en backend y en el render del frontend)
 - **Prepared statements** con PDO (sin emulación) y **bindParam**
-- Validación backend reutilizable (helpers en `App\Core\Model`)
+- Validación backend estricta de tipos (`App\Core\Validator`) y helpers reutilizables (`App\Core\Model`)
+- Registro de errores sin exponer detalles al usuario: `App\Core\Logger` escribe en `src/logs/errores.md` (errores de PHP, excepciones y fatales vía `index.php`)
+- Barras de búsqueda en los menús desplegables (selects de Materialize) con filtro en tiempo real (`app.selects.js`)
 - Operaciones **transaccionales** (ventas, asesorías, sesiones cyber) con get-or-create centralizado de clientes
 - Exportadores sin dependencias: **CSV**, **Excel (HTML)** y **PDF** (generador propio, `Exporter` + `PdfBuilder`)
 - Assets 100% locales, **Service Worker** (caché offline), **Manifest PWA** y página `offline.php`
@@ -61,9 +63,11 @@ eis_zona_web_lara/
 │   │   │   ├── Database.php          # Conexión PDO Singleton (moderna)
 │   │   │   ├── Model.php             # Clase base abstracta con helpers de validación
 │   │   │   ├── router.php            # Enrutador OOP (Front Controller)
+│   │   │   ├── Validator.php         # Coerción estricta de tipos (texto/int/decimal/fecha/enum/email/bool)
+│   │   │   ├── Logger.php            # Registro de errores en src/logs/errores.md
 │   │   │   ├── Exporter.php          # Exportación CSV / Excel / PDF
 │   │   │   └── PdfBuilder.php        # Generador de PDF mínimo
-│   │   ├── Controllers/              # 12 controladores (app/json + render)
+│   │   ├── Controllers/              # 13 controladores (12 AJAX + Auth)
 │   │   │   ├── AuthController.php            # Login/logout
 │   │   │   ├── ClienteController.php         # CRUD clientes
 │   │   │   ├── InventarioController.php      # CRUD inventario
@@ -75,7 +79,8 @@ eis_zona_web_lara/
 │   │   │   ├── CiberController.php           # Control de cybercafé
 │   │   │   ├── ActivoController.php          # Activos fijos
 │   │   │   ├── DashboardController.php       # KPIs del panel
-│   │   │   └── ReporteController.php         # Reportes y exportación
+│   │   │   ├── ReporteController.php         # Reportes y exportación
+│   │   │   └── UsuarioController.php         # CRUD de usuarios
 │   │   ├── Models/
 │   │   │   ├── Usuario.php, Cliente.php, Inventario.php, Venta.php
 │   │   │   ├── Proveedor.php, ProveedorGestion.php, Rol.php
@@ -85,7 +90,7 @@ eis_zona_web_lara/
 │   │   │   ├── crud_users.php       # CRUD legacy procedural
 │   │   │   └── crud_asesorias.php   # CRUD legacy procedural
 │   │   ├── template/
-│   │   │   └── layout.php           # Layout maestro (sidebar 13 módulos)
+│   │   │   └── layout.php           # Layout maestro (sidebar 12 rutas)
 │   │   └── Views/                    # 15 vistas
 │   │       ├── login.php, login_validate.php, menu.php
 │   │       ├── dashboard.php, inventario.php, ventas.php
@@ -100,7 +105,7 @@ eis_zona_web_lara/
 │   │   └── usuario dev.txt           # Credenciales de usuario dev
 │   └── Public/
 │       ├── css/                      # styles, login, materialize, material-icons, dataTables.materialize (local)
-│       ├── js/                       # jQuery, Materialize, DataTables + 15 módulos app.*.js
+│       ├── js/                       # jQuery, Materialize, DataTables + 17 módulos app.*.js
 │       └── fonts/                    # MaterialIcons-Regular.ttf (local)
 ├── docs/                             # Documentación del proyecto
 ├── vendor/                           # Autoloader de Composer
@@ -230,7 +235,7 @@ Navegador → src/.htaccess → src/index.php → App\Core\Router->handle()
 ### Controladores (`App\Controllers`)
 - Cada módulo expone un endpoint JSON vía `handle()` que despacha `match ($action)` a métodos privados
 - Las mutaciones (crear/actualizar/eliminar/estado/finalizar/iniciar/registrar) verifican **CSRF** y método `POST`
-- Capturan `\PDOException`, `\InvalidArgumentException` y `\Exception` devolviendo JSON `{success, data?, error?, message?}`
+- Capturan `\Throwable` (y excepciones específicas como `\PDOException`, `\InvalidArgumentException`) devolviendo JSON `{success, data?, error?, message?}`
 - Filtro de error de FK en `ActivoController` para mensajes amigables
 
 ### Modelos (`App\Models`)
@@ -240,19 +245,24 @@ Navegador → src/.htaccess → src/index.php → App\Core\Router->handle()
 - Operaciones transaccionales: `Venta::registrarVenta`, `Asesoria::crear`, `CiberControl::iniciarSesion`
 - Cliente **get-or-create** centralizado en `Cliente::obtenerOCrearPorCedula()`
 
+### Validación estricta (`App\Core\Validator`)
+- Coerción centralizada de tipos: texto, entero, decimal, fecha, enum, email y booleano
+- Rechaza valores fuera de rango/enum y control characters (`rechazarControl`)
+- Integrada en los controladores para sanear la entrada antes de delegar en el modelo
+
 ### Exportación de Reportes (`App\Core\Exporter` + `PdfBuilder`)
 - `Exporter::csv()`, `excel()` y `pdf()` convierten `{columnas, filas}` en descargas
 - `PdfBuilder` genera un PDF mínimo y válido (texto + tabla) sin librerías externas
 - `ReporteController::exportar` valida CSRF, rango de fechas y formato permitido
 
 ### JavaScript Modular
-- **`app.core.js`** — namespace `EIS`, `debounce`, `EIS.toast`, `escHtml` (XSS) y la familia de helpers de **DataTables**: `EIS.datatable`, `EIS.datatableRefresh`, `EIS.datatableWireSearch`, `EIS.datatableWireColumnFilter`, `EIS.datatableDestroy`
+- **`app.core.js`** — namespace `EIS`, `debounce`, `EIS.toast`, `escHtml` (XSS), `EIS.formSelect` (re-inicialización de selects evitando el bug de doble `formSelect`) y la familia de helpers de **DataTables**: `EIS.datatable`, `EIS.datatableRefresh`, `EIS.datatableWireSearch`, `EIS.datatableWireColumnFilter`, `EIS.datatableDestroy`
 - **`app.init.js`** — inicia Materialize, reloj, tema oscuro/claro
-- **`app.selects.js`** — barra de búsqueda en los menús desplegables (selects) de Materialize
+- **`app.selects.js`** — barra de búsqueda en los menús desplegables (selects) de Materialize con filtro en tiempo real; expone `EIS.habilitarBusquedaEnSelects()` y `EIS.activarBusquedaEnSelect(selector, placeholder)` para selects regenerados dinámicamente (p. ej. el de clientes del POS)
 - **`app.tables.js`** — punto de extensión genérico; la búsqueda, filtro y paginación ya las gestiona **DataTables** en cada módulo (se mantiene sin handlers manuales para evitar conflictos)
 - **`app.ui.js`** — notificaciones, botones, tooltips
 - **`jquery.dataTables.min.js`** + **`dataTables.materialize.js`** + **`dataTables.materialize.css`** — motor DataTables (local), integración con tema Materialize oscuro/claro y configuración por defecto (lenguaje español, `pageLength` 10)
-- **`app.inventario.js`**, **`app.roles.js`**, **`app.clientes.js`**, **`app.proveedores.js`**, **`app.proveedores-gestion.js`**, **`app.activos.js`**, **`app.legal.js`**, **`app.pos.js`**, **`app.cyber.js`**, **`app.reportes.js`** — CRUD/acciones AJAX por módulo; cada uno conecta su barra de búsqueda/filtros existente a la instancia de DataTables correspondiente
+- **`app.inventario.js`**, **`app.roles.js`**, **`app.clientes.js`**, **`app.proveedores.js`**, **`app.proveedores-gestion.js`**, **`app.activos.js`**, **`app.legal.js`**, **`app.pos.js`**, **`app.cyber.js`**, **`app.reportes.js`**, **`app.usuarios.js`** — CRUD/acciones AJAX por módulo; cada uno conecta su barra de búsqueda/filtros existente a la instancia de DataTables correspondiente
 - **DataTables transversal** — las tablas principales de Inventario, Clientes, Activos, Roles, Usuarios, Proveedores (órdenes y gestión), Asesorías, Reportes (tabla dinámica), Cyber (historial) y Dashboard usan `EIS.datatable()`; los re-render por AJAX se sincronizan con `EIS.datatableRefresh()`
 - **CSRF automático** — el layout inyecta `window.EIS.csrfToken` y `$.ajaxSetup` lo agrega a cada POST
 
@@ -314,6 +324,8 @@ Diseño conceptual, lógico y físico de la base de datos, ER y diagrama de clas
 - [x] CRUD de activos fijos con BD
 - [x] Reportes reales con exportación CSV/Excel/PDF
 - [x] Integrar jQuery DataTables en todas las tablas principales
+- [x] Módulo de Usuarios con controlador propio (`UsuarioController`) y manejo global de errores vía `Logger`
+- [x] Barras de búsqueda en los selects con placeholder personalizado (p. ej. clientes del POS)
 - [ ] Mover credenciales de BD a variables de entorno (`.env`)
 - [ ] Unificar modelos legacy (`CiberModel`, `crud_*`) con los POO modernos
 - [ ] Middleware de autenticación/CSRF como capa separada
@@ -325,11 +337,11 @@ Diseño conceptual, lógico y físico de la base de datos, ER y diagrama de clas
 
 | Métrica | Valor |
 |---------|-------|
-| Controladores | 12 |
-| Modelos | 15 (13 POO + 2 legacy procedurales) |
+| Controladores | 13 (12 AJAX + Auth) |
+| Modelos | 15 (12 POO + 3 legacy) |
 | Vistas | 15 |
-| Core OOP | 5 (Database, Model, Router, Exporter, PdfBuilder) |
-| Archivos JS | 19 (4 librerías/integración + 15 módulos) |
+| Core OOP | 7 (Database, Model, Router, Validator, Logger, Exporter, PdfBuilder) |
+| Archivos JS | 21 (17 módulos `app*.js` + 4 librerías/integración) |
 | Archivos CSS | 5 |
 | Archivos SQL | 4 (estructura + 3 seed/ejemplos) |
 | Tablas en BD | 21 |
@@ -350,6 +362,7 @@ Email: carlospaezguerra@gmail.com
 
 | Versión | Fecha | Descripción |
 |---------|-------|-------------|
+| 4.2 | Sep 2026 | Módulo **Usuarios** con controlador propio (`UsuarioController` + `app.usuarios.js`), **manejo global de errores** en `index.php` con `App\Core\Logger` (registro en `src/logs/errores.md`, respuesta genérica al usuario), **`Validator`** de coerción estricta de tipos, barras de búsqueda en selects de Materialize (`EIS.habilitarBusquedaEnSelects`, `EIS.activarBusquedaEnSelect`), pulido visual general y corrección del render de reportes/clientes del POS |
 | 4.1 | Sep 2026 | Integración de **jQuery DataTables** (local) en todas las tablas principales (ordenamiento, paginación y búsqueda): Inventario, Clientes, Activos, Roles, Usuarios, Proveedores, Asesorías, Reportes, Cyber historial y Dashboard; helpers `EIS.datatable*` en `app.core.js` y tema Materialize oscuro/claro; corrección de 7 bugs de funcionalidad: eliminación de handlers demo en `app.ui.js` (reportes y `.btn-nuevo`), campos `direccion`/`telefono` opcionales en clientes, checkbox `activa` corregido con `isset()` en activos, `asignarRolAUsuario()` resuelve `rol_usuarios.id`, soporte completo de `descripcion`/`created_at` en roles, e INSERT corregido de `cliente_asesoria` |
 | 4.x | Ago 2026 | Dashboard y Reportes conectados a datos reales con exportación (CSV/Excel/PDF vía `Exporter`/`PdfBuilder`); registro de clientes en POS; CRUD de Activos; CiberControl con sesiones iniciar/finalizar y CRUD de PCs |
 | 3.3 | Jul 2026 | Validación backend completa: helpers reutilizables, existence checks, coherencia de datos |
@@ -362,4 +375,4 @@ Email: carlospaezguerra@gmail.com
 ---
 
 **Última actualización**: Septiembre 2026
-**Estado**: En desarrollo activo (rama `Carlos`). Todos los módulos funcionales con MVC + AJAX + BD + tablas con DataTables. Se corrigieron 7 bugs de funcionalidad que impedían el 100% de las operaciones (ver versión 4.1).
+**Estado**: En desarrollo activo (rama `Carlos`). Todos los módulos funcionales con MVC + AJAX + BD + tablas con DataTables. Versión actual **4.2**: 13 controladores, 12 modelos POO, `Validator` + `Logger`, manejo global de errores y módulo de usuarios propio.

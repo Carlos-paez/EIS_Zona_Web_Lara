@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Logger;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Models\Asesoria;
@@ -43,10 +44,12 @@ class AsesoriaController
                 default      => $this->json(false, null, 'Acción no válida'),
             };
         } catch (\PDOException $e) {
+            Logger::error($e, 'Asesorías - consulta SQL');
             echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
         } catch (\InvalidArgumentException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         } catch (\Exception $e) {
+            Logger::error($e, 'Asesorías');
             echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
         }
     }
@@ -115,6 +118,16 @@ class AsesoriaController
             return;
         }
 
+        $errores = Validator::requeridos($_POST, [
+            'ciudadano' => 'ciudadano',
+            'cedula'    => 'cédula',
+            'documento' => 'tipo de documento',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
+            return;
+        }
+
         $ciudadano   = Validator::texto($_POST['ciudadano'] ?? null, 'ciudadano', ['required' => true, 'min' => 2, 'max' => 200, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El ciudadano contiene caracteres no permitidos']);
         $cedula      = Validator::cedula($_POST['cedula'] ?? null, 'cédula');
         $documento   = Validator::texto($_POST['documento'] ?? null, 'tipo de documento', ['required' => true, 'min' => 1, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El tipo de documento contiene caracteres no permitidos']);
@@ -134,6 +147,15 @@ class AsesoriaController
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $errores = Validator::requeridos($_POST, [
+            'id'        => 'ID de la asesoría',
+            'documento' => 'tipo de documento',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
             return;
         }
 

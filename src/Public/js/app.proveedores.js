@@ -144,6 +144,7 @@ $(function () {
     // PROPÓSITO: Abre el modal en modo creación (sin líneas).
     // ================================================================
     function abrirModalCrear() {
+        EIS.limpiarErroresFormulario('#form-orden');
         $('#orden-id').val('');
         $('#form-orden')[0].reset();
         $('#orden-fecha').val(new Date().toISOString().slice(0, 10));
@@ -161,8 +162,8 @@ $(function () {
 
         $('#modal-orden').modal('open');
         M.updateTextFields();
-        $('#orden-proveedor').formSelect();
-        $('#orden-status').formSelect();
+        EIS.formSelect('#orden-proveedor');
+        EIS.formSelect('#orden-status');
     }
 
     // ================================================================
@@ -172,6 +173,7 @@ $(function () {
     function abrirModalEditar(id) {
         $.getJSON(API + 'detalle&id=' + id, function (r) {
             if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
+            EIS.limpiarErroresFormulario('#form-orden');
             var o = r.data;
 
             $('#orden-id').val(o.id);
@@ -184,8 +186,8 @@ $(function () {
             $('#orden-lineas-section').show();
 
             M.updateTextFields();
-            $('#orden-proveedor').formSelect();
-            $('#orden-status').formSelect();
+            EIS.formSelect('#orden-proveedor');
+            EIS.formSelect('#orden-status');
             $('#modal-orden').modal('open');
 
             cargarLineas(id);
@@ -234,41 +236,15 @@ $(function () {
 
     $('#form-orden').on('submit', function (e) {
         e.preventDefault();
+        var $form = $(this);
         var id = $('#orden-id').val();
         var esNueva = !id;
         var accion = esNueva ? 'crear' : 'actualizar';
 
-        var numero       = $('#orden-numero').val().trim();
-        var fecha        = $('#orden-fecha').val();
-        var fk_proveedor = parseInt($('#orden-proveedor').val()) || 0;
-        var fk_status    = parseInt($('#orden-status').val()) || 0;
+        // La validación de campos obligatorios la hace el servidor (PHP):
+        // los errores se muestran en pantalla de forma persistente.
 
-        if (!numero) {
-            EIS.toast('El número de orden es obligatorio', 'red', 'error');
-            return;
-        }
-
-        if (numero.length > 20) {
-            EIS.toast('El número de orden no puede exceder 20 caracteres', 'red', 'error');
-            return;
-        }
-
-        if (!fecha) {
-            EIS.toast('La fecha es obligatoria', 'red', 'error');
-            return;
-        }
-
-        if (!fk_proveedor) {
-            EIS.toast('Seleccione un proveedor', 'red', 'error');
-            return;
-        }
-
-        if (!fk_status) {
-            EIS.toast('Seleccione un estado', 'red', 'error');
-            return;
-        }
-
-        $.post(API + accion, $(this).serialize(), function (r) {
+        $.post(API + accion, $form.serialize(), function (r) {
             if (r.success) {
                 EIS.toast(r.message, 'green', 'check_circle');
 
@@ -286,7 +262,7 @@ $(function () {
                     refrescarKPI();
                 }
             } else {
-                EIS.toast(r.error || 'Error al guardar', 'red', 'error');
+                EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
             EIS.toast('Error de conexión', 'red', 'error');
@@ -311,38 +287,25 @@ $(function () {
 
     $('#form-linea').on('submit', function (e) {
         e.preventDefault();
-        var orden_id    = $('#linea-orden-id').val();
-        var producto_id = parseInt($('#linea-producto').val()) || 0;
-        var cantidad    = parseInt($('#linea-cantidad').val()) || 0;
-        var precio      = parseFloat($('#linea-precio').val()) || 0;
+        var $form = $(this);
+        var orden_id = $('#linea-orden-id').val();
 
         if (!orden_id) { EIS.toast('Seleccione una solicitud primero', 'red', 'error'); return; }
 
-        if (!producto_id) {
-            EIS.toast('Seleccione un producto', 'red', 'error');
-            return;
-        }
+        // La validación de campos obligatorios la hace el servidor (PHP):
+        // los errores se muestran en pantalla de forma persistente.
 
-        if (cantidad < 1) {
-            EIS.toast('La cantidad debe ser al menos 1', 'red', 'error');
-            return;
-        }
-
-        if (precio <= 0) {
-            EIS.toast('El precio debe ser mayor a 0', 'red', 'error');
-            return;
-        }
-
-        $.post(API + 'agregarLinea', $(this).serialize() + '&orden_id=' + orden_id, function (r) {
+        $.post(API + 'agregarLinea', $form.serialize() + '&orden_id=' + orden_id, function (r) {
             if (r.success) {
                 EIS.toast(r.message, 'green', 'check_circle');
+                EIS.limpiarErroresFormulario($form);
                 $('#linea-producto').val('');
                 $('#linea-cantidad').val(1);
                 $('#linea-precio').val('');
-                $('#linea-producto').formSelect();
+                EIS.formSelect('#linea-producto');
                 cargarLineas(parseInt(orden_id));
             } else {
-                EIS.toast(r.error || 'Error al agregar', 'red', 'error');
+                EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
             EIS.toast('Error de conexión', 'red', 'error');
@@ -370,7 +333,7 @@ $(function () {
     // INICIALIZACIÓN DE COMPONENTES MATERIALIZE
     // ================================================================
 
-    $('#linea-producto').formSelect();
+    EIS.formSelect('#linea-producto');
     $('.modal').modal();
     $('.tooltipped').tooltip();
 

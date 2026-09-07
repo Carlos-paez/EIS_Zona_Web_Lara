@@ -429,12 +429,12 @@ $totalProductos = count($productos);
             <div class="row">
                 <!-- Campo: Codigo del producto (obligatorio) -->
                 <div class="input-field col s12 m6">
-                    <input type="text" name="codigo" id="producto-codigo" required maxlength="50">
+                    <input type="text" name="codigo" id="producto-codigo" maxlength="50">
                     <label for="producto-codigo">Código</label>
                 </div>
                 <!-- Campo: Nombre del producto (obligatorio) -->
                 <div class="input-field col s12 m6">
-                    <input type="text" name="nombre" id="producto-nombre" required maxlength="100" pattern=".{2,100}" title="Entre 2 y 100 caracteres">
+                    <input type="text" name="nombre" id="producto-nombre" maxlength="100" title="Entre 2 y 100 caracteres">
                     <label for="producto-nombre">Nombre del Producto</label>
                 </div>
             </div>
@@ -450,19 +450,19 @@ $totalProductos = count($productos);
             <div class="row">
                 <!-- Select: Categoria del producto (obligatorio) -->
                 <div class="input-field col s12 m6">
-                    <select name="categoria_id" id="producto-categoria" required>
+                    <select name="categoria_id" id="producto-categoria">
                         <option value="" disabled selected>Seleccione</option>
                     </select>
                     <label>Categoría</label>
                 </div>
                 <!-- Campo: Stock actual (numero, minimo 0, valor por defecto 0) -->
                 <div class="input-field col s12 m3">
-                    <input type="number" name="stock" id="producto-stock" min="0" value="0" required>
+                    <input type="number" name="stock" id="producto-stock" min="0" value="0">
                     <label for="producto-stock">Stock</label>
                 </div>
                 <!-- Campo: Stock minimo (numero, minimo 1, valor por defecto 5) -->
                 <div class="input-field col s12 m3">
-                    <input type="number" name="stock_minimo" id="producto-stock-minimo" min="1" value="5" required>
+                    <input type="number" name="stock_minimo" id="producto-stock-minimo" min="1" value="5">
                     <label for="producto-stock-minimo">Stock Mínimo</label>
                 </div>
             </div>
@@ -470,12 +470,12 @@ $totalProductos = count($productos);
             <div class="row">
                 <!-- Campo: Costo de compra (numero decimal, paso 0.01, por defecto 0) -->
                 <div class="input-field col s12 m6">
-                    <input type="number" name="costo_compra" id="producto-costo" min="0" step="0.01" value="0" required>
+                    <input type="number" name="costo_compra" id="producto-costo" min="0" step="0.01" value="0">
                     <label for="producto-costo">Costo de Compra ($)</label>
                 </div>
                 <!-- Campo: Precio de venta (obligatorio, numero decimal) -->
                 <div class="input-field col s12 m6">
-                    <input type="number" name="precio_venta" id="producto-precio" min="0" step="0.01" value="0" required>
+                    <input type="number" name="precio_venta" id="producto-precio" min="0" step="0.01" value="0">
                     <label for="producto-precio">Precio de Venta ($)</label>
                 </div>
             </div>
@@ -503,7 +503,7 @@ $totalProductos = count($productos);
             <form id="form-categoria" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:flex-end;">
                 <input type="hidden" name="id" id="categoria-id" value="">
                 <div class="input-field" style="flex:2;min-width:150px;margin:0;">
-                    <input type="text" name="nombre" id="categoria-nombre" required maxlength="100">
+                    <input type="text" name="nombre" id="categoria-nombre" maxlength="100">
                     <label for="categoria-nombre">Nombre de la categoría</label>
                 </div>
                 <button type="submit" class="btn waves-effect waves-light green" style="height:44px;border-radius:24px;padding:0 1rem;">

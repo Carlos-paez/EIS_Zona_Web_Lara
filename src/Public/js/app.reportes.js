@@ -7,9 +7,10 @@
     'use strict';
 
     $(document).ready(function () {
-        // Inicializa el select de Materialize
-        if (typeof M !== 'undefined' && M.FormSelect) {
-            $('#reporteTipo').formSelect();
+        // (Re)inicializa el select de Materialize (destroy + formSelect
+        // para no duplicar la barra desplegable que ya creó app.init.js)
+        if (typeof M !== 'undefined' && M.FormSelect && window.EIS) {
+            EIS.formSelect('#reporteTipo');
         }
 
         var $form = $('#formReporte');
@@ -75,9 +76,14 @@
 
             var bodyHtml = '';
             filas.forEach(function (fila) {
+                // Las filas llegan como objetos asociativos (claves = nombre de
+                // columna) desde json_encode; se extraen los valores en el mismo
+                // orden en que el modelo proyectó las columnas. También se
+                // soportan arreglos numéricos por compatibilidad.
+                var valores = Array.isArray(fila) ? fila : Object.values(fila);
                 bodyHtml += '<tr>';
                 columnas.forEach(function (col, i) {
-                    var value = fila[i] !== undefined ? fila[i] : '';
+                    var value = valores[i] !== undefined ? valores[i] : '';
                     bodyHtml += '<td>' + $('<span>').text(value).html() + '</td>';
                 });
                 bodyHtml += '</tr>';

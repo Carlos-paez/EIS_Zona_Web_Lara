@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // Se importa la clase Model del núcleo de la aplicación
+use App\Core\Logger;
 use App\Core\Model;
 use PDO;
 
@@ -350,6 +351,7 @@ class Proveedor extends Model
         } catch (\Exception $e) {
             // Si algo falla, revierte todos los cambios
             $this->db->rollBack();
+            Logger::error($e, 'Proveedor - eliminar orden de abastecimiento');
             return false;
         }
     }

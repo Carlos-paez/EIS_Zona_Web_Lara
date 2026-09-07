@@ -21,7 +21,7 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 
 **Caracteristicas tecnicas destacadas**:
 - Assets 100% locales (sin dependencia de CDN)
-- JavaScript modular en 16 archivos especializados mas el motor de jQuery DataTables
+- JavaScript modular en 17 archivos especializados mas el motor de jQuery DataTables
 - Service Worker para funcionamiento offline
 - PWA con manifest.json
 - Tema oscuro/claro con persistencia en localStorage
@@ -30,7 +30,7 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 - Patron Singleton para conexion PDO (clase `Database`)
 - Clase base abstracta `Model` con helpers de validacion reutilizables
 - Clase final `Validator` (`App\Core\Validator`) con reglas estaticas por campo
-- 13 controladores con namespace para CRUD via AJAX
+- 13 controladores con namespace: 12 para CRUD via AJAX (mapa `CONTROLLERS`) + `AuthController` (login/logout, no es AJAX)
 - Seguridad: CSRF tokens, XSS sanitizacion, session hardening, validacion backend completa
 
 ---
@@ -83,7 +83,7 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 
 | Archivo | Lineas | Proposito |
 |---------|--------|----------|
-| src/index.php | 21 | Front Controller (autoloader + Router OOP) |
+| src/index.php | 135 | Front Controller (autoloader + Router OOP + manejo global de errores via Logger) |
 | src/Config/database.php | 46 | Configuracion BD (legacy) |
 | src/app/core/Database.php | 81 | Conexion PDO Singleton (moderna) |
 | src/app/core/Validator.php | �– | Clase final con reglas de validacion estaticas por campo (cedula, RIF, username, precios, etc.) |
@@ -91,7 +91,7 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 | src/app/core/PdfBuilder.php | �– | Generador de PDF A4 sin librerias externas |
 | src/app/core/Model.php | 200+ | Clase base abstracta con helpers de validacion |
 | src/app/core/router.php | — | Enrutador OOP (clase Router, CSRF tokens, mapa CONTROLLERS, dispatchAction, auth, vistas) |
-| src/app/template/layout.php | 201 | Layout maestro con CSRF token + JS condicional (14 modulos JS) |
+| src/app/template/layout.php | 301 | Layout maestro con CSRF token + JS condicional (11 modulos JS) |
 | src/app/Controllers/AuthController.php | — | Controlador login/logout con session_regenerate_id |
 | src/app/Controllers/ClienteController.php | — | Controlador AJAX clientes |
 | src/app/Controllers/InventarioController.php | — | Controlador AJAX inventario |
@@ -117,7 +117,7 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 | src/app/Models/Reporte.php | — | Modelo POO reportes |
 | src/app/Models/Dashboard.php | — | Modelo POO dashboard |
 | src/app/Models/CiberControl.php | — | Modelo POO control cyber |
-| src/app/Models/CiberModel.php | — | Modelo POO sesiones cyber |
+| src/app/Models/CiberModel.php | — | Modelo legacy sesiones cyber |
 | src/app/Models/crud_users.php | 54 | CRUD usuarios legacy (8 funciones) |
 | src/app/Models/crud_asesorias.php | 49 | CRUD asesorias legacy (8 funciones) |
 | src/app/Views/login.php | — | Pagina login |
@@ -169,17 +169,27 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 
 ## Explicacion Detallada por Archivo
 
-### 1. `src/index.php` (21 lineas)
+### 1. `src/index.php` (135 lineas)
 
 ```php
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
+use App\Core\Logger;
 use App\Core\Router;
+
+// MANEJO GLOBAL DE ERRORES
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ob_start();
+// set_error_handler, set_exception_handler y register_shutdown_function
+// registran los fallos via App\Core\Logger en src/logs/errores.md y
+// responden JSON generico en AJAX o una pagina amigable en navegacion.
+
 $router = new Router();
 $router->handle();
 ```
 
-Punto de entrada unico (Front Controller). Todas las solicitudes pasan por aqui gracias a las reglas de reescritura de Apache (.htaccess). Ahora usa el autoloader de Composer y la clase `Router` con namespace.
+Punto de entrada unico (Front Controller). Todas las solicitudes pasan por aqui gracias a las reglas de reescritura de Apache (.htaccess). Usa el autoloader de Composer, la clase `Router` con namespace y un **manejo global de errores** que registra todo en `src/logs/errores.md` via `App\Core\Logger`, respondiendo JSON generico en AJAX o una pagina amigable al usuario.
 
 ---
 
@@ -204,6 +214,7 @@ class Router
         'dashboard'         => DashboardController::class,
         'reportes'          => ReporteController::class,
         'activos'           => ActivoController::class,
+        'usuarios'          => UsuarioController::class,
     ];
 
     public function __construct()
@@ -335,7 +346,7 @@ class Router
 | `nav` | Barra superior con titulo dinamico, reloj, notificaciones, usuario, header extra |
 | `container` | Contenedor central donde se renderiza `$contentView` |
 | `backToTop` | Boton flotante para volver arriba |
-| Modulos JS | 5 archivos base + condicionales por pagina (pos, cyber, legal, inventario, roles, proveedores, proveedores-gestion, clientes, activos, reportes) |
+| Modulos JS | 5 archivos base + condicionales por pagina (pos, cyber, legal, inventario, roles, proveedores, proveedores-gestion, clientes, activos, reportes, usuarios) |
 | `sw.js` | Service Worker para cache offline |
 
 **Variables PHP pasadas desde router.php**:
@@ -437,7 +448,6 @@ El proyecto tiene 2 tipos de modelos:
 | `Reporte` | `Reporte.php` | — | Generacion de reportes |
 | `Dashboard` | `Dashboard.php` | — | Metricas del panel principal |
 | `CiberControl` | `CiberControl.php` | `sesion_ciber` | Control de estaciones cyber |
-| `CiberModel` | `CiberModel.php` | `sesion_ciber` | Sesiones de cybercafe |
 
 Todos heredan de `App\Core\Model` y usan `$this->db` (conexion PDO Singleton).
 
@@ -455,6 +465,8 @@ Todos heredan de `App\Core\Model` y usan `$this->db` (conexion PDO Singleton).
 
 - `crud_asesorias.php` (49 lineas) — 8 funciones CRUD para `asesoria`:
   `crearAsesoria()`, `obtenerAsesorias()`, `obtenerAsesoriasPorEstado()`, `obtenerAsesoriaPorId()`, `buscarAsesoriasPorCedula()`, `actualizarAsesoria()`, `eliminarAsesoria()`, `contarAsesoriasPorEstado()`
+
+- `CiberModel.php` — modelo legacy de cybercafe (sin namespace, no extiende `Model`, usa `$pdo` de `Config/database.php`): `obtenerEstaciones()`, `iniciarSesion()`, `finalizarSesion()`, `obtenerHistorialEstacion()`, `obtenerEstadisticas()`, gestion de PCs y tipos de activo
 
 #### 5.3 Controladores (namespace `App\Controllers`)
 
@@ -580,7 +592,7 @@ Gestion de roles y permisos conectada a BD via `Rol.php` + `RolController.php` +
 
 ### Arquitectura
 
-El monolito `app.js` original se dividio en **16 archivos modulares** organizados por funcionalidad, mas el motor de **jQuery DataTables** (local):
+El monolito `app.js` original se dividio en **17 archivos modulares** organizados por funcionalidad, mas el motor de **jQuery DataTables** (local):
 
 | Archivo | Proposito | Carga |
 |---------|-----------|-------|
@@ -908,8 +920,8 @@ Hoja de estilos local para Material Icons con referencia a la fuente TTF local.
 - **BD**: Registro de casos de asesoria con validacion de documentos
 
 ### Usuarios (FUNCIONAL CON BD - CRUD AJAX)
-- **Archivos**: `usuarios.php`, `Usuario.php`, `AuthController.php`, `app.core.js`
-- **BD**: Crear, editar, eliminar y listar usuarios
+- **Archivos**: `usuarios.php`, `Usuario.php`, `UsuarioController.php`, `app.usuarios.js`
+- **BD**: Crear, editar, eliminar, activar/desactivar y cambiar password de usuarios
 
 ### Roles y Permisos (FUNCIONAL CON BD - CRUD AJAX)
 - **Archivos**: `roles.php`, `Rol.php`, `RolController.php`, `app.roles.js`
@@ -966,13 +978,13 @@ El proyecto cuenta con **todos los modulos conectados a la BD** y arquitectura O
 - **Modelo base**: Clase abstracta `Model` con helpers de validacion (non-empty, min-length, FK existence, duplicates, patterns)
 - **Validador central**: Clase final `Validator` con reglas estáticas reutilizables en todos los modelos y `AuthController`
 - **13 controladores** con namespace: Auth, Usuario, Cliente, Inventario, Venta, Rol, Proveedor, ProveedorGestion, Asesoria, Ciber, Dashboard, Reporte, Activo
-- **13 modelos POO**: Cliente, Inventario, Usuario, Proveedor, ProveedorGestion, Rol, Asesoria, Activo, Venta, Reporte, Dashboard, CiberControl, CiberModel
+- **12 modelos POO**: Cliente, Inventario, Usuario, Proveedor, ProveedorGestion, Rol, Asesoria, Activo, Venta, Reporte, Dashboard, CiberControl (+ 3 legacy: CiberModel, crud_users, crud_asesorias)
 - **Navegacion funcional** con sidebar responsivo (12 modulos)
 - **Login con BD**: Autenticacion via AuthController + password_verify + session_regenerate_id
 - **Modulos conectados a BD**: Clientes, Inventario, Ventas, Cyber, Usuarios, Roles/Permisos, Proveedores, Activos, Asesorias, Reportes, Dashboard
 - **Seguridad completa**: CSRF tokens, XSS sanitizacion, session hardening, prepared statements, validacion backend
 - **Tema oscuro/claro** con persistencia
-- **JavaScript modular** en 16 archivos especializados mas el motor de jQuery DataTables
+- **JavaScript modular** en 17 archivos especializados mas el motor de jQuery DataTables
 - **Tablas con DataTables**: ordenamiento, paginacion y busqueda en las tablas principales de todos los modulos
 - **Assets 100% locales** (sin dependencia de CDN)
 - **Service Worker** para funcionamiento offline

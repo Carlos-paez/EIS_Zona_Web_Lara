@@ -72,6 +72,7 @@ $(function () {
     }
 
     $(document).on('click', '.btn-nuevo-activo', function () {
+        EIS.limpiarErroresFormulario('#form-activo');
         $('#activo-id').val('');
         $('#form-activo')[0].reset();
         $('#activo-activa').prop('checked', true);
@@ -86,6 +87,7 @@ $(function () {
         var id = $(this).data('id');
         $.getJSON(API + 'detalle&id=' + id, function (r) {
             if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
+            EIS.limpiarErroresFormulario('#form-activo');
             var a = r.data;
             $('#activo-id').val(a.id);
             $('#activo-marca').val(a.marca);
@@ -104,34 +106,21 @@ $(function () {
 
     $('#form-activo').on('submit', function (e) {
         e.preventDefault();
+        var $form = $(this);
 
-        var marca       = $('#activo-marca').val().trim();
-        var descripcion = $('#activo-descripcion').val().trim();
-        var tipo        = $('#activo-tipo').val();
-
-        if (!marca || !descripcion || !tipo) {
-            EIS.toast('Marca, descripción y tipo son obligatorios', 'red', 'error');
-            return;
-        }
-        if (marca.length < 2 || marca.length > 100) {
-            EIS.toast('La marca debe tener entre 2 y 100 caracteres', 'red', 'error');
-            return;
-        }
-        if (descripcion.length > 1000) {
-            EIS.toast('La descripción no puede exceder 1000 caracteres', 'red', 'error');
-            return;
-        }
+        // La validación la hace el servidor (PHP): los errores se muestran
+        // en pantalla de forma persistente a través de fieldErrors.
 
         var id = $('#activo-id').val();
         var accion = id ? 'actualizar' : 'crear';
-        $.post(API + accion, $(this).serialize(), function (r) {
+        $.post(API + accion, $form.serialize(), function (r) {
             if (r.success) {
                 EIS.toast(r.message, 'green', 'check_circle');
                 $('#modal-activo').modal('close');
                 refrescarKPI();
                 refrescarTabla();
             } else {
-                EIS.toast(r.error || 'Error al guardar', 'red', 'error');
+                EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
             EIS.toast('Error de conexión', 'red', 'error');

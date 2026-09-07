@@ -32,8 +32,8 @@ src/
 │   │   ├── DashboardController.php← Controlador AJAX dashboard
 │   │   ├── ReporteController.php← Controlador AJAX reportes
 │   │   ├── VentaController.php  ← Controlador AJAX ventas (POS)
-│   │   └── UsuarioController.php← Controlador AJAX usuarios (nuevo)
-│   ├── Models/                  ← 13 modelos POO
+│   │   └── UsuarioController.php← Controlador AJAX usuarios
+│   ├── Models/                  ← 15 modelos (12 POO + 3 legacy)
 │   │   ├── Cliente.php          ← Modelo POO clientes
 │   │   ├── Inventario.php       ← Modelo POO inventario (namespace)
 │   │   ├── Usuario.php          ← Modelo POO usuarios
@@ -102,22 +102,37 @@ Actualmente las URLs soportan dos formatos: `?pagina=nombre` (query string) y `/
 
 ## 2. `src/index.php` — Front Controller
 
-```php
-<?php
-require_once __DIR__ . '/../vendor/autoload.php';
-use App\Core\Router;
-$router = new Router();
-$router->handle();
+El archivo `index.php` (135 lineas) no solo carga el autoloader y ejecuta el Router: tambien configura un **manejo global de errores** completo que evita que los errores tecnicos se filtren al usuario final.
+
+```
+src/index.php (135 lineas)
+├── require_once vendor/autoload.php   ← Autoloader Composer PSR-4
+├── use App\Core\Logger, Router
+├── error_reporting(E_ALL) + ini_set('display_errors','0')
+├── ob_start()                         ← Buffer de salida para errores fatales
+├── es_peticion_ajax()                 ← Helper: detecta peticiones AJAX
+├── limpiar_buffer_salida()            ← Helper: descarta buffer previo
+├── mostrar_error_generico()           ← HTML/JSON generico (sin detalles tecnicos)
+├── set_error_handler()                ← Warnings/notices → Logger::error()
+├── set_exception_handler()            ← Excepciones no capturadas → Logger::error() + 500
+├── register_shutdown_function()       ← Errores fatales → Logger::error() + 500
+├── $router = new Router()
+└── $router->handle()
 ```
 
-| Linea | Explicacion |
-|-------|-------------|
+| Seccion | Explicacion |
+|---------|-------------|
 | `require_once __DIR__ . '/../vendor/autoload.php'` | Carga el autoloader de Composer (PSR-4). |
-| `use App\Core\Router` | Importa la clase Router del namespace App\Core. |
+| `use App\Core\Logger` / `Router` | Importa clases del namespace `App\Core`. |
+| `ini_set('display_errors', '0')` | Los errores PHP nunca se muestran al navegador. |
+| `ob_start()` | Activa buffer de salida para reemplazar respuesta parcial en errores fatales. |
+| `set_error_handler(...)` | Captura warnings/notices y los registra via `Logger::error()` (en `src/logs/errores.md`). |
+| `set_exception_handler(...)` | Captura excepciones no manejadas, las registra y muestra error 500 generico. |
+| `register_shutdown_function(...)` | Detecta errores fatales (`E_ERROR`, `E_PARSE`, etc.) al finalizar el script. |
 | `$router = new Router()` | Crea instancia: inicia sesion y resuelve pagina. |
 | `$router->handle()` | Procesa la solicitud (AJAX, auth, o vista). |
 
-Ahora usa autoloader de Composer. El flujo es: `index.php` -> `new Router()` -> `Router::handle()`.
+El flujo es: `index.php` -> configura manejo de errores -> `new Router()` -> `Router::handle()`.
 
 ---
 
@@ -127,10 +142,10 @@ Ahora usa autoloader de Composer. El flujo es: `index.php` -> `new Router()` -> 
 
 El enrutamiento usa la clase `Router` en namespace `App\Core`. Centraliza los controladores en un mapa `CONTROLLERS` (`pagina => clase`) y usa `dispatchAction()` para las peticiones AJAX:
 1. **AJAX** (`?pagina=X&action=Y`) cuando `X` esta en `CONTROLLERS` -> `dispatchAction()` instancia el controlador y ejecuta `handle()`
-2. **Auth actions** (`?pagina=login_validate` o `logout`) -> `AuthController`
+2. **Auth actions** -> `login_validate` (POST) -> `AuthController::login()`; `pagina=login` con `logout=1` -> `Router::logout()`
 3. **Vistas normales** -> `render()` -> `layout.php` + vista
 
-El mapa `CONTROLLERS` incluye: `clientes`, `inventario`, `ventas`, `roles`, `proveedores`, `proveedores-gestion`, `asesorias`, `ciberControl`, `dashboard`, `reportes`, `activos`.
+El mapa `CONTROLLERS` incluye 12 controladores AJAX: `clientes`, `inventario`, `ventas`, `roles`, `proveedores`, `proveedores-gestion`, `asesorias`, `ciberControl`, `activos`, `dashboard`, `reportes`, `usuarios`.
 
 ### Estructura de la clase
 
@@ -150,118 +165,155 @@ class Router
         'proveedores-gestion' => \App\Controllers\ProveedorGestionController::class,
         'asesorias'         => \App\Controllers\AsesoriaController::class,
         'ciberControl'      => \App\Controllers\CiberController::class,
+        'activos'           => \App\Controllers\ActivoController::class,
         'dashboard'         => \App\Controllers\DashboardController::class,
         'reportes'          => \App\Controllers\ReporteController::class,
-        'activos'           => \App\Controllers\ActivoController::class,
+        'usuarios'          => \App\Controllers\UsuarioController::class,
+    ];
+
+    private const PUBLIC_PAGES = ['login', 'login_validate'];
+
+    private const PAGE_TITLES = [
+        'dashboard'           => 'Panel de Control',
+        'inventario'          => 'Gestión de inventario',
+        'ventas'              => 'Punto de Venta (POS)',
+        'ciberControl'        => 'Control de Cybercafé',
+        'proveedores'         => 'Solicitudes a Proveedores',
+        'proveedores-gestion' => 'Gestión de Proveedores',
+        'clientes'            => 'Gestión de Clientes',
+        'reportes'            => 'Reportes y Estadísticas',
+        'activos'             => 'Gestión de Activos',
+        'asesorias'           => 'Asesoría Legal',
+        'usuarios'            => 'Configuración de Usuarios',
+        'roles'               => 'Roles y Permisos',
+    ];
+
+    private const PAGE_EXTRA_HEADERS = [
+        'ciberControl' => '<span id="hdrDisponibles" class="chip green white-text">Disponibles</span><span id="hdrOcupadas" class="chip orange white-text">Ocupadas</span>',
     ];
 
     public function __construct()
     {
-        session_start();
-        $this->pagina = $this->resolvePage();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
     }
 
     public function handle(): void
     {
-        if ($this->isAuthAction()) {
-            $this->runAuthAction(); return;
+        $this->pagina = $this->resolvePagina();
+
+        // Página de cierre de sesión (GET ?pagina=login con intención de logout).
+        if (
+            $this->pagina === 'login'
+            && isset($_GET['logout'])
+            && isset($_SESSION['logged_in'])
+        ) {
+            $this->logout();
         }
+
+        // Control de acceso: las páginas privadas requieren sesión.
+        if (
+            !isset($_SESSION['logged_in'])
+            && !in_array($this->pagina, self::PUBLIC_PAGES, true)
+        ) {
+            $this->redirect('login');
+        }
+
+        // Despacho de peticiones AJAX de los módulos (?pagina=X&action=Y).
         if (array_key_exists($this->pagina, self::CONTROLLERS) && isset($_GET['action'])) {
-            $this->dispatchAction(); return;
+            $this->dispatchAction();
         }
+
+        // Flujo de inicio de sesión (POST ?pagina=login_validate).
+        if ($this->pagina === 'login_validate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            (new \App\Controllers\AuthController())->login();
+            return;
+        }
+
         $this->render();
     }
 
-    private function resolvePage(): string
+    private function resolvePagina(): string
     {
-        $pagina = 'login';
-        if (!empty($_GET['pagina'])) {
-            $pagina = $_GET['pagina'];
-        }
+        $pagina = $_GET['pagina'] ?? 'login';
+
         if (!preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)) {
             $pagina = 'login';
         }
-        return $pagina;
-    }
 
-    private function isAuthAction(): bool
-    {
-        return $this->pagina === 'login_validate' || $this->pagina === 'logout';
+        return $pagina;
     }
 
     private function dispatchAction(): void
     {
         $controllerClass = self::CONTROLLERS[$this->pagina];
-        $this->requireAuth();
-        $controller = new $controllerClass();
-        $controller->handle();
-        exit;
-    }
+        $controller      = new $controllerClass();
 
-    private function requireAuth(): void
-    {
-        if (!isset($_SESSION['logged_in'])) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'error' => 'No autenticado']);
+        if (method_exists($controller, 'handle')) {
+            $controller->handle();
             exit;
         }
     }
 
-    private function runAuthAction(): void
+    private function logout(): void
     {
-        if ($this->pagina === 'logout') {
-            $controller = new \App\Controllers\AuthController();
-            $controller->logout();
-            return;
-        }
-        $controller = new \App\Controllers\AuthController();
-        $controller->login();
-        exit;
+        session_regenerate_id(true);
+        $_SESSION = [];
+        session_destroy();
+        $this->redirect('login');
     }
 
     private function render(): void
     {
-        $publicPages = ['login'];
-        if (!isset($_SESSION['logged_in']) && !in_array($this->pagina, $publicPages)) {
-            header('Location: ?pagina=login');
-            exit;
+        if (in_array($this->pagina, self::PUBLIC_PAGES, true)) {
+            $rutaVista = $this->viewsDir() . $this->pagina . '.php';
+            if (is_file($rutaVista)) {
+                require $rutaVista;
+            } else {
+                http_response_code(404);
+                echo '<h1>Error 404: Página no encontrada</h1>';
+            }
+            return;
         }
-        $rutaVista = __DIR__ . '/../Views/' . $this->pagina . '.php';
+
+        $rutaVista = $this->viewsDir() . $this->pagina . '.php';
+
         if (!is_file($rutaVista)) {
             http_response_code(404);
-            echo '<h1>Error 404: Pagina no encontrada</h1>';
+            echo '<h1>Error 404: Página no encontrada</h1>';
+            echo "<p>La página <strong>{$this->pagina}</strong> no existe.</p>";
+            echo "<a href='?pagina=dashboard'>Volver al dashboard</a>";
             return;
         }
-        if (in_array($this->pagina, $publicPages)) {
-            require $rutaVista;
-            return;
-        }
-        $this->renderWithLayout($rutaVista);
+
+        $pageTitle   = self::PAGE_TITLES[$this->pagina] ?? 'EIS System';
+        $headerExtra = self::PAGE_EXTRA_HEADERS[$this->pagina] ?? '';
+        $contentView = $rutaVista;
+        $pagina      = $this->pagina;
+
+        require __DIR__ . '/../template/layout.php';
     }
 
-    private function renderWithLayout(string $contentView): void
+    public static function verifyCsrfToken(?string $token): bool
     {
-        $pagina = $this->pagina;
-        $titulos = [
-            'dashboard'    => 'Panel de Control',
-            'inventario'   => 'Gestion de inventario',
-            'ventas'       => 'Punto de Venta (POS)',
-            'clientes'     => 'Gestion de Clientes',
-            'ciberControl' => 'Control de Cybercafe',
-            'proveedores'  => 'Solicitudes a Proveedores',
-            'proveedores-gestion' => 'Gestion de Proveedores',
-            'reportes'     => 'Reportes y Estadisticas',
-            'activos'      => 'Gestion de Activos',
-            'asesorias'    => 'Asesoria Legal',
-            'usuarios'     => 'Gestion de Usuarios',
-            'roles'        => 'Gestion de Roles y Permisos',
-        ];
-        $extraHeaders = [
-            'ciberControl' => '<span class="chip green white-text">5 Disponibles</span><span class="chip orange white-text">4 Ocupadas</span>',
-        ];
-        $pageTitle   = $titulos[$pagina] ?? 'EIS System';
-        $headerExtra = $extraHeaders[$pagina] ?? '';
-        require __DIR__ . '/../template/layout.php';
+        return !empty($_SESSION['csrf_token'])
+            && is_string($token)
+            && hash_equals($_SESSION['csrf_token'], $token);
+    }
+
+    private function viewsDir(): string
+    {
+        return __DIR__ . '/../Views/';
+    }
+
+    private function redirect(string $pagina): void
+    {
+        header('Location: ?pagina=' . $pagina);
+        exit;
     }
 }
 ```
@@ -273,6 +325,8 @@ class Router
 | `__construct()` | Inicia sesion (si no existe) y genera el CSRF token una sola vez por sesion (`bin2hex(random_bytes(32))`) |
 | `handle()` | Metodo principal: determina el tipo de peticion y ejecuta la accion |
 | `CONTROLLERS` | Mapa `pagina => clase` que centraliza los 12 controladores AJAX (13 archivos con `AuthController`) |
+| `PUBLIC_PAGES` | Constante `['login', 'login_validate']` (páginas accesibles sin sesión) |
+| `PAGE_TITLES` / `PAGE_EXTRA_HEADERS` | Constantes con títulos y cabeceras extra de cada página |
 | `resolvePagina()` | Lee `$_GET["pagina"]`, valida con regex `/^[a-zA-Z0-9_-]+$/`, retorna el nombre (default: "login") |
 | `dispatchAction()` | Si la pagina esta en `CONTROLLERS` y hay `action`, instancia el controlador y ejecuta `handle()` |
 | `logout()` | Cierra sesion (`session_regenerate_id` + `session_destroy`) desde `?pagina=login&logout=1` |
@@ -351,6 +405,9 @@ class Router
 <?php if ($pagina === 'reportes'): ?>
 <script src="Public/js/app.reportes.js"></script>
 <?php endif; ?>
+<?php if ($pagina === 'usuarios'): ?>
+<script src="Public/js/app.usuarios.js"></script>
+<?php endif; ?>
 ```
 
 ---
@@ -363,9 +420,11 @@ class Router
 | `login&logout=1` | `Router::logout()` | Si | Ninguno |
 | `login_validate` (POST) | `AuthController::login()` | Si | Ninguno |
 | `dashboard` | `dashboard.php` | No | `app.reportes.js`? No — ninguno (KPIs via `app.reportes.js` no; dashboard usa `app.core/init/ui`) |
+| `dashboard&action=X` | `DashboardController::handle()` | No | (AJAX) |
 | `inventario` | `inventario.php` | No | `app.inventario.js` |
 | `inventario&action=X` | `InventarioController::handle()` | No | (AJAX) |
 | `ventas` | `ventas.php` | No | `app.pos.js` |
+| `ventas&action=X` | `VentaController::handle()` | No | (AJAX) |
 | `proveedores` | `proveedores.php` | No | `app.proveedores.js` |
 | `proveedores&action=X` | `ProveedorController::handle()` | No | (AJAX) |
 | `clientes` | `clientes.php` | No | `app.clientes.js` |
@@ -373,9 +432,13 @@ class Router
 | `proveedores-gestion` | proveedores-gestion.php | No | `app.proveedores-gestion.js` |
 | `proveedores-gestion&action=X` | `ProveedorGestionController::handle()` | No | (AJAX) |
 | `ciberControl` | `ciberControl.php` | No | `app.cyber.js` |
+| `ciberControl&action=X` | `CiberController::handle()` | No | (AJAX) |
 | `reportes` | `reportes.php` | No | `app.reportes.js` |
+| `reportes&action=X` | `ReporteController::handle()` | No | (AJAX) |
 | `activos` | `activos.php` | No | `app.activos.js` |
+| `activos&action=X` | `ActivoController::handle()` | No | (AJAX) |
 | `asesorias` | `asesorias.php` | No | `app.legal.js` |
+| `asesorias&action=X` | `AsesoriaController::handle()` | No | (AJAX) |
 | `usuarios` | `usuarios.php` | No | `app.usuarios.js` |
 | `usuarios&action=X` | `UsuarioController::handle()` | No | (AJAX) |
 | `roles` | `roles.php` | No | `app.roles.js` |
@@ -465,16 +528,17 @@ Usuario: GET /src/?pagina=ventas
    └── src/.htaccess: RewriteRule ^(.*)$ index.php [QSA,L]
 
 2. index.php:
-   └── require_once __DIR__.'/app/core/router.php'
+   └── require_once ../vendor/autoload.php (autoloader Composer)
+   └── configura manejo global de errores (Logger, errores.md)
+   └── $router = new Router(); $router->handle()
 
-3. router.php:
-   ├── session_start()
+3. Router::handle():
+   ├── session_start() (si no existe) + token CSRF
    ├── $pagina = "ventas"
    ├── preg_match -> OK
    ├── $_SESSION['logged_in']? -> Si (o redirige a login)
-   ├── ¿Es inventario con action? -> No (sigue a carga de vista)
+   ├── ¿Controlador con action? -> No (ventas no tiene action)
    ├── $rutaVista = ".../Views/ventas.php" -> existe
-   ├── ¿publica? -> No
    ├── $pageTitle = 'Punto de Venta (POS)'
    ├── $headerExtra = ''
    ├── $contentView = ".../Views/ventas.php"
@@ -510,7 +574,7 @@ Usuario: GET /src/?pagina=ventas
 | **Autoloader** | Composer PSR-4 | Igual |
 | **Logica de login** | `AuthController::login()` con `password_verify` + CSRF | LoginController::validate() con guards |
 | **Datos de Cyber** | En la vista (`ciberControl.php`) | En el controlador |
-| **Titulos** | Array en `Router::renderWithLayout()` | Propiedad de clase Controller |
+| **Titulos** | Array en `Router::render()` | Propiedad de clase Controller |
 | **ORM** | PDO directo | Eloquent/Doctrine |
 | **Middleware** | `requireAuth()` interno | Sistema de middlewares encadenables |
 | **Request** | `$_GET`, `$_POST` directos | Request::capture() encapsulado |

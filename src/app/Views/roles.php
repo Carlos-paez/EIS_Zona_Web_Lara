@@ -129,18 +129,18 @@
         <!-- Formulario de rol -->
         <form id="formRol">
             <!-- Campo oculto para el ID del rol (vacío si es nuevo) -->
-            <input type="hidden" id="rol-id" value="">
+            <input type="hidden" name="id" id="rol-id" value="">
             <div class="row" style="margin-bottom:0;">
                 <!-- Campo: Nombre del rol -->
                 <div class="col s12 input-field">
                     <i class="material-icons prefix">badge</i>
-                    <input type="text" id="rol-nombre" required maxlength="50" pattern=".{2,50}" title="Entre 2 y 50 caracteres">
+                    <input type="text" name="nombre" id="rol-nombre" maxlength="50" title="Entre 2 y 50 caracteres">
                     <label for="rol-nombre">Nombre del rol</label>
                 </div>
                 <!-- Campo: Descripción del rol -->
                 <div class="col s12 input-field">
                     <i class="material-icons prefix">description</i>
-                    <textarea id="rol-descripcion" class="materialize-textarea"></textarea>
+                    <textarea name="descripcion" id="rol-descripcion" class="materialize-textarea"></textarea>
                     <label for="rol-descripcion">Descripción</label>
                 </div>
             </div>

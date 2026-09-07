@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Logger;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Models\Cliente;
@@ -41,10 +42,12 @@ class VentaController
                 default         => $this->json(false, null, 'Acción no válida'),
             };
         } catch (\PDOException $e) {
+            Logger::error($e, 'Ventas - consulta SQL');
             echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
         } catch (\InvalidArgumentException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Logger::error($e, 'Ventas');
             echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
         }
     }
@@ -76,6 +79,16 @@ class VentaController
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $errores = Validator::requeridos($_POST, [
+            'ciudadano' => 'nombre del cliente',
+            'cedula'    => 'cédula',
+            'items'     => 'productos de la venta',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
             return;
         }
 

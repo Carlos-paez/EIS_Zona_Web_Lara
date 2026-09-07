@@ -108,12 +108,12 @@ try {
         <form id="cyberForm">
             <div class="input-field">
                 <i class="material-icons prefix">person</i>
-                <input type="text" id="cyberCiudadano" name="ciudadano" class="form-control" placeholder="Nombre completo del cliente" required>
+                <input type="text" id="cyberCiudadano" name="ciudadano" class="form-control" placeholder="Nombre completo del cliente">
                 <label for="cyberCiudadano" class="active">Cliente</label>
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">badge</i>
-                <input type="text" id="cyberCedula" name="cedula" class="form-control" placeholder="Ej: V-12345678" required>
+                <input type="text" id="cyberCedula" name="cedula" class="form-control" placeholder="Ej: V-12345678">
                 <label for="cyberCedula" class="active">Cédula</label>
                 <span class="helper-text" style="font-size:0.8rem;color:var(--text-muted);">Al salir de este campo se precargan los datos del cliente</span>
             </div>
@@ -129,21 +129,21 @@ try {
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">dns</i>
-                <select id="cyberActivo" required>
+                <select id="cyberActivo" name="activo_id" required>
                     <option value="" disabled selected>Cargando estaciones...</option>
                 </select>
                 <label for="cyberActivo">Estación</label>
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">attach_money</i>
-                <select id="cyberTarifa" required>
+                <select id="cyberTarifa" name="tarifa_id" required>
                     <option value="" disabled selected>Cargando tarifas...</option>
                 </select>
                 <label for="cyberTarifa">Tarifa</label>
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">timer</i>
-                <input type="text" id="cyberTiempo" name="tiempo_uso" value="01:00:00" class="form-control" required>
+                <input type="text" id="cyberTiempo" name="tiempo_uso" value="01:00:00" class="form-control">
                 <label for="cyberTiempo" class="active">Tiempo (HH:MM:SS)</label>
                 <span class="helper-text" style="font-size:0.8rem;color:var(--text-muted);">Ej: 01:30:00 = 1 hora 30 minutos</span>
             </div>
@@ -165,20 +165,20 @@ try {
             <span id="modalPCTitle">Nueva PC</span>
         </h4>
         <form id="formPC">
-            <input type="hidden" id="pcId" value="">
+            <input type="hidden" name="id" id="pcId" value="">
             <div class="input-field">
                 <i class="material-icons prefix">branding_watermark</i>
-                <input type="text" id="pcMarca" name="marca" class="form-control" placeholder="Ej: HP, Dell, Lenovo" required>
+                <input type="text" id="pcMarca" name="marca" class="form-control" placeholder="Ej: HP, Dell, Lenovo" maxlength="100">
                 <label for="pcMarca" class="active">Marca</label>
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">description</i>
-                <input type="text" id="pcDescripcion" name="descripcion" class="form-control" placeholder="Ej: Intel i5, 8GB RAM, 256GB SSD" required>
+                <input type="text" id="pcDescripcion" name="descripcion" class="form-control" placeholder="Ej: Intel i5, 8GB RAM, 256GB SSD" maxlength="1000">
                 <label for="pcDescripcion" class="active">Descripción</label>
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">devices</i>
-                <select id="pcTipo" required>
+                <select id="pcTipo" name="tipo_activo_id">
                     <option value="" disabled selected>Seleccionar tipo</option>
                     <?php foreach ($tiposActivo as $tipo): ?>
                         <option value="<?= (int)$tipo['id'] ?>"><?= htmlspecialchars($tipo['nombre_tipo']) ?></option>
@@ -189,11 +189,11 @@ try {
             <div class="input-field" style="margin-top:1.5rem;">
                 <div style="display:flex;gap:2rem;align-items:center;">
                     <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
-                        <input type="radio" name="pcEstado" value="1" checked>
+                        <input type="radio" name="activa" value="1" checked>
                         <span>Activa</span>
                     </label>
                     <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
-                        <input type="radio" name="pcEstado" value="0">
+                        <input type="radio" name="activa" value="0">
                         <span>Mantenimiento</span>
                     </label>
                 </div>

@@ -107,6 +107,7 @@ header nav .brand-logo {
     color: var(--primary);
     font-weight: 600;
     border-right: 3px solid var(--primary);
+    border-radius: 0 12px 12px 0;
 }
 
 [data-theme="dark"] .sidenav li a.sidenav-link.active {
@@ -1103,3 +1104,140 @@ body, html { overflow-x: hidden; }
     .btn-floating.btn-large { width: 50px; height: 50px; }
     .btn-floating.btn-large i { line-height: 50px; font-size: 1.5rem; }
 }
+
+/* ============================================================
+   VALIDACIÓN DE FORMULARIOS DESDE PHP
+   Estilos para los errores que devuelve el servidor y muestra
+   EIS.mostrarErroresFormulario (campo en rojo + mensaje debajo).
+   ============================================================ */
+.input-field input.invalid,
+.input-field textarea.invalid,
+.autocomplete-content input.invalid {
+    border-bottom: 1px solid #c62828 !important;
+    box-shadow: 0 1px 0 0 #c62828 !important;
+}
+.input-field input.invalid + label,
+.input-field textarea.invalid + label {
+    color: #c62828 !important;
+}
+.select-wrapper.invalid .select-dropdown,
+.select-wrapper.invalid .select-dropdown:hover {
+    border-bottom: 1px solid #c62828 !important;
+    box-shadow: 0 1px 0 0 #c62828 !important;
+}
+.select-wrapper.invalid .select-dropdown + .caret {
+    fill: #c62828 !important;
+}
+[data-theme="dark"] .eis-form-error {
+    background: #4e1a1a !important;
+    color: #ffcdd2 !important;
+}
+[data-theme="dark"] .select-wrapper.invalid .select-dropdown {
+    background-color: transparent !important;
+}
+
+/* ============================================================
+   PULIDO VISUAL GLOBAL
+   Consistencia de tablas, tarjetas, modales y accesibilidad.
+   ============================================================ */
+
+/* --- Cabeceras de tabla consistentes (mismas que las vistas CRUD) --- */
+.card thead th {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+}
+
+/* --- Celdas verticalmente centradas y hover de fila uniforme --- */
+.card table td { vertical-align: middle; }
+.card table tbody tr { transition: background 0.15s ease; }
+.card table tbody tr:hover { background: var(--surface-hover); }
+
+.card .result-count { font-size: 0.82rem; }
+
+/* --- Iconos de encabezados de tarjeta --- */
+.card .card-title i { vertical-align: middle; }
+
+/* --- Encabezados de modal normalizados (h4 del estilo viejo) --- */
+.modal h4 {
+    font-weight: 700;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.modal .modal-footer .btn { border-radius: 24px; }
+
+/* --- Accesibilidad: foco visible en enlaces y botones --- */
+a:focus-visible,
+button:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+.btn:focus, .btn-floating:focus { outline-offset: 1px; }
+
+/* ============================================================
+   SIDEBAR: transiciones y submenú activo
+   ============================================================ */
+.sidenav li a.sidenav-link {
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.has-submenu .submenu-parent.open,
+.has-submenu .submenu-parent.active {
+    color: var(--primary);
+}
+.has-submenu .submenu-parent.active {
+    background: rgba(57, 73, 171, 0.12);
+    font-weight: 600;
+    border-right: 3px solid var(--primary);
+    border-radius: 0 12px 12px 0;
+}
+[data-theme="dark"] .has-submenu .submenu-parent.active {
+    background: rgba(121, 134, 203, 0.15);
+}
+.has-submenu .submenu-list li a { padding-left: 1.5rem; }
+.has-submenu .submenu-list li a:hover { background: rgba(57, 73, 171, 0.08); }
+[data-theme="dark"] .has-submenu .submenu-list li a:hover { background: rgba(255, 255, 255, 0.05); }
+
+/* ============================================================
+   ARREGLOS DE TEMA OSCURO
+   ============================================================ */
+
+/* Mensaje de error por campo: texto claro sobre fondo oscuro */
+[data-theme="dark"] .eis-field-error { color: #ff8a80 !important; }
+
+/* Badge blanco con texto índigo (contador del carrito POS): solo se
+   fuerza blanco el texto cuando el fondo NO es blanco */
+[data-theme="dark"] .new-badge:not(.white),
+[data-theme="dark"] .new.badge:not(.white) { color: #fff; }
+
+/* Estados de stock de inventario inyectados con estilos inline desde el
+   servidor (sin clase): se re-mapean a tonos del tema oscuro */
+[data-theme="dark"] [style*="#fce4ec"] {
+    background-color: #4a1520 !important;
+    color: #ff8a80 !important;
+}
+[data-theme="dark"] [style*="#e8f5e9"] {
+    background-color: #1b3a23 !important;
+    color: #a5d6a7 !important;
+}
+
+/* Paneles grises claros de Materialize afectados por el tema */
+[data-theme="dark"] .card-panel.grey.lighten-4 { background: var(--surface-hover) !important; }
+[data-theme="dark"] .card-panel.grey.lighten-4 input { border-bottom-color: var(--border); }
+
+/* Botones grises claros ("Cancelar" viejo) en dark */
+[data-theme="dark"] .btn.grey.lighten-1 {
+    background-color: #4e4e52 !important;
+    color: #fff !important;
+}
+[data-theme="dark"] .btn.grey.lighten-1:hover { background-color: #5c5c60 !important; }
+
+/* Botón "volver arriba" y temas consistentes en dark */
+[data-theme="dark"] #backToTop { background-color: #283593 !important; }
+[data-theme="dark"] #backToTop:hover { background-color: #1a237e !important; }

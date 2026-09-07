@@ -93,6 +93,7 @@ EIS_Zona_Web_Lara/
 │   │   │   ├── Database.php            # Conecta a MySQL (un solo objeto compartido)
 │   │   │   ├── Model.php               # Clase base de todos los modelos (validación)
 │   │   │   ├── Validator.php           # Validación estricta de los datos entrantes
+│   │   │   ├── Logger.php              # Registra errores en src/logs/errores.md
 │   │   │   ├── Exporter.php            # Genera CSV / Excel / PDF
 │   │   │   ├── PdfBuilder.php          # Construye un PDF mínimo sin librerías
 │   │   │   └── router.php              # ← El enrutador (decide qué se ejecuta)
@@ -105,6 +106,7 @@ EIS_Zona_Web_Lara/
 │   │   │   ├── ProveedorController.php
 │   │   │   ├── ProveedorGestionController.php
 │   │   │   ├── AsesoriaController.php
+│   │   │   ├── ActivoController.php
 │   │   │   ├── CiberController.php
 │   │   │   ├── DashboardController.php
 │   │   │   ├── ReporteController.php
@@ -113,20 +115,22 @@ EIS_Zona_Web_Lara/
 │   │   │   ├── Cliente.php             # ← Ejemplo que analizamos
 │   │   │   ├── Usuario.php
 │   │   │   ├── Inventario.php
-│   │   │   └── ... (13 en total)
+│   │   │   └── ... (15 en total: 12 POO + 3 legacy)
 │   │   ├── template/
 │   │   │   └── layout.php              # El HTML común a todas las páginas
 │   │   └── Views/                       # Las vistas (HTML específico por página)
 │   │       ├── login.php
 │   │       ├── clientes.php
-│   │       └── ... (12+ vistas)
+│   │       └── ... (15 vistas)
 │   ├── Public/                          # Recursos públicos: JS, CSS, imágenes
 │   │   ├── css/
 │   │   ├── js/app.clientes.js          # JS de cada módulo
 │   │   └── ...
 │   └── Database/
 │       ├── estructura.sql               # El esquema: CREATE TABLE de las 21 tablas
-│       └── seed_data.sql                # Datos iniciales de prueba
+│       ├── seed_data.sql                # Datos iniciales de prueba
+│       ├── seed_data_masivo.sql         # Datos masivos (reportes y KPIs)
+│       └── reportes_ejemplo.sql         # Reportes de ejemplo con JOINs
 ```
 
 **Nota clave:** el navegador **solo** debería poder acceder a `src/Public/` (CSS, JS, imágenes)
@@ -167,9 +171,9 @@ Vas a ver cada uno de esos pasos. Empecemos por donde entra todo: `index.php`.
 
 ## 4. `index.php` — la puerta de entrada (Front Controller)
 
-Este archivo tiene solo 11 líneas de código (el resto son comentarios), pero es *el más
-importante*: cada vez que alguien pide cualquier página, pasa por aquí. A esto se le llama
-**Front Controller** ("un solo punto de entrada").
+Este archivo tiene dos trabajos: preparar el **manejo global de errores** y crear el
+enrutador. Pero es *el más importante*: cada vez que alguien pide cualquier página, pasa por
+aquí. A esto se le llama **Front Controller** ("un solo punto de entrada").
 
 ```php
 <?php
@@ -208,14 +212,56 @@ cuando en el código alguien escriba `new ClienteController()`, PHP no necesita 
 `require` manualmente de ese archivo. El autoloader **lo carga-solo**. Esto es el "autoloading".
 
 ```php
-// Importa la clase Router del namespace App\Core para usarla sin prefijo
+// Importa las clases necesarias del namespace App\Core
+use App\Core\Logger;
 use App\Core\Router;
 ```
 
-Línea 16: `use` es un **alias**. Solo le dice a PHP "cuando diga `Router`, me refiero a
-`App\Core\Router`". Piensa en `use` como un atajo de escritura (no incluye nada; eso lo hace
-el autoloader). Los *namespaces* son como apellidos de las clases para evitar choques de
-nombres. La clase se llama de verdad `App\Core\Router` pero aquí la podemos nombrar `Router`.
+Líneas 16-17: cada `use` es un **alias**. Le dice a PHP "cuando diga `Router`, me refiero a
+`App\Core\Router`; cuando diga `Logger`, a `App\Core\Logger`". Piensa en `use` como un atajo
+de escritura (no incluye nada; eso lo hace el autoloader). Los *namespaces* son como
+apellidos de las clases para evitar choques de nombres. `Logger` lo usará el bloque de errores
+que viene ahora.
+
+### 4.1 Manejo global de errores (líneas 19-131)
+
+Entre el `require_once` y el enrutador hay un bloque que **nunca le muestra los errores
+técnicos al usuario final**:
+
+```php
+error_reporting(E_ALL);
+ini_set('display_errors', '0');   // No exponer errores al navegador
+ini_set('log_errors', '1');
+ini_set('html_errors', '0');
+ob_start();
+```
+
+- `error_reporting(E_ALL)` + `display_errors=0`: PHP detecta TODOS los errores internos
+  (líneas 25-26), pero no los imprime en la página.
+- `log_errors=1` y `html_errors=0`: los errores van al log del servidor en texto plano.
+- `ob_start()` inicia un "buffer de salida": guarda la respuesta en memoria. Si ocurre un
+  error fatal, podemos descartarla y sustituirla por un mensaje genérico.
+
+Estas tres funciones son las "manos" que atrapan cada tipo de fallo:
+
+```php
+set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline): bool { ... });
+set_exception_handler(function (\Throwable $t): void { ... });
+register_shutdown_function(function (): void { ... });
+```
+
+- `set_error_handler(...)`: atrapa *warnings* y *notices* (errores que no detienen el
+  programa) y los registra con `Logger::error()`.
+- `set_exception_handler(...)`: atrapa **excepciones no capturadas** (errores que sí detienen
+  el programa) y responde con un error genérico.
+- `register_shutdown_function(...)`: para **errores fatales** (los que matan a PHP antes de
+  avisar), revisa `error_get_last()` y registra la causa.
+- `Logger::error(...)` escribe el detalle técnico en `src/logs/errores.md`, donde el
+  desarrollador puede verlo.
+
+No memorices esto. Lo importante es *la idea*: la app nunca le da pistas técnicas a quien la
+usa, pero deja un registro completo para quien la mantiene. Por eso arriba importábamos
+`App\Core\Logger`.
 
 ```php
 // Crea una instancia del enrutador principal (inicia sesión y resuelve la página solicitada)
@@ -224,15 +270,15 @@ $router = new Router();
 $router->handle();
 ```
 
-- Línea 19: `new Router()` crea un **objeto** de la clase `Router`. El prefijo `$` indica que
-  es una *variable*. Al crear el objeto se llama automáticamente a su método `__construct()`
-  ("constructor"), que verás más adelante.
-- Línea 21: `$router->handle()` **ejecuta el método** `handle()` de ese objeto. La flecha
+- Línea 133: `new Router()` crea un **objeto** de la clase `Router`. El prefijo `$` indica
+  que es una *variable*. Al crear el objeto se llama automáticamente a su método
+  `__construct()`, que verás más adelante.
+- Línea 135: `$router->handle()` **ejecuta el método** `handle()` de ese objeto. La flecha
   `->` significa "ejecuta algo que pertenece a este objeto". Aquí ocurre toda la magia.
 
-Y aquí termina este archivo: ¡solo crea el enrutador y le dice "maneja la petición"! Todo lo
-demás pasa dentro de `router.php`. Antes de mirarlo, veamos qué hace que todo llegue hasta
-`index.php`, porque eso lo consigue `.htaccess`.
+Y aquí termina este archivo: tras preparar los errores, solo crea el enrutador y le dice
+"maneja la petición". Todo lo demás pasa dentro de `router.php`. Antes de mirarlo, veamos qué
+hace que todo llegue hasta `index.php`, porque eso lo consigue `.htaccess`.
 
 ---
 

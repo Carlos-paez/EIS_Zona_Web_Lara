@@ -1,4 +1,4 @@
-# Mapa Navegacional — EIS Zona Web Lara (ZWL)
+﻿# Mapa Navegacional — EIS Zona Web Lara (ZWL)
 
   
 
@@ -19,123 +19,139 @@
 
 config:
 
-  layout: elk
+ layout: elk
 
-  theme: mc
+ theme: mc
 
 ---
 
 flowchart TB
 
- subgraph subGraph1["CAPA DE DATOS"]
+subgraph subGraph1["CAPA DE DATOS"]
 
-        DB@{ label: "🗄️ DB 'zona_web_lara'<br>MySQL + PDO (21 tablas)" }
+    DB@{ label: "🗄️ DB 'zona_web_lara'<br>MySQL + PDO (21 tablas)" }
 
-  end
+ end
 
-    ENTRY["/ (Raíz)"] -- ".htaccess redirige a src/" --> INDEX["src/index.php"]
+  ENTRY["/ (Raíz)"] -- ".htaccess redirige a src/" --> INDEX["src/index.php"]
 
-    INDEX -- require --> ROUTER["src/app/core/router.php"]
+  INDEX -- require --> ROUTER["src/app/core/router.php"]
 
-    ROUTER -- "?pagina=login (default)" --> LOGIN["login.php<br>Formulario de acceso"]
+  ROUTER -- "?pagina=login (default)" --> LOGIN["login.php<br>Formulario de acceso"]
 
-    ROUTER -- "?pagina=login_validate" --> VALIDATE["AuthController::login()<br>Validar credenciales vs BD"]
+  ROUTER -- "?pagina=login_validate" --> VALIDATE["AuthController::login()<br>Validar credenciales vs BD"]
 
-    ROUTER -- "?pagina=logout" --> LOGOUT["AuthController::logout()<br>Cerrar sesión"]
+  ROUTER -- "?pagina=logout" --> LOGOUT["AuthController::logout()<br>Cerrar sesión"]
 
-    ROUTER -- "?pagina=dashboard" --> DASHBOARD["dashboard.php"]
+  ROUTER -- "?pagina=dashboard" --> DASHBOARD["dashboard.php"]
 
-    ROUTER -- "?pagina=inventario" --> INVENTARIO["inventario.php"]
+  ROUTER -- "?pagina=inventario" --> INVENTARIO["inventario.php"]
 
-    ROUTER -- "?pagina=ventas" --> VENTAS["ventas.php"]
+ROUTER -- "?pagina=ventas" --> VENTAS["ventas.php"]
 
-    ROUTER -- "?pagina=proveedores" --> PROVEEDORES["proveedores.php"]
+    ROUTER -- "?pagina=clientes" --> CLIENTES["clientes.php"]
 
-    ROUTER -- "?pagina=ciberControl" --> CIBER["ciberControl.php"]
+    ROUTER -- "?pagina=proveedores" --> PROVEEDORES["proveedores.php"]
 
-    ROUTER -- "?pagina=reportes" --> REPORTES["reportes.php"]
+    ROUTER -- "?pagina=proveedores-gestion" --> PROV_GEST["proveedores-gestion.php"]
 
-    ROUTER -- "?pagina=activos" --> ACTIVOS["activos.php"]
+    ROUTER -- "?pagina=ciberControl" --> CIBER["ciberControl.php"]
 
-    ROUTER -- "?pagina=asesorias" --> ASESORIAS["asesorias.php"]
+  ROUTER -- "?pagina=reportes" --> REPORTES["reportes.php"]
 
-    ROUTER -- "?pagina=usuarios" --> USUARIOS["usuarios.php<br>CRUD Usuarios (BD)"]
+  ROUTER -- "?pagina=activos" --> ACTIVOS["activos.php"]
 
-    ROUTER -- "?pagina=roles" --> ROLES["roles.php<br>CRUD Roles/Permisos (BD)"]
+  ROUTER -- "?pagina=asesorias" --> ASESORIAS["asesorias.php"]
 
-    LOGIN -- POST usuario/contraseña --> VALIDATE
+  ROUTER -- "?pagina=usuarios" --> USUARIOS["usuarios.php<br>CRUD Usuarios (BD)"]
 
-    VALIDATE -- AuthController<br>password_verify --> SESSION@{ label: "$_SESSION['logged_in'] = true" }
+  ROUTER -- "?pagina=roles" --> ROLES["roles.php<br>CRUD Roles/Permisos (BD)"]
 
-    VALIDATE -- fallo --> LOGIN_ERROR["?pagina=login&error=1"]
+  LOGIN -- POST usuario/contraseña --> VALIDATE
 
-    SESSION -- redirect --> DASHBOARD
+  VALIDATE -- AuthController<br>password_verify --> SESSION@{ label: "$_SESSION['logged_in'] = true" }
 
-    LAYOUT["layout.php"] --> SIDEBAR["Sidebar Izquierdo<br>8 módulos"] & TOPBAR["Barra Superior<br>Reloj + Notificaciones + Usuario"] & CONTENT["require \$contentView<br>(vista específica)"]
+  VALIDATE -- fallo --> LOGIN_ERROR["?pagina=login&error=1"]
 
-    SIDEBAR -- Dashboard --> DASHBOARD
+  SESSION -- redirect --> DASHBOARD
 
-    SIDEBAR -- Inventario --> INVENTARIO
+  LAYOUT["layout.php"] --> SIDEBAR["Sidebar Izquierdo<br>12 módulos"] & TOPBAR["Barra Superior<br>Reloj + Notificaciones + Usuario"] & CONTENT["require \$contentView<br>(vista específica)"]
 
-    SIDEBAR -- Ventas (POS) --> VENTAS
+  SIDEBAR -- Dashboard --> DASHBOARD
 
-    SIDEBAR -- Solicitudes --> PROVEEDORES
+  SIDEBAR -- Inventario --> INVENTARIO
 
-    SIDEBAR -- Cyber --> CIBER
+  SIDEBAR -- Ventas (POS) --> VENTAS
 
-    SIDEBAR -- Reportes --> REPORTES
+  SIDEBAR -- Clientes --> CLIENTES
 
-    SIDEBAR -- Activos --> ACTIVOS
+  SIDEBAR -- Solicitudes --> PROVEEDORES
 
-    SIDEBAR -- Asesoría Legal --> ASESORIAS
+  SIDEBAR -- Gestión Proveedores --> PROV_GEST
 
-    SIDEBAR -- Configuración (Usuarios) --> USUARIOS
+  SIDEBAR -- Cyber --> CIBER
 
-    SIDEBAR -- Roles y Permisos --> ROLES
+  SIDEBAR -- Reportes --> REPORTES
 
-    SIDEBAR -- Cerrar Sesión --> LOGOUT
+  SIDEBAR -- Activos --> ACTIVOS
 
-    DASHBOARD -- Panel de Control<br>KPIs, Horas pico, Stock crítico --> DASH_VIEW["📊 Vista Dashboard"]
+  SIDEBAR -- Asesoría Legal --> ASESORIAS
 
-    INVENTARIO -- Gestión de Inventario<br>Búsqueda, Tabla, Paginación --> INV_VIEW["📦 Vista Inventario"]
+  SIDEBAR -- Configuración (Usuarios) --> USUARIOS
 
-    VENTAS -- Punto de Venta<br>Catálogo, Carrito, Procesar --> VENT_VIEW["🛒 Vista Ventas"]
+  SIDEBAR -- Roles y Permisos --> ROLES
 
-    PROVEEDORES -- Solicitudes a Proveedores<br>Filtros, Tabla, Paginación --> PROV_VIEW["📋 Vista Proveedores"]
+  SIDEBAR -- Cerrar Sesión --> LOGOUT
 
-    CIBER -- Control Cybercafé<br>3 Zonas, 10 Estaciones --> CIBER_VIEW["🖥️ Vista Cyber"]
+  DASHBOARD -- Panel de Control<br>KPIs, Horas pico, Stock crítico --> DASH_VIEW["📊 Vista Dashboard"]
 
-    REPORTES -- Reportes y Estadísticas<br>KPIs mensuales, Generador --> REP_VIEW["📈 Vista Reportes"]
+  INVENTARIO -- Gestión de Inventario<br>Búsqueda, Tabla, Paginación --> INV_VIEW["📦 Vista Inventario"]
 
-    ACTIVOS -- Gestión de Activos<br>Equipos, Licencias, Herramientas --> ACT_VIEW["🔧 Vista Activos"]
+  VENTAS -- Punto de Venta<br>Catálogo, Carrito, Procesar --> VENT_VIEW["🛒 Vista Ventas"]
 
-    ASESORIAS -- Asesoría Legal<br>Registro, Validación, Historial --> ASE_VIEW["⚖️ Vista Asesorías"]
+  CLIENTES -- Gestión de Clientes<br>CRUD, Tabla, Búsqueda --> CLIENTES_VIEW["👥 Vista Clientes"]
 
- DASH_VIEW --> DB
+  PROVEEDORES -- Solicitudes a Proveedores<br>Filtros, Tabla, Paginación --> PROV_VIEW["📋 Vista Proveedores"]
 
- INV_VIEW --> DB
+  PROV_GEST -- Gestión de Proveedores<br>CRUD, Tabla, Búsqueda --> PROV_GEST_VIEW["🏢 Vista Proveedores (Gestión)"]
 
- VENT_VIEW --> DB
+  CIBER -- Control Cybercafé<br>3 Zonas, 10 Estaciones --> CIBER_VIEW["🖥️ Vista Cyber"]
 
- PROV_VIEW --> DB
+  REPORTES -- Reportes y Estadísticas<br>KPIs mensuales, Generador --> REP_VIEW["📈 Vista Reportes"]
 
- CIBER_VIEW --> DB
+  ACTIVOS -- Gestión de Activos<br>Equipos, Licencias, Herramientas --> ACT_VIEW["🔧 Vista Activos"]
 
- REP_VIEW --> DB
+  ASESORIAS -- Asesoría Legal<br>Registro, Validación, Historial --> ASE_VIEW["⚖️ Vista Asesorías"]
 
- ACT_VIEW --> DB
+DASH_VIEW --> DB
 
- ASE_VIEW --> DB
+INV_VIEW --> DB
 
- USUARIOS_VIEW@{ label: "📋 Vista Usuarios" } --> DB
+VENT_VIEW --> DB
 
- ROLES_VIEW@{ label: "📋 Vista Roles" } --> DB
+  CLIENTES_VIEW --> DB
+
+  PROV_VIEW --> DB
+
+  PROV_GEST_VIEW --> DB
+
+CIBER_VIEW --> DB
+
+REP_VIEW --> DB
+
+ACT_VIEW --> DB
+
+ASE_VIEW --> DB
+
+USUARIOS_VIEW@{ label: "📋 Vista Usuarios" } --> DB
+
+ROLES_VIEW@{ label: "📋 Vista Roles" } --> DB
 
   
 
-    SESSION@{ shape: rect}
+  SESSION@{ shape: rect}
 
-    DB@{ shape: cylinder}
+  DB@{ shape: cylinder}
 ```
 
   
@@ -164,7 +180,11 @@ flowchart TB
 
 | `?pagina=ventas` | 🔒 Privada | `ventas.php` | Punto de venta (POS) |
 
+| `?pagina=clientes` | 🔒 Privada | `clientes.php` | Gestión de clientes (conectado a BD) |
+
 | `?pagina=proveedores` | 🔒 Privada | `proveedores.php` | Solicitudes a proveedores (conectado a BD) |
+
+| `?pagina=proveedores-gestion` | 🔒 Privada | `proveedores-gestion.php` | CRUD de proveedores (conectado a BD) |
 
 | `?pagina=ciberControl` | 🔒 Privada | `ciberControl.php` | Control de cybercafé |
 
@@ -192,45 +212,49 @@ flowchart TB
 
 INICIO
 
-  │
+ │
 
-  ├─ /  →  .htaccess  →  src/index.php  →  router.php
+ ├─ / → .htaccess → src/index.php → router.php
 
-  │
+ │
 
-  ├─ [No autenticado]
+ ├─ [No autenticado]
 
-  │    └─ ?pagina=login (default)
+ │  └─ ?pagina=login (default)
 
-  │         └─ POST credentials → login_validate.php
+ │     └─ POST credentials → login_validate.php
 
-  │              ├─ éxito → $_SESSION['logged_in'] → redirect /dashboard
+ │       ├─ éxito → $_SESSION['logged_in'] → redirect /dashboard
 
-  │              └─ fallo → redirect /login?error=1
+ │       └─ fallo → redirect /login?error=1
 
-  │
+ │
 
-  └─ [Autenticado] → layout.php (sidebar + topbar + contenido)
+ └─ [Autenticado] → layout.php (sidebar + topbar + contenido)
 
-       │
+   │
 
-       ├─ /dashboard        →  Panel de Control
+   ├─ /dashboard    → Panel de Control
 
-       ├─ /inventario       →  Gestión de Inventario
+   ├─ /inventario    → Gestión de Inventario
 
-       ├─ /ventas           →  Punto de Venta (POS)
+   ├─ /ventas      → Punto de Venta (POS)
 
-       ├─ /proveedores      →  Solicitudes a Proveedores
+   ├─ /clientes     → Gestión de Clientes
 
-       ├─ /ciberControl     →  Control de Cybercafé
+   ├─ /proveedores   → Solicitudes a Proveedores
 
-       ├─ /reportes         →  Reportes y Estadísticas
+   ├─ /proveedores-gestion → Gestión de Proveedores
 
-       ├─ /activos          →  Gestión de Activos
+   ├─ /ciberControl   → Control de Cybercafé
 
-       ├─ /asesorias        →  Asesoría Legal
+   ├─ /reportes     → Reportes y Estadísticas
 
-       └─ "Cerrar Sesión"   →  /login
+   ├─ /activos     → Gestión de Activos
+
+   ├─ /asesorias    → Asesoría Legal
+
+   └─ "Cerrar Sesión"  → /login
 
 ```
 
@@ -250,23 +274,23 @@ INICIO
 
 3. **Router** (`router.php` - clase `Router` en `App\Core`):
 
- - `resolvePagina()`: Sanitiza `?pagina=` (regex `^[a-zA-Z0-9_-]+$`)
+- `resolvePagina()`: Sanitiza `?pagina=` (regex `^[a-zA-Z0-9_-]+$`)
 
- - `handle()`: Determina el tipo de petición:
+- `handle()`: Determina el tipo de petición:
 
- - El mapa `CONTROLLERS` (`pagina => clase`) resuelve los 12 controladores; si hay `action`, `dispatchAction()` instancia y ejecuta `handle()`
+- El mapa `CONTROLLERS` (`pagina => clase`) resuelve los 12 controladores; si hay `action`, `dispatchAction()` instancia y ejecuta `handle()`
 
- - ¿Auth (login_validate/logout)? → `AuthController::login()` o `logout()`
+- ¿Auth (login_validate/logout)? → `AuthController::login()` o `logout()`
 
- - ¿Vista normal? → `render()`
+- ¿Vista normal? → `render()`
 
- - `render()`: Si es pública (`login`), renderiza standalone
+- `render()`: Si es pública (`login`), renderiza standalone
 
- - Si es privada: verifica `$_SESSION['logged_in']`, redirige a login si no existe
+- Si es privada: verifica `$_SESSION['logged_in']`, redirige a login si no existe
 
- - Si la vista no existe: HTTP 404
+- Si la vista no existe: HTTP 404
 
- - Para páginas privadas: `renderWithLayout()` → `layout.php` vía `require $contentView`
+- Para páginas privadas: `render()` → `layout.php` vía `require $contentView`
 
   
 
@@ -282,7 +306,7 @@ INICIO
 
 |------------|-------------|
 
-| **Sidebar** | Menú lateral fijo con 10 módulos + modo oscuro + cerrar sesión |
+| **Sidebar** | Menú lateral fijo con 12 módulos + modo oscuro + cerrar sesión |
 
 | **Topbar** | Barra superior con título de página, reloj, notificaciones, usuario |
 

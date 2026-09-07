@@ -158,6 +158,7 @@ $(function () {
     function abrirModalRol(titulo, datos) {
         $('#modal-rol-title').text(titulo);       // Título del modal
         $('#modal-rol-icon').text(titulo === 'Nuevo Rol' ? 'add' : 'edit'); // Ícono según acción
+        EIS.limpiarErroresFormulario('#formRol'); // Limpio errores de validación previos
         $('#formRol')[0].reset();                 // Reseteo el formulario
         $('#rol-id').val('');                     // Limpio el ID (nuevo rol)
 
@@ -248,9 +249,9 @@ $(function () {
                 $('#asignar-rol').append('<option value="' + rol.id + '">' + $('<span>').text(rol.nombre).html() + '</option>');
             });
 
-            // Inicializo los selects de Materialize y abro el modal
-            $('#asignar-usuario').formSelect();
-            $('#asignar-rol').formSelect();
+            // (Re)inicializo los selects de Materialize y abro el modal
+            EIS.formSelect('#asignar-usuario');
+            EIS.formSelect('#asignar-rol');
             $('#modalAsignar').modal('open');
         }).fail(function () {
             EIS.toast('Error al cargar usuarios', 'red', 'error');
@@ -315,24 +316,13 @@ $(function () {
 
     // Botón "Guardar" en modal de rol
     $('#btnGuardarRol').on('click', function () {
+        var $form = $('#formRol');
         var id = $('#rol-id').val(); // ID del rol (vacío si es nuevo)
         var accion = id ? 'actualizar' : 'crear'; // Determino la acción
-        var data = {
-            id: id,
-            nombre: $('#rol-nombre').val(),
-            descripcion: $('#rol-descripcion').val()
-        };
+        var data = $form.serialize(); // Envía id, nombre y descripción
 
-        // Validación: el nombre del rol es obligatorio
-        if (!data.nombre.trim()) {
-            EIS.toast('El nombre del rol es obligatorio', 'red', 'error');
-            return;
-        }
-
-        if (data.nombre.trim().length < 2 || data.nombre.trim().length > 50) {
-            EIS.toast('El nombre del rol debe tener entre 2 y 50 caracteres', 'red', 'error');
-            return;
-        }
+        // La validación de campos obligatorios la hace el servidor (PHP):
+        // los errores se muestran en pantalla de forma persistente.
 
         // POST request para crear o actualizar el rol
         $.post(API + accion, data, function (r) {
@@ -342,7 +332,7 @@ $(function () {
                 refrescarTabla(); // Recargo tabla
                 refrescarKPI();   // Actualizo KPIs
             } else {
-                EIS.toast(r.error || 'Error al guardar', 'red', 'error');
+                EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
             EIS.toast('Error de conexi&oacute;n', 'red', 'error');
@@ -425,9 +415,10 @@ $(function () {
     // INICIALIZACIÓN DE COMPONENTES MATERIALIZE
     // ================================================================
 
-    // Activo tooltips, selects y modales de Materialize
+    // Activo tooltips y modales de Materialize (los selects ya los
+    // inicializó app.init.js; aquí NO se vuelve a llamar formSelect()
+    // para no duplicar las barras desplegables).
     $('.tooltipped').tooltip();
-    $('select').formSelect();
     $('.modal').modal();
 
     // Inicializo DataTables sobre la tabla de roles

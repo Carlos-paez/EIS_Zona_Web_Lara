@@ -168,6 +168,7 @@ $(function () {
     // ================================================================
     $(document).on('submit', '#asesoriaForm', function (e) {
         e.preventDefault();
+        var $form = $(this);
 
         var ciudadano   = $('#ciudadano').val().trim();
         var cedula      = $('#cedula').val().trim();
@@ -176,35 +177,9 @@ $(function () {
         var telefono    = $('#telefono').val().trim();
         var direccion   = $('#direccion').val().trim();
 
-        if (!ciudadano || !cedula || !documento) {
-            EIS.toast('Completa los campos obligatorios', 'red', 'error');
-            return;
-        }
-
-        if (ciudadano.length < 2 || ciudadano.length > 100) {
-            EIS.toast('El nombre del ciudadano debe tener entre 2 y 100 caracteres', 'red', 'error');
-            return;
-        }
-
-        if (cedula.length < 5 || cedula.length > 20) {
-            EIS.toast('La cédula debe tener entre 5 y 20 caracteres', 'red', 'error');
-            return;
-        }
-
-        if (documento.length > 100) {
-            EIS.toast('El tipo de documento no puede exceder 100 caracteres', 'red', 'error');
-            return;
-        }
-
-        if (telefono && telefono.length > 20) {
-            EIS.toast('El teléfono no puede exceder 20 caracteres', 'red', 'error');
-            return;
-        }
-
-        if (direccion && direccion.length > 500) {
-            EIS.toast('La dirección no puede exceder 500 caracteres', 'red', 'error');
-            return;
-        }
+        // La validación de campos obligatorios la hace el servidor (PHP):
+        // si algún campo obligatorio viene vacío, el controlador devuelve
+        // "fieldErrors" y los mostramos de forma persistente en pantalla.
 
         // Feedback visual previo según el tipo de documento
         var permitido = documentoPermitido(documento);
@@ -227,7 +202,7 @@ $(function () {
             return a.cedula === cedula;
         });
 
-        $.post(API + 'crear', $(this).serialize(), function (r) {
+        $.post(API + 'crear', $form.serialize(), function (r) {
             if (r.success) {
                 EIS.toast(
                     existeCliente
@@ -236,14 +211,15 @@ $(function () {
                     'green',
                     'how_to_reg'
                 );
-                this.reset();
+                EIS.limpiarErroresFormulario($form);
+                $form[0].reset();
                 $('#btnRegistrar').prop('disabled', true);
                 $('#btnRegistrar').removeClass('red').addClass('indigo').html('<i class="material-icons left">verified</i>Validar y Registrar');
                 $('label').removeClass('active');
                 cargarAsesorias();
                 refrescarKPI();
             } else {
-                EIS.toast(r.error || 'Error al registrar la asesoría', 'red', 'error');
+                EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
             EIS.toast('Error de conexión', 'red', 'error');
@@ -308,6 +284,7 @@ $(function () {
         $('#asesoria-id').val(asesoria.id);
         $('#asesoria-documento').val(asesoria.documento || '');
         $('#asesoria-descripcion').val(asesoria.descripcion || '');
+        EIS.limpiarErroresFormulario('#form-asesoria');
         M.updateTextFields();
         $('#modal-asesoria').modal('open');
     });
@@ -318,6 +295,7 @@ $(function () {
     // ================================================================
     $(document).on('submit', '#form-asesoria', function (e) {
         e.preventDefault();
+        var $form = $(this);
 
         var id = $('#asesoria-id').val();
         var documento = $('#asesoria-documento').val().trim();
@@ -328,14 +306,14 @@ $(function () {
             return;
         }
 
-        $.post(API + 'actualizar', $(this).serialize(), function (r) {
+        $.post(API + 'actualizar', $form.serialize(), function (r) {
             if (r.success) {
                 EIS.toast(r.message, 'green', 'check_circle');
                 $('#modal-asesoria').modal('close');
                 cargarAsesorias();
                 refrescarKPI();
             } else {
-                EIS.toast(r.error || 'Error al actualizar', 'red', 'error');
+                EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
             EIS.toast('Error de conexión', 'red', 'error');
@@ -380,6 +358,13 @@ $(function () {
     $(document).on('input', '#searchAsesoria', debounce(function () {
         aplicarFiltro();
     }, 300));
+
+    // ================================================================
+    // INIT: Al corregir un campo se ocultan los errores del servidor
+    // ================================================================
+    $(document).on('input', '#asesoriaForm input, #asesoriaForm textarea, #form-asesoria input', function () {
+        EIS.limpiarErroresFormulario($(this).closest('form'));
+    });
 
     // ================================================================
     // INICIALIZACIÓN

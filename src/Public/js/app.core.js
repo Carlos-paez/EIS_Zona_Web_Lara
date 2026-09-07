@@ -76,6 +76,141 @@ EIS.toast = function (msg, color, icon) {
 };
 
 // =====================================================================
+// MÉTODO: EIS.formSelect(sel)
+// PROPÓSITO: (Re)inicializa de forma SEGURA un <select> de Materialize.
+//            A diferencia de $('select').formSelect(), destruye primero
+//            la instancia existente para evitar que Materialize vuelva a
+//            envolver el <select> (lo que deja barras desplegables
+//            duplicadas y huérfanas en la página, sobre todo en modales).
+//            Útil cuando un formulario/modal repuebla las opciones de un
+//            select dinámicamente (destroy + formSelect).
+// PARÁMETROS:
+//   sel - Selector o elemento jQuery del <select> a (re)inicializar
+// =====================================================================
+EIS.formSelect = function (sel) {
+    var $sel = $(sel);
+    $sel.each(function () {
+        var inst = M.FormSelect.getInstance(this);
+        if (inst) {
+            inst.destroy();
+        }
+        $(this).formSelect();
+    });
+    // Re-inyecto la barra de búsqueda en las barras desplegables recién
+    // creadas (app.selects.js expone habilitarBusquedaEnSelects).
+    if (window.EIS && EIS.habilitarBusquedaEnSelects) {
+        EIS.habilitarBusquedaEnSelects();
+    }
+    return $sel;
+};
+
+// =====================================================================
+// MÉTODO: EIS.limpiarErroresFormulario(form)
+// PROPÓSITO: Elimina los mensajes de error y los resaltados que dejó la
+//            función EIS.mostrarErroresFormulario en un formulario.
+//            Se invoca antes de cada envío y cuando el usuario corrige.
+// PARÁMETROS:
+//   form - Elemento <form> (o selector/objeto jQuery del formulario)
+// =====================================================================
+EIS.limpiarErroresFormulario = function (form) {
+    var $form = $(form);
+    if (!$form.length) return;
+    // Quito mensajes por campo e identifico los elementos adornados
+    $form.find('.eis-field-error').remove();
+    // Quito la clase "invalid" que añadimos a inputs y select-wrapers
+    $form.find('.eis-invalid').each(function () {
+        var $el = $(this).removeClass('eis-invalid');
+        if ($el.is('input, textarea')) {
+            $el.removeClass('invalid');
+            // Si no hay otro contexto, elimino el helper rojo de Materialize
+            $el.removeAttr('aria-invalid');
+        }
+    });
+    // Elimino el panel de error global del formulario
+    $form.find('.eis-form-error').remove();
+};
+
+// =====================================================================
+// MÉTODO: EIS.mostrarErroresFormulario(form, data)
+// PROPÓSITO: Muestra en pantalla los errores de validación que devolvió
+//            el servidor (PHP). Si la respuesta trae "fieldErrors" (mapa
+//            campo => mensaje), marca cada campo en rojo con su mensaje;
+//            siempre muestra además un panel rojo con el mensaje general.
+//            El usuario ve el error de forma persistente, no como toast.
+// PARÁMETROS:
+//   form - Elemento <form> donde se mostrarán los errores
+//   data - Objeto de respuesta del servidor (JSON.parse ya hecho)
+// =====================================================================
+EIS.mostrarErroresFormulario = function (form, data) {
+    var $form = $(form);
+    if (!$form.length) return;
+
+    EIS.limpiarErroresFormulario($form);
+
+    // --- Errores por campo --------------------------------------------
+    var fieldErrors = (data && data.fieldErrors) ? data.fieldErrors : {};
+    $.each(fieldErrors, function (name, msg) {
+        var $field = $form.find('[name="' + name + '"]').first();
+        if (!$field.length) return;
+
+        // Determino el contenedor visible (input-field o select-wrapper)
+        var $wrap = $field.closest('.select-wrapper').length
+            ? $field.closest('.select-wrapper')
+            : $field.closest('.input-field, .select-wrapper').length
+                ? $field.closest('.input-field, .select-wrapper')
+                : $field.parent();
+
+        // Marca visual en rojo
+        if ($field.is('select')) {
+            $wrap.addClass('invalid eis-invalid');
+        } else {
+            $field.addClass('invalid eis-invalid');
+        }
+
+        // Inserto el mensaje debajo del campo
+        $('<div class="eis-field-error helper-text" style="color:#c62828;font-weight:500;">' + msg + '</div>').appendTo($wrap);
+    });
+
+    // --- Panel de error global ----------------------------------------
+    var msg = (data && data.error) ? data.error : 'Completa los campos obligatorios antes de continuar.';
+    var $panel = $(
+        '<div class="card-panel eis-form-error" style="background:#fce4ec;color:#b71c1c;' +
+        'border-radius:8px;padding:0.75rem 1rem;margin:0 0 1rem;display:flex;align-items:center;gap:0.5rem;">' +
+        '<i class="material-icons" style="font-size:1.2rem;">error</i><span></span></div>'
+    );
+    $panel.find('span').text(msg);
+    $form.prepend($panel);
+
+    // Enfoque el primer campo con error para que el usuario lo corrija rápido
+    var $firstError = $form.find('.eis-invalid').first();
+    if ($firstError.length) {
+        setTimeout(function () { $firstError.trigger('focus'); }, 150);
+    }
+};
+
+// =====================================================================
+// MÉTODO: EIS.mostrarErrorAnexo(form, data)
+// PROPÓSITO: Similar a EIS.mostrarErroresFormulario pero para formularios
+//            que ya tienen su propio contenedor de error (p. ej. el
+//            cybercafé con <div id="pcFormError">). Rellena ese contenedor
+//            con el mensaje del servidor y lo desliza a la vista.
+// PARÁMETROS:
+//   form      - Elemento <form> que contiene el contenedor de error
+//   errorSelector - Selector del contenedor de error dentro del form
+//   data      - Objeto de respuesta del servidor
+// =====================================================================
+EIS.mostrarErrorAnexo = function (form, errorSelector, data) {
+    var $form = $(form);
+    if (!$form.length) return;
+    var $panel = $form.find(errorSelector);
+    if (!$panel.length) return;
+    var msg = (data && data.error) ? data.error : 'Ha ocurrido un error. Verifica los datos e intenta de nuevo.';
+    $panel.find('.pc-form-error-message').text(msg);
+    $panel.find('.pc-form-error-message').html(msg.replace(/\n/g, '<br>'));
+    $panel.slideDown(250);
+};
+
+// =====================================================================
 // INTEGRACIÓN CON JQUERY DATATABLES
 // Funciones utilitarias para inicializar y manejar DataTables de forma
 // consistente en todos los módulos. Se apoyan en DataTables 1.13.x

@@ -10,7 +10,7 @@ La integracion incluyo:
 - Migracion de JS vanilla a jQuery para theme toggle, sidebar, busquedas, filtros
 - Implementacion de componentes Materialize: sidenav, modals, selects, tooltips, tabs
 - Refactorizacion de vistas autenticadas para usar solo contenido (sin HTML repetido)
-- Creacion de JavaScript modular en 16 archivos especializados mas el motor de jQuery DataTables
+- Creacion de JavaScript modular en 17 archivos especializados mas el motor de jQuery DataTables
 - CRUD via AJAX en todos los modulos (POS, Cyber, Legal, Inventario, Roles, Proveedores, Clientes, Activos, Reportes, Usuarios)
 - Validacion de documentos en modulo de Asesoria Legal
 
@@ -18,7 +18,7 @@ La integracion incluyo:
 
 ## 2. Archivos del Proyecto
 
-### JavaScript (16 modulos + DataTables)
+### JavaScript (17 modulos + DataTables)
 
 | Archivo | Proposito | Carga |
 |---------|-----------|-------|

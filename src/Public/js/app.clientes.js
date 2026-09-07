@@ -60,6 +60,7 @@ $(function () {
     }
 
     $(document).on('click', '.btn-nuevo-cliente', function () {
+        EIS.limpiarErroresFormulario('#form-cliente');
         $('#cliente-id').val('');
         $('#form-cliente')[0].reset();
         $('#modal-cliente-title').text('Nuevo Cliente');
@@ -71,6 +72,7 @@ $(function () {
         var id = $(this).data('id');
         $.getJSON(API + 'detalle&id=' + id, function (r) {
             if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
+            EIS.limpiarErroresFormulario('#form-cliente');
             var c = r.data;
             $('#cliente-id').val(c.id);
             $('#cliente-cedula').val(c.cedula);
@@ -88,47 +90,21 @@ $(function () {
 
     $('#form-cliente').on('submit', function (e) {
         e.preventDefault();
+        var $form = $(this);
 
-        var cedula   = $('#cliente-cedula').val().trim();
-        var nombre   = $('#cliente-nombre').val().trim();
-        var apellido = $('#cliente-apellido').val().trim();
-        var telefono = $('#cliente-telefono').val().trim();
-
-        if (!cedula || !nombre || !apellido) {
-            EIS.toast('Cédula, nombre y apellido son obligatorios', 'red', 'error');
-            return;
-        }
-
-        if (cedula.length < 5 || cedula.length > 20) {
-            EIS.toast('La cédula debe tener entre 5 y 20 caracteres', 'red', 'error');
-            return;
-        }
-
-        if (nombre.length < 2 || nombre.length > 100) {
-            EIS.toast('El nombre debe tener entre 2 y 100 caracteres', 'red', 'error');
-            return;
-        }
-
-        if (apellido.length < 2 || apellido.length > 100) {
-            EIS.toast('El apellido debe tener entre 2 y 100 caracteres', 'red', 'error');
-            return;
-        }
-
-        if (telefono && telefono.length > 20) {
-            EIS.toast('El teléfono no puede exceder 20 caracteres', 'red', 'error');
-            return;
-        }
+        // La validación la hace el servidor (PHP): los errores se muestran
+        // en pantalla de forma persistente a través de fieldErrors.
 
         var id = $('#cliente-id').val();
         var accion = id ? 'actualizar' : 'crear';
-        $.post(API + accion, $(this).serialize(), function (r) {
+        $.post(API + accion, $form.serialize(), function (r) {
             if (r.success) {
                 EIS.toast(r.message, 'green', 'check_circle');
                 $('#modal-cliente').modal('close');
                 refrescarKPI();
                 refrescarTabla();
             } else {
-                EIS.toast(r.error || 'Error al guardar', 'red', 'error');
+                EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
             EIS.toast('Error de conexión', 'red', 'error');

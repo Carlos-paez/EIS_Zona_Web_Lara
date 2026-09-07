@@ -126,7 +126,7 @@ foreach ($usuarios as $u) {
             <div class="row" style="margin-bottom:0;">
                 <div class="col s12 m6 input-field">
                     <i class="material-icons prefix">person</i>
-                    <input type="text" name="nombre" id="usuario-nombre" required maxlength="100" pattern=".{2,100}" title="Entre 2 y 100 caracteres">
+                    <input type="text" name="nombre" id="usuario-nombre" maxlength="100" title="Entre 2 y 100 caracteres">
                     <label for="usuario-nombre">Nombre</label>
                 </div>
                 <div class="col s12 m6 input-field">
@@ -136,7 +136,7 @@ foreach ($usuarios as $u) {
                 </div>
                 <div class="col s12 m6 input-field">
                     <i class="material-icons prefix">badge</i>
-                    <input type="text" name="user_name" id="usuario-username" required maxlength="50" pattern="[A-Za-z0-9._-]{3,50}" title="Entre 3 y 50 caracteres: letras, números, puntos, guiones">
+                    <input type="text" name="user_name" id="usuario-username" maxlength="50" title="Entre 3 y 50 caracteres: letras, números, puntos, guiones">
                     <label for="usuario-username">Nombre de usuario</label>
                 </div>
                 <div class="col s12 m6 input-field">

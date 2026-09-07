@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Logger;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Models\Usuario;
@@ -40,6 +41,13 @@ class AuthController
         $username = trim($_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
 
+        // Campos vacíos: se distingue del error de credenciales para poder
+        // mostrar en el formulario el mensaje de "completa todos los campos".
+        if ($username === '' || $password === '') {
+            header('Location: ?pagina=login&error=vacio');
+            exit;
+        }
+
         try {
             $username = Validator::username($username, 'usuario');
         } catch (\InvalidArgumentException) {
@@ -47,16 +55,23 @@ class AuthController
             exit;
         }
 
-        if (empty($password)) {
-            header('Location: ?pagina=login&error=1');
-            exit;
-        }
         if (mb_strlen($username) < 3) {
             header('Location: ?pagina=login&error=1');
             exit;
         }
 
-        $usuario = $this->model->autenticar($username, $password);
+        $usuario = null;
+        try {
+            $usuario = $this->model->autenticar($username, $password);
+        } catch (\PDOException $e) {
+            Logger::error($e, 'Login - error de base de datos');
+            header('Location: ?pagina=login&error=1');
+            exit;
+        } catch (\Exception $e) {
+            Logger::error($e, 'Login');
+            header('Location: ?pagina=login&error=1');
+            exit;
+        }
 
         if ($usuario) {
             session_regenerate_id(true);

@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Logger;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Models\ProveedorGestion;
@@ -42,10 +43,12 @@ class ProveedorGestionController
                 default      => $this->json(false, null, 'Acción no válida'),
             };
         } catch (\PDOException $e) {
+            Logger::error($e, 'Proveedores (gestión) - consulta SQL');
             echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
         } catch (\InvalidArgumentException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         } catch (\Exception $e) {
+            Logger::error($e, 'Proveedores (gestión)');
             echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
         }
     }
@@ -88,6 +91,15 @@ class ProveedorGestionController
             return;
         }
 
+        $errores = Validator::requeridos($_POST, [
+            'rif'    => 'RIF',
+            'nombre' => 'nombre',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
+            return;
+        }
+
         $rif      = Validator::rif($_POST['rif'] ?? null, 'RIF');
         $nombre   = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos']);
         $email    = Validator::email($_POST['email'] ?? null, 'email');
@@ -110,6 +122,16 @@ class ProveedorGestionController
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $errores = Validator::requeridos($_POST, [
+            'id'     => 'ID del proveedor',
+            'rif'    => 'RIF',
+            'nombre' => 'nombre',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
             return;
         }
 

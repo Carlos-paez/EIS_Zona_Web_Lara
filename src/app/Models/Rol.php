@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Core\Logger;
 use App\Core\Model;
 use PDO;
 
@@ -136,6 +137,7 @@ class Rol extends Model
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
+            Logger::error($e, 'Rol - eliminar rol');
             return false;
         }
     }
@@ -200,6 +202,7 @@ class Rol extends Model
             return true;
         } catch (\Exception $e) {
             $this->db->rollBack();
+            Logger::error($e, 'Rol - actualizar permisos');
             return false;
         }
     }

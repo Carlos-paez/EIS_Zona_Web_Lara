@@ -87,10 +87,10 @@
                     class="material-icons left">badge</i>Clientes</a></li>
         <!-- Solicitudes - Menú desplegable con submódulos -->
         <li class="has-submenu<?php echo in_array($pagina, ['proveedores', 'proveedores-gestion']) ? ' open' : ''; ?>">
-            <a href="#!" class="sidenav-link submenu-parent">
+            <a href="#!" class="sidenav-link submenu-parent<?php echo in_array($pagina, ['proveedores', 'proveedores-gestion']) ? ' active' : ''; ?>">
                 <i class="material-icons left">request_quote</i>
                 <span>Solicitudes</span>
-                <i class="material-icons submenu-arrow" style="position:absolute;right:1rem;transition:transform 0.25s;">arrow_right</i>
+                <i class="material-icons submenu-arrow" style="position:absolute;right:1rem;">arrow_right</i>
             </a>
             <ul class="submenu-list">
                 <li><a href="?pagina=proveedores" class="sidenav-link<?php echo $pagina === 'proveedores' ? ' active' : ''; ?>">Órdenes de Compra</a></li>

@@ -213,6 +213,7 @@ $(function () {
     // PROPÓSITO: Prepara y abre el modal para iniciar una sesión.
     // ================================================================
     function abrirModalIniciar(estacionId) {
+        EIS.limpiarErroresFormulario('#cyberForm');
         $('#cyberForm')[0].reset();
         $('#cyberTiempo').val('01:00:00');
         poblarSelects(estacionId);
@@ -296,70 +297,20 @@ $(function () {
     $(document).on('submit', '#cyberForm', function (e) {
         e.preventDefault();
 
-        var ciudadano = $('#cyberCiudadano').val().trim();
-        var cedula = $('#cyberCedula').val().trim();
-        var telefono = $('#cyberTelefono').val().trim();
-        var direccion = $('#cyberDireccion').val().trim();
-        var activoId = $('#cyberActivo').val();
-        var tarifaId = $('#cyberTarifa').val();
-        var tiempoUso = $('#cyberTiempo').val().trim();
-
-        if (!ciudadano || !cedula) {
-            EIS.toast('Nombre y cédula del cliente son obligatorios', 'red', 'error');
-            return;
-        }
-        if (ciudadano.length < 2 || ciudadano.length > 100) {
-            EIS.toast('El cliente debe tener entre 2 y 100 caracteres', 'red', 'error');
-            return;
-        }
-        if (cedula.length < 5 || cedula.length > 20) {
-            EIS.toast('La cédula debe tener entre 5 y 20 caracteres', 'red', 'error');
-            return;
-        }
-        if (telefono && telefono.length > 20) {
-            EIS.toast('El teléfono no puede exceder 20 caracteres', 'red', 'error');
-            return;
-        }
-        if (direccion && direccion.length > 500) {
-            EIS.toast('La dirección no puede exceder 500 caracteres', 'red', 'error');
-            return;
-        }
-        if (!activoId) {
-            EIS.toast('Selecciona una estación disponible', 'red', 'error');
-            return;
-        }
-        if (!tarifaId) {
-            EIS.toast('Selecciona una tarifa', 'red', 'error');
-            return;
-        }
-        if (!tiempoUso) {
-            EIS.toast('El tiempo de uso es obligatorio', 'red', 'error');
-            return;
-        }
-        if (!/^\d{1,3}:\d{2}:\d{2}$/.test(tiempoUso)) {
-            EIS.toast('El tiempo de uso debe tener formato HH:MM:SS', 'red', 'error');
-            return;
-        }
-
+        // La validación de campos obligatorios la hace el servidor (PHP):
+        // los errores se muestran en pantalla de forma persistente.
+        var $form = $(this);
         var $btn = $('#btnIniciarSesion');
         $btn.prop('disabled', true);
 
-        $.post(API + 'iniciar', {
-            ciudadano: ciudadano,
-            cedula: cedula,
-            direccion: direccion,
-            telefono: telefono,
-            activo_id: activoId,
-            tarifa_id: tarifaId,
-            tiempo_uso: tiempoUso
-        }, function (r) {
+        $.post(API + 'iniciar', $form.serialize(), function (r) {
             $btn.prop('disabled', false);
             if (r.success) {
                 EIS.toast(r.message || 'Sesión iniciada', 'green', 'play_circle');
                 $('#cyberModal').modal('close');
                 cargarEstado();
             } else {
-                EIS.toast(r.error || 'Error al iniciar la sesión', 'red', 'error');
+                EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
             $btn.prop('disabled', false);
@@ -390,9 +341,10 @@ $(function () {
         $('#modalPCTitleIcon').text('computer');
         $('#pcId').val('');
         $('#formPC')[0].reset();
+        EIS.limpiarErroresFormulario('#formPC');
         $('#pcTipo').val('');
         refrescarSelect($('#pcTipo'));
-        $('input[name="pcEstado"][value="1"]').prop('checked', true);
+        $('input[name="activa"][value="1"]').prop('checked', true);
         $('#pcFormError').hide();
         $('#btnGuardarPC').removeClass('orange').addClass('indigo');
         $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
@@ -408,6 +360,7 @@ $(function () {
         $('#modalPCTitle').text('Editar PC');
         $('#modalPCTitleIcon').text('edit');
         $('#pcFormError').hide();
+        EIS.limpiarErroresFormulario('#formPC');
         $('#btnGuardarPC').removeClass('indigo').addClass('orange');
         $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Actualizar PC');
 
@@ -422,7 +375,7 @@ $(function () {
             $('#pcDescripcion').val(pc.descripcion || '');
             $('#pcTipo').val(String(pc.tipo_activo_id || ''));
             refrescarSelect($('#pcTipo'));
-            $('input[name="pcEstado"][value="' + (pc.activa ? 1 : 0) + '"]').prop('checked', true);
+            $('input[name="activa"][value="' + (pc.activa ? 1 : 0) + '"]').prop('checked', true);
             M.updateTextFields();
             $('#modalPCForm').modal('open');
         }).fail(function () {
@@ -463,37 +416,19 @@ $(function () {
 
     // EVENTO: Click en "Guardar PC" (#btnGuardarPC) — crear o actualizar
     $(document).on('click', '#btnGuardarPC', function () {
+        var $form = $('#formPC');
         var id = $('#pcId').val();
-        var marca = $('#pcMarca').val().trim();
-        var descripcion = $('#pcDescripcion').val().trim();
-        var tipoActivo = $('#pcTipo').val();
-        var activa = $('input[name="pcEstado"]:checked').val() || 1;
 
-        if (!marca) {
-            EIS.toast('La marca es obligatoria', 'red', 'error');
-            $('#pcMarca').focus();
-            return;
-        }
-        if (!descripcion) {
-            EIS.toast('La descripción es obligatoria', 'red', 'error');
-            $('#pcDescripcion').focus();
-            return;
-        }
-        if (!tipoActivo) {
-            EIS.toast('Debes seleccionar un tipo de PC', 'red', 'error');
-            $('#pcTipo').focus();
-            return;
-        }
-
+        // La validación de campos obligatorios la hace el servidor (PHP):
+        // los errores se muestran en pantalla de forma persistente.
         var $btn = $(this);
         $btn.prop('disabled', true).html('<i class="material-icons left" style="margin:0;">hourglass_top</i> Guardando...');
+        EIS.limpiarErroresFormulario($form);
         $('#pcFormError').hide();
 
         var url = id ? API + 'actualizarPC' : API + 'crearPC';
-        var data = { marca: marca, descripcion: descripcion, tipo_activo_id: tipoActivo, activa: activa };
-        if (id) data.id = id;
 
-        $.post(url, data, function (r) {
+        $.post(url, $form.serialize(), function (r) {
             $btn.prop('disabled', false);
             $('#btnGuardarPC').removeClass('orange').addClass('indigo');
             $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
@@ -502,8 +437,7 @@ $(function () {
                 $('#modalPCForm').modal('close');
                 cargarEstado();
             } else {
-                $('#pcFormErrorMessage').text(r.error || 'Error al guardar la PC');
-                $('#pcFormError').slideDown(300);
+                EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
             $btn.prop('disabled', false);

@@ -1,6 +1,6 @@
-# Diagrama de Clases — EIS Zona Web Lara (Arquitectura MVC)
+﻿# Diagrama de Clases — EIS Zona Web Lara (Arquitectura MVC)
 
-> **Actualizado (Agosto 2026):** Documento de diseño histórico. La implementación final cuenta con **13 controladores (12 AJAX + `AuthController`) y 13 modelos POO**.
+> **Actualizado (Agosto 2026):** Documento de diseño histórico. La implementación final cuenta con **13 controladores (12 AJAX + `AuthController`) y 15 modelos (12 POO + 3 legacy)**.
 
 ## Estado Actual (Clases PHP con Namespace — Patrón MVC)
 

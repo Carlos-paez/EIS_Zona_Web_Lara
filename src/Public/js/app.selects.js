@@ -46,19 +46,32 @@ $(function () {
     }
 
     // ---------------------------------------------------------------
-    // FUNCIÓN: inyectarBusqueda(ul)
+    // FUNCIÓN: inyectarBusqueda(ul, placeholder)
     // PROPÓSITO: Asegura que el desplegable tenga su barra de búsqueda.
-    //            Es idempotente (no duplica la barra).
+    //            Es idempotente (no duplica la barra); si ya existe,
+    //            solo actualiza el placeholder solicitado.
     // ---------------------------------------------------------------
-    function inyectarBusqueda($ul) {
-        if ($ul.find('li.eis-select-search').length) return;
+    function inyectarBusqueda($ul, placeholder) {
+        var hayPlaceholder = typeof placeholder === 'string';
+        placeholder = hayPlaceholder ? placeholder : 'Buscar opción...';
+
+        var $existente = $ul.find('li.eis-select-search');
+        if ($existente.length) {
+            // Si ya existe la barra, respeto su placeholder salvo que se
+            // solicite uno específico (p. ej. el del selector de clientes
+            // del POS, que pide "Buscar cliente por nombre o cédula...").
+            if (hayPlaceholder) {
+                $existente.find('input').attr('placeholder', placeholder);
+            }
+            return;
+        }
 
         $ul.prepend(
             '<li class="eis-select-search" data-eis-search>'
             + '<span>'
             + '<div class="eis-search-field">'
             + '<i class="material-icons">search</i>'
-            + '<input type="text" placeholder="Buscar opción..." autocomplete="off" spellcheck="false">'
+            + '<input type="text" placeholder="' + placeholder + '" autocomplete="off" spellcheck="false">'
             + '</div>'
             + '</span>'
             + '</li>'
@@ -158,6 +171,23 @@ $(function () {
     EIS.habilitarBusquedaEnSelects = function () {
         $('select').parent('.select-wrapper').each(function () {
             inyectarBusqueda($(this).find('ul.dropdown-content.select-dropdown'));
+        });
+    };
+
+    // ---------------------------------------------------------------
+    // UTILIDAD PÚBLICA: EIS.activarBusquedaEnSelect(selector, placeholder)
+    // Inserta (o actualiza) la barra de búsqueda con un placeholder
+    // específico en el desplegable de un select concreto. Útil para
+    // selects regenerados vía formSelect() (p. ej. el de clientes del
+    // POS) y para personalizar el texto guía del filtro.
+    // ---------------------------------------------------------------
+    EIS.activarBusquedaEnSelect = function (selector, placeholder) {
+        $(selector).each(function () {
+            var $wrapper = $(this).parent('.select-wrapper');
+            if (!$wrapper.length) return;
+            var $ul = $wrapper.find('ul.dropdown-content.select-dropdown');
+            if (!$ul.length) return;
+            inyectarBusqueda($ul, placeholder);
         });
     };
 

@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Logger;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Models\Proveedor;
@@ -48,10 +49,12 @@ class ProveedorController
                 default          => $this->json(false, null, 'Acción no válida'),
             };
         } catch (\PDOException $e) {
+            Logger::error($e, 'Proveedores (solicitudes) - consulta SQL');
             echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
         } catch (\InvalidArgumentException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         } catch (\Exception $e) {
+            Logger::error($e, 'Proveedores (solicitudes)');
             echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
         }
     }
@@ -112,6 +115,17 @@ class ProveedorController
             return;
         }
 
+        $errores = Validator::requeridos($_POST, [
+            'numero'       => 'número de orden',
+            'fecha'        => 'fecha',
+            'fk_proveedor' => 'proveedor',
+            'fk_status'    => 'estado',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
+            return;
+        }
+
         $numero       = Validator::numeroOrden($_POST['numero'] ?? null, 'número de orden');
         $fecha        = Validator::fecha($_POST['fecha'] ?? null, 'fecha', ['required' => true]);
         $fk_proveedor = Validator::id($_POST['fk_proveedor'] ?? null, 'proveedor');
@@ -138,6 +152,18 @@ class ProveedorController
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $errores = Validator::requeridos($_POST, [
+            'id'           => 'ID de la solicitud',
+            'numero'       => 'número de orden',
+            'fecha'        => 'fecha',
+            'fk_proveedor' => 'proveedor',
+            'fk_status'    => 'estado',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
             return;
         }
 
@@ -192,6 +218,17 @@ class ProveedorController
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $errores = Validator::requeridos($_POST, [
+            'orden_id'    => 'ID de la solicitud',
+            'producto_id' => 'producto',
+            'cantidad'    => 'cantidad',
+            'precio'      => 'precio',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
             return;
         }
 

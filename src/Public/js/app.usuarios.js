@@ -108,6 +108,7 @@ $(function () {
     }
 
     function abrirNuevo() {
+        EIS.limpiarErroresFormulario('#form-usuario');
         $('#form-usuario')[0].reset();
         $('#usuario-id').val('');
         $('#usuario-username').prop('readonly', false);
@@ -126,6 +127,7 @@ $(function () {
         $.getJSON(API + 'detalle&id=' + id, function (r) {
             if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
             var u = r.data;
+            EIS.limpiarErroresFormulario('#form-usuario');
             $('#form-usuario')[0].reset();
             $('#usuario-id').val(u.id);
             $('#usuario-nombre').val(u.nombre);
@@ -193,47 +195,21 @@ $(function () {
 
     $('#form-usuario').on('submit', function (e) {
         e.preventDefault();
+        var $form = $(this);
 
-        var nombre   = $('#usuario-nombre').val().trim();
-        var username = $('#usuario-username').val().trim();
-        var password = $('#usuario-password').val();
-        var email    = $('#usuario-email').val().trim();
-        var id       = $('#usuario-id').val();
+        // La validación de campos obligatorios la hace el servidor (PHP):
+        // los errores se muestran en pantalla de forma persistente.
 
-        if (!nombre || !username) {
-            EIS.toast('Nombre y nombre de usuario son obligatorios', 'red', 'error');
-            return;
-        }
-        if (nombre.length < 2 || nombre.length > 100) {
-            EIS.toast('El nombre debe tener entre 2 y 100 caracteres', 'red', 'error');
-            return;
-        }
-        if (username.length < 3 || username.length > 50) {
-            EIS.toast('El nombre de usuario debe tener entre 3 y 50 caracteres', 'red', 'error');
-            return;
-        }
-        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            EIS.toast('El email no es válido', 'red', 'error');
-            return;
-        }
-        if (!id && (!password || password.length < 8)) {
-            EIS.toast('La contraseña debe tener al menos 8 caracteres', 'red', 'error');
-            return;
-        }
-        if (id && password && password.length < 8) {
-            EIS.toast('La contraseña debe tener al menos 8 caracteres', 'red', 'error');
-            return;
-        }
-
+        var id = $('#usuario-id').val();
         var accion = id ? 'actualizar' : 'crear';
-        $.post(API + accion, $(this).serialize(), function (r) {
+        $.post(API + accion, $form.serialize(), function (r) {
             if (r.success) {
                 EIS.toast(r.message, 'green', 'check_circle');
                 $('#modal-usuario').modal('close');
                 refrescarKPI();
                 refrescarTabla();
             } else {
-                EIS.toast(r.error || 'Error al guardar', 'red', 'error');
+                EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
             EIS.toast('Error de conexión', 'red', 'error');

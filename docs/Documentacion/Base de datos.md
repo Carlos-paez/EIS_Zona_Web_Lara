@@ -75,9 +75,9 @@ Está dirigido a:
 | Motor | MySQL 8.0+ / MariaDB 10.3+ |
 | Motor de almacenamiento | **InnoDB** |
 | Charset | `utf8mb4` |
-| Collation | `utf8mb4_unicode_ci` |
+| Collation | `utf8mb4_spanish_ci` |
 | Capa de acceso | PDO con prepared statements |
-| Total de tablas | 19 |
+| Total de tablas (real) | 21 |
 | Vistas | 3 |
 | Procedimientos | 2 |
 | Disparadores | 2 |
@@ -527,7 +527,7 @@ graph LR
 **Razones:**
 - `utf8` en MySQL es en realidad `utf8mb3` (máximo 3 bytes), que no cubre todo Unicode.
 - `utf8mb4` cubre el estándar Unicode completo (incluyendo emojis, símbolos matemáticos, caracteres de idiomas orientales).
-- `utf8mb4_unicode_ci` usa el algoritmo UCA (Unicode Collation Algorithm) para ordenamiento y comparación lingüísticamente correctos.
+- `utf8mb4_spanish_ci` usa el algoritmo de collation para ordenamiento y comparación lingüísticamente correctos, adaptado al español.
 - En Venezuela (donde opera Zona Web Lara), es común usar acentos, ñ, y caracteres especiales en nombres de personas y empresas.
 
 ### 4.3 ¿Por qué usar ENUM en lugar de tablas separadas?

@@ -124,12 +124,12 @@ $tiposActivo = $activoModel->listarTiposActivo();
             <div class="row" style="margin-bottom:0;">
                 <div class="col s12 m6 input-field" style="margin-bottom:0;">
                     <i class="material-icons prefix">branding_watermark</i>
-                    <input type="text" name="marca" id="activo-marca" required maxlength="100" pattern=".{2,100}" title="Entre 2 y 100 caracteres">
+                    <input type="text" name="marca" id="activo-marca" maxlength="100" title="Entre 2 y 100 caracteres">
                     <label for="activo-marca">Marca</label>
                 </div>
                 <div class="col s12 m6 input-field" style="margin-bottom:0;">
                     <i class="material-icons prefix">category</i>
-                    <select name="tipo_activo_id" id="activo-tipo" required>
+                    <select name="tipo_activo_id" id="activo-tipo">
                         <option value="" disabled selected>Selecciona un tipo...</option>
                         <?php foreach ($tiposActivo as $tipo): ?>
                             <option value="<?php echo (int)$tipo['id']; ?>"><?php echo htmlspecialchars($tipo['nombre_tipo'], ENT_QUOTES, 'UTF-8'); ?></option>
@@ -140,7 +140,7 @@ $tiposActivo = $activoModel->listarTiposActivo();
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">notes</i>
-                <textarea name="descripcion" id="activo-descripcion" class="materialize-textarea" required maxlength="1000"></textarea>
+                <textarea name="descripcion" id="activo-descripcion" class="materialize-textarea" maxlength="1000"></textarea>
                 <label for="activo-descripcion">Descripción</label>
             </div>
             <div style="display:flex;gap:2.5rem;margin-top:0.5rem;flex-wrap:wrap;">

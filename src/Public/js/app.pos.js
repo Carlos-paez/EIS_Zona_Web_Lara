@@ -238,6 +238,13 @@ $(function () {
         var inst = M.FormSelect.getInstance(el);
         if (inst) inst.destroy();
         $sel.formSelect();
+
+        // Re-inyecta la barra de búsqueda con filtro por texto (nombre o
+        // cédula). formSelect() regenera el <ul> del desplegable y con
+        // ello elimina la barra que pudo inyectarse antes.
+        if (window.EIS && EIS.activarBusquedaEnSelect) {
+            EIS.activarBusquedaEnSelect('#posClienteSelect', 'Buscar cliente por nombre o cédula...');
+        }
     }
 
     // ================================================================
@@ -387,6 +394,13 @@ $(function () {
         }
         actualizarCarritoModal();
         instance.open();
+
+        // Garantiza la barra de búsqueda del selector de clientes. Es
+        // idempotente: si el desplegable ya la tiene, solo actualiza el
+        // placeholder.
+        if (window.EIS && EIS.activarBusquedaEnSelect) {
+            EIS.activarBusquedaEnSelect('#posClienteSelect', 'Buscar cliente por nombre o cédula...');
+        }
     });
 
     // ================================================================
@@ -429,31 +443,10 @@ $(function () {
             return;
         }
 
-        var ciudadano = $('#posCiudadano').val().trim();
-        var cedula = $('#posCedula').val().trim();
-        var telefono = $('#posTelefono').val().trim();
-        var direccion = $('#posDireccion').val().trim();
-
-        if (!ciudadano || !cedula) {
-            EIS.toast('Nombre y cédula del cliente son obligatorios', 'red', 'error');
-            return;
-        }
-        if (ciudadano.length < 2 || ciudadano.length > 100) {
-            EIS.toast('El cliente debe tener entre 2 y 100 caracteres', 'red', 'error');
-            return;
-        }
-        if (cedula.length < 5 || cedula.length > 20) {
-            EIS.toast('La cédula debe tener entre 5 y 20 caracteres', 'red', 'error');
-            return;
-        }
-        if (telefono && telefono.length > 20) {
-            EIS.toast('El teléfono no puede exceder 20 caracteres', 'red', 'error');
-            return;
-        }
-        if (direccion && direccion.length > 500) {
-            EIS.toast('La dirección no puede exceder 500 caracteres', 'red', 'error');
-            return;
-        }
+        // La validación de los campos del cliente la hace el servidor (PHP):
+        // los errores se muestran en pantalla de forma persistente.
+        var $form = $('#posClienteForm');
+        EIS.limpiarErroresFormulario($form);
 
         if (!confirm('¿Procesar venta por $' + posTotal.toFixed(2) + '?')) return;
 
@@ -464,13 +457,7 @@ $(function () {
         var $btn = $('#procesarVenta');
         $btn.prop('disabled', true);
 
-        $.post(API + 'registrar', {
-            ciudadano: ciudadano,
-            cedula: cedula,
-            direccion: direccion,
-            telefono: telefono,
-            items: JSON.stringify(items)
-        }, function (r) {
+        $.post(API + 'registrar', $form.serialize() + '&items=' + encodeURIComponent(JSON.stringify(items)), function (r) {
             $btn.prop('disabled', false);
             if (r.success) {
                 EIS.toast(r.message || '¡Venta registrada!', 'green', 'paid');
@@ -483,7 +470,7 @@ $(function () {
                 cargarProductos();
                 cargarClientes();
             } else {
-                EIS.toast(r.error || 'Error al registrar la venta', 'red', 'error');
+                EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
             $btn.prop('disabled', false);

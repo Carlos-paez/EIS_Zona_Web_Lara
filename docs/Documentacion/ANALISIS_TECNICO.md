@@ -53,6 +53,8 @@ eis_zona_web_lara/
 │   │   ├── core/
 │   │   │   ├── Database.php             # Conexión PDO Singleton (moderna)
 │   │   │   ├── Model.php                # Clase base abstracta con helpers de validación
+│   │   │   ├── Validator.php            # Clase final con reglas de validación por campo
+│   │   │   ├── Logger.php               # Registro de errores en src/logs/errores.md
 │   │   │   ├── router.php               # Enrutador OOP (Front Controller)
 │   │   │   ├── Exporter.php             # Exportación CSV/Excel/PDF
 │   │   │   └── PdfBuilder.php           # Generador de PDF mínimo
@@ -70,13 +72,13 @@ eis_zona_web_lara/
 │   │   │   ├── ActivoController.php         # Activos
 │   │   │   ├── DashboardController.php      # KPIs
 │   │   │   └── ReporteController.php        # Reportes/exportación
-│   │   ├── Models/                     # 13 POO + 2 legacy
+│   │   ├── Models/                     # 12 POO + 3 legacy
 │   │   ├── template/
 │   │   │   └── layout.php               # Layout maestro (12 módulos)
 │   │   └── Views/                       # 15 vistas
 │   └── Public/
 │       ├── css/                        # styles, login, materialize, material-icons (locales)
-│       ├── js/                         # jquery + materialize + 16 módulos app.*.js
+│       ├── js/                         # jquery + materialize + 17 módulos app.*.js
 │       └── fonts/                      # MaterialIcons-Regular.ttf (local)
 ├── docs/                               # Documentación detallada
 └── vendor/                             # Composer dependencies
@@ -89,7 +91,7 @@ eis_zona_web_lara/
 | **Model** | `src/app/Models/*.php` | Lógica de negocio, acceso a datos con PDO prepared statements, validación con helpers reutilizables |
 | **View** | `src/app/Views/*.php` | Presentación HTML, datos del modelo |
 | **Controller** | `src/app/Controllers/*.php` (13) | Orquestación: recibe request AJAX, valida, llama a modelos, retorna JSON |
-| **Core** | `src/app/core/` (Database, Model, **Validator**, Router, Exporter, PdfBuilder) | Conexión Singleton, clase base + reglas de validación, enrutamiento con CSRF, exportación |
+| **Core** | `src/app/core/` (Database, Model, **Validator**, **Logger**, Router, Exporter, PdfBuilder) | Conexión Singleton, clase base + reglas de validación, registro de errores, enrutamiento con CSRF, exportación |
 | **Config** | `src/Config/database.php` | Conexión PDO legacy |
 
 ### 1.3 Principios PDO Estricto

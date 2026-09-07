@@ -88,6 +88,7 @@ $(function () {
 
     // Botón "Nuevo Proveedor"
     $(document).on('click', '.btn-nuevo-proveedor', function () {
+        EIS.limpiarErroresFormulario('#form-proveedor');
         $('#proveedor-id').val('');
         $('#form-proveedor')[0].reset();
         $('#modal-proveedor-title').text('Nuevo Proveedor');
@@ -100,6 +101,7 @@ $(function () {
         var id = $(this).data('id');
         $.getJSON(API + 'detalle&id=' + id, function (r) {
             if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
+            EIS.limpiarErroresFormulario('#form-proveedor');
             var p = r.data;
             $('#proveedor-id').val(p.id);
             $('#proveedor-rif').val(p.rif);
@@ -117,52 +119,21 @@ $(function () {
     // Submit del formulario (crear o actualizar)
     $('#form-proveedor').on('submit', function (e) {
         e.preventDefault();
+        var $form = $(this);
 
-        var rif      = $('#proveedor-rif').val().trim();
-        var nombre   = $('#proveedor-nombre').val().trim();
-        var email    = $('#proveedor-email').val().trim();
-        var telefono = $('#proveedor-telefono').val().trim();
-
-        if (!rif || !nombre) {
-            EIS.toast('RIF y Nombre son obligatorios', 'red', 'error');
-            return;
-        }
-
-        if (rif.length < 5 || rif.length > 20) {
-            EIS.toast('El RIF debe tener entre 5 y 20 caracteres', 'red', 'error');
-            return;
-        }
-
-        if (nombre.length < 2 || nombre.length > 100) {
-            EIS.toast('El nombre debe tener entre 2 y 100 caracteres', 'red', 'error');
-            return;
-        }
-
-        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            EIS.toast('El formato del email no es válido', 'red', 'error');
-            return;
-        }
-
-        if (email.length > 100) {
-            EIS.toast('El email no puede exceder 100 caracteres', 'red', 'error');
-            return;
-        }
-
-        if (telefono && telefono.length > 20) {
-            EIS.toast('El teléfono no puede exceder 20 caracteres', 'red', 'error');
-            return;
-        }
+        // La validación de campos obligatorios la hace el servidor (PHP):
+        // los errores se muestran en pantalla de forma persistente.
 
         var id = $('#proveedor-id').val();
         var accion = id ? 'actualizar' : 'crear';
-        $.post(API + accion, $(this).serialize(), function (r) {
+        $.post(API + accion, $form.serialize(), function (r) {
             if (r.success) {
                 EIS.toast(r.message, 'green', 'check_circle');
                 $('#modal-proveedor').modal('close');
                 refrescarKPI();
                 refrescarTabla();
             } else {
-                EIS.toast(r.error || 'Error al guardar', 'red', 'error');
+                EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
             EIS.toast('Error de conexión', 'red', 'error');

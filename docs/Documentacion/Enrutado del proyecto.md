@@ -11,12 +11,16 @@ Antes de que el código PHP se ejecute, el servidor web (Apache) prepara el cami
     - `RewriteCond %{REQUEST_FILENAME} !-f` y `!-d`: solo aplica si no es archivo/directorio real.
     - `RewriteRule ^([\w-]+)$ index.php?pagina=$1 [L,QSA]`: convierte `/dashboard` en `?pagina=dashboard` (URLs limpias parciales).
 
-### 2. Punto de Entrada: index.php (21 líneas)
+### 2. Punto de Entrada: index.php (135 líneas)
 
 La ejecución de PHP:
 
 - `require_once __DIR__ . '/../vendor/autoload.php'` — carga el autoloader PSR-4 de Composer.
-- `use App\Core\Router` — importa la clase Router.
+- `use App\Core\Logger; use App\Core\Router` — manejo de errores + enrutador.
+- **Manejo global de errores**: `error_reporting(E_ALL)`, `display_errors=0`, buffer de salida
+  (`ob_start`) y handlers de error/excepción/fatal que registran todo en `src/logs/errores.md` vía
+  `App\Core\Logger`, respondiendo JSON genérico (`{success:false, error:...}`) en peticiones AJAX o
+  una página amigable en HTML (nunca detalles técnicos).
 - `$router = new Router()` — constructor: `session_start()` (si no existe) + token CSRF.
 - `$router->handle()` — método principal que procesa la solicitud.
 
@@ -65,7 +69,7 @@ La clase `Router` tiene los siguientes métodos clave:
 | `ActivoController` | `handle()` — acciones CRUD para activos fijos via AJAX |
 | `DashboardController` | `handle()` — métricas del dashboard via AJAX |
 | `ReporteController` | `handle()` — generación de reportes via AJAX |
-| `UsuarioController` | `handle()` — CRUD usuarios, estados y password via AJAX (nuevo) |
+| `UsuarioController` | `handle()` — CRUD usuarios, estados y password via AJAX |
 
 ### 6. Diferencia con el diseño anterior
 
@@ -80,5 +84,7 @@ El diseño actual usa:
 - Mapa `CONTROLLERS` que centraliza la resolución de controladores + `dispatchAction()`
 - AuthController para login y Router para logout
 - 12 controladores AJAX resueltos dinámicamente desde el mapa `CONTROLLERS` (13 archivos en total con `AuthController`)
+- Páginas privadas (12): dashboard, inventario, ventas, clientes, proveedores, proveedores-gestion, ciberControl, reportes, activos, asesorias, usuarios, roles
+- Validación estricta de tipos (`App\Core\Validator`) y registro de errores (`App\Core\Logger` → `src/logs/errores.md`)
 - Autoloader PSR-4 de Composer
 - URLs limpias parciales via .htaccess

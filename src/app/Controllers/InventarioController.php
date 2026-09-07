@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Logger;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Models\Inventario;
@@ -47,10 +48,12 @@ class InventarioController
                 default               => $this->json(false, null, 'Acción no válida'),
             };
         } catch (\PDOException $e) {
+            Logger::error($e, 'Inventario - consulta SQL');
             echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
         } catch (\InvalidArgumentException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         } catch (\Exception $e) {
+            Logger::error($e, 'Inventario');
             echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
         }
     }
@@ -113,6 +116,19 @@ class InventarioController
             return;
         }
 
+        $errores = Validator::requeridos($_POST, [
+            'codigo'       => 'código',
+            'nombre'       => 'nombre',
+            'categoria_id' => 'categoría',
+            'stock'        => 'stock',
+            'stock_minimo' => 'stock mínimo',
+            'precio_venta' => 'precio de venta',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
+            return;
+        }
+
         $codigo       = Validator::texto($_POST['codigo'] ?? null, 'código', ['required' => true, 'max' => 50, 'pattern' => Validator::PATTERN_CODIGO, 'patternMessage' => 'El código del producto contiene caracteres no permitidos']);
         $nombre       = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100]);
         $descripcion  = Validator::texto($_POST['descripcion'] ?? null, 'descripción', ['required' => false, 'max' => 1000]);
@@ -144,6 +160,20 @@ class InventarioController
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $errores = Validator::requeridos($_POST, [
+            'id'           => 'ID del producto',
+            'codigo'       => 'código',
+            'nombre'       => 'nombre',
+            'categoria_id' => 'categoría',
+            'stock'        => 'stock',
+            'stock_minimo' => 'stock mínimo',
+            'precio_venta' => 'precio de venta',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
             return;
         }
 
@@ -202,6 +232,12 @@ class InventarioController
             return;
         }
 
+        $errores = Validator::requeridos($_POST, ['nombre' => 'nombre de categoría']);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
+            return;
+        }
+
         $nombre = Validator::texto($_POST['nombre'] ?? null, 'nombre de categoría', ['required' => true, 'max' => 100]);
         $resultado = $this->model->crearCategoria($nombre);
         echo json_encode(
@@ -215,6 +251,12 @@ class InventarioController
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $errores = Validator::requeridos($_POST, ['id' => 'ID de la categoría', 'nombre' => 'nombre de categoría']);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
             return;
         }
 

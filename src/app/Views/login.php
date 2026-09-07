@@ -59,13 +59,21 @@
             <?php
             // Verifico si el parámetro 'error' viene en la URL (GET)
             if (isset($_GET['error'])): ?>
-                <!-- Panel de error con fondo rojo claro y texto rojo oscuro -->
-                <div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:0.75rem 1rem;">
-                    <!-- Ícono de advertencia (triángulo con exclamación) -->
-                    <i class="material-icons left" style="font-size:1.2rem;">warning</i>
-                    <!-- Mensaje de error informando al usuario que las credenciales son incorrectas -->
-                    Credenciales incorrectas. Por favor, intenta nuevamente.
-                </div>
+                <?php if (($_GET['error'] ?? '') === 'vacio'): ?>
+                    <!-- Error de validación: el usuario presionó enviar sin llenar campos -->
+                    <div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:0.75rem 1rem;">
+                        <i class="material-icons left" style="font-size:1.2rem;">error</i>
+                        Por favor, completa todos los campos para iniciar sesión.
+                    </div>
+                <?php else: ?>
+                    <!-- Error de autenticación: credenciales incorrectas -->
+                    <div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:0.75rem 1rem;">
+                        <!-- Ícono de advertencia (triángulo con exclamación) -->
+                        <i class="material-icons left" style="font-size:1.2rem;">warning</i>
+                        <!-- Mensaje de error informando al usuario que las credenciales son incorrectas -->
+                        Credenciales incorrectas. Por favor, intenta nuevamente.
+                    </div>
+                <?php endif; ?>
             <?php
             // Fin del bloque condicional
             endif; ?>
@@ -83,8 +91,8 @@
                 <div class="input-field">
                     <!-- Ícono de persona (prefijo dentro del input) -->
                     <i class="material-icons prefix">person</i>
-                    <!-- Input de tipo texto para el nombre de usuario; required = obligatorio; autofocus = cursor automático al cargar -->
-                    <input type="text" name="username" id="username" required autofocus>
+                    <!-- Input de tipo texto para el nombre de usuario; autofocus = cursor automático al cargar -->
+                    <input type="text" name="username" id="username" autofocus>
                     <!-- Etiqueta flotante que se mueve al escribir -->
                     <label for="username">Usuario</label>
                 </div>
@@ -96,7 +104,7 @@
                     <!-- Ícono de candado (prefijo dentro del input) -->
                     <i class="material-icons prefix">lock</i>
                     <!-- Input de tipo password para ocultar los caracteres mientras se escribe -->
-                    <input type="password" name="password" id="password" required>
+                    <input type="password" name="password" id="password">
                     <!-- Etiqueta flotante -->
                     <label for="password">Contraseña</label>
                 </div>

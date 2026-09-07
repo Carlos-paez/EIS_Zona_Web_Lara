@@ -325,6 +325,30 @@ final class Validator
     }
 
     /**
+     * Comprueba de una vez cuáles campos obligatorios vienen vacíos en el
+     * formulario enviado. Centraliza desde PHP la validación de "campos sin
+     * llenar" para que el usuario reciba el error en pantalla.
+     *
+     * @param array<string,mixed>    $data   Datos recibidos (normalmente $_POST).
+     * @param array<string,string>   $campos Mapa campo => etiqueta legible.
+     * @return array<string,string>  Errores [campo => mensaje]; vacío si todo está lleno.
+     */
+    public static function requeridos(array $data, array $campos): array
+    {
+        $errores = [];
+        foreach ($campos as $campo => $etiqueta) {
+            $valor = $data[$campo] ?? '';
+            if (is_string($valor)) {
+                $valor = trim($valor);
+            }
+            if ($valor === '' || $valor === null || $valor === []) {
+                $errores[$campo] = "El campo $etiqueta es obligatorio";
+            }
+        }
+        return $errores;
+    }
+
+    /**
      * Valida los ítems de una venta (JSON): estructura, tipos y cantidades.
      *
      * @return array<int,array{id:int,cantidad:int}> Ítems validados y ordenados.

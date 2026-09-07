@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Logger;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Models\Usuario;
@@ -45,6 +46,7 @@ class UsuarioController
                 default        => $this->json(false, null, 'Acción no válida'),
             };
         } catch (\PDOException $e) {
+            Logger::error($e, 'Usuarios - consulta SQL');
             $msg = $e->getMessage();
             if (str_contains($msg, 'foreign key constraint') || str_contains($msg, 'a foreign key constraint fails')) {
                 echo json_encode(['success' => false, 'error' => 'No se puede eliminar: el usuario tiene registros asociados.']);
@@ -56,6 +58,7 @@ class UsuarioController
         } catch (\InvalidArgumentException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         } catch (\Exception $e) {
+            Logger::error($e, 'Usuarios');
             echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
         }
     }
@@ -110,6 +113,17 @@ class UsuarioController
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $errores = Validator::requeridos($_POST, [
+            'user_name' => 'nombre de usuario',
+            'nombre'    => 'nombre',
+            'email'     => 'email',
+            'password'  => 'contraseña',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
             return;
         }
 
@@ -177,12 +191,23 @@ class UsuarioController
 
     private function estado(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
             return;
         }
 
-        $id     = Validator::id($_POST['id'] ?? null, 'ID del usuario');
+        $errores = Validator::requeridos($_POST, [
+            'id'      => 'ID del usuario',
+            'nombre'  => 'nombre',
+            'email'   => 'email',
+            'estatus' => 'estado',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
+            return;
+        }
+
+        $id       = Validator::id($_POST['id'] ?? null, 'ID del usuario');
         $activo = Validator::bool($_POST['activo'] ?? null, 'estado');
 
         if ($activo === 0 && $id === (int)($_SESSION['user_id'] ?? 0)) {

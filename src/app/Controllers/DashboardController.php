@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Logger;
 use App\Models\Dashboard;
 
 /**
@@ -41,6 +42,7 @@ class DashboardController
                 default  => $this->json(false, null, 'Acción no válida'),
             };
         } catch (\Exception $e) {
+            Logger::error($e, 'Dashboard');
             echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
         }
     }

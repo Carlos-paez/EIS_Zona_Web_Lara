@@ -5,7 +5,7 @@
 EIS System es una aplicacion web de gestion empresarial desarrollada en **PHP 8.x vanilla** con
 **Materialize CSS 1.0.0** y **jQuery 3.7.1**. Utiliza un patron **Front Controller** con enrutador
 OOP (clase `Router`), arquitectura **MVC** con namespaces PSR-4 (Composer), layout maestro y
-JavaScript modular (16 modulos). Todos los assets son locales (sin CDN) y cuenta con Service Worker
+JavaScript modular (17 modulos). Todos los assets son locales (sin CDN) y cuenta con Service Worker
 para funcionamiento offline (PWA).
 
 Los **13 modulos** estan conectados a la base de datos MySQL (`zona_web_lara`): cada uno dispone de
@@ -71,6 +71,7 @@ src/
 │   │   ├── Database.php         # Conexion PDO Singleton (moderna)
 │   │   ├── Model.php            # Clase base abstracta con helpers de validacion
 │   │   ├── Validator.php        # Clase final con reglas estáticas de validacion por campo
+│   │   ├── Logger.php           # Registro de errores en src/logs/errores.md
 │   │   ├── router.php           # Enrutador OOP (Front Controller)
 │   │   ├── Exporter.php         # Exportacion CSV/Excel/PDF
 │   │   └── PdfBuilder.php       # Generador de PDF minimo
@@ -88,7 +89,7 @@ src/
 │   │   ├── ActivoController.php         # Activos fijos
 │   │   ├── DashboardController.php      # KPIs del panel
 │   │   └── ReporteController.php        # Reportes y exportacion
-│   ├── Models/                  # 13 POO + 2 legacy procedurales
+│   ├── Models/                  # 12 POO + 3 legacy procedurales
 │   │   ├── Usuario.php, Cliente.php, Inventario.php, Venta.php
 │   │   ├── Proveedor.php, ProveedorGestion.php, Rol.php
 │   │   ├── Asesoria.php, Activo.php, CiberControl.php
@@ -112,7 +113,7 @@ src/
 │   └── usuario dev.txt          # Credenciales dev
 └── Public/
     ├── css/                     # styles, login, materialize, material-icons (locales)
-    ├── js/                      # jquery + materialize + 15 modulos app.*.js
+    ├── js/                      # jquery + materialize + 17 modulos app.*.js
     └── fonts/                   # MaterialIcons-Regular.ttf (local)
 ```
 
@@ -224,6 +225,7 @@ app.roles, app.proveedores, app.proveedores-gestion, app.clientes, app.activos, 
 - `Model.php`: base abstracta con helpers de validacion
 - `Validator.php`: clase final con reglas de validacion estaticas
 - `Database.php`: Singleton PDO
+- `Logger.php`: registro de errores en `src/logs/errores.md`
 - `Exporter.php` + `PdfBuilder.php`: exportacion CSV/Excel/PDF sin dependencias
 
 ### Frontend

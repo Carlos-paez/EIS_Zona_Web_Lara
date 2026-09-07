@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Exporter;
+use App\Core\Logger;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Models\Reporte;
@@ -46,6 +47,7 @@ class ReporteController
         } catch (\InvalidArgumentException $e) {
             $this->json(false, null, $e->getMessage());
         } catch (\Exception $e) {
+            Logger::error($e, 'Reportes');
             $this->json(false, null, 'Error interno del servidor');
         }
     }

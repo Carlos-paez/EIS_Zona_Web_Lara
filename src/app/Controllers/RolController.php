@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Logger;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Models\Rol;
@@ -46,10 +47,12 @@ class RolController
                 default           => $this->json(false, null, 'Acción no válida'),
             };
         } catch (\PDOException $e) {
+            Logger::error($e, 'Roles - consulta SQL');
             echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
         } catch (\InvalidArgumentException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         } catch (\Exception $e) {
+            Logger::error($e, 'Roles');
             echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
         }
     }
@@ -78,10 +81,16 @@ class RolController
             return;
         }
 
+        $errores = Validator::requeridos($_POST, ['nombre' => 'nombre de rol']);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
+            return;
+        }
+
         $nombre_rol = trim($_POST['nombre'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
         if (empty($nombre_rol)) {
-            echo json_encode(['success' => false, 'error' => 'El nombre del rol es obligatorio']);
+            echo json_encode(['success' => false, 'error' => 'El nombre del rol es obligatorio', 'fieldErrors' => ['nombre' => 'El campo nombre de rol es obligatorio']]);
             return;
         }
 
@@ -102,6 +111,12 @@ class RolController
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $errores = Validator::requeridos($_POST, ['id' => 'ID del rol', 'nombre' => 'nombre de rol']);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
             return;
         }
 

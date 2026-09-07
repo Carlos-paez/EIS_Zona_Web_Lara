@@ -179,6 +179,8 @@ $(function () {
     function abrirModalProducto(titulo, datos) {
         // Cambio el título del modal según la acción (crear o editar)
         $('#modal-producto-title').text(titulo);
+        // Limpio los errores de validación del envío anterior (si los hay)
+        EIS.limpiarErroresFormulario('#form-producto');
         // Reseteo el formulario a sus valores iniciales
         $('#form-producto')[0].reset();
         // Limpio el campo oculto del ID (para indicar que es un nuevo producto)
@@ -220,7 +222,7 @@ $(function () {
                 sel.append(opt);
             });
             if (selectedId) sel.val(selectedId);
-            sel.formSelect();
+            EIS.formSelect(sel);
         });
     }
 
@@ -259,6 +261,7 @@ $(function () {
     // Abre el modal de categorías y carga la lista.
     // ================================================================
     $(document).on('click', '.btn-gestionar-categorias', function () {
+        EIS.limpiarErroresFormulario('#form-categoria');
         $('#form-categoria')[0].reset();
         $('#categoria-id').val('');
         M.updateTextFields();
@@ -272,15 +275,9 @@ $(function () {
     // ================================================================
     $('#form-categoria').on('submit', function (e) {
         e.preventDefault();
-        var id = $('#categoria-id').val();
-        var nombre = $('#categoria-nombre').val().trim();
-        if (!nombre) {
-            EIS.toast('El nombre es obligatorio', 'red', 'error');
-            return;
-        }
-        var accion = id ? 'actualizarCategoria' : 'crearCategoria';
-        var data = id ? { id: id, nombre: nombre } : { nombre: nombre };
-        $.post(API + accion, data, function (r) {
+        var $form = $(this);
+        var accion = $('#categoria-id').val() ? 'actualizarCategoria' : 'crearCategoria';
+        $.post(API + accion, $form.serialize(), function (r) {
             if (r.success) {
                 EIS.toast(r.message, 'green', 'check_circle');
                 $('#form-categoria')[0].reset();
@@ -288,7 +285,7 @@ $(function () {
                 M.updateTextFields();
                 cargarCategorias();
             } else {
-                EIS.toast(r.error || 'Error al guardar', 'red', 'error');
+                EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
             EIS.toast('Error de conexión', 'red', 'error');
@@ -333,6 +330,7 @@ $(function () {
     // Resetea el formulario de categoría.
     // ================================================================
     $(document).on('click', '.btn-cancelar-cat', function () {
+        EIS.limpiarErroresFormulario('#form-categoria');
         $('#form-categoria')[0].reset();
         $('#categoria-id').val('');
         M.updateTextFields();
@@ -408,58 +406,15 @@ $(function () {
     // ================================================================
     $('#form-producto').on('submit', function (e) {
         e.preventDefault();
+        var $form = $(this);
 
-        var codigo       = $('#producto-codigo').val().trim();
-        var nombre       = $('#producto-nombre').val().trim();
-        var categoria_id = parseInt($('#producto-categoria').val()) || 0;
-        var stock        = parseInt($('#producto-stock').val()) || 0;
-        var stock_minimo = parseInt($('#producto-stock-minimo').val()) || 0;
-        var costo_compra = parseFloat($('#producto-costo').val()) || 0;
-        var precio_venta = parseFloat($('#producto-precio').val()) || 0;
-
-        if (!codigo || !nombre || !categoria_id) {
-            EIS.toast('Código, nombre y categoría son obligatorios', 'red', 'error');
-            return;
-        }
-
-        if (codigo.length < 1 || codigo.length > 50) {
-            EIS.toast('El código debe tener entre 1 y 50 caracteres', 'red', 'error');
-            return;
-        }
-
-        if (nombre.length < 2 || nombre.length > 100) {
-            EIS.toast('El nombre debe tener entre 2 y 100 caracteres', 'red', 'error');
-            return;
-        }
-
-        if (stock < 0) {
-            EIS.toast('El stock no puede ser negativo', 'red', 'error');
-            return;
-        }
-
-        if (stock_minimo < 1) {
-            EIS.toast('El stock mínimo debe ser al menos 1', 'red', 'error');
-            return;
-        }
-
-        if (costo_compra < 0) {
-            EIS.toast('El costo de compra no puede ser negativo', 'red', 'error');
-            return;
-        }
-
-        if (precio_venta < 0) {
-            EIS.toast('El precio de venta no puede ser negativo', 'red', 'error');
-            return;
-        }
-
-        if (precio_venta > 0 && costo_compra > 0 && precio_venta < costo_compra) {
-            EIS.toast('El precio de venta no puede ser menor al costo de compra', 'red', 'error');
-            return;
-        }
+        // La validación de campos obligatorios la hace el servidor (PHP);
+        // si falta algún campo, el controlador devuelve "fieldErrors" y los
+        // mostramos en pantalla de forma persistente.
 
         var id = $('#producto-id').val();
         var accion = id ? 'actualizar' : 'crear';
-        var data = $(this).serialize();
+        var data = $form.serialize();
 
         $.post(API + accion, data, function (r) {
             if (r.success) {
@@ -468,7 +423,7 @@ $(function () {
                 refrescarTabla();
                 refrescarKPI();
             } else {
-                EIS.toast(r.error || 'Error al guardar', 'red', 'error');
+                EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
             EIS.toast('Error de conexión al guardar', 'red', 'error');

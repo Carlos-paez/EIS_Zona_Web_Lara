@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Logger;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Models\Activo;
@@ -44,6 +45,7 @@ class ActivoController
                 default      => $this->json(false, null, 'Acción no válida'),
             };
         } catch (\PDOException $e) {
+            Logger::error($e, 'Activos - consulta SQL');
             $msg = $e->getMessage();
             if (str_contains($msg, 'foreign key constraint') || str_contains($msg, 'a foreign key constraint fails')) {
                 echo json_encode(['success' => false, 'error' => 'No se puede eliminar: el activo tiene registros asociados.']);
@@ -53,6 +55,7 @@ class ActivoController
         } catch (\InvalidArgumentException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         } catch (\Exception $e) {
+            Logger::error($e, 'Activos');
             echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
         }
     }
@@ -99,6 +102,16 @@ class ActivoController
             return;
         }
 
+        $errores = Validator::requeridos($_POST, [
+            'marca'          => 'marca',
+            'descripcion'    => 'descripción',
+            'tipo_activo_id' => 'tipo de activo',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
+            return;
+        }
+
         $marca       = Validator::texto($_POST['marca'] ?? null, 'marca', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'La marca contiene caracteres no permitidos']);
         $descripcion = Validator::texto($_POST['descripcion'] ?? null, 'descripción', ['required' => false, 'max' => 1000]);
         $tipoActivo  = Validator::id($_POST['tipo_activo_id'] ?? null, 'tipo de activo');
@@ -117,6 +130,17 @@ class ActivoController
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $errores = Validator::requeridos($_POST, [
+            'id'             => 'ID del activo',
+            'marca'          => 'marca',
+            'descripcion'    => 'descripción',
+            'tipo_activo_id' => 'tipo de activo',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
             return;
         }
 

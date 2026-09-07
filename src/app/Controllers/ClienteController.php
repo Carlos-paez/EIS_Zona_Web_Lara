@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Logger;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Models\Cliente;
@@ -42,6 +43,7 @@ class ClienteController
                 default      => $this->json(false, null, 'Acción no válida'),
             };
         } catch (\PDOException $e) {
+            Logger::error($e, 'Clientes - consulta SQL');
             $msg = $e->getMessage();
             if (str_contains($msg, 'foreign key constraint') || str_contains($msg, 'a foreign key constraint fails')) {
                 echo json_encode(['success' => false, 'error' => 'No se puede eliminar: el cliente tiene registros asociados.']);
@@ -51,6 +53,7 @@ class ClienteController
         } catch (\InvalidArgumentException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         } catch (\Exception $e) {
+            Logger::error($e, 'Clientes');
             echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
         }
     }
@@ -89,6 +92,17 @@ class ClienteController
             return;
         }
 
+        $errores = Validator::requeridos($_POST, [
+            'cedula'   => 'cédula',
+            'nombre'   => 'nombre',
+            'apellido' => 'apellido',
+            'direccion' => 'dirección',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
+            return;
+        }
+
         $cedula    = Validator::cedula($_POST['cedula'] ?? null, 'cédula');
         $nombre    = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos']);
         $apellido  = Validator::texto($_POST['apellido'] ?? null, 'apellido', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos']);
@@ -112,6 +126,18 @@ class ClienteController
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            return;
+        }
+
+        $errores = Validator::requeridos($_POST, [
+            'id'       => 'ID del cliente',
+            'cedula'   => 'cédula',
+            'nombre'   => 'nombre',
+            'apellido' => 'apellido',
+            'direccion' => 'dirección',
+        ]);
+        if ($errores) {
+            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
             return;
         }
 
