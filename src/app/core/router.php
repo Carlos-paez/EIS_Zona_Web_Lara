@@ -35,12 +35,12 @@ class Router
 
     /** Títulos de cada página para el layout. */
     private const PAGE_TITLES = [
-        'dashboard'          => 'Panel de Control',
+        'dashboard'          => 'Dashboard',
         'inventario'         => 'Gestión de inventario',
         'ventas'             => 'Punto de Venta (POS)',
-        'ciberControl'       => 'Control de Cybercafé',
+        'ciberControl'       => 'Control de Ciber',
         'proveedores'        => 'Solicitudes a Proveedores',
-        'proveedores-gestion'=> 'Gestión de Proveedores',
+        'proveedores-gestion' => 'Gestión de Proveedores',
         'clientes'           => 'Gestión de Clientes',
         'reportes'           => 'Reportes y Estadísticas',
         'activos'            => 'Gestión de Activos',
@@ -61,7 +61,7 @@ class Router
         'ventas'             => VentaController::class,
         'roles'              => RolController::class,
         'proveedores'        => ProveedorController::class,
-        'proveedores-gestion'=> ProveedorGestionController::class,
+        'proveedores-gestion' => ProveedorGestionController::class,
         'asesorias'          => AsesoriaController::class,
         'ciberControl'       => CiberController::class,
         'activos'            => ActivoController::class,

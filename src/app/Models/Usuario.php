@@ -186,7 +186,7 @@ class Usuario extends Model
         $stmt = $this->db->query("
             SELECT u.id, u.user_name AS username, u.nombre, u.apellido, u.email,
                    CASE WHEN u.estatus IN ('1','activo') THEN '1' ELSE '0' END AS activo,
-                   ru.rol, r.nombre_rol AS rol_nombre, u.fk_rol_usuario
+                   r.nombre_rol AS rol_nombre, u.fk_rol_usuario
             FROM usuarios u
             LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
             LEFT JOIN roles r ON ru.fk_rol = r.id
@@ -199,7 +199,7 @@ class Usuario extends Model
     {
         $id = $this->sanitizeInt($id);
         $stmt = $this->db->prepare("
-            SELECT u.*, ru.rol, r.nombre_rol AS rol_nombre,
+            SELECT u.*, r.nombre_rol AS rol_nombre,
                    CASE WHEN u.estatus IN ('1','activo') THEN '1' ELSE '0' END AS estatus_num
             FROM usuarios u
             LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
@@ -215,7 +215,7 @@ class Usuario extends Model
     {
         $username = $this->sanitizeString($username);
         $stmt = $this->db->prepare("
-            SELECT u.*, ru.rol, r.nombre_rol AS rol_nombre
+            SELECT u.*, r.nombre_rol AS rol_nombre
             FROM usuarios u
             LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
             LEFT JOIN roles r ON ru.fk_rol = r.id
@@ -258,7 +258,7 @@ class Usuario extends Model
 
     public function obtenerRolesAsignables(): array
     {
-        $stmt = $this->db->query("SELECT id, rol AS nombre FROM rol_usuarios ORDER BY rol");
+        $stmt = $this->db->query("SELECT ru.id, r.nombre_rol AS nombre FROM rol_usuarios ru JOIN roles r ON r.id = ru.fk_rol ORDER BY r.nombre_rol");
         return $stmt->fetchAll();
     }
 

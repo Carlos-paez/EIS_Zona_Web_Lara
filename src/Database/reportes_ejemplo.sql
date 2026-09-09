@@ -339,8 +339,7 @@ SELECT
     CONCAT(u.nombre, ' ', u.apellido)     AS nombre_completo,
     u.email,
     u.estatus,
-    r.nombre_rol                          AS rol,
-    ru.rol                                AS rol_detalle
+    r.nombre_rol                          AS rol
 FROM usuarios u
 JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
 JOIN roles r ON ru.fk_rol = r.id

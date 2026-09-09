@@ -102,8 +102,8 @@ CREATE TABLE tipo_activo
 CREATE TABLE rol_usuarios
 (
     id     INT PRIMARY KEY AUTO_INCREMENT,
-    fk_rol INT,
-    rol    VARCHAR(50) not null,
+    fk_rol INT          NOT NULL,
+    UNIQUE KEY uq_rol_usuarios_fk_rol (fk_rol),
     FOREIGN KEY (fk_rol) REFERENCES roles (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE

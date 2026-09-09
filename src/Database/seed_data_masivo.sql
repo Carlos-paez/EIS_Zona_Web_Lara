@@ -711,15 +711,15 @@ INSERT INTO tipo_activo (nombre_tipo) VALUES
 -- ============================================================
 -- ROL_USUARIOS (8 registros)
 -- ============================================================
-INSERT INTO rol_usuarios (fk_rol, rol) VALUES
-(1, 'Administrador'),
-(2, 'Vendedor'),
-(3, 'Almacenista'),
-(4, 'Asesor'),
-(5, 'Soporte Técnico'),
-(6, 'Gerente General'),
-(7, 'Contador'),
-(8, 'Recursos Humanos');
+INSERT INTO rol_usuarios (fk_rol) VALUES
+(1),
+(2),
+(3),
+(4),
+(5),
+(6),
+(7),
+(8);
 
 -- ============================================================
 -- USUARIOS (80 registros)

@@ -243,7 +243,7 @@ class Rol extends Model
 
         // usuarios.fk_rol_usuario referencia rol_usuarios.id (no roles.id).
         // Buscamos el rol_usuarios.id correspondiente al rol seleccionado.
-        $stmt = $this->db->prepare("SELECT ru.id, ru.rol FROM rol_usuarios ru WHERE ru.fk_rol = ? LIMIT 1");
+        $stmt = $this->db->prepare("SELECT ru.id, r.nombre_rol AS rol FROM rol_usuarios ru JOIN roles r ON r.id = ru.fk_rol WHERE ru.fk_rol = ? LIMIT 1");
         $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
         $stmt->execute();
         $rolUsuarios = $stmt->fetch();
