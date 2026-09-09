@@ -130,12 +130,12 @@ INSERT INTO tipo_activo (nombre_tipo) VALUES
 -- ============================================================
 -- ROL_USUARIOS
 -- ============================================================
-INSERT INTO rol_usuarios (fk_rol, rol) VALUES
-(1, 'Administrador'),
-(2, 'Vendedor'),
-(3, 'Almacenista'),
-(4, 'Asesor'),
-(5, 'Soporte Técnico');
+INSERT INTO rol_usuarios (fk_rol) VALUES
+(1),
+(2),
+(3),
+(4),
+(5);
 
 -- ============================================================
 -- USUARIOS

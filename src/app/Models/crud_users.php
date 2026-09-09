@@ -38,7 +38,7 @@ function obtenerUsuarios($pdo) {
     // Consulta con LEFT JOIN a rol_usuarios y roles para incluir el nombre del rol
     $stmt = $pdo->query("
         SELECT u.id, u.user_name AS username, u.nombre, u.apellido, u.email, u.estatus AS activo,
-               ru.rol, r.nombre_rol AS rol_nombre
+               r.nombre_rol AS rol_nombre
         FROM usuarios u
         LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
         LEFT JOIN roles r ON ru.fk_rol = r.id
@@ -57,7 +57,7 @@ function obtenerUsuarios($pdo) {
 function obtenerUsuarioPorId($pdo, $id) {
     // Consulta parametrizada que une usuarios con sus tablas de rol
     $stmt = $pdo->prepare("
-        SELECT u.*, ru.rol, r.nombre_rol AS rol_nombre
+        SELECT u.*, r.nombre_rol AS rol_nombre
         FROM usuarios u
         LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
         LEFT JOIN roles r ON ru.fk_rol = r.id
@@ -78,7 +78,7 @@ function obtenerUsuarioPorId($pdo, $id) {
 function obtenerUsuarioPorUsername($pdo, $username) {
     // Consulta parametrizada filtrando por user_name y estatus 'activo'
     $stmt = $pdo->prepare("
-        SELECT u.*, ru.rol, r.nombre_rol AS rol_nombre
+        SELECT u.*, r.nombre_rol AS rol_nombre
         FROM usuarios u
         LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
         LEFT JOIN roles r ON ru.fk_rol = r.id
