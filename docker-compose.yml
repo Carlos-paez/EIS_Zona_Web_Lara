@@ -1,0 +1,59 @@
+# ============================================================
+# EIS System — Docker Compose
+# Uso: docker compose up --build
+# ============================================================
+name: eis-zona-web
+
+services:
+  web:
+    build: .
+    container_name: eis_web
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    environment:
+      # La app lee estas variables (Database.php y Config/database.php)
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-zona_web_lara}
+      DB_USER: ${DB_USER:-eis}
+      DB_PASS: ${DB_PASS:-eis_secret}
+    volumes:
+      # Monta el código para que los cambios se reflejen sin rebuildar la imagen
+      - ./src:/var/www/html/src
+      # Persistencia de logs (src/logs/errores.md)
+      - ./src/logs:/var/www/html/src/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    # healthcheck:
+    #   test: ["CMD", "php", "-r", "exit(@file('http://localhost/') ? 0 : 1);"]
+    #   interval: 15s
+    #   timeout: 5s
+    #   retries: 5
+
+  db:
+    image: mysql:8.0
+    container_name: eis_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_secret}
+      MYSQL_DATABASE: ${DB_NAME:-zona_web_lara}
+      MYSQL_USER: ${DB_USER:-eis}
+      MYSQL_PASSWORD: ${DB_PASS:-eis_secret}
+    volumes:
+      - db_data:/var/lib/mysql
+      # Los .sql se ejecutan SOLO la primera vez que se crea el volumen
+      - ./src/Database/estructura.sql:/docker-entrypoint-initdb.d/01-estructura.sql:ro
+      - ./src/Database/seed_data.sql:/docker-entrypoint-initdb.d/02-seed_data.sql:ro
+    # Para conectarse a MySQL desde el host (DBeaver, MySQL Workbench...)
+    # ports:
+    #   - "${DB_PORT:-3307}:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  db_data:

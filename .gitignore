@@ -1,0 +1,6 @@
+# Archivos de entorno (credenciales locales, no versionar)
+.env
+.env.*.local
+
+# Logs de la aplicación
+src/logs/*.log

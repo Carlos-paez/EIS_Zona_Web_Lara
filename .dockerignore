@@ -1,0 +1,27 @@
+# ============================================================
+# Contexto de build de Docker — exclusiones
+# ============================================================
+
+# Control de versiones
+.git
+.gitignore
+.idea
+
+# Documentación (no necesaria en runtime)
+docs
+*.md
+
+# Configuración / credenciales locales (no copiar al contenedor)
+.env
+.env.*.local
+
+# Archivos de Docker (ya se copian explícitamente vía Dockerfile/compose)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Logs
+*.log
+
+# Ignorar el montaje del host: el volumen ./src ya cubre la app
+node_modules

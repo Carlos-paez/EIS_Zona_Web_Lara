@@ -9,11 +9,13 @@
 // =============================================================================
 
 // Configuración de la conexión a la base de datos MySQL usando PDO
+// Las credenciales se leen desde variables de entorno (Docker) con
+// valores por defecto para desarrollo local (XAMPP/WAMP/Laragon).
 
-    $host = "localhost";          // Dirección del servidor de base de datos
-    $db = "zona_web_lara";        // Nombre de la base de datos
-    $user = "root";              // Usuario de MySQL
-    $pass = "";                  // Contraseña de MySQL (vacía en desarrollo local)
+    $host = getenv('DB_HOST') ?: "localhost";          // Dirección del servidor de base de datos
+    $db = getenv('DB_NAME') ?: "zona_web_lara";        // Nombre de la base de datos
+    $user = getenv('DB_USER') ?: "root";              // Usuario de MySQL
+    $pass = getenv('DB_PASS') ?: "";                  // Contraseña de MySQL (vacía en desarrollo local)
     $charset = 'utf8mb4';        // Juego de caracteres UTF-8 (soporta emojis y caracteres especiales)
 
 // Cadena de conexión (DSN - Data Source Name) que PDO necesita para conectarse
