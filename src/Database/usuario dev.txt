@@ -1,0 +1,8 @@
+INSERT INTO usuarios (nombre, apellido, user_name, password_hash, email, estatus, fk_rol_usuario) VALUES
+('Carlos', 'Páez', 'cpaez', '$2y$10$CrMD5/k0GOi0OZpbGjPyHO95NjC1Q0pNaLhMieltQDH0P9HPHE6Hu', 'zonaweblara@gmail.com', '1', 2);
+
+
+
+
+cpaez
+3006

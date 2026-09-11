@@ -1,0 +1,317 @@
+﻿# Mapa Navegacional — EIS Zona Web Lara (ZWL)
+
+  
+
+> Diagrama de navegación de la aplicación PHP generado con Mermaid.
+
+  
+
+---
+
+  
+
+## Diagrama
+
+  
+
+```mermaid
+---
+
+config:
+
+ layout: elk
+
+ theme: mc
+
+---
+
+flowchart TB
+
+subgraph subGraph1["CAPA DE DATOS"]
+
+    DB@{ label: "🗄️ DB 'zona_web_lara'<br>MySQL + PDO (21 tablas)" }
+
+ end
+
+  ENTRY["/ (Raíz)"] -- ".htaccess redirige a src/" --> INDEX["src/index.php"]
+
+  INDEX -- require --> ROUTER["src/app/core/router.php"]
+
+  ROUTER -- "?pagina=login (default)" --> LOGIN["login.php<br>Formulario de acceso"]
+
+  ROUTER -- "?pagina=login_validate" --> VALIDATE["AuthController::login()<br>Validar credenciales vs BD"]
+
+  ROUTER -- "?pagina=logout" --> LOGOUT["AuthController::logout()<br>Cerrar sesión"]
+
+  ROUTER -- "?pagina=dashboard" --> DASHBOARD["dashboard.php"]
+
+  ROUTER -- "?pagina=inventario" --> INVENTARIO["inventario.php"]
+
+ROUTER -- "?pagina=ventas" --> VENTAS["ventas.php"]
+
+    ROUTER -- "?pagina=clientes" --> CLIENTES["clientes.php"]
+
+    ROUTER -- "?pagina=proveedores" --> PROVEEDORES["proveedores.php"]
+
+    ROUTER -- "?pagina=proveedores-gestion" --> PROV_GEST["proveedores-gestion.php"]
+
+    ROUTER -- "?pagina=ciberControl" --> CIBER["ciberControl.php"]
+
+  ROUTER -- "?pagina=reportes" --> REPORTES["reportes.php"]
+
+  ROUTER -- "?pagina=activos" --> ACTIVOS["activos.php"]
+
+  ROUTER -- "?pagina=asesorias" --> ASESORIAS["asesorias.php"]
+
+  ROUTER -- "?pagina=usuarios" --> USUARIOS["usuarios.php<br>CRUD Usuarios (BD)"]
+
+  ROUTER -- "?pagina=roles" --> ROLES["roles.php<br>CRUD Roles/Permisos (BD)"]
+
+  LOGIN -- POST usuario/contraseña --> VALIDATE
+
+  VALIDATE -- AuthController<br>password_verify --> SESSION@{ label: "$_SESSION['logged_in'] = true" }
+
+  VALIDATE -- fallo --> LOGIN_ERROR["?pagina=login&error=1"]
+
+  SESSION -- redirect --> DASHBOARD
+
+  LAYOUT["layout.php"] --> SIDEBAR["Sidebar Izquierdo<br>12 módulos"] & TOPBAR["Barra Superior<br>Reloj + Notificaciones + Usuario"] & CONTENT["require \$contentView<br>(vista específica)"]
+
+  SIDEBAR -- Dashboard --> DASHBOARD
+
+  SIDEBAR -- Inventario --> INVENTARIO
+
+  SIDEBAR -- Ventas (POS) --> VENTAS
+
+  SIDEBAR -- Clientes --> CLIENTES
+
+  SIDEBAR -- Solicitudes --> PROVEEDORES
+
+  SIDEBAR -- Gestión Proveedores --> PROV_GEST
+
+  SIDEBAR -- Cyber --> CIBER
+
+  SIDEBAR -- Reportes --> REPORTES
+
+  SIDEBAR -- Activos --> ACTIVOS
+
+  SIDEBAR -- Asesoría Legal --> ASESORIAS
+
+  SIDEBAR -- Configuración (Usuarios) --> USUARIOS
+
+  SIDEBAR -- Roles y Permisos --> ROLES
+
+  SIDEBAR -- Cerrar Sesión --> LOGOUT
+
+  DASHBOARD -- Panel de Control<br>KPIs, Horas pico, Stock crítico --> DASH_VIEW["📊 Vista Dashboard"]
+
+  INVENTARIO -- Gestión de Inventario<br>Búsqueda, Tabla, Paginación --> INV_VIEW["📦 Vista Inventario"]
+
+  VENTAS -- Punto de Venta<br>Catálogo, Carrito, Procesar --> VENT_VIEW["🛒 Vista Ventas"]
+
+  CLIENTES -- Gestión de Clientes<br>CRUD, Tabla, Búsqueda --> CLIENTES_VIEW["👥 Vista Clientes"]
+
+  PROVEEDORES -- Solicitudes a Proveedores<br>Filtros, Tabla, Paginación --> PROV_VIEW["📋 Vista Proveedores"]
+
+  PROV_GEST -- Gestión de Proveedores<br>CRUD, Tabla, Búsqueda --> PROV_GEST_VIEW["🏢 Vista Proveedores (Gestión)"]
+
+  CIBER -- Control Cybercafé<br>3 Zonas, 10 Estaciones --> CIBER_VIEW["🖥️ Vista Cyber"]
+
+  REPORTES -- Reportes y Estadísticas<br>KPIs mensuales, Generador --> REP_VIEW["📈 Vista Reportes"]
+
+  ACTIVOS -- Gestión de Activos<br>Equipos, Licencias, Herramientas --> ACT_VIEW["🔧 Vista Activos"]
+
+  ASESORIAS -- Asesoría Legal<br>Registro, Validación, Historial --> ASE_VIEW["⚖️ Vista Asesorías"]
+
+DASH_VIEW --> DB
+
+INV_VIEW --> DB
+
+VENT_VIEW --> DB
+
+  CLIENTES_VIEW --> DB
+
+  PROV_VIEW --> DB
+
+  PROV_GEST_VIEW --> DB
+
+CIBER_VIEW --> DB
+
+REP_VIEW --> DB
+
+ACT_VIEW --> DB
+
+ASE_VIEW --> DB
+
+USUARIOS_VIEW@{ label: "📋 Vista Usuarios" } --> DB
+
+ROLES_VIEW@{ label: "📋 Vista Roles" } --> DB
+
+  
+
+  SESSION@{ shape: rect}
+
+  DB@{ shape: cylinder}
+```
+
+  
+
+---
+
+  
+
+## Tabla de rutas
+
+  
+
+| Ruta | Tipo | Vista | Descripción |
+
+|------|------|-------|-------------|
+
+| `?pagina=login` | 🔓 Pública | `login.php` | Formulario de acceso |
+
+| `?pagina=login_validate` | 🔒 POST (Pública) | `AuthController::login()` | Valida credenciales vs BD con password_verify |
+
+| `?pagina=login&logout=1` | 🔒 GET | `Router::logout()` | Destruye sesión, redirige a login |
+
+| `?pagina=dashboard` | 🔒 Privada | `dashboard.php` | Panel de control con KPIs |
+
+| `?pagina=inventario` | 🔒 Privada | `inventario.php` | Gestión de inventario (conectado a BD) |
+
+| `?pagina=ventas` | 🔒 Privada | `ventas.php` | Punto de venta (POS) |
+
+| `?pagina=clientes` | 🔒 Privada | `clientes.php` | Gestión de clientes (conectado a BD) |
+
+| `?pagina=proveedores` | 🔒 Privada | `proveedores.php` | Solicitudes a proveedores (conectado a BD) |
+
+| `?pagina=proveedores-gestion` | 🔒 Privada | `proveedores-gestion.php` | CRUD de proveedores (conectado a BD) |
+
+| `?pagina=ciberControl` | 🔒 Privada | `ciberControl.php` | Control de cybercafé |
+
+| `?pagina=reportes` | 🔒 Privada | `reportes.php` | Reportes y estadísticas |
+
+| `?pagina=activos` | 🔒 Privada | `activos.php` | Gestión de activos |
+
+| `?pagina=asesorias` | 🔒 Privada | `asesorias.php` | Asesoría legal |
+
+| `?pagina=usuarios` | 🔒 Privada | `usuarios.php` | Gestión de usuarios (conectado a BD) |
+
+| `?pagina=roles` | 🔒 Privada | `roles.php` | Roles y permisos (conectado a BD) |
+
+  
+
+---
+
+  
+
+## Flujo de navegación
+
+  
+
+```
+
+INICIO
+
+ │
+
+ ├─ / → .htaccess → src/index.php → router.php
+
+ │
+
+ ├─ [No autenticado]
+
+ │  └─ ?pagina=login (default)
+
+ │     └─ POST credentials → login_validate.php
+
+ │       ├─ éxito → $_SESSION['logged_in'] → redirect /dashboard
+
+ │       └─ fallo → redirect /login?error=1
+
+ │
+
+ └─ [Autenticado] → layout.php (sidebar + topbar + contenido)
+
+   │
+
+   ├─ /dashboard    → Panel de Control
+
+   ├─ /inventario    → Gestión de Inventario
+
+   ├─ /ventas      → Punto de Venta (POS)
+
+   ├─ /clientes     → Gestión de Clientes
+
+   ├─ /proveedores   → Solicitudes a Proveedores
+
+   ├─ /proveedores-gestion → Gestión de Proveedores
+
+   ├─ /ciberControl   → Control de Cybercafé
+
+   ├─ /reportes     → Reportes y Estadísticas
+
+   ├─ /activos     → Gestión de Activos
+
+   ├─ /asesorias    → Asesoría Legal
+
+   └─ "Cerrar Sesión"  → /login
+
+```
+
+  
+
+---
+
+  
+
+## Mecanismo de ruteo
+
+  
+
+1. **Apache rewrite** (`.htaccess` en `src/`): `/dashboard` → `index.php?pagina=dashboard` o `/nombre` → `?pagina=nombre`
+
+2. **Front controller** (`index.php`): Carga autoloader, instancia `new Router()`, ejecuta `$router->handle()`
+
+3. **Router** (`router.php` - clase `Router` en `App\Core`):
+
+- `resolvePagina()`: Sanitiza `?pagina=` (regex `^[a-zA-Z0-9_-]+$`)
+
+- `handle()`: Determina el tipo de petición:
+
+- El mapa `CONTROLLERS` (`pagina => clase`) resuelve los 12 controladores; si hay `action`, `dispatchAction()` instancia y ejecuta `handle()`
+
+- ¿Auth (login_validate/logout)? → `AuthController::login()` o `logout()`
+
+- ¿Vista normal? → `render()`
+
+- `render()`: Si es pública (`login`), renderiza standalone
+
+- Si es privada: verifica `$_SESSION['logged_in']`, redirige a login si no existe
+
+- Si la vista no existe: HTTP 404
+
+- Para páginas privadas: `render()` → `layout.php` vía `require $contentView`
+
+  
+
+---
+
+  
+
+## Layout principal (`layout.php`)
+
+  
+
+| Componente | Descripción |
+
+|------------|-------------|
+
+| **Sidebar** | Menú lateral fijo con 12 módulos + modo oscuro + cerrar sesión |
+
+| **Topbar** | Barra superior con título de página, reloj, notificaciones, usuario |
+
+| **Contenido** | `<div class="container">` con `require $contentView` |
+
+| **Back-to-top** | Botón flotante en esquina inferior derecha |
+
+| **Scripts** | Materialize JS + `app.js` |

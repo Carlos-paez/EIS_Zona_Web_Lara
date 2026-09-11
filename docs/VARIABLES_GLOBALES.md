@@ -1,0 +1,610 @@
+# Variables Globales del Sistema EIS
+
+Este documento detalla todas las variables globales, superglobales, de configuración y de ámbito compartido utilizadas en la aplicación PHP EIS System (MVC).
+
+---
+
+## Índice
+
+1. [Superglobales de PHP](#1-superglobales-de-php)
+2. [Variables de Sesión (`$_SESSION`)](#2-variables-de-sesión-_session)
+3. [Variables de Configuración de Base de Datos (Procedural)](#3-variables-de-configuración-de-base-de-datos-procedural)
+4. [Variables de Configuración de Base de Datos (Singleton OOP)](#4-variables-de-configuración-de-base-de-datos-singleton-oop)
+5. [Variables del Front Controller (`src/index.php`)](#5-variables-del-front-controller-srcindexphp)
+6. [Variables de la Clase `Router`](#6-variables-de-la-clase-router)
+7. [Variables del Layout Principal (`src/app/template/layout.php`)](#7-variables-del-layout-principal-srcapptemplatelayoutphp)
+8. [Variables de los Controladores](#8-variables-de-los-controladores)
+9. [Variables de la Vista de Login (`src/app/Views/login.php`)](#9-variables-de-la-vista-de-login-srcappviewsloginphp)
+10. [Variables del Script CLI (`src/cli/create_user.php`)](#10-variables-del-script-cli-srcclicreate_userphp)
+11. [Variables del Service Worker (`src/sw.js`)](#11-variables-del-service-worker-srcswjs)
+12. [Variables en las Vistas Protegidas](#12-variables-en-las-vistas-protegidas)
+13. [Constantes y Variables Especiales de PHP](#13-constantes-y-variables-especiales-de-php)
+
+---
+
+## 1. Superglobales de PHP
+
+Son arrays nativos del lenguaje accesibles desde cualquier ámbito. La aplicación utiliza las siguientes:
+
+| Variable | Propósito | Archivos donde se usa |
+|---|---|---|
+| `$_GET` | Parámetros de la URL (query string). Contiene `pagina`, `action`, `id`, `error`, `orden_id`, `rol_id`, `termino`, `cedula`, `logout` | Todos los controladores AJAX (vía `Router::dispatchAction()`), `router.php`, `login.php` |
+| `$_POST` | Datos enviados mediante formularios HTTP POST o AJAX. Contiene credenciales de login, CSRF y los campos CRUD de todos los módulos | Todos los controladores AJAX, `AuthController.php` |
+| `$_SESSION` | Variables de sesión persistentes del lado del servidor. Contiene datos del usuario autenticado. | `router.php`, `AuthController.php`, `layout.php` |
+| `$_SERVER['REQUEST_METHOD']` | Método HTTP de la petición (`GET` o `POST`). Se usa para validar que el login solo acepte POST. | `AuthController.php` |
+
+### 1.1 Parámetros de `$_GET`
+
+| Clave | Tipo | Descripción | Valores posibles |
+|---|---|---|---|
+| `pagina` | `string` | Nombre de la vista o acción a ejecutar | `login`, `dashboard`, `inventario`, `ventas`, `proveedores`, `proveedores-gestion`, `clientes`, `ciberControl`, `reportes`, `activos`, `asesorias`, `usuarios`, `roles`, `login_validate`, `logout`, `menu` |
+| `action` | `string` | Acción JSON específica para controladores AJAX | **Dashboard:** `kpis`. **Inventario:** `listar`, `kpis`, `categorias`, `detalle`, `buscar`, `crear`, `actualizar`, `eliminar`, `crearCategoria`, `actualizarCategoria`, `eliminarCategoria`. **Ventas:** `productos`, `clientes`, `buscarCliente`, `registrar`. **Ciber:** `estaciones`, `tarifas`, `buscarCliente`, `iniciar`, `finalizar`, `estadisticas`, `historial`, `tiposActivo`, `obtenerPC`, `crearPC`, `actualizarPC`, `eliminarPC`, `cambiarEstadoPC`. **Proveedores:** `listar`, `kpis`, `detalle`, `productos`, `statuses`, `crear`, `actualizar`, `eliminar`, `lineas`, `agregarLinea`, `eliminarLinea`, `siguienteNumero`. **Proveedores-Gestión:** `listar`, `detalle`, `crear`, `actualizar`, `eliminar`, `kpis`. **Clientes:** `listar`, `detalle`, `crear`, `actualizar`, `eliminar`, `kpis`. **Asesorías:** `listar`, `detalle`, `buscar`, `crear`, `actualizar`, `eliminar`, `kpis`. **Activos:** `listar`, `detalle`, `crear`, `actualizar`, `estado`, `eliminar`, `kpis`, `tipos`. **Reportes:** `kpis`, `consultar`, `exportar`. **Roles:** `listar`, `detalle`, `crear`, `actualizar`, `eliminar`, `permisos`, `permisosRol`, `guardarPermisos`, `usuarios`, `asignarRol`. **Usuarios:** `listar`, `detalle`, `kpis`, `roles`, `crear`, `actualizar`, `estado`, `eliminar`, `password` |
+| `id` | `int` | ID del registro a consultar | Entero positivo |
+| `rol_id` | `int` | ID del rol para consultar permisos | Entero positivo |
+| `orden_id` | `int` | ID de la orden para consultar líneas | Entero positivo |
+| `cedula` | `string` | Cédula exacta o fragmento para buscar clientes/asesorías | Cadena de 5-20 caracteres |
+| `termino` | `string` | Término de búsqueda (productos, asesorías) | Cadena |
+| `logout` | `int` | Bandera para cerrar sesión desde `?pagina=login&logout=1` | `1` |
+| `error` | `int` | Indicador de error de autenticación | `1` |
+
+### 1.2 Parámetros de `$_POST`
+
+| Clave | Tipo | Descripción | Controlador |
+|---|---|---|---|
+| `csrf_token` | `string` | Token CSRF (obligatorio en todo POST) | Todos los controladores (verificado con `Router::verifyCsrfToken()`) |
+| `username` | `string` | Nombre de usuario para login | `AuthController` |
+| `password` | `string` | Contraseña para login / nueva contraseña de usuario | `AuthController`, `UsuarioController` |
+| `codigo` | `string` | Código de producto | `InventarioController` |
+| `nombre` | `string` | Nombre de producto/rol/proveedor/cliente/asesoría/categoría | Varios controladores |
+| `apellido` | `string` | Apellido de cliente/usuario | `ClienteController`, `UsuarioController` |
+| `descripcion` | `string` | Descripción de producto/asesoría/rol/marca de activo | Varios controladores |
+| `categoria_id` | `int` | ID de categoría de producto | `InventarioController` |
+| `stock` | `int` | Cantidad en stock | `InventarioController` |
+| `stock_minimo` | `int` | Stock mínimo permitido | `InventarioController` |
+| `costo_compra` | `float` | Precio de compra | `InventarioController` |
+| `precio_venta` | `float` | Precio de venta | `InventarioController` |
+| `id` | `int` | ID del registro a modificar/eliminar/consultar | Casi todos los controladores |
+| `termino` | `string` | Término de búsqueda de productos/asesorías | `InventarioController`, `AsesoriaController` |
+| `numero` | `string` | Número de orden de compra | `ProveedorController` |
+| `fecha` | `string` | Fecha de la orden (YYYY-MM-DD) | `ProveedorController` |
+| `fk_proveedor` | `int` | ID del proveedor | `ProveedorController` |
+| `fk_status` | `int` | ID del estado de la orden | `ProveedorController` |
+| `orden_id` | `int` | ID de la orden para líneas | `ProveedorController` |
+| `producto_id` | `int` | ID del producto en línea | `ProveedorController` |
+| `cantidad` | `int` | Cantidad solicitada / cantidad de línea de venta | `ProveedorController`, `VentaController` |
+| `precio` | `float` | Precio unitario en línea | `ProveedorController` |
+| `items` | `string` | JSON `[{id, cantidad}]` del carrito de venta | `VentaController` |
+| `ciudadano` | `string` | Nombre del ciudadano (venta/sesión cyber) | `VentaController`, `CiberController` |
+| `cedula` | `string` | Cédula del cliente (venta/sesión cyber/asesoría) | `VentaController`, `CiberController`, `AsesoriaController`, `ClienteController` |
+| `direccion` | `string` | Dirección del cliente | `VentaController`, `CiberController`, `AsesoriaController`, `ClienteController` |
+| `telefono` | `string` | Teléfono del cliente | Igual que `direccion` |
+| `rif` | `string` | RIF del proveedor | `ProveedorController`, `ProveedorGestionController` |
+| `email` | `string` | Email del proveedor/cliente | `ProveedorController`, `ProveedorGestionController`, `ClienteController` |
+| `estatus` | `int` | Estado activo/inactivo (usuario/activo) | `UsuarioController`, `ActivoController` |
+| `marca` | `string` | Marca del activo / PC de cyber | `ActivoController`, `CiberController` |
+| `tipo_activo_id` | `int` | ID del tipo de activo | `ActivoController`, `CiberController` |
+| `activa` | `int` | Si el activo/PC está activo (`1`/`0`) | `ActivoController`, `CiberController` |
+| `is_ciber` | `int` | Si el activo es estación de cyber | `ActivoController` |
+| `rol_id` | `int` | ID del rol (permisos/asignación) | `RolController` |
+| `usuario_id` | `int` | ID del usuario | `RolController`, `UsuarioController` |
+| `permisos` | `array` | IDs de permisos a asignar (se serializan como `permisos[]=`) | `RolController` |
+| `nombre_rol` | `string` | Nombre del rol | `RolController` |
+| `user_name` | `string` | Nombre de usuario | `UsuarioController` |
+| `tipo_asesoria_id` | `int` | ID del tipo de asesoría | `AsesoriaController` |
+| `tipo_reporte` | `string` | Tipo de reporte a consultar/exportar | `ReporteController` |
+| `formato` | `string` | Formato de exportación (`csv`, `excel`, `pdf`) | `ReporteController` |
+
+---
+
+## 2. Variables de Sesión (`$_SESSION`)
+
+La sesión se inicia en `Router::__construct()` mediante `session_start()`.
+
+| Variable | Tipo | Descripción | Se establece en | Se lee en |
+|---|---|---|---|---|
+| `$_SESSION['logged_in']` | `bool` | Indica si el usuario tiene una sesión activa | `AuthController::login()` | `Router::requireAuth()`, `Router::render()` |
+| `$_SESSION['user_id']` | `int` | ID del usuario autenticado (campo `id` de tabla `usuarios`) | `AuthController::login()` | Potencialmente en vistas o controladores |
+| `$_SESSION['username']` | `string` | Nombre de usuario (`user_name`) del autenticado | `AuthController::login()` | Potencialmente en vistas |
+| `$_SESSION['nombre']` | `string` | Nombre completo del usuario autenticado | `AuthController::login()` | Potencialmente en vistas |
+
+La sesión se destruye completamente con `session_destroy()` en `Router::logout()` (invocado vía `?pagina=login&logout=1`).
+
+---
+
+## 3. Variables de Configuración de Base de Datos (Procedural)
+
+Archivo: `src/Config/database.php`
+
+Este archivo define variables globales de conexión usadas por los CRUDs procedurales (`crud_users.php`, `crud_asesorias.php`). Al ser incluido con `require_once`, estas variables quedan en el ámbito global.
+
+| Variable | Tipo | Valor por defecto | Descripción |
+|---|---|---|---|
+| `$host` | `string` | `"localhost"` | Dirección del servidor MySQL |
+| `$db` | `string` | `"zona_web_lara"` | Nombre de la base de datos |
+| `$user` | `string` | `"root"` | Usuario de MySQL |
+| `$pass` | `string` | `""` | Contraseña de MySQL (vacía en desarrollo) |
+| `$charset` | `string` | `"utf8mb4"` | Juego de caracteres para la conexión |
+| `$dns` | `string` | `"mysql:host=localhost;dbname=zona_web_lara;charset=utf8mb4"` | DSN (Data Source Name) para PDO |
+| `$options` | `array` | `[PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false]` | Opciones de configuración de PDO |
+| `$pdo` | `PDO` | Nueva instancia de `PDO` | Objeto de conexión PDO activo |
+
+### 3.1 Opciones de PDO (`$options`)
+
+| Opción | Valor | Efecto |
+|---|---|---|
+| `PDO::ATTR_ERRMODE` | `PDO::ERRMODE_EXCEPTION` | Lanza excepciones `PDOException` en errores SQL |
+| `PDO::ATTR_DEFAULT_FETCH_MODE` | `PDO::FETCH_ASSOC` | Los resultados se devuelven como arrays asociativos (llaves = nombres de columna) |
+| `PDO::ATTR_EMULATE_PREPARES` | `false` | Desactiva emulación de consultas preparadas; usa preparación real del motor MySQL (más seguro contra inyección SQL) |
+
+---
+
+## 4. Variables de Configuración de Base de Datos (Singleton OOP)
+
+Archivo: `src/app/core/Database.php`
+
+### 4.1 Propiedad de clase (estática)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `Database::$instance` | `?PDO` | `private static` | Almacena la única instancia de la conexión PDO. Inicializada en `null`. Se asigna una sola vez en `getConnection()`. |
+
+### 4.2 Variables locales del método `getConnection()`
+
+| Variable | Tipo | Valor por defecto | Descripción |
+|---|---|---|---|
+| `$host` | `string` | `'localhost'` | Servidor MySQL |
+| `$db` | `string` | `'zona_web_lara'` | Nombre de BD |
+| `$user` | `string` | `'root'` | Usuario MySQL |
+| `$pass` | `string` | `''` | Contraseña MySQL |
+| `$charset` | `string` | `'utf8mb4'` | Juego de caracteres |
+| `$dns` | `string` | `"mysql:host=localhost;dbname=zona_web_lara;charset=utf8mb4"` | DSN de conexión |
+| `$options` | `array` | Mismas opciones que la versión procedural | Opciones PDO |
+
+---
+
+## 5. Variables del Front Controller (`src/index.php`)
+
+| Variable | Tipo | Valor | Descripción |
+|---|---|---|---|
+| `$router` | `Router` | `new Router()` | Instancia única del enrutador principal que maneja toda la solicitud |
+
+`index.php` (135 líneas) también configura el **manejo global de errores** antes de despachar la solicitud:
+
+| Función / directiva | Propósito |
+|---|---|
+| `error_reporting(E_ALL)` + `ini_set('display_errors', '0')` | Notifica y registra todos los errores sin exponerlos al navegador |
+| `ini_set('log_errors', '1')` + `ini_set('html_errors', '0')` | Registro de errores en el log de PHP |
+| `ob_start()` | Activa el buffer de salida (permite reemplazar respuestas parciales ante fallos fatales) |
+| `es_peticion_ajax()` | Helper global que detecta si la petición consume JSON (`X-Requested-With` o `action`) |
+| `limpiar_buffer_salida()` | Helper global que descarta el buffer de salida previo a un error |
+| `mostrar_error_generico($codigo = 500)` | Helper global que responde un error genérico (JSON para AJAX, HTML para páginas) |
+| `set_error_handler(...)` | Captura warnings/notices y los registra con `App\Core\Logger::error()` en `src/logs/errores.md` |
+| `set_exception_handler(...)` | Captura excepciones no manejadas, las registra y responde error 500 |
+| `register_shutdown_function(...)` | Detecta errores fatales (`E_ERROR`, `E_PARSE`, etc.) y los registra al terminar el script |
+
+---
+
+## 6. Variables de la Clase `Router`
+
+Archivo: `src/app/core/router.php`
+
+### 6.1 Propiedades de instancia
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `Router::$pagina` | `string` | `private` | Nombre de la página solicitada, resuelta y validada mediante `resolvePage()` |
+| `$_SESSION['csrf_token']` | `string` | superglobal | Token CSRF generado una sola vez por sesión con `bin2hex(random_bytes(32))`, inyectado en `window.EIS.csrfToken` y `<input name="csrf_token">`, verificado con `Router::verifyCsrfToken()` |
+
+La clase también define las constantes `PUBLIC_PAGES = ['login', 'login_validate']`, `PAGE_TITLES`, `PAGE_EXTRA_HEADERS` y **`CONTROLLERS`** (mapa `pagina => clase` con los **12 controladores AJAX**) que se usa en `dispatchAction()` para resolver el controlador según la página:
+
+```php
+'clientes' => ClienteController::class, 'inventario' => InventarioController::class,
+'ventas' => VentaController::class, 'roles' => RolController::class,
+'proveedores' => ProveedorController::class, 'proveedores-gestion' => ProveedorGestionController::class,
+'asesorias' => AsesoriaController::class, 'ciberControl' => CiberController::class,
+'activos' => ActivoController::class, 'dashboard' => DashboardController::class,
+'reportes' => ReporteController::class, 'usuarios' => UsuarioController::class,
+```
+
+Los métodos principales del enrutador son: `handle()` (procesa toda la solicitud), `resolvePagina()`, `dispatchAction()`, `logout()`, `render()`, `verifyCsrfToken()` (estático) y `redirect()`.
+
+### 6.2 Variables locales del método `render()`
+
+| Variable | Tipo | Valor | Descripción |
+|---|---|---|---|
+| `$rutaVista` | `string` | `$this->viewsDir() . $this->pagina . '.php'` | Ruta absoluta al archivo de la vista |
+
+La lista de páginas públicas es la constante `PUBLIC_PAGES = ['login', 'login_validate']`; `render()` la consume internamente. Además, `render()` expone las variables `$pageTitle`, `$headerExtra`, `$contentView` y `$pagina` que recibe `layout.php` (ver sección 6.3).
+
+### 6.3 Variables que expone `Router::render()` al layout
+
+| Variable | Tipo | Descripción |
+|---|---|---|
+| `$pagina` | `string` | Alias de `$this->pagina` para usar directamente en `layout.php` |
+| `$pageTitle` | `string` | Título de la página actual (de la constante `Router::PAGE_TITLES` o `'EIS System'` por defecto). Se pasa a `layout.php` |
+| `$headerExtra` | `string` | HTML de cabecera adicional (de la constante `Router::PAGE_EXTRA_HEADERS` o cadena vacía). Se pasa a `layout.php` |
+| `$contentView` | `string` | Ruta absoluta a la vista específica. Se pasa a `layout.php` para ser incluida con `require` |
+
+#### Mapa de títulos (`Router::PAGE_TITLES`)
+
+```php
+$titulos = [
+    'dashboard'        => 'Panel de Control',
+    'inventario'       => 'Gestión de inventario',
+    'ventas'           => 'Punto de Venta (POS)',
+    'ciberControl'     => 'Control de Cybercafé',
+    'proveedores'      => 'Solicitudes a Proveedores',
+    'proveedores-gestion' => 'Gestión de Proveedores',
+    'clientes'         => 'Gestión de Clientes',
+    'reportes'         => 'Reportes y Estadísticas',
+    'activos'          => 'Gestión de Activos',
+    'asesorias'        => 'Asesoría Legal',
+    'usuarios'         => 'Configuración de Usuarios',
+    'roles'            => 'Roles y Permisos',
+];
+```
+
+#### Mapa de cabeceras extra (`Router::PAGE_EXTRA_HEADERS`)
+
+```php
+$extraHeaders = [
+    'ciberControl' => '<span class="chip ...">Disponibles</span><span class="chip ...">Ocupadas</span>',
+];
+```
+
+### 6.4 Variable local del método `resolvePagina()`
+
+| Variable | Tipo | Descripción |
+|---|---|---|
+| `$pagina` | `string` | Variable temporal que almacena el nombre de página. Inicia como `'login'` por defecto, se sobrescribe con `$_GET['pagina']` si existe y pasa la validación regex |
+
+---
+
+## 7. Variables del Layout Principal (`src/app/template/layout.php`)
+
+Estas variables son **inyectadas** por `Router::render()` antes de incluir el layout. Están en el ámbito global de `layout.php`.
+
+| Variable | Tipo | Origen | Descripción |
+|---|---|---|---|
+| `$pageTitle` | `string` | `Router::render()` | Título de la página para la etiqueta `<title>` y los encabezados del navbar |
+| `$pagina` | `string` | `Router::render()` | Identificador de la página actual. Se usa para aplicar la clase `active` en el menú lateral |
+| `$headerExtra` | `string` | `Router::render()` | HTML adicional para el navbar (ej: chips de estado). Se muestra solo si no está vacío |
+| `$contentView` | `string` | `Router::render()` | Ruta absoluta al archivo `.php` de la vista específica. Se incluye con `require $contentView` |
+
+### 7.1 Uso en el layout
+
+- **`<?php echo $pageTitle; ?>`** - En `<title>`, `.page-title-desktop`, `.page-title-mobile`
+- **`<?php echo $pagina === 'dashboard' ? ' active' : ''; ?>`** - En cada ítem del menú lateral para resaltar la sección activa
+- **`<?php if (!empty($headerExtra)): ?> ... <?php echo $headerExtra; ?> ... <?php endif; ?>`** - Cabeceras adicionales condicionales
+- **`<?php require $contentView; ?>`** - Inyección del contenido específico de cada página
+- **`<?php if ($pagina === 'ventas'): ?>`** - Carga condicional de scripts JS específicos por módulo
+
+---
+
+## 8. Variables de los Controladores
+
+### 8.1 `AuthController` (`src/app/Controllers/AuthController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `AuthController::$model` | `Usuario` | `private` | Instancia del modelo `Usuario` para consultas de autenticación |
+
+**Variables locales del método `login()`:**
+
+| Variable | Origen | Descripción |
+|---|---|---|
+| `$username` | `$_POST['username'] ?? ''` | Nombre de usuario del formulario |
+| `$password` | `$_POST['password'] ?? ''` | Contraseña del formulario |
+| `$usuario` | `$this->model->autenticar($username, $password)` | Resultado de la autenticación: array con datos del usuario o `false` |
+
+### 8.2 `InventarioController` (`src/app/Controllers/InventarioController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `InventarioController::$model` | `Inventario` | `private` | Instancia del modelo `Inventario` |
+
+Expone el método `handle()` que despacha `$action = $_GET['action'] ?? ''` sobre productos (`listar`, `kpis`, `categorias`, `detalle`, `buscar`, `crear`, `actualizar`, `eliminar`) y categorías (`crearCategoria`, `actualizarCategoria`, `eliminarCategoria`). Variables locales de `crear()`/`actualizar()` provienen de `$_POST` con `??`: `$codigo`, `$nombre`, `$descripcion` (string); `$categoria_id`, `$stock`, `$stock_minimo` (int); `$costo_compra`, `$precio_venta` (float); más `$id` (int) en `actualizar()`/`eliminar()`/`detalle()`.
+
+### 8.3 `VentaController` (`src/app/Controllers/VentaController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `VentaController::$model` | `Venta` | `private` | Instancia del modelo `Venta` |
+
+Acciones: `productos`, `clientes`, `buscarCliente`, `registrar`. En `registrar()` las variables provienen de `$_POST`: `$items` (JSON decodificado con `json_decode`), `$ciudadano`, `$cedula`, `$direccion`, `$telefono`, y el `$usuarioId = $_SESSION['user_id']`.
+
+### 8.4 `CiberController` (`src/app/Controllers/CiberController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `CiberController::$model` | `CiberControl` | `private` | Instancia del modelo `CiberControl` |
+
+Acciones: `estaciones`, `tarifas`, `buscarCliente`, `iniciar`, `finalizar`, `estadisticas`, `historial`, `tiposActivo`, `obtenerPC`, `crearPC`, `actualizarPC`, `eliminarPC`, `cambiarEstadoPC`. Variables de `$_GET`/`$_POST`: `$id`, `$marca`, `$descripcion`, `$tipo_activo_id`, `$activa`, `$activoId`, `$tarifaId`, `$tiempoUso`, `$ciudadano`, `$cedula`, `$direccion`, `$telefono`.
+
+### 8.5 `ProveedorController` (`src/app/Controllers/ProveedorController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `ProveedorController::$model` | `Proveedor` | `private` | Instancia del modelo `Proveedor` |
+
+Acciones: `listar`, `kpis`, `detalle`, `productos`, `statuses`, `crear`, `actualizar`, `eliminar`, `lineas`, `agregarLinea`, `eliminarLinea`, `siguienteNumero`. Variables de `$_GET`/`$_POST`: `$action`, `$id`, `$numero`, `$fecha`, `$fk_proveedor`, `$fk_status`, `$orden_id`, `$producto_id`, `$cantidad`, `$precio`, `$rif`, `$nombre`, `$email`, `$telefono`.
+
+### 8.6 `ProveedorGestionController` (`src/app/Controllers/ProveedorGestionController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `ProveedorGestionController::$model` | `ProveedorGestion` | `private` | Instancia del modelo `ProveedorGestion` |
+
+Acciones: `listar`, `detalle`, `crear`, `actualizar`, `eliminar`, `kpis`. Variables de `$_GET`/`$_POST`: `$id`, `$rif`, `$nombre`, `$email`, `$telefono`, `$direccion`.
+
+### 8.7 `ClienteController` (`src/app/Controllers/ClienteController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `ClienteController::$model` | `Cliente` | `private` | Instancia del modelo `Cliente` |
+
+Acciones: `listar`, `detalle`, `crear`, `actualizar`, `eliminar`, `kpis`. Variables de `$_GET`/`$_POST`: `$id`, `$cedula`, `$nombre`, `$apellido`, `$direccion`, `$telefono`, `$email`.
+
+### 8.8 `AsesoriaController` (`src/app/Controllers/AsesoriaController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `AsesoriaController::$model` | `Asesoria` | `private` | Instancia del modelo `Asesoria` |
+
+Acciones: `listar`, `detalle`, `buscar`, `crear`, `actualizar`, `eliminar`, `kpis`. Variables de `$_GET`/`$_POST`: `$id`, `$ciudadano`, `$cedula`, `$documento`, `$descripcion`, `$direccion`, `$telefono`, `$tipo_asesoria_id`, `$termino`, `$fk_asesoria`.
+
+### 8.9 `ActivoController` (`src/app/Controllers/ActivoController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `ActivoController::$model` | `Activo` | `private` | Instancia del modelo `Activo` |
+
+Acciones: `listar`, `detalle`, `crear`, `actualizar`, `estado`, `eliminar`, `kpis`, `tipos`. Variables de `$_GET`/`$_POST`: `$id`, `$marca`, `$descripcion`, `$tipo_activo_id`, `$activa`, `$is_ciber`.
+
+### 8.10 `ReporteController` (`src/app/Controllers/ReporteController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `ReporteController::$model` | `Reporte` | `private` | Instancia del modelo `Reporte` |
+
+Acciones: `kpis`, `consultar`, `exportar`. Variables de `$_GET`/`$_POST`: `$tipo_reporte`, `$fecha_desde`, `$fecha_hasta`, `$estado`, `$formato` (`csv`, `excel`, `pdf`). Las exportaciones delegan en `App\Core\Exporter`.
+
+### 8.11 `RolController` (`src/app/Controllers/RolController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `RolController::$model` | `Rol` | `private` | Instancia del modelo `Rol` |
+
+Acciones: `listar`, `detalle`, `crear`, `actualizar`, `eliminar`, `permisos`, `permisosRol`, `guardarPermisos`, `usuarios`, `asignarRol`. Variables de `$_GET`/`$_POST`: `$action`, `$id`, `$nombre_rol`, `$descripcion`, `$rol_id`, `$permiso_ids` (lee `$_POST['permisos'] ?? []`), `$usuario_id`.
+
+### 8.12 `UsuarioController` (`src/app/Controllers/UsuarioController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `UsuarioController::$model` | `Usuario` | `private` | Instancia del modelo `Usuario` |
+
+Acciones: `listar`, `detalle`, `kpis`, `roles`, `crear`, `actualizar`, `estado`, `eliminar`, `password`. Variables de `$_GET`/`$_POST`: `$id`, `$user_name`, `$nombre`, `$apellido`, `$email`, `$password`, `$estatus`, `$rol_id`.
+
+### 8.13 `DashboardController` (`src/app/Controllers/DashboardController.php`)
+
+| Variable | Tipo | Visibilidad | Descripción |
+|---|---|---|---|
+| `DashboardController::$model` | `Dashboard` | `private` | Instancia del modelo `Dashboard` |
+
+Acción única: `kpis`, que devuelve los indicadores agregados del dashboard.
+
+---
+
+## 9. Variables de la Vista de Login (`src/app/Views/login.php`)
+
+### 9.1 Parámetros GET
+
+| Variable | Propósito |
+|---|---|
+| `$_GET['error']` | Si está presente en la URL (`?pagina=login&error=1`), muestra un mensaje de "Credenciales incorrectas" |
+
+### 9.2 Variables JavaScript (ámbito del navegador)
+
+| Variable | Propósito |
+|---|---|
+| `currentTheme` | Almacena el tema actual (`'light'` o `'dark'`) leído de `localStorage`. Determina el ícono del botón de tema y el atributo `data-theme` del `<html>` |
+
+---
+
+## 10. Variables del Script CLI (`src/cli/create_user.php`)
+
+### 10.1 Opciones de línea de comandos
+
+| Variable | Origen | Tipo | Descripción |
+|---|---|---|---|
+| `$longopts` | Definición literal | `array` | Especificación de opciones largas para `getopt()`: `username:`, `password:`, `nombre:`, `apellido:`, `email:`, `help` |
+| `$options` | `getopt('', $longopts)` | `array` | Opciones parseadas desde la línea de comandos |
+| `$username` | `$options['username']` | `string` | Nombre de usuario |
+| `$password` | `$options['password']` | `string` | Contraseña en texto plano |
+| `$nombre` | `$options['nombre']` | `string` | Nombre real |
+| `$apellido` | `$options['apellido'] ?? ''` | `string` | Apellido (opcional) |
+| `$email` | `$options['email']` | `string` | Correo electrónico |
+| `$db` | `Database::getConnection()` | `PDO` | Conexión a la base de datos |
+| `$hash` | `password_hash($password, PASSWORD_BCRYPT)` | `string` | Hash bcrypt de la contraseña |
+| `$check` | `$db->prepare(...)` | `PDOStatement` | Consulta de verificación de duplicados |
+| `$stmt` | `$db->prepare(...)` | `PDOStatement` | Consulta de inserción |
+| `$userId` | `$db->lastInsertId()` | `string` | ID autoincremental del nuevo usuario |
+
+---
+
+## 11. Variables del Service Worker (`src/sw.js`)
+
+Son variables JavaScript globales del ámbito del Service Worker.
+
+| Variable | Tipo | Valor | Descripción |
+|---|---|---|---|
+| `CACHE_NAME` | `string` | `'eis-cache-v5'` | Nombre del caché para almacenar assets estáticos |
+| `STATIC_ASSETS` | `array` | Lista de rutas de archivos CSS, JS, fuentes e iconos | Assets a cachear durante la instalación del Service Worker |
+
+La estrategia de caché es **Stale-While-Revalidate**: se responde primero con lo cacheado y se revalida en segundo plano contra la red. **Mecanismo de invalidación**: para forzar la actualización de scripts corregidos hay que **subir `CACHE_NAME`** (v4→v5 ya hecho tras corregir `app.selects.js`; las futuras correcciones usarán v6, v7, etc.).
+
+### Contenido de `STATIC_ASSETS`
+
+```
+Public/css/material-icons.css
+Public/css/materialize.min.css
+Public/css/styles.css
+Public/css/dataTables.materialize.css
+Public/css/login.css
+Public/js/jquery-3.7.1.min.js
+Public/js/materialize.min.js
+Public/js/jquery.dataTables.min.js
+Public/js/dataTables.materialize.js
+Public/js/app.core.js
+Public/js/app.init.js
+Public/js/app.selects.js
+Public/js/app.tables.js
+Public/js/app.ui.js
+Public/js/app.pos.js
+Public/js/app.cyber.js
+Public/js/app.legal.js
+Public/fonts/MaterialIcons-Regular.ttf
+manifest.json
+Public/icons/icon-192.svg
+Public/icons/icon-512.svg
+offline.php
+```
+
+---
+
+## 11.5 Namespace JavaScript global `EIS`
+
+El sistema expone un objeto global `EIS` (namespace) con funciones utilitarias compartidas por todos los módulos. Se declara en `src/Public/js/app.core.js` (`var EIS = {}`) y se complementa en `src/Public/js/app.selects.js`. `window.EIS.csrfToken` se inyecta desde el layout para las peticiones AJAX.
+
+### 11.5.1 Funciones exportadas por `EIS` (`app.core.js`)
+
+| Función | Descripción |
+|---|---|
+| `EIS.searchableSelectsReady` | Bandera (`boolean`) que indica si la barra de búsqueda ya se aplicó a los selects de Materialize (evita re-ejecuciones duplicadas) |
+| `EIS.toast(msg, color, icon)` | Muestra una notificación toast de Materialize (color e ícono por defecto: `indigo`, `check_circle`) |
+| `EIS.formSelect(sel)` | (Re)inicializa de forma segura un `<select>` de Materialize (destruye instancia previa para evitar duplicados) |
+| `EIS.limpiarErroresFormulario(form)` | Elimina mensajes de error y resaltados de validación de un formulario |
+| `EIS.mostrarErroresFormulario(form, data)` | Muestra errores de validación del servidor por campo y un panel de error global |
+| `EIS.mostrarErrorAnexo(form, errorSelector, data)` | Rellena un contenedor de error propio del formulario con el mensaje del servidor |
+| `EIS.datatable(selector, opts)` | Inicializa DataTables sobre una tabla (ignora filas de "sin datos" con `colspan`) |
+| `EIS.datatableRefresh(selector)` | Recarga filas del DOM después de re-renderizar el `<tbody>` por AJAX y redibuja |
+| `EIS.datatableWireSearch(selector, inputSelector)` | Conecta un input de búsqueda a la búsqueda global de DataTables (debounce 250 ms) |
+| `EIS.datatableWireColumnFilter(selector, selectSelector, columnIndex)` | Conecta un `<select>` a un filtro de columna de DataTables |
+| `EIS.datatableDestroy(selector)` | Destruye una instancia de DataTables envolviendo la tabla correctamente |
+
+### 11.5.2 Funciones exportadas por `EIS` (`app.selects.js`)
+
+| Función | Descripción |
+|---|---|
+| `EIS.habilitarBusquedaEnSelects()` | Re-aplica la barra de búsqueda en todos los selects de Materialize existentes |
+| `EIS.activarBusquedaEnSelect(selector, placeholder)` | Inserta (o actualiza) la barra de búsqueda con un placeholder específico en el desplegable de un select concreto |
+
+**Correcciones aplicadas en v4.3 (app.selects.js):**
+
+1. **Bug 1 — el desplegable se cerraba al hacer clic en la barra de búsqueda:** Materialize 1.0.0 registra su handler de cierre en `document.body` con **fase de captura** (`addEventListener("click", handler, true)`). El fix instala un bloqueador también en fase de captura pero sobre `document` (ancestro de `body`) que ejecuta `e.stopPropagation()` para `click`/`touchend` cuando el objetivo está dentro de `.eis-select-search`.
+2. **Bug 2 — el typeahead robaba el foco al escribir:** el handler `_handleDropdownKeydown` del dropdown de Materialize capturaba las teclas. El fix añade `keydown`/`keyup` con `e.stopPropagation()` sobre el input de búsqueda para evitar que el typeahead robe el foco.
+
+### 11.5.3 Funciones globales auxiliares (`app.core.js`)
+
+Además de `EIS`, `app.core.js` declara funciones globales:
+
+| Función | Descripción |
+|---|---|
+| `debounce(fn, delay)` | Limita la frecuencia de ejecución de una función (espera `delay` ms sin llamadas) |
+| `filtrarTabla(inputSelector, tableSelector, colIndex)` | Filtra filas de una tabla HTML según el texto de un campo (opcional por columna) |
+| `eisDataTablesDisponible()` | Comprueba si la librería DataTables está cargada |
+
+### 11.5.4 Propiedades inyectadas por el layout (`layout.php`)
+
+El layout inyecta en `window.EIS` las siguientes propiedades:
+
+| Propiedad | Origen | Descripción |
+|---|---|---|
+| `window.EIS.csrfToken` | `$_SESSION['csrf_token']` | Token CSRF para peticiones AJAX (se agrega automáticamente en los `$.ajax` de la app) |
+| `window.EIS.userId` | `$_SESSION['user_id']` | ID del usuario autenticado |
+
+> Nota: el helper `escHtml()` no forma parte del namespace `EIS`; está definido como función local en cada módulo (`app.cyber.js`, `app.legal.js`, `app.pos.js`, etc.) para el renderizado seguro de contenido dinámico (anti-XSS).
+
+> El **tema oscuro/claro** se gestiona en `app.init.js`: persiste en `localStorage` (`theme`) y se aplica mediante `data-theme="dark"` en el `<html>`, con toggles en `#themeToggle`. El **CRUD de usuarios** lo gestiona `app.usuarios.js` vía `UsuarioController`.
+
+---
+
+## 12. Variables en las Vistas Protegidas
+
+Cada vista protegida (ej: `dashboard.php`, `inventario.php`, `ventas.php`, etc.) se incluye dentro de `layout.php` mediante `require $contentView`. Por herencia del ámbito, las vistas tienen acceso a las variables definidas en `Router::render()`:
+
+| Variable | Disponible en vistas |
+|---|---|
+| `$pagina` | Sí - identifica la página actual |
+| `$pageTitle` | Sí - título de la página |
+| `$headerExtra` | Sí - HTML extra del navbar |
+| `$contentView` | No aplica (es la propia vista) |
+
+Además, las vistas que realizan peticiones AJAX utilizan `$_GET`, `$_POST` y `$_SESSION` indirectamente a través de los controladores.
+
+### 12.1 Vista `login_validate.php`
+
+Es una página **pública** que nunca debe renderizarse directamente: `Router::handle()` detecta `?pagina=login_validate` con método `POST` y delega en `AuthController::login()`. Si se accede sin POST, la vista solo contiene:
+
+| Variable | Propósito |
+|---|---|
+| `header('Location: ?pagina=login')` | Redirige al login si se accede directamente sin POST |
+| `exit` | Termina la ejecución |
+
+La autenticación real ocurre en `AuthController::login()` (valida CSRF, usuario y contraseña contra la tabla `usuarios` con `password_hash`).
+
+---
+
+## 13. Constantes y Variables Especiales de PHP
+
+### 13.1 Constantes mágicas
+
+| Constante | Descripción | Archivos donde se usa |
+|---|---|---|
+| `__DIR__` | Directorio actual del archivo | `index.php`, `router.php`, `cli/create_user.php`, `crud_users.php`, `crud_asesorias.php` |
+| `__FILE__` | Ruta completa del archivo actual | No se usa explícitamente |
+
+### 13.2 Constantes de PHP nativas
+
+| Constante | Propósito |
+|---|---|
+| `PASSWORD_BCRYPT` | Algoritmo de hash para `password_hash()` - genera hashes de 60 caracteres con salting automático |
+| `PDO::ATTR_ERRMODE` | Atributo PDO para modo de error |
+| `PDO::ERRMODE_EXCEPTION` | Valor que indica lanzar excepciones en errores |
+| `PDO::ATTR_DEFAULT_FETCH_MODE` | Atributo PDO para modo de obtención de resultados |
+| `PDO::FETCH_ASSOC` | Valor que indica devolver resultados como array asociativo |
+| `PDO::ATTR_EMULATE_PREPARES` | Atributo PDO para emulación de consultas preparadas |
+| `PASSWORD_DEFAULT` | Algoritmo por defecto para `password_hash()` en `cli/create_user.php` |
+| `random_bytes()` | Generador criptográficamente seguro usado para el token CSRF (`bin2hex(random_bytes(32))`) |
+| `hash_equals()` | Comparación constante de cadenas para verificar el token CSRF sin vulnerabilidad de tiempo |
+
+### 13.3 Constantes del manifiesto PWA (`src/manifest.json`)
+
+| Propiedad | Valor | Descripción |
+|---|---|---|
+| `name` | `"EIS System"` | Nombre completo de la aplicación |
+| `short_name` | `"EIS"` | Nombre abreviado |
+| `display` | `"standalone"` | Modo de visualización sin Chrome UI |
+| `background_color` | `"#1a237e"` | Color de fondo de pantalla de carga |
+| `theme_color` | `"#1a237e"` | Color de tema (barra de navegación del navegador) |
+| `orientation` | `"portrait-primary"` | Orientación preferida |
+
+---
+
+## Resumen de Ámbitos
+
+| Ámbito | Variables |
+|---|---|
+| **Superglobal** | `$_GET`, `$_POST`, `$_SESSION`, `$_SERVER` |
+| **Global (procedural)** | `$host`, `$db`, `$user`, `$pass`, `$charset`, `$dns`, `$options`, `$pdo` |
+| **Estático de clase** | `Database::$instance` |
+| **Propiedades de instancia** | `Model::$db`, `Router::$pagina`, y `::$model` en los 13 controladores (`AuthController`, `UsuarioController`, `RolController`, `VentaController`, `ClienteController`, `InventarioController`, `ProveedorController`, `ProveedorGestionController`, `ReporteController`, `DashboardController`, `CiberController`, `ActivoController`, `AsesoriaController`) |
+| **Variables de template** | `$pageTitle`, `$pagina`, `$headerExtra`, `$contentView` |
+| **CLI (local)** | `$longopts`, `$options`, `$username`, `$password`, `$nombre`, `$apellido`, `$email`, `$db`, `$hash`, `$check`, `$stmt`, `$userId` |
+| **Service Worker (JS)** | `CACHE_NAME`, `STATIC_ASSETS` |
+| **Namespace JS `EIS`** | `EIS.toast`, `EIS.formSelect`, `EIS.limpiarErroresFormulario`, `EIS.mostrarErroresFormulario`, `EIS.mostrarErrorAnexo`, `EIS.datatable`, `EIS.datatableRefresh`, `EIS.datatableWireSearch`, `EIS.datatableWireColumnFilter`, `EIS.datatableDestroy`, `EIS.habilitarBusquedaEnSelects`, `EIS.activarBusquedaEnSelect`, `EIS.searchableSelectsReady`, `window.EIS.csrfToken`, `window.EIS.userId` |
+| **Globales JS (core)** | `debounce`, `filtrarTabla`, `eisDataTablesDisponible` |
+
+---
+
+*Documentación generada el 2026-07-09 - EIS System (Zona Web Lara). Actualizado el 2026-09-06 (13 controladores, nueva clase `Validator`, `UsuarioController`, acciones de todos los módulos, namespace JS `EIS` con helpers DataTables y búsqueda en selects). Actualizado a v4.3: `CACHE_NAME = 'eis-cache-v5'` en `sw.js`, bandera `EIS.searchableSelectsReady` y fixes de `app.selects.js` (bloqueo en captura sobre `document` + typeahead con `stopPropagation`).*

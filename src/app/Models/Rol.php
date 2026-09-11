@@ -1,0 +1,290 @@
+<?php
+
+namespace App\Models;
+
+use App\Core\Logger;
+use App\Core\Model;
+use PDO;
+
+class Rol extends Model
+{
+    private int $id = 0;
+    private string $nombreRol = '';
+    private string $descripcion = '';
+
+    private const MIN_NOMBRE_ROL = 2;
+    private const MAX_NOMBRE_ROL = 50;
+    private const MAX_DESCRIPCION = 500;
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $this->sanitizeInt($id);
+    }
+
+    public function getNombreRol(): string
+    {
+        return $this->nombreRol;
+    }
+
+    public function getDescripcion(): string
+    {
+        return $this->descripcion;
+    }
+
+    public function setDescripcion(string $descripcion): void
+    {
+        $descripcion = $this->sanitizeString($descripcion);
+        $this->validateLength($descripcion, 'descripción', self::MAX_DESCRIPCION);
+        $this->descripcion = $descripcion;
+    }
+
+    public function setNombreRol(string $nombreRol): void
+    {
+        $nombreRol = $this->sanitizeString($nombreRol);
+        $this->validateNotEmpty($nombreRol, 'nombre de rol');
+        $this->validateMinLength($nombreRol, 'nombre de rol', self::MIN_NOMBRE_ROL);
+        $this->validateLength($nombreRol, 'nombre de rol', self::MAX_NOMBRE_ROL);
+        $this->nombreRol = $nombreRol;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id'          => $this->id,
+            'nombre_rol'  => $this->nombreRol,
+            'descripcion' => $this->descripcion,
+        ];
+    }
+
+    public static function fromArray(array $data): self
+    {
+        $rol = new self();
+        $rol->setId((int)($data['id'] ?? 0));
+        $rol->setNombreRol($data['nombre_rol'] ?? $data['nombre'] ?? '');
+        $rol->setDescripcion($data['descripcion'] ?? '');
+        return $rol;
+    }
+
+    public function listarRoles(): array
+    {
+        $stmt = $this->db->query("
+            SELECT r.id, r.nombre_rol AS nombre, r.descripcion, r.created_at,
+                   (SELECT COUNT(*) FROM rol_usuarios ru WHERE ru.fk_rol = r.id) AS total_usuarios
+            FROM roles r ORDER BY r.nombre_rol
+        ");
+        return $stmt->fetchAll();
+    }
+
+    public function obtenerRolPorId(int $id): array|false
+    {
+        $id = $this->sanitizeInt($id);
+        $stmt = $this->db->prepare("SELECT id, nombre_rol AS nombre, descripcion FROM roles WHERE id = ?");
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
+    public function crearRol(string $nombre_rol, string $descripcion = ''): bool
+    {
+        $this->setNombreRol($nombre_rol);
+        $this->setDescripcion($descripcion);
+        $sql = "INSERT INTO roles (nombre_rol, descripcion) VALUES (?, ?)";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(1, $this->nombreRol, PDO::PARAM_STR);
+        $stmt->bindParam(2, $this->descripcion, PDO::PARAM_STR);
+        return $stmt->execute();
+    }
+
+    public function actualizarRol(int $id, string $nombre_rol, string $descripcion = ''): bool
+    {
+        $this->setId($id);
+        $this->setNombreRol($nombre_rol);
+        $this->setDescripcion($descripcion);
+        $sql = "UPDATE roles SET nombre_rol = ?, descripcion = ? WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(1, $this->nombreRol, PDO::PARAM_STR);
+        $stmt->bindParam(2, $this->descripcion, PDO::PARAM_STR);
+        $stmt->bindParam(3, $this->id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    public function eliminarRol(int $id): bool
+    {
+        $id = $this->sanitizeInt($id);
+        $sql = "SELECT COUNT(*) AS total FROM rol_usuarios WHERE fk_rol = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $fila = $stmt->fetch();
+        if ((int)$fila['total'] > 0) return false;
+
+        try {
+            $this->db->beginTransaction();
+            $stmt = $this->db->prepare("DELETE FROM permisos_rol WHERE fk_rol = ?");
+            $stmt->bindParam(1, $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $stmt = $this->db->prepare("DELETE FROM roles WHERE id = ?");
+            $stmt->bindParam(1, $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $this->db->commit();
+            return true;
+        } catch (\Exception $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            Logger::error($e, 'Rol - eliminar rol');
+            return false;
+        }
+    }
+
+    public function obtenerPermisos(): array
+    {
+        $stmt = $this->db->query("SELECT id, permisos AS nombre FROM permisos ORDER BY permisos");
+        return $stmt->fetchAll();
+    }
+
+    public function obtenerPermisosPorRol(int $rol_id): array
+    {
+        $rol_id = $this->sanitizeInt($rol_id);
+        $sql = "SELECT fk_permiso AS permiso_id FROM permisos_rol WHERE fk_rol = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
+        $stmt->execute();
+        $rows = $stmt->fetchAll();
+        return array_column($rows, 'permiso_id');
+    }
+
+    public function guardarPermisosRol(int $rol_id, array $permiso_ids): bool
+    {
+        $rol_id = $this->sanitizeInt($rol_id);
+        if ($rol_id <= 0) {
+            throw new \InvalidArgumentException('ID de rol no válido');
+        }
+        if (!$this->existeEnTabla('roles', $rol_id)) {
+            throw new \InvalidArgumentException('El rol seleccionado no existe');
+        }
+        if (count($permiso_ids) > 200) {
+            throw new \InvalidArgumentException('Se excedió el máximo de permisos permitidos');
+        }
+
+        // Lista blanca de permisos existentes: los IDs se filtran contra la BD.
+        $permiso_ids = array_values(array_filter($permiso_ids, fn($v) => is_int($v) || (is_string($v) && preg_match('/^\d+$/', trim($v)))));
+        $permiso_ids = array_map('intval', $permiso_ids);
+        $permiso_ids = array_values(array_unique($permiso_ids));
+
+        $stmtIds = $this->db->query("SELECT id FROM permisos");
+        $permitidos = array_map('intval', array_column($stmtIds->fetchAll(), 'id'));
+
+        $permiso_ids = array_values(array_filter($permiso_ids, function (int $pid) use ($permitidos) {
+            return $pid > 0 && in_array($pid, $permitidos, true);
+        }));
+
+        $this->db->beginTransaction();
+        try {
+            $stmt = $this->db->prepare("DELETE FROM permisos_rol WHERE fk_rol = ?");
+            $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
+            $stmt->execute();
+            if (!empty($permiso_ids)) {
+                $sql = "INSERT INTO permisos_rol (fk_rol, fk_permiso) VALUES (?, ?)";
+                $stmt = $this->db->prepare($sql);
+                $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
+                foreach ($permiso_ids as $pid) {
+                    $stmt->bindParam(2, $pid, PDO::PARAM_INT);
+                    $stmt->execute();
+                }
+            }
+            $this->db->commit();
+            return true;
+        } catch (\Exception $e) {
+            $this->db->rollBack();
+            Logger::error($e, 'Rol - actualizar permisos');
+            return false;
+        }
+    }
+
+    public function obtenerRoles(): array
+    {
+        $stmt = $this->db->query("SELECT id, nombre_rol AS nombre FROM roles ORDER BY nombre_rol");
+        return $stmt->fetchAll();
+    }
+
+    public function obtenerUsuarios(): array
+    {
+        $stmt = $this->db->query("
+            SELECT u.id, u.user_name AS username, u.nombre, u.apellido, u.email, u.estatus AS activo,
+                   r.nombre_rol AS rol
+            FROM usuarios u
+            LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
+            LEFT JOIN roles r ON ru.fk_rol = r.id
+            ORDER BY u.nombre
+        ");
+        return $stmt->fetchAll();
+    }
+
+    public function asignarRolAUsuario(int $usuario_id, int $rol_id): bool
+    {
+        $usuario_id = $this->sanitizeInt($usuario_id);
+        $rol_id = $this->sanitizeInt($rol_id);
+
+        if ($usuario_id <= 0 || $rol_id <= 0) {
+            throw new \InvalidArgumentException('Datos no válidos');
+        }
+        if (!$this->existeEnTabla('usuarios', $usuario_id)) {
+            throw new \InvalidArgumentException('El usuario seleccionado no existe');
+        }
+        if (!$this->existeEnTabla('roles', $rol_id)) {
+            throw new \InvalidArgumentException('El rol seleccionado no existe');
+        }
+
+        // usuarios.fk_rol_usuario referencia rol_usuarios.id (no roles.id).
+        // Buscamos el rol_usuarios.id correspondiente al rol seleccionado.
+        $stmt = $this->db->prepare("SELECT ru.id, ru.rol FROM rol_usuarios ru WHERE ru.fk_rol = ? LIMIT 1");
+        $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
+        $stmt->execute();
+        $rolUsuarios = $stmt->fetch();
+
+        if (!$rolUsuarios) {
+            throw new \InvalidArgumentException('El rol seleccionado no tiene un registro de asignación válido');
+        }
+
+        $rolUsuariosId = (int)$rolUsuarios['id'];
+
+        $stmt = $this->db->prepare("UPDATE usuarios SET fk_rol_usuario = ? WHERE id = ?");
+        $stmt->bindParam(1, $rolUsuariosId, PDO::PARAM_INT);
+        $stmt->bindParam(2, $usuario_id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    public function existeNombreRol(string $nombre, int $excludeId = 0): bool
+    {
+        $nombre = $this->sanitizeString($nombre);
+        if ($excludeId > 0) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM roles WHERE nombre_rol = ? AND id != ?");
+            $stmt->bindParam(1, $nombre, PDO::PARAM_STR);
+            $stmt->bindParam(2, $excludeId, PDO::PARAM_INT);
+            $stmt->execute();
+        } else {
+            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM roles WHERE nombre_rol = ?");
+            $stmt->bindParam(1, $nombre, PDO::PARAM_STR);
+            $stmt->execute();
+        }
+        return (int)$stmt->fetch()['total'] > 0;
+    }
+
+    public function totalRoles(): int
+    {
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM roles");
+        return (int)$stmt->fetch()['total'];
+    }
+
+    public function totalPermisos(): int
+    {
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM permisos");
+        return (int)$stmt->fetch()['total'];
+    }
+}

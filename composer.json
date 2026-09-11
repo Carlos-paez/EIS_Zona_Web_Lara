@@ -1,0 +1,15 @@
+{
+    "name": "carlospez/clase",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/app/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Carlos-paez",
+            "email": "carlospaezguerra@gmail.com"
+        }
+    ],
+    "require": {}
+}

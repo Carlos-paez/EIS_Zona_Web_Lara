@@ -1,0 +1,138 @@
+:root {
+    --primary: #3949ab;
+    --primary-light: #5c6bc0;
+    --primary-dark: #283593;
+    --success: #43a047;
+    --text: #263238;
+    --text-muted: #78909c;
+    --border: #cfd8dc;
+    --surface: #ffffff;
+}
+
+[data-theme="dark"] {
+    --primary: #7986cb;
+    --primary-light: #9fa8da;
+    --primary-dark: #5c6bc0;
+    --success: #66bb6a;
+    --text: #e0e0e0;
+    --text-muted: #9e9e9e;
+    --border: #424242;
+    --surface: #1e1e1e;
+}
+
+body {
+    min-height: 100vh;
+    min-height: 100dvh; /* Mejor soporte para viewport dinámico en móviles */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #283593 0%, #5c6bc0 100%);
+    padding: 1rem;
+}
+
+[data-theme="dark"] body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #283593 100%);
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 2.5rem 2rem;
+    animation: slideUp 0.5s ease;
+    background: #fff;
+}
+[data-theme="dark"] .login-card {
+    background: rgba(30, 30, 30, 0.95);
+}
+
+.social-btn {
+    border: 2px solid var(--border) !important;
+    border-radius: 12px !important;
+    padding: 0.75rem 1.5rem !important;
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.login-logo {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--primary), #7c4dff);
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 8px 20px rgba(57, 73, 171, 0.3);
+}
+
+[data-theme="dark"] .login-card .card-title { color: var(--text); }
+[data-theme="dark"] .login-card p { color: var(--text-muted); }
+.input-field input { background: var(--surface); }
+[data-theme="dark"] .input-field input { color: var(--text) !important; background: var(--surface) !important; border-bottom-color: #666 !important; }
+[data-theme="dark"] .input-field input:focus { border-bottom-color: var(--primary) !important; box-shadow: 0 1px 0 0 var(--primary) !important; }
+[data-theme="dark"] .input-field input:focus + label { color: var(--primary) !important; }
+[data-theme="dark"] .input-field label { color: var(--text-muted); }
+[data-theme="dark"] .divider { background-color: #333; }
+[data-theme="dark"] .input-field input:-webkit-autofill {
+    -webkit-text-fill-color: var(--text) !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--surface) inset !important;
+}
+[data-theme="dark"] .card-panel.red.lighten-4 {
+    background: #b71c1c !important;
+    color: #ffcdd2 !important;
+}
+[data-theme="dark"] .card-panel.red.lighten-4 i {
+    color: #ffcdd2 !important;
+}
+[data-theme="dark"] .btn-floating.indigo {
+    background: #1a237e !important;
+}
+
+/* ============================================================
+     RESPONSIVE LOGIN
+     ============================================================ */
+@media only screen and (max-width: 600px) {
+    body { padding: 0.5rem; }
+    .login-card {
+        padding: 1.5rem 1rem;
+        max-width: 100%;
+        border-radius: 8px;
+    }
+    .login-card h4.card-title { font-size: 1.3rem; }
+    .login-card p { font-size: 0.85rem; }
+    .login-logo { width: 56px; height: 56px; font-size: 1.5rem; border-radius: 16px; }
+    .social-login-row { gap: 0.75rem !important; }
+    .social-login-row .btn-flat {
+        padding: 0.6rem 1rem !important;
+        min-width: 48px;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #themeToggle {
+        top: calc(0.5rem + env(safe-area-inset-top, 0px)) !important;
+        right: calc(0.5rem + env(safe-area-inset-right, 0px)) !important;
+        width: 44px;
+        height: 44px;
+    }
+    #themeToggle i { line-height: 44px; font-size: 1.3rem; }
+    .card-panel.red.lighten-4 { font-size: 0.85rem; }
+    .card-panel.red.lighten-4 i { font-size: 1rem !important; }
+    .login-card a[href="#"] {
+        display: inline-block;
+        padding: 0.5rem;
+        min-height: 44px;
+        line-height: 1.5;
+    }
+}
+
+@media only screen and (max-width: 400px) {
+    .login-card { padding: 1.25rem 0.85rem; }
+    .login-card .input-field { margin-bottom: 0.75rem; }
+    .login-card .btn { height: 3rem; font-size: 0.95rem; }
+}

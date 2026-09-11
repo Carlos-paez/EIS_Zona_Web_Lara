@@ -1,0 +1,18 @@
+# Impedir que se pueda ver el listado de contenidos de un directorio
+Options -Indexes
+
+# Activar el motor de reescritura de URLs de Apache
+RewriteEngine On
+
+# Definir la ruta base donde está este archivo .htaccess
+RewriteBase /EIS_Zona_Web_Lara/src/
+
+# Redirigir la raíz del sitio hacia index.php
+RewriteRule ^$ index.php [L,QSA]
+
+# Si el archivo o directorio solicitado no existe físicamente
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Redirigir hacia index.php pasando la página como parámetro
+RewriteRule ^([\w-]+)$ index.php?pagina=$1 [L,QSA]
