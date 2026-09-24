@@ -135,6 +135,7 @@ class Activo extends Model
                     GROUP BY fk_activo
                 ) s2 ON s1.id = s2.max_id
             ) sc ON sc.fk_activo = a.id
+            WHERE a.activo = 1
             ORDER BY a.id
         ");
         return $stmt->fetchAll();
@@ -151,7 +152,7 @@ class Activo extends Model
                    a.fk_tipo_activo AS tipo_activo_id, ta.nombre_tipo
             FROM activos a
             LEFT JOIN tipo_activo ta ON a.fk_tipo_activo = ta.id
-            WHERE a.id = ?
+            WHERE a.id = ? AND a.activo = 1
         ");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -280,9 +281,9 @@ class Activo extends Model
         if ($this->tieneSesiones($id)) {
             throw new \InvalidArgumentException('No se puede eliminar un activo con sesiones de cybercafé registradas. Desactívalo en su lugar');
         }
-        $stmt = $this->db->prepare("DELETE FROM activos WHERE id = ?");
+        $stmt = $this->db->prepare("UPDATE activos SET activo = 0 WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
-        return $stmt->execute() && $stmt->rowCount() > 0;
+        return $stmt->execute();
     }
 
     public function existeActivo(string $marca, string $descripcion, int $excludeId = 0): bool
@@ -334,13 +335,13 @@ class Activo extends Model
 
     public function totalActivos(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM activos");
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM activos WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
     public function totalCiber(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM activos WHERE is_ciber = 1");
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM activos WHERE is_ciber = 1 AND activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -361,7 +362,7 @@ class Activo extends Model
 
     public function totalInactivos(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM activos WHERE activa = 0");
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM activos WHERE activa = 0 AND activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -370,7 +371,7 @@ class Activo extends Model
         $stmt = $this->db->query("
             SELECT ta.nombre_tipo, COUNT(a.id) AS cantidad
             FROM tipo_activo ta
-            LEFT JOIN activos a ON a.fk_tipo_activo = ta.id
+            LEFT JOIN activos a ON a.fk_tipo_activo = ta.id AND a.activo = 1
             GROUP BY ta.id, ta.nombre_tipo
             ORDER BY cantidad DESC, ta.nombre_tipo
         ");

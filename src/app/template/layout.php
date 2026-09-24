@@ -116,9 +116,12 @@
         <!-- Usuarios/Configuración - Administración de usuarios del sistema -->
         <li><a href="?pagina=usuarios" class="sidenav-link<?php echo $pagina === 'usuarios' ? ' active' : ''; ?>"><i
                     class="material-icons left">settings</i>Configuración</a></li>
-        <!-- Roles y Permisos - Control de acceso basado en roles (RBAC) -->
+        <!-- Roles y Permisos -->
         <li><a href="?pagina=roles" class="sidenav-link<?php echo $pagina === 'roles' ? ' active' : ''; ?>"><i
                     class="material-icons left">admin_panel_settings</i>Roles y Permisos</a></li>
+        <!-- Manual de Usuario - Ayuda incrustada en el sistema -->
+        <li><a href="?pagina=manual_usuario" class="sidenav-link<?php echo $pagina === 'manual_usuario' ? ' active' : ''; ?>"><i
+                    class="material-icons left">menu_book</i>Manual de Usuario</a></li>
         <!-- Alternar tema oscuro/claro (manejado por JS en app.init.js) -->
         <li><a class="sidenav-link" id="themeToggle" style="cursor:pointer;"><i class="material-icons left"
                     id="themeIcon">dark_mode</i><span id="themeLabel">Modo Oscuro</span></a></li>
@@ -162,7 +165,7 @@
                     <!-- Badge con el nombre del usuario (solo avatar en móvil) -->
                     <li><span class="badge indigo lighten-2 white-text"
                             style="margin-right:0.5rem;font-size:0.8rem;padding:0.25rem 0.6rem;display:flex;align-items:center;min-height:44px;"><i
-                                class="material-icons left" style="font-size:1rem;">person</i><span class="hide-on-small-only">Admin</span></span></li>
+                                class="material-icons left" style="font-size:1rem;">person</i><span class="hide-on-small-only"><?php echo htmlspecialchars($_SESSION['nombre'] ?? 'Usuario'); ?></span></span></li>
                 </ul>
             </div>
         </nav>

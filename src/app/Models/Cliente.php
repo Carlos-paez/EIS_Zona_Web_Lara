@@ -130,14 +130,14 @@ class Cliente extends Model
 
     public function obtenerClientes(): array
     {
-        $stmt = $this->db->query("SELECT id, cedula, nombre, apellido, direccion, telefono FROM clientes ORDER BY nombre");
+        $stmt = $this->db->query("SELECT id, cedula, nombre, apellido, direccion, telefono FROM clientes WHERE activo = 1 ORDER BY nombre");
         return $stmt->fetchAll();
     }
 
     public function obtenerClientePorId(int $id): array|false
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT * FROM clientes WHERE id = ?");
+        $stmt = $this->db->prepare("SELECT * FROM clientes WHERE id = ? AND activo = 1");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch();
@@ -146,7 +146,7 @@ class Cliente extends Model
     public function obtenerClientePorCedula(string $cedula): array|false
     {
         $cedula = $this->sanitizeString($cedula);
-        $stmt = $this->db->prepare("SELECT * FROM clientes WHERE cedula = ?");
+        $stmt = $this->db->prepare("SELECT * FROM clientes WHERE cedula = ? AND activo = 1");
         $stmt->bindParam(1, $cedula, PDO::PARAM_STR);
         $stmt->execute();
         return $stmt->fetch();
@@ -271,14 +271,14 @@ class Cliente extends Model
     public function eliminarCliente(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("DELETE FROM clientes WHERE id = ?");
+        $stmt = $this->db->prepare("UPDATE clientes SET activo = 0 WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
 
     public function totalClientes(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM clientes");
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM clientes WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 

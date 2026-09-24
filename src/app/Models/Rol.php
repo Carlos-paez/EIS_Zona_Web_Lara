@@ -75,7 +75,7 @@ class Rol extends Model
         $stmt = $this->db->query("
             SELECT r.id, r.nombre_rol AS nombre, r.descripcion, r.created_at,
                    (SELECT COUNT(*) FROM rol_usuarios ru WHERE ru.fk_rol = r.id) AS total_usuarios
-            FROM roles r ORDER BY r.nombre_rol
+            FROM roles r WHERE r.activo = 1 ORDER BY r.nombre_rol
         ");
         return $stmt->fetchAll();
     }
@@ -83,7 +83,7 @@ class Rol extends Model
     public function obtenerRolPorId(int $id): array|false
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT id, nombre_rol AS nombre, descripcion FROM roles WHERE id = ?");
+        $stmt = $this->db->prepare("SELECT id, nombre_rol AS nombre, descripcion FROM roles WHERE id = ? AND activo = 1");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch();
@@ -123,23 +123,9 @@ class Rol extends Model
         $fila = $stmt->fetch();
         if ((int)$fila['total'] > 0) return false;
 
-        try {
-            $this->db->beginTransaction();
-            $stmt = $this->db->prepare("DELETE FROM permisos_rol WHERE fk_rol = ?");
-            $stmt->bindParam(1, $id, PDO::PARAM_INT);
-            $stmt->execute();
-            $stmt = $this->db->prepare("DELETE FROM roles WHERE id = ?");
-            $stmt->bindParam(1, $id, PDO::PARAM_INT);
-            $stmt->execute();
-            $this->db->commit();
-            return true;
-        } catch (\Exception $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
-            Logger::error($e, 'Rol - eliminar rol');
-            return false;
-        }
+        $stmt = $this->db->prepare("UPDATE roles SET activo = 0 WHERE id = ?");
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function obtenerPermisos(): array
@@ -209,7 +195,7 @@ class Rol extends Model
 
     public function obtenerRoles(): array
     {
-        $stmt = $this->db->query("SELECT id, nombre_rol AS nombre FROM roles ORDER BY nombre_rol");
+        $stmt = $this->db->query("SELECT id, nombre_rol AS nombre FROM roles WHERE activo = 1 ORDER BY nombre_rol");
         return $stmt->fetchAll();
     }
 
@@ -221,6 +207,7 @@ class Rol extends Model
             FROM usuarios u
             LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
             LEFT JOIN roles r ON ru.fk_rol = r.id
+            WHERE u.activo = 1
             ORDER BY u.nombre
         ");
         return $stmt->fetchAll();
@@ -278,7 +265,7 @@ class Rol extends Model
 
     public function totalRoles(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM roles");
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM roles WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 

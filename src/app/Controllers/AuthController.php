@@ -80,6 +80,10 @@ class AuthController
             $_SESSION['user_id']   = $usuario['id'];
             $_SESSION['username']  = $usuario['user_name'];
             $_SESSION['nombre']    = $usuario['nombre'];
+            $_SESSION['rol']       = $usuario['rol_nombre'] ?? null;
+
+            $permisos = $this->model->obtenerPermisosPorUsuario((int)$usuario['id']);
+            $_SESSION['permisos'] = $permisos;
 
             header('Location: ?pagina=dashboard');
             exit;

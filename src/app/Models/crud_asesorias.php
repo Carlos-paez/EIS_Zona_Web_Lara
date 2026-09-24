@@ -215,7 +215,7 @@ function actualizarAsesoria($pdo, $id, $documento, $descripcion) {
  * @return bool    True si la eliminación fue exitosa.
  */
 function eliminarAsesoria($pdo, $id) {
-    $stmt = $pdo->prepare("DELETE FROM asesoria WHERE id = ?");
+    $stmt = $pdo->prepare("UPDATE asesoria SET activo = 0 WHERE id = ?");
     $stmt->bindParam(1, $id, PDO::PARAM_INT);
     return $stmt->execute();
 }

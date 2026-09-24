@@ -25,7 +25,7 @@ class Venta extends Model
         $stmt = $this->db->query("
             SELECT id, codigo, nombre, descripcion, stock, precio_venta
             FROM productos
-            WHERE stock > 0
+            WHERE stock > 0 AND activo = 1
             ORDER BY nombre
         ");
         return $stmt->fetchAll();

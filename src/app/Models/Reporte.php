@@ -47,7 +47,7 @@ class Reporte extends Model
      */
     public function productosActivos(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos");
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -80,7 +80,7 @@ class Reporte extends Model
      */
     public function totalSolicitudes(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM orden_abastecimiento");
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM orden_abastecimiento WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -96,6 +96,7 @@ class Reporte extends Model
             FROM orden_abastecimiento oa
             JOIN status_seguimiento ss ON oa.fk_status = ss.id
             WHERE ss.status IN ('Aprobado', 'En Tránsito', 'Recibido Parcial', 'Recibido Completo')
+              AND oa.activo = 1
         ");
         return (int)$stmt->fetch()['total'];
     }
@@ -172,6 +173,7 @@ class Reporte extends Model
                    COALESCE(c.nombre_categoria, 'Sin categoría') AS categoria
             FROM productos p
             LEFT JOIN categoria c ON p.fk_categoria = c.id
+            WHERE p.activo = 1
             ORDER BY p.nombre
         ");
         return [
@@ -213,7 +215,7 @@ class Reporte extends Model
             LEFT JOIN proveedores p ON oa.fk_proveedor = p.id
             LEFT JOIN status_seguimiento ss ON oa.fk_status = ss.id
             LEFT JOIN lineas_abastecimiento la ON la.fk_orden_abastecimiento = oa.id
-            WHERE oa.fecha BETWEEN ? AND ?
+            WHERE oa.fecha BETWEEN ? AND ? AND oa.activo = 1
             GROUP BY oa.id, oa.numero_de_orden, oa.fecha, p.nombre, ss.status
             ORDER BY oa.fecha DESC
         ");

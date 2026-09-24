@@ -3,7 +3,6 @@
 namespace App\Models;
 
 // Se importa la clase Model del núcleo de la aplicación
-use App\Core\Logger;
 use App\Core\Model;
 use PDO;
 
@@ -187,6 +186,7 @@ class Proveedor extends Model
             FROM orden_abastecimiento oa
             LEFT JOIN proveedores p ON oa.fk_proveedor = p.id
             LEFT JOIN status_seguimiento ss ON oa.fk_status = ss.id
+            WHERE oa.activo = 1
             ORDER BY oa.fecha DESC
         ");
         return $stmt->fetchAll();
@@ -209,7 +209,7 @@ class Proveedor extends Model
             FROM orden_abastecimiento oa
             LEFT JOIN proveedores p ON oa.fk_proveedor = p.id
             LEFT JOIN status_seguimiento ss ON oa.fk_status = ss.id
-            WHERE oa.id = ?
+            WHERE oa.id = ? AND oa.activo = 1
         ");
         $stmt->bindParam(1, $this->id, PDO::PARAM_INT);
         $stmt->execute();
@@ -334,26 +334,9 @@ class Proveedor extends Model
         // Encapsulación: se carga el ID mediante el setter
         $this->setId($id);
 
-        // Inicia transacción
-        $this->db->beginTransaction();
-        try {
-            // Primero elimina todas las líneas de abastecimiento asociadas a la orden
-            $stmt = $this->db->prepare("DELETE FROM lineas_abastecimiento WHERE fk_orden_abastecimiento = ?");
-            $stmt->bindParam(1, $this->id, PDO::PARAM_INT);
-            $stmt->execute();
-            // Luego elimina la orden en sí
-            $stmt = $this->db->prepare("DELETE FROM orden_abastecimiento WHERE id = ?");
-            $stmt->bindParam(1, $this->id, PDO::PARAM_INT);
-            $stmt->execute();
-            // Confirma la transacción
-            $this->db->commit();
-            return true;
-        } catch (\Exception $e) {
-            // Si algo falla, revierte todos los cambios
-            $this->db->rollBack();
-            Logger::error($e, 'Proveedor - eliminar orden de abastecimiento');
-            return false;
-        }
+        $stmt = $this->db->prepare("UPDATE orden_abastecimiento SET activo = 0 WHERE id = ?");
+        $stmt->bindParam(1, $this->id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     /**
@@ -365,7 +348,7 @@ class Proveedor extends Model
     public function obtenerProveedores(): array
     {
         // Consulta todos los proveedores ordenados por nombre
-        $stmt = $this->db->query("SELECT id, rif, nombre, email, telefono FROM proveedores ORDER BY nombre");
+        $stmt = $this->db->query("SELECT id, rif, nombre, email, telefono FROM proveedores WHERE activo = 1 ORDER BY nombre");
         return $stmt->fetchAll();
     }
 
@@ -389,7 +372,7 @@ class Proveedor extends Model
     public function obtenerProductos(): array
     {
         // Consulta básica de productos, solo los campos necesarios para una orden
-        $stmt = $this->db->query("SELECT id, codigo, nombre, precio_compra FROM productos ORDER BY nombre");
+        $stmt = $this->db->query("SELECT id, codigo, nombre, precio_compra FROM productos WHERE activo = 1 ORDER BY nombre");
         return $stmt->fetchAll();
     }
 
@@ -474,7 +457,7 @@ class Proveedor extends Model
      */
     public function totalSolicitudes(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM orden_abastecimiento");
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM orden_abastecimiento WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -489,6 +472,7 @@ class Proveedor extends Model
             SELECT ss.status AS estado, COUNT(*) AS total
             FROM orden_abastecimiento oa
             LEFT JOIN status_seguimiento ss ON oa.fk_status = ss.id
+            WHERE oa.activo = 1
             GROUP BY ss.status
         ");
         return $stmt->fetchAll();

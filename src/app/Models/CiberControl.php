@@ -44,7 +44,7 @@ class CiberControl extends Model
             ) sc ON sc.fk_activo = a.id
             LEFT JOIN clientes cli ON sc.fk_cliente = cli.id
             LEFT JOIN tarifas tr ON sc.fk_tarifa = tr.id
-            WHERE a.is_ciber = 1 AND a.activa = 1
+            WHERE a.is_ciber = 1 AND a.activa = 1 AND a.activo = 1
             ORDER BY a.id
         ");
         return $stmt->fetchAll();
@@ -136,7 +136,7 @@ class CiberControl extends Model
             $this->db->beginTransaction();
 
             // 1. Verifica que la estación exista, esté activa y sea de cybercafé
-            $stmt = $this->db->prepare("SELECT id FROM activos WHERE id = ? AND is_ciber = 1 AND activa = 1");
+            $stmt = $this->db->prepare("SELECT id FROM activos WHERE id = ? AND is_ciber = 1 AND activa = 1 AND activo = 1");
             $stmt->bindParam(1, $activoId, PDO::PARAM_INT);
             $stmt->execute();
             if (!$stmt->fetch()) {
@@ -213,7 +213,7 @@ class CiberControl extends Model
                    a.fk_tipo_activo AS tipo_activo_id, ta.nombre_tipo
             FROM activos a
             LEFT JOIN tipo_activo ta ON a.fk_tipo_activo = ta.id
-            WHERE a.id = ? AND a.is_ciber = 1
+            WHERE a.id = ? AND a.is_ciber = 1 AND a.activo = 1
         ");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -368,9 +368,9 @@ class CiberControl extends Model
         if ($this->tieneSesiones($id)) {
             throw new \InvalidArgumentException('No se puede eliminar una PC con sesiones registradas. Desactívala en su lugar');
         }
-        $stmt = $this->db->prepare("DELETE FROM activos WHERE id = ? AND is_ciber = 1");
+        $stmt = $this->db->prepare("UPDATE activos SET activo = 0 WHERE id = ? AND is_ciber = 1");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
-        return $stmt->execute() && $stmt->rowCount() > 0;
+        return $stmt->execute();
     }
 
     /**

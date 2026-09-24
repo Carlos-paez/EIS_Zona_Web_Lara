@@ -305,6 +305,7 @@ class Asesoria extends Model
             LEFT JOIN cliente_asesoria ca ON a.fk_cliente_asesoria = ca.id
             LEFT JOIN clientes cli ON ca.fk_cliente = cli.id
             LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
+            WHERE a.activo = 1
             ORDER BY a.fecha DESC
         ");
         // Retorna todas las filas como arreglo asociativo
@@ -332,7 +333,7 @@ class Asesoria extends Model
             LEFT JOIN cliente_asesoria ca ON a.fk_cliente_asesoria = ca.id
             LEFT JOIN clientes cli ON ca.fk_cliente = cli.id
             LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
-            WHERE ta.permitido = ?
+            WHERE a.activo = 1 AND ta.permitido = ?
             ORDER BY a.fecha DESC
         ");
         // Ejecuta con el valor permitido calculado
@@ -361,7 +362,7 @@ class Asesoria extends Model
             LEFT JOIN cliente_asesoria ca ON a.fk_cliente_asesoria = ca.id
             LEFT JOIN clientes cli ON ca.fk_cliente = cli.id
             LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
-            WHERE a.id = ?
+            WHERE a.id = ? AND a.activo = 1
         ");
         $stmt->bindParam(1, $this->id, PDO::PARAM_INT);
         $stmt->execute();
@@ -390,7 +391,7 @@ class Asesoria extends Model
             INNER JOIN cliente_asesoria ca ON a.fk_cliente_asesoria = ca.id
             INNER JOIN clientes cli ON ca.fk_cliente = cli.id
             LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
-            WHERE cli.cedula LIKE ?
+            WHERE cli.cedula LIKE ? AND a.activo = 1
             ORDER BY a.fecha DESC
         ");
         // Agrega comodines % para la búsqueda parcial
@@ -438,8 +439,7 @@ class Asesoria extends Model
     {
         // Encapsulación: se carga el ID mediante el setter
         $this->setId($id);
-        // Sentencia DELETE parametrizada
-        $stmt = $this->db->prepare("DELETE FROM asesoria WHERE id = ?");
+        $stmt = $this->db->prepare("UPDATE asesoria SET activo = 0 WHERE id = ?");
         $stmt->bindParam(1, $this->id, PDO::PARAM_INT);
         return $stmt->execute();
     }
@@ -456,6 +456,7 @@ class Asesoria extends Model
             SELECT CASE WHEN ta.permitido = 1 THEN 'Permitido' ELSE 'Denegado' END AS estado, COUNT(*) AS total
             FROM asesoria a
             LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
+            WHERE a.activo = 1
             GROUP BY ta.permitido
         ");
         return $stmt->fetchAll();

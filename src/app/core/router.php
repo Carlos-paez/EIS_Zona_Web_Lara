@@ -47,6 +47,7 @@ class Router
         'asesorias'          => 'Asesoría Legal',
         'usuarios'           => 'Configuración de Usuarios',
         'roles'              => 'Roles y Permisos',
+        'manual_usuario'     => 'Manual de Usuario',
     ];
 
     /** Encabezados extra opcionales por página (chips, badges, etc.). */

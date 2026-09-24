@@ -115,14 +115,14 @@ class ProveedorGestion extends Model
 
     public function obtenerProveedores(): array
     {
-        $stmt = $this->db->query("SELECT id, rif, nombre, email, telefono FROM proveedores ORDER BY nombre");
+        $stmt = $this->db->query("SELECT id, rif, nombre, email, telefono FROM proveedores WHERE activo = 1 ORDER BY nombre");
         return $stmt->fetchAll();
     }
 
     public function obtenerProveedorPorId(int $id): array|false
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT * FROM proveedores WHERE id = ?");
+        $stmt = $this->db->prepare("SELECT * FROM proveedores WHERE id = ? AND activo = 1");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch();
@@ -165,14 +165,14 @@ class ProveedorGestion extends Model
     public function eliminarProveedor(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("DELETE FROM proveedores WHERE id = ?");
+        $stmt = $this->db->prepare("UPDATE proveedores SET activo = 0 WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
 
     public function totalProveedores(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM proveedores");
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM proveedores WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 

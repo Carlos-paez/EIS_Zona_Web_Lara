@@ -204,6 +204,7 @@ class Inventario extends Model
                    c.nombre_categoria AS categoria
             FROM productos p
             LEFT JOIN categoria c ON p.fk_categoria = c.id
+            WHERE p.activo = 1
             ORDER BY p.nombre
         ");
         return $stmt->fetchAll();
@@ -220,7 +221,7 @@ class Inventario extends Model
                    c.nombre_categoria AS categoria
             FROM productos p
             LEFT JOIN categoria c ON p.fk_categoria = c.id
-            WHERE p.id = ?
+            WHERE p.id = ? AND p.activo = 1
         ";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
@@ -238,7 +239,7 @@ class Inventario extends Model
                    c.nombre_categoria AS categoria
             FROM productos p
             LEFT JOIN categoria c ON p.fk_categoria = c.id
-            WHERE p.nombre LIKE ? OR p.codigo LIKE ?
+            WHERE p.activo = 1 AND (p.nombre LIKE ? OR p.codigo LIKE ?)
             ORDER BY p.nombre
         ";
         $stmt = $this->db->prepare($sql);
@@ -282,7 +283,7 @@ class Inventario extends Model
     public function eliminarProducto(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $sql = "DELETE FROM productos WHERE id = ?";
+        $sql = "UPDATE productos SET activo = 0 WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         return $stmt->execute();
@@ -290,32 +291,32 @@ class Inventario extends Model
 
     public function totalProductos(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos");
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
     public function stockCritico(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE stock <= 0");
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE stock <= 0 AND activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
     public function stockBajo(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE stock > 0 AND stock <= stock_minimo");
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE stock > 0 AND stock <= stock_minimo AND activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
     public function valorTotalInventario(): float
     {
-        $stmt = $this->db->query("SELECT SUM(stock * precio_venta) AS total FROM productos");
+        $stmt = $this->db->query("SELECT SUM(stock * precio_venta) AS total FROM productos WHERE activo = 1");
         $fila = $stmt->fetch();
         return $fila['total'] ? (float)$fila['total'] : 0.0;
     }
 
     public function obtenerCategorias(): array
     {
-        $stmt = $this->db->query("SELECT id, nombre_categoria AS nombre FROM categoria ORDER BY nombre_categoria");
+        $stmt = $this->db->query("SELECT id, nombre_categoria AS nombre FROM categoria WHERE activo = 1 ORDER BY nombre_categoria");
         return $stmt->fetchAll();
     }
 
@@ -346,7 +347,7 @@ class Inventario extends Model
     public function eliminarCategoria(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $sql = "DELETE FROM categoria WHERE id = ?";
+        $sql = "UPDATE categoria SET activo = 0 WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         return $stmt->execute();

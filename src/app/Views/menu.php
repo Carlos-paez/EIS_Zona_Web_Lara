@@ -151,9 +151,34 @@
                     <i class="material-icons">shopping_cart</i> Ventas
                     <span class="menu-arrow material-icons">arrow_forward</span>
                 </a>
+                <!-- Enlace al módulo de Clientes -->
+                <a href="?pagina=clientes" class="menu-item">
+                    <i class="material-icons">badge</i> Clientes
+                    <span class="menu-arrow material-icons">arrow_forward</span>
+                </a>
                 <!-- Enlace al módulo de Activos -->
                 <a href="?pagina=activos" class="menu-item">
                     <i class="material-icons">build</i> Activos
+                    <span class="menu-arrow material-icons">arrow_forward</span>
+                </a>
+                <!-- Enlace al módulo de Asesoría Legal -->
+                <a href="?pagina=asesorias" class="menu-item">
+                    <i class="material-icons">gavel</i> Asesoría Legal
+                    <span class="menu-arrow material-icons">arrow_forward</span>
+                </a>
+                <!-- Enlace al módulo de Configuración (Usuarios) -->
+                <a href="?pagina=usuarios" class="menu-item">
+                    <i class="material-icons">settings</i> Configuración
+                    <span class="menu-arrow material-icons">arrow_forward</span>
+                </a>
+                <!-- Enlace al módulo de Roles y Permisos -->
+                <a href="?pagina=roles" class="menu-item">
+                    <i class="material-icons">admin_panel_settings</i> Roles y Permisos
+                    <span class="menu-arrow material-icons">arrow_forward</span>
+                </a>
+                <!-- Enlace al Manual de Usuario -->
+                <a href="?pagina=manual_usuario" class="menu-item">
+                    <i class="material-icons">menu_book</i> Manual de Usuario
                     <span class="menu-arrow material-icons">arrow_forward</span>
                 </a>
             </div>

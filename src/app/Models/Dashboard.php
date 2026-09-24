@@ -62,7 +62,7 @@ class Dashboard extends Model
      */
     public function stockCritico(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE stock <= stock_minimo");
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE stock <= stock_minimo AND activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -73,7 +73,7 @@ class Dashboard extends Model
      */
     public function stockAgotado(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE stock <= 0");
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE stock <= 0 AND activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -99,7 +99,7 @@ class Dashboard extends Model
             SELECT COUNT(*) AS total
             FROM orden_abastecimiento oa
             JOIN status_seguimiento ss ON oa.fk_status = ss.id
-            WHERE ss.status = 'Pendiente'
+            WHERE ss.status = 'Pendiente' AND oa.activo = 1
         ");
         return (int)$stmt->fetch()['total'];
     }
@@ -134,7 +134,7 @@ class Dashboard extends Model
         $stmt = $this->db->query("
             SELECT nombre, stock, stock_minimo
             FROM productos
-            WHERE stock <= stock_minimo
+            WHERE stock <= stock_minimo AND activo = 1
             ORDER BY stock ASC, nombre ASC
             LIMIT 8
         ");
@@ -172,6 +172,7 @@ class Dashboard extends Model
                    oa.fecha AS fecha
             FROM orden_abastecimiento oa
             LEFT JOIN proveedores p ON oa.fk_proveedor = p.id
+            WHERE oa.activo = 1
             ORDER BY oa.id DESC
             LIMIT 4
         ")->fetchAll();

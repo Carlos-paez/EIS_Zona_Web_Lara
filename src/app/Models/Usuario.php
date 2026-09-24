@@ -190,6 +190,7 @@ class Usuario extends Model
             FROM usuarios u
             LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
             LEFT JOIN roles r ON ru.fk_rol = r.id
+            WHERE u.activo = 1
             ORDER BY u.nombre
         ");
         return $stmt->fetchAll();
@@ -204,7 +205,7 @@ class Usuario extends Model
             FROM usuarios u
             LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
             LEFT JOIN roles r ON ru.fk_rol = r.id
-            WHERE u.id = ?
+            WHERE u.id = ? AND u.activo = 1
         ");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -219,7 +220,7 @@ class Usuario extends Model
             FROM usuarios u
             LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
             LEFT JOIN roles r ON ru.fk_rol = r.id
-            WHERE u.user_name = ? AND u.estatus IN ('1','activo')
+            WHERE u.user_name = ? AND u.estatus IN ('1','activo') AND u.activo = 1
         ");
         $stmt->bindParam(1, $username, PDO::PARAM_STR);
         $stmt->execute();
@@ -280,6 +281,39 @@ class Usuario extends Model
         return false;
     }
 
+    public function obtenerPermisosPorUsuario(int $user_id): array
+    {
+        $user_id = $this->sanitizeInt($user_id);
+        $stmt = $this->db->prepare("
+            SELECT DISTINCT p.permisos AS nombre
+            FROM permisos p
+            INNER JOIN permisos_rol pr ON p.id = pr.fk_permiso
+            INNER JOIN rol_usuarios ru ON pr.fk_rol = ru.id
+            INNER JOIN usuarios u ON ru.id = u.fk_rol_usuario
+            WHERE u.id = ? AND u.estatus IN ('1','activo') AND u.activo = 1
+        ");
+        $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+        $stmt->execute();
+        $rows = $stmt->fetchAll();
+        return array_column($rows, 'nombre');
+    }
+
+    public function obtenerRolUsuario(int $user_id): ?string
+    {
+        $user_id = $this->sanitizeInt($user_id);
+        $stmt = $this->db->prepare("
+            SELECT r.nombre_rol
+            FROM usuarios u
+            INNER JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
+            INNER JOIN roles r ON ru.fk_rol = r.id
+            WHERE u.id = ?
+        ");
+        $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch();
+        return $row ? $row['nombre_rol'] : null;
+    }
+
     public function actualizar(int $id, string $nombre, string $apellido, string $email, ?int $fk_rol_usuario = null, string $estatus = '1'): bool
     {
         $this->setId($id);
@@ -313,7 +347,7 @@ class Usuario extends Model
     public function eliminar(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("DELETE FROM usuarios WHERE id = ?");
+        $stmt = $this->db->prepare("UPDATE usuarios SET activo = 0 WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         return $stmt->execute();
     }

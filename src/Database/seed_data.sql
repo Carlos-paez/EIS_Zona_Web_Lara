@@ -23,7 +23,8 @@ INSERT INTO permisos (permisos) VALUES
 ('gestion_clientes'),
 ('gestion_proveedores'),
 ('ver_reportes'),
-('configuracion');
+('configuracion'),
+('gestion_ciber');
 
 -- ============================================================
 -- CATEGORIA
@@ -153,7 +154,7 @@ INSERT INTO usuarios (nombre, apellido, user_name, password_hash, email, estatus
 -- ============================================================
 INSERT INTO permisos_rol (fk_rol, fk_permiso) VALUES
 (1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
-(1, 6), (1, 7), (1, 8), (1, 9), (1, 10),
+(1, 6), (1, 7), (1, 8), (1, 9), (1, 10), (1, 11),
 (2, 3), (2, 7), (2, 9),
 (3, 2), (3, 4), (3, 9),
 (4, 5), (4, 7), (4, 9),

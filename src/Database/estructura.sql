@@ -6,7 +6,8 @@ CREATE TABLE roles
     id          INT PRIMARY KEY AUTO_INCREMENT,
     nombre_rol  VARCHAR(50)  NOT NULL,
     descripcion VARCHAR(500)          DEFAULT NULL,
-    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    activo      TINYINT(1)   NOT NULL DEFAULT 1
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -22,7 +23,8 @@ CREATE TABLE permisos
 CREATE TABLE categoria
 (
     id               INT PRIMARY KEY AUTO_INCREMENT,
-    nombre_categoria VARCHAR(100) NOT NULL
+    nombre_categoria VARCHAR(100) NOT NULL,
+    activo           TINYINT(1)   NOT NULL DEFAULT 1
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -34,7 +36,8 @@ CREATE TABLE clientes
     nombre    VARCHAR(100)       not null,
     apellido  VARCHAR(100)       not null,
     direccion TEXT               not null,
-    telefono  VARCHAR(20)        not null
+    telefono  VARCHAR(20)        not null,
+    activo    TINYINT(1)         NOT NULL DEFAULT 1
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -59,7 +62,8 @@ CREATE TABLE proveedores
     rif      VARCHAR(20) UNIQUE NOT NULL,
     nombre   VARCHAR(100)       not null,
     email    VARCHAR(100)       not null,
-    telefono VARCHAR(20)        not null
+    telefono VARCHAR(20)        not null,
+    activo   TINYINT(1)         NOT NULL DEFAULT 1
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_spanish_ci;
@@ -120,6 +124,7 @@ CREATE TABLE usuarios
     password_hash  VARCHAR(255)       not null,
     email          VARCHAR(100)                default 'zonaweblara@gmail.com',
     estatus        VARCHAR(20)        not null default '0',
+    activo         TINYINT(1)         NOT NULL DEFAULT 1,
     fk_rol_usuario INT,
     FOREIGN KEY (fk_rol_usuario) REFERENCES rol_usuarios (id)
         ON DELETE RESTRICT
@@ -156,6 +161,7 @@ CREATE TABLE productos
     fecha_creacion      DATE           not null,
     fecha_actualizacion DATE           not null,
     fk_categoria        INT,
+    activo              TINYINT(1) NOT NULL DEFAULT 1,
     FOREIGN KEY (fk_categoria) REFERENCES categoria (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE
@@ -204,6 +210,7 @@ CREATE TABLE orden_abastecimiento
     fecha           DATE        not null,
     fk_proveedor    INT,
     fk_status       INT,
+    activo          TINYINT(1) NOT NULL DEFAULT 1,
     FOREIGN KEY (fk_proveedor) REFERENCES proveedores (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE,
@@ -239,6 +246,7 @@ CREATE TABLE asesoria
     fecha               DATE         not null,
     fk_cliente_asesoria INT,
     fk_tipo_asesoria    INT,
+    activo              TINYINT(1) NOT NULL DEFAULT 1,
     FOREIGN KEY (fk_cliente_asesoria) REFERENCES cliente_asesoria (id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
@@ -256,6 +264,7 @@ CREATE TABLE activos
     descripcion    TEXT         not null,
     is_ciber       BOOLEAN      not null default false,
     activa         BOOLEAN               DEFAULT TRUE,
+    activo         TINYINT(1)            NOT NULL DEFAULT 1,
     fk_tipo_activo INT,
     FOREIGN KEY (fk_tipo_activo) REFERENCES tipo_activo (id)
         ON DELETE RESTRICT

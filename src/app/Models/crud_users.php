@@ -159,7 +159,7 @@ function actualizarPassword($pdo, $id, $password) {
  * @return bool    True si la eliminación fue exitosa.
  */
 function eliminarUsuario($pdo, $id) {
-    $stmt = $pdo->prepare("DELETE FROM usuarios WHERE id = ?");
+    $stmt = $pdo->prepare("UPDATE usuarios SET activo = 0 WHERE id = ?");
     $stmt->bindParam(1, $id, PDO::PARAM_INT);
     return $stmt->execute();
 }
