@@ -5,9 +5,11 @@
      de asesorías con búsqueda y tabla informativa de documentos
      permitidos.
      NOTA: La lógica dinámica es manejada por JS en app.legal.js.
+     La clase "legal-module" se usa para acotar los estilos del
+     módulo (ver styles.css) y evitar que el texto se desborde.
      ============================================================ -->
 
-<div class="row">
+<div class="row legal-module">
     <div class="col s12">
         <!-- ===== BANNER DE BIENVENIDA CON DEGRADADO ===== -->
         <div class="card welcome-banner" style="background:linear-gradient(135deg, #283593 0%, #5c6bc0 100%);padding:1.75rem 2rem;">
@@ -15,20 +17,20 @@
                 <!-- Ícono decorativo (gavel = martillo de juez) -->
                 <div><i class="material-icons" style="font-size:2.5rem;">gavel</i></div>
                 <!-- Texto de bienvenida -->
-                <div style="flex:1;">
+                <div style="flex:1;min-width:0;">
                     <h2 style="font-size:1.5rem;font-weight:700;margin:0 0 0.25rem;">Asesoría Legal</h2>
                     <p style="margin:0;opacity:0.9;font-size:0.9rem;">Registro y validación de documentos para asesoría jurídica gratuita</p>
                 </div>
                 <!-- Chip que muestra cuántas asesorías se registraron hoy (actualizado dinámicamente por JS) -->
-                <div>
-                    <span class="chip indigo lighten-2 white-text" style="font-size:0.8rem;padding:0.25rem 0.75rem;display:inline-flex;align-items:center;gap:0.25rem;" id="asesoriasCountChip"><i class="material-icons" style="font-size:1rem;">receipt</i> <span>0 registradas hoy</span></span>
+                <div style="max-width:100%;">
+                    <span class="chip indigo lighten-2 white-text" style="font-size:0.8rem;padding:0.25rem 0.75rem;display:inline-flex;align-items:center;gap:0.25rem;white-space:normal;height:auto;" id="asesoriasCountChip"><i class="material-icons" style="font-size:1rem;">receipt</i> <span>0 registradas hoy</span></span>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
+<div class="row legal-module">
     <!-- ===== COLUMNA IZQUIERDA: FORMULARIO DE REGISTRO ===== -->
     <div class="col s12 l5">
         <div class="card">
@@ -112,52 +114,8 @@
         </div>
     </div>
 
-    <!-- ===== COLUMNA DERECHA: HISTORIAL E INFORMACIÓN ===== -->
+    <!-- ===== COLUMNA DERECHA: DOCUMENTOS PERMITIDOS ===== -->
     <div class="col s12 l7">
-        <!-- ===== TARJETA: HISTORIAL DE ASESORÍAS REGISTRADAS ===== -->
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title">
-                    <i class="material-icons left">history</i>Historial de Asesorías
-                    <!-- Badge con el total de asesorías registradas (actualizado dinámicamente por JS) -->
-                    <span class="badge indigo white-text" id="totalAsesoriasBadge" style="font-size:0.85rem;border-radius:4px;">0</span>
-                </span>
-                <div class="row" style="margin-bottom:0;">
-                    <!-- Buscador en el historial de asesorías -->
-                    <div class="input-field col s12">
-                        <i class="material-icons prefix">search</i>
-                        <input type="text" id="searchAsesoria" placeholder="Buscar por ciudadano, cédula o documento...">
-                        <label for="searchAsesoria">Buscar en historial</label>
-                    </div>
-                </div>
-                <!-- Tabla de asesorías (los datos se cargan dinámicamente con JavaScript) -->
-                <table class="striped responsive-table" id="tabla-asesorias">
-                    <thead>
-                        <tr>
-                            <th class="hide-on-small-only">#</th>
-                            <th>Ciudadano</th>
-                            <th class="hide-on-small-only">Cédula</th>
-                            <th>Documento</th>
-                            <th>Estado</th>
-                            <th class="hide-on-small-only">Fecha</th>
-                            <!-- Columna de acciones en escritorio -->
-                            <th class="right-align hide-on-small-only">Acción</th>
-                            <!-- Columna de acciones en móvil -->
-                            <th class="hide-on-med-and-up right-align">Acción</th>
-                        </tr>
-                    </thead>
-                    <!-- Cuerpo de la tabla: las filas se generan dinámicamente con JavaScript -->
-                    <tbody id="asesoriasTableBody">
-                    </tbody>
-                </table>
-                <!-- Mensaje mostrado cuando no hay asesorías registradas -->
-                <div id="asesoriasEmpty" class="center-align" style="padding:2rem 0;color:var(--text-muted);">
-                    <i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">gavel</i>
-                    <p>No hay asesorías registradas aún.<br><small>Completa el formulario para registrar la primera.</small></p>
-                </div>
-            </div>
-        </div>
-
         <!-- ===== TARJETA INFORMATIVA: DOCUMENTOS PERMITIDOS ===== -->
         <div class="card">
             <div class="card-content">
@@ -180,31 +138,51 @@
     </div>
 </div>
 
-<!-- ===== MODAL: EDITAR ASESORÍA ===== -->
-<div id="modal-asesoria" class="modal" style="max-width:520px;">
-    <div class="modal-content" style="padding:2rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
-            <h4 style="font-weight:700;margin:0;font-size:1.3rem;display:flex;align-items:center;gap:0.5rem;">
-                <i class="material-icons" style="color:var(--primary);">gavel</i> Editar Asesoría
-            </h4>
-            <a href="#!" class="modal-close btn-flat" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="material-icons">close</i></a>
+<div class="row legal-module">
+    <!-- ===== HISTORIAL DE ASESORÍAS (ANCHO COMPLETO) ===== -->
+    <div class="col s12">
+        <!-- ===== TARJETA: HISTORIAL DE ASESORÍAS REGISTRADAS ===== -->
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title">
+                    <i class="material-icons left">history</i>Historial de Asesorías
+                    <!-- Badge con el total de asesorías registradas (actualizado dinámicamente por JS) -->
+                    <span class="badge indigo white-text" id="totalAsesoriasBadge" style="font-size:0.85rem;border-radius:4px;">0</span>
+                </span>
+                <div class="row" style="margin-bottom:0;">
+                    <!-- Buscador en el historial de asesorías -->
+                    <div class="input-field col s12 m6 l4">
+                        <i class="material-icons prefix">search</i>
+                        <input type="text" id="searchAsesoria" placeholder="Buscar por ciudadano, cédula o documento...">
+                        <label for="searchAsesoria">Buscar en historial</label>
+                    </div>
+                </div>
+                <!-- Tabla de asesorías (los datos se cargan dinámicamente con JavaScript) -->
+                <div style="overflow-x:auto;margin-top:0.75rem;">
+                    <table class="striped" id="tabla-asesorias" style="margin-bottom:0;border-collapse:collapse;width:100%;">
+                        <thead>
+                            <tr>
+                                <th class="hide-on-small-only">#</th>
+                                <th>Ciudadano</th>
+                                <th class="hide-on-small-only">Cédula</th>
+                                <th>Documento</th>
+                                <th>Estado</th>
+                                <th class="hide-on-small-only">Fecha</th>
+                            </tr>
+                        </thead>
+                        <!-- Cuerpo de la tabla: las filas se generan dinámicamente con JavaScript -->
+                        <tbody id="asesoriasTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Mensaje mostrado cuando no hay asesorías registradas -->
+                <div id="asesoriasEmpty" class="center-align" style="padding:2rem 0;color:var(--text-muted);">
+                    <i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">gavel</i>
+                    <p>No hay asesorías registradas aún.<br><small>Completa el formulario para registrar la primera.</small></p>
+                </div>
+            </div>
         </div>
-        <form id="form-asesoria">
-            <input type="hidden" name="id" id="asesoria-id" value="">
-            <div class="input-field">
-                <i class="material-icons prefix">description</i>
-                <input type="text" name="documento" id="asesoria-documento" list="documentSuggestions" maxlength="100">
-                <label for="asesoria-documento">Tipo de Documento / Asesoría</label>
-            </div>
-            <div class="input-field">
-                <i class="material-icons prefix">notes</i>
-                <textarea id="asesoria-descripcion" name="descripcion" class="materialize-textarea"></textarea>
-                <label for="asesoria-descripcion">Descripción / Motivo de la Consulta</label>
-            </div>
-        </form>
-    </div>
-    <div class="modal-footer" style="padding:1rem 2rem;display:flex;gap:0.75rem;justify-content:flex-end;border-top:1px solid var(--border-light);">
-        <button class="btn waves-effect waves-light grey lighten-1 modal-close" style="border-radius:24px;">Cancelar</button>
-        <button type="submit" form="form-asesoria" class="btn waves-effect waves-light indigo" style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;"><i class="material-icons left" style="margin:0;">save</i> Guardar</button>
     </div>
 </div>
+
+<!-- ===== FIN MÓDULO ASESORÍA LEGAL ===== -->

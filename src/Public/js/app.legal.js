@@ -105,22 +105,12 @@ $(function () {
                 + '<td>' + escHtml(a.documento) + '</td>'
                 + '<td><span class="' + estadoClass + '" style="white-space:nowrap;"><i class="material-icons left" style="font-size:0.85rem;margin:0;">' + icono + '</i>' + estado + '</span></td>'
                 + '<td class="hide-on-small-only" style="font-size:0.8rem;color:var(--text-muted);">' + escHtml(a.fecha) + '</td>'
-                + '<td class="right-align hide-on-small-only" style="white-space:nowrap;">'
-                + '<button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar-asesoria" data-id="' + a.id + '" data-position="top" data-tooltip="Editar"><i class="material-icons">edit</i></button>'
-                + '<button class="btn-floating waves-effect waves-light grey tooltipped btn-eliminar-asesoria" data-id="' + a.id + '" data-position="top" data-tooltip="Eliminar" style="margin-left:4px;"><i class="material-icons">delete</i></button>'
-                + '</td>'
-                + '<td class="right-align hide-on-med-and-up">'
-                + '<button class="btn-floating waves-effect waves-light indigo tooltipped btn-editar-asesoria" data-id="' + a.id + '" data-position="top" data-tooltip="Editar"><i class="material-icons">edit</i></button>'
-                + '<button class="btn-floating waves-effect waves-light grey tooltipped btn-eliminar-asesoria" data-id="' + a.id + '" data-position="top" data-tooltip="Eliminar" style="margin-left:4px;"><i class="material-icons">delete</i></button>'
-                + '</td>'
                 + '</tr>';
         });
 
         $tbody.html(html);
         $('#totalAsesoriasBadge').text(asesoriasRegistradas.length);
 
-        // Reinicio los tooltips de Materialize para los nuevos botones
-        $('.tooltipped').tooltip();
         EIS.datatableRefresh('#tabla-asesorias');
     }
 
@@ -269,79 +259,6 @@ $(function () {
     });
 
     // ================================================================
-    // EVENTO: Click en botón editar asesoría (.btn-editar-asesoria)
-    // Carga el detalle y abre el modal para modificar documento y descripción.
-    // ================================================================
-    $(document).on('click', '.btn-editar-asesoria', function () {
-        var id = $(this).data('id');
-        var asesoria = asesoriasRegistradas.find(function (a) { return a.id == id; });
-
-        if (!asesoria) {
-            EIS.toast('No se encontró la asesoría', 'red', 'error');
-            return;
-        }
-
-        $('#asesoria-id').val(asesoria.id);
-        $('#asesoria-documento').val(asesoria.documento || '');
-        $('#asesoria-descripcion').val(asesoria.descripcion || '');
-        EIS.limpiarErroresFormulario('#form-asesoria');
-        M.updateTextFields();
-        $('#modal-asesoria').modal('open');
-    });
-
-    // ================================================================
-    // EVENTO: Submit del formulario de edición (#form-asesoria)
-    // Envía la actualización al backend y refresca el historial.
-    // ================================================================
-    $(document).on('submit', '#form-asesoria', function (e) {
-        e.preventDefault();
-        var $form = $(this);
-
-        var id = $('#asesoria-id').val();
-        var documento = $('#asesoria-documento').val().trim();
-        var descripcion = $('#asesoria-descripcion').val().trim();
-
-        if (!id || !documento) {
-            EIS.toast('ID y tipo de documento son obligatorios', 'red', 'error');
-            return;
-        }
-
-        $.post(API + 'actualizar', $form.serialize(), function (r) {
-            if (r.success) {
-                EIS.toast(r.message, 'green', 'check_circle');
-                $('#modal-asesoria').modal('close');
-                cargarAsesorias();
-                refrescarKPI();
-            } else {
-                EIS.mostrarErroresFormulario($form, r);
-            }
-        }, 'json').fail(function () {
-            EIS.toast('Error de conexión', 'red', 'error');
-        });
-    });
-
-    // ================================================================
-    // EVENTO: Click en botón eliminar asesoría (.btn-eliminar-asesoria)
-    // Solicita confirmación y elimina la asesoría en el backend.
-    // ================================================================
-    $(document).on('click', '.btn-eliminar-asesoria', function () {
-        var id = $(this).data('id');
-        if (confirm('¿Eliminar esta asesoría del registro?')) {
-            $.post(API + 'eliminar', { id: id }, function (r) {
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
-                    cargarAsesorias();
-                    refrescarKPI();
-                } else {
-                    EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
-                }
-            }, 'json').fail(function () {
-                EIS.toast('Error de conexión', 'red', 'error');
-            });
-        }
-    });
-
-    // ================================================================
     // FUNCIÓN: aplicarFiltro()
     // PROPÓSITO: Conecta la búsqueda del historial con la búsqueda
     //            global de DataTables (ya no recorre filas manualmente).
@@ -362,14 +279,13 @@ $(function () {
     // ================================================================
     // INIT: Al corregir un campo se ocultan los errores del servidor
     // ================================================================
-    $(document).on('input', '#asesoriaForm input, #asesoriaForm textarea, #form-asesoria input', function () {
+    $(document).on('input', '#asesoriaForm input, #asesoriaForm textarea', function () {
         EIS.limpiarErroresFormulario($(this).closest('form'));
     });
 
     // ================================================================
     // INICIALIZACIÓN
     // ================================================================
-    $('.modal').modal();
     if (window.EIS && EIS.datatable) {
         EIS.datatable('#tabla-asesorias');
         if (EIS.datatableWireSearch) EIS.datatableWireSearch('#tabla-asesorias', '#searchAsesoria');

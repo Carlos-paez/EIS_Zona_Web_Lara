@@ -1241,3 +1241,76 @@ button:focus-visible {
 /* Botón "volver arriba" y temas consistentes en dark */
 [data-theme="dark"] #backToTop { background-color: #283593 !important; }
 [data-theme="dark"] #backToTop:hover { background-color: #1a237e !important; }
+
+/* ============================================================
+   MÓDULO: ASESORÍA LEGAL (.legal-module)
+   Ajustes de maquetación para que el contenido permanezca
+   dentro de sus contenedores (tarjetas, celdas, chips y panel
+   de validación) y la tabla del historial quede alineada con
+   los controles de DataTables (longitud / paginación).
+   ============================================================ */
+.legal-module,
+.legal-module .card,
+.legal-module .card-content { min-width: 0; }
+
+.legal-module .card-content { overflow-wrap: break-word; }
+
+/* --- Título de tarjeta con badge alineado a la derecha --- */
+.legal-module .card-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    line-height: 1.35;
+    font-size: 1.1rem;
+}
+.legal-module .card-title .material-icons.left { margin-right: 0.1rem; }
+.legal-module .card-title > .badge {
+    float: none;
+    margin-left: auto;
+    height: auto;
+    line-height: 1.5;
+    padding: 0.05rem 0.55rem;
+}
+
+/* --- Chips (documentos permitidos y contador del banner) --- */
+.legal-module .chip {
+    height: auto;
+    line-height: 1.45;
+    white-space: normal;
+    overflow-wrap: break-word;
+    max-width: 100%;
+}
+
+/* --- Panel de validación de documento --- */
+.legal-module #documentValidationResult { overflow-wrap: break-word; word-break: break-word; }
+.legal-module #validationMessage { line-height: 1.5; }
+.legal-module #validationMessage .material-icons.left { margin-right: 0.35rem; }
+
+/* --- Tabla del historial: legible y sin desbordes --- */
+.legal-module #tabla-asesorias { min-width: 560px; font-size: 0.85rem; }
+.legal-module #tabla-asesorias th,
+.legal-module #tabla-asesorias td {
+    padding: 0.65rem 0.85rem;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    vertical-align: middle;
+}
+.legal-module #tabla-asesorias thead th {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    font-weight: 700;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+}
+.legal-module #tabla-asesorias tbody td { border-bottom: 1px solid var(--border-light); }
+.legal-module #tabla-asesorias tbody tr:hover { background: var(--surface-hover); }
+
+/* En pantallas pequeñas la tabla se adapta (sin forzar scroll) */
+@media only screen and (max-width: 600px) {
+    .legal-module #tabla-asesorias { min-width: 0; }
+    .legal-module #tabla-asesorias th,
+    .legal-module #tabla-asesorias td { padding: 0.5rem 0.55rem; }
+}
