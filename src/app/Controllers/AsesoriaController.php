@@ -38,8 +38,6 @@ class AsesoriaController
                 'detalle'    => $this->detalle(),
                 'buscar'     => $this->buscar(),
                 'crear'      => $this->crear(),
-                'actualizar' => $this->actualizar(),
-                'eliminar'   => $this->eliminar(),
                 'kpis'       => $this->kpis(),
                 default      => $this->json(false, null, 'Acción no válida'),
             };
@@ -140,50 +138,6 @@ class AsesoriaController
             $resultado
                 ? ['success' => true, 'message' => 'Asesoría registrada exitosamente']
                 : ['success' => false, 'error' => 'Error al registrar la asesoría']
-        );
-    }
-
-    private function actualizar(): void
-    {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
-            return;
-        }
-
-        $errores = Validator::requeridos($_POST, [
-            'id'        => 'ID de la asesoría',
-            'documento' => 'tipo de documento',
-        ]);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
-
-        $id          = Validator::id($_POST['id'] ?? null, 'ID de la asesoría');
-        $documento   = Validator::texto($_POST['documento'] ?? null, 'tipo de documento', ['required' => true, 'min' => 1, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El tipo de documento contiene caracteres no permitidos']);
-        $descripcion = Validator::texto($_POST['descripcion'] ?? null, 'descripción', ['required' => false, 'max' => 1000]);
-
-        $resultado = $this->model->actualizar($id, $documento, $descripcion);
-        echo json_encode(
-            $resultado
-                ? ['success' => true, 'message' => 'Asesoría actualizada exitosamente']
-                : ['success' => false, 'error' => 'Error al actualizar la asesoría']
-        );
-    }
-
-    private function eliminar(): void
-    {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
-            return;
-        }
-
-        $id = Validator::id($_POST['id'] ?? null, 'ID de la asesoría');
-        $resultado = $this->model->eliminar($id);
-        echo json_encode(
-            $resultado
-                ? ['success' => true, 'message' => 'Asesoría eliminada exitosamente']
-                : ['success' => false, 'error' => 'Error al eliminar la asesoría']
         );
     }
 

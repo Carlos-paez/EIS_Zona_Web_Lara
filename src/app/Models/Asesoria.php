@@ -402,49 +402,6 @@ class Asesoria extends Model
     }
 
     /**
-     * Actualiza el documento y descripción de una asesoría.
-     * El tipo de asesoría se actualiza automáticamente según el nuevo documento.
-     *
-     * @param int    $id           ID de la asesoría.
-     * @param string $documento    Nuevo tipo de documento.
-     * @param string $descripcion  Nueva descripción.
-     * @return bool  True si la actualización fue exitosa.
-     */
-    public function actualizar(int $id, string $documento, string $descripcion): bool
-    {
-        // Encapsulación: se cargan los valores mediante setters con validación
-        $this->setId($id);
-        $this->setDocumento($documento);
-        $this->setDescripcion($descripcion);
-
-        // Obtiene el ID del tipo de asesoría correspondiente al documento
-        $fk_tipo_asesoria = $this->obtenerTipoAsesoria($this->documento);
-        // Actualiza los campos; COALESCE mantiene el tipo anterior si no se encuentra el nuevo
-        $sql = "UPDATE asesoria SET documento = ?, descripcion = ?, fk_tipo_asesoria = COALESCE(?, fk_tipo_asesoria) WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(1, $this->documento, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->descripcion, PDO::PARAM_STR);
-        $stmt->bindParam(3, $fk_tipo_asesoria, PDO::PARAM_INT);
-        $stmt->bindParam(4, $this->id, PDO::PARAM_INT);
-        return $stmt->execute();
-    }
-
-    /**
-     * Elimina una asesoría por su ID.
-     *
-     * @param int $id ID de la asesoría a eliminar.
-     * @return bool  True si la eliminación fue exitosa.
-     */
-    public function eliminar(int $id): bool
-    {
-        // Encapsulación: se carga el ID mediante el setter
-        $this->setId($id);
-        $stmt = $this->db->prepare("UPDATE asesoria SET activo = 0 WHERE id = ?");
-        $stmt->bindParam(1, $this->id, PDO::PARAM_INT);
-        return $stmt->execute();
-    }
-
-    /**
      * Cuenta las asesorías agrupadas por estado (Permitido / Denegado).
      *
      * @return array Arreglo con cada estado y su total.

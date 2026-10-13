@@ -3,8 +3,8 @@
 // FUNCIÓN: Maneja la interactividad del módulo de Asesoría Legal.
 //          Permite validar tipos de documentos legales, registrar
 //          asesorías (permitidas o derivadas) creando/actualizando el
-//          cliente asociado, editar, eliminar y visualizar el historial
-//          filtrable. Toda la persistencia se realiza vía AJAX.
+//          cliente asociado y visualizando el historial filtrable.
+//          Toda la persistencia se realiza vía AJAX.
 // =====================================================================
 
 $(function () {
