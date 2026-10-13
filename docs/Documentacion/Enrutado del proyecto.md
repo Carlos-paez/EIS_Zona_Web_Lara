@@ -65,7 +65,7 @@ La clase `Router` tiene los siguientes métodos clave:
 | `ClienteController` | `handle()` — acciones CRUD para clientes via AJAX |
 | `VentaController` | `handle()` — acciones CRUD para ventas (POS) via AJAX |
 | `CiberController` | `handle()` — control de estaciones cyber via AJAX |
-| `AsesoriaController` | `handle()` — acciones CRUD para asesorías via AJAX |
+| `AsesoriaController` | `handle()` — registro y consulta de asesorías via AJAX |
 | `ActivoController` | `handle()` — acciones CRUD para activos fijos via AJAX |
 | `DashboardController` | `handle()` — métricas del dashboard via AJAX |
 | `ReporteController` | `handle()` — generación de reportes via AJAX |

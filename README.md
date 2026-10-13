@@ -4,7 +4,7 @@
 
 **EIS System** es una aplicación web de gestión empresarial desarrollada en **PHP vanilla (8.x)** con **Materialize CSS** y **jQuery**. Utiliza una arquitectura **Front Controller** con enrutador OOP (clase `Router`), patrón **Singleton** para conexión PDO, y **MVC** modular con controladores y modelos con namespace (PSR-4 vía Composer).
 
-El sistema administra múltiples aspectos de un negocio: ventas (POS), inventario, proveedores, activos fijos y control de cybercafé, asesoría legal, usuarios, roles y permisos, dashboard con KPIs reales y reportes exportables. Cada módulo cuenta con **CRUD completo persistente en base de datos** vía AJAX (JSON) y validación de seguridad (CSRF, XSS, prepared statements). El frontend funciona sin conexión a Internet gracias a assets locales y un Service Worker (PWA).
+El sistema administra múltiples aspectos de un negocio: ventas (POS), inventario, proveedores, activos fijos y control de cybercafé, asesoría legal, usuarios, roles y permisos, dashboard con KPIs reales y reportes exportables. Cada módulo persiste sus datos en base de datos vía AJAX (JSON) —con **CRUD completo en la mayoría de ellos**— y validación de seguridad (CSRF, XSS, prepared statements). El frontend funciona sin conexión a Internet gracias a assets locales y un Service Worker (PWA).
 
 ---
 
@@ -24,7 +24,7 @@ El sistema administra múltiples aspectos de un negocio: ventas (POS), inventari
 | **Proveedores (Gestión)** | `proveedores-gestion.php` | `ProveedorGestion` | `ProveedorGestionController` | `app.proveedores-gestion.js` | CRUD proveedores |
 | **Cyber Control** | `ciberControl.php` | `CiberControl` | `CiberController` | `app.cyber.js` | Estaciones, iniciar/finalizar sesiones, tarifas, CRUD de PCs |
 | **Activos Fijos** | `activos.php` | `Activo` | `ActivoController` | `app.activos.js` | CRUD activos, tipos, KPIs, estado ciber |
-| **Asesoría Legal** | `asesorias.php` | `Asesoria` | `AsesoriaController` | `app.legal.js` | CRUD asesorías, cliente get-or-create, KPIs |
+| **Asesoría Legal** | `asesorias.php` | `Asesoria` | `AsesoriaController` | `app.legal.js` | Registro y consulta de asesorías, cliente get-or-create, KPIs |
 | **Usuarios** | `usuarios.php` | `Usuario` | `UsuarioController` | `app.usuarios.js` | CRUD usuarios, estados y contraseñas |
 | **Roles y Permisos** | `roles.php` | `Rol` | `RolController` | `app.roles.js` | CRUD roles/permisos |
 | **Reportes** | `reportes.php` | `Reporte` | `ReporteController` | `app.reportes.js` | KPIs, consultas por rango y **exportación CSV/Excel/PDF** |

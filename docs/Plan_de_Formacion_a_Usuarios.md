@@ -125,9 +125,9 @@ Capacitar a todos los usuarios finales del sistema EIS en el uso correcto de cad
 | **Panel de asesoría legal** | 10 min | Banner informativo, contador de registros del día |
 | **Registrar asesoría** | 15 min | Formulario: ciudadano, cédula, tipo de documento, descripción |
 | **Validación de documentos** | 10 min | Documentos permitidos vs. derivación a oficina oficial |
-| **Historial de asesorías** | 10 min | Buscar por ciudadano, cédula o documento; ver estado del caso |
-| **Estados de caso** | 10 min | Pendiente → En Proceso → Finalizada → Archivada |
-| **Práctica guiada** | 20 min | Registrar 3 asesorías, buscar en historial, cambiar estado |
+| **Historial de asesorías** | 10 min | Buscar por ciudadano, cédula o documento; ver estado (Permitido/Denegado) |
+| **Estados de caso** | 10 min | Permitido / Denegado según el tipo de documento |
+| **Práctica guiada** | 20 min | Registrar 3 asesorías y buscar en el historial |
 | **Q&A** | 10 min | Preguntas y respuestas |
 
 ### Usuarios + Reportes — Solo Administradores (2h)
@@ -268,10 +268,8 @@ Los usuarios con nivel C o D recibirán una sesión de refuerzo adicional de 1 h
 
   ESTADOS DE ASESORÍA
   ───────────────────
-  📌 Pendiente      → Caso nuevo sin revisar
-  🔄 En Proceso     → En atención
-  ✅ Finalizada     → Caso cerrado
-  📦 Archivada      → Histórico
+  ✅ Permitido      → Documento permitido
+  🚫 Denegado       → Documento no permitido (derivar a oficina oficial)
 
   REPORTES
   ────────

@@ -314,4 +314,4 @@ INICIO
 
 | **Back-to-top** | Botón flotante en esquina inferior derecha |
 
-| **Scripts** | Materialize JS + `app.js` |
+| **Scripts** | jQuery + Materialize JS + `app.core.js`, `app.init.js`, `app.selects.js`, `app.tables.js`, `app.ui.js` (+ módulo de la página) |

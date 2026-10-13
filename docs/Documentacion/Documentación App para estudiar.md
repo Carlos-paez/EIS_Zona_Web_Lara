@@ -90,7 +90,7 @@
 
    - [login.css](#92-logincss)
 
-   - [app.js](#93-appjs)
+   - [app.js (eliminado)](#93-appjs)
 
 10. [composer.json](#10-composerjson)
 
@@ -1350,7 +1350,7 @@ Línea 68-69: Scripts:
 
   - materialize.min.js: componentes JS de Materialize (modales, tooltips, etc.).
 
-  - app.js: lógica frontend propia de la aplicación.
+  - app.js (eliminado): lógica frontend propia de la aplicación. Hoy repartida en los módulos `app.core.js`, `app.init.js`, `app.selects.js`, `app.tables.js`, `app.ui.js` y los `app.*` de cada módulo.
 
 ```
 
@@ -2026,7 +2026,7 @@ Línea 307-334: Botón "volver arriba" y campana de notificaciones con animació
 
   
 
-Línea 336-351 (app.js): Toasts (notificaciones) y paginación — la parte de paginación manual se eliminó (hoy la genera DataTables).
+Línea 336-351 (app.js, hoy eliminado): Toasts (notificaciones) y paginación — la parte de paginación manual se eliminó (hoy la genera DataTables).
 
   
 
@@ -2093,6 +2093,8 @@ Línea 60-67: Adaptaciones para tema oscuro (inputs, labels, divisores).
   
 
 ### 9.3 app.js
+
+> **Nota:** `app.js` fue **eliminado** del proyecto (su lógica se reparte hoy en los módulos `app.core.js`, `app.init.js`, `app.selects.js`, `app.tables.js`, `app.ui.js` y los `app.*` de cada módulo). El análisis línea por línea siguiente se conserva como referencia histórica.
 
   
 
@@ -2438,7 +2440,7 @@ Usuario escribe: http://localhost/eis_zona_web_lara/dashboard
 
                        ├── Materialize JS
 
-                       └── app.js (inicializa componentes, reloj, animaciones)
+                       └── app.core.js / app.init.js / app.ui.js (inicializan componentes, reloj, animaciones)
 
   
 

@@ -123,8 +123,8 @@ function debounce(fn, delay) {
 }
 
 // filtrarTabla() es LEGACY: se conserva por compatibilidad pero ya no se usa
-// (las tablas las filtra jQuery DataTables). La busqueda/filtro manuales de
-// app.js y app.tables.js se eliminaron en favor de DataTables.
+// (las tablas las filtra jQuery DataTables). El monolito app.js y la
+// busqueda/filtro manuales de app.tables.js se eliminaron en favor de DataTables.
 function filtrarTabla(inputSelector, tableSelector, colIndex) { ... }
 
 EIS.toast = function (msg, color, icon) {
@@ -369,7 +369,7 @@ $(document).on('click', '.filter-btn', function () { ... });
 
 ### 4.7 app.legal.js - Asesoria Legal
 
-El modulo de asesorias **persiste en la BD** via AJAX: carga el historial y el KPI (`.getJSON(API + 'listar')`, `API + 'kpis'`), registra (`$.post(API + 'crear', $(this).serialize())`), actualiza (`$.post(API + 'actualizar', ...)`) y elimina (`$.post(API + 'eliminar', {id})`) con `API = '?pagina=asesorias&action='`. Mantiene la validacion en tiempo real de los tipos de documento permitidos:
+El modulo de asesorias **persiste en la BD** via AJAX: carga el historial y el KPI (`.getJSON(API + 'listar')`, `API + 'kpis'`) y registra (`$.post(API + 'crear', $(this).serialize())`) con `API = '?pagina=asesorias&action='`. Las opciones de editar y eliminar se retiraron del historial. Mantiene la validacion en tiempo real de los tipos de documento permitidos:
 
 ```javascript
 var allowedDocs = [ /* 11 tipos permitidos */ ];
@@ -419,7 +419,7 @@ Inyecta de forma idempotente una barra de busqueda (placeholder "Buscar opción.
 |---------------|--------|---------------|
 | Inicializar sidenav | Todos | `.sidenav()` |
 | Inicializar selects | Donde hay selects | `.formSelect()` |
-| Inicializar modals | POS, Legal | `.modal()` |
+| Inicializar modals | POS | `.modal()` |
 | Inicializar tooltips | Todos | `.tooltip()` |
 | Tema oscuro/claro | Todos | `.attr()`, `localStorage` |
 | Reloj digital | Todos | `.text()`, `setInterval` |

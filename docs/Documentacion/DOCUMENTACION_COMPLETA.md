@@ -150,7 +150,7 @@ src/
 
 Nombres: `app.core, app.init, app.selects, app.tables, app.ui, app.pos, app.cyber, app.legal, app.inventario,
 app.roles, app.proveedores, app.proveedores-gestion, app.clientes, app.activos, app.reportes, app.usuarios`
-(+ `app.js` legacy) y el motor de tables `jquery.dataTables.min.js` + `dataTables.materialize.js`.
+y el motor de tables `jquery.dataTables.min.js` + `dataTables.materialize.js` (el antiguo monolito `app.js` fue eliminado).
 
 - **app.core.js**: namespace `EIS`, `debounce()`, `EIS.toast()`, `escHtml()` y los helpers de DataTables `EIS.datatable*`
 - **app.init.js**: Materialize init, reloj, tema oscuro/claro, animaciones

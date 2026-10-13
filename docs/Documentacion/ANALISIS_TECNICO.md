@@ -295,11 +295,11 @@ php src/cli/create_user.php --username=admin --password=1234 --nombre="Administr
 
 ### 11.1 Archivos
 - `asesorias.php` — vista
-- `AsesoriaController` — `listar`, `detalle`, `buscar`, `crear`, `actualizar`, `eliminar`, `kpis`
+- `AsesoriaController` — `listar`, `detalle`, `buscar`, `crear`, `kpis`
 - `Asesoria` model
 
 ### 11.2 Funcionalidad
-- CRUD de asesorías
+- Registro y consulta de asesorías (las opciones de editar y eliminar se retiraron del historial)
 - `Asesoria::crear` transaccional: cliente get-or-create + `cliente_asesoria` + `asesoria`
 - KPIs: total, permitidas, derivadas
 - Búsqueda por cédula, aviso de "cliente ya registrado" al blur de cédula

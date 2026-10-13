@@ -442,7 +442,7 @@ El proyecto tiene 2 tipos de modelos:
 | `Proveedor` | `Proveedor.php` | `proveedores`, `orden_abastecimiento` | CRUD proveedores, ordenes de abastecimiento, FK proveedor/status |
 | `ProveedorGestion` | `ProveedorGestion.php` | `proveedores` | CRUD proveedores (gestion), unicidad RIF, email format |
 | `Rol` | `Rol.php` | `roles`, `permisos`, `permisos_rol`, `rol_usuarios` | CRUD roles, asignacion permisos, unicidad nombre, **descripcion** y **created_at** (v4.1) |
-| `Asesoria` | `Asesoria.php` | `asesoria` | CRUD asesorias legales |
+| `Asesoria` | `Asesoria.php` | `asesoria` | Registro y consulta de asesorias legales |
 | `Activo` | `Activo.php` | `activos` | CRUD activos fijos |
 | `Venta` | `Venta.php` | `orden_de_venta`, `lineas_venta` | CRUD ventas y lineas de venta |
 | `Reporte` | `Reporte.php` | — | Generacion de reportes |
@@ -479,7 +479,7 @@ Todos heredan de `App\Core\Model` y usan `$this->db` (conexion PDO Singleton).
 | `ProveedorController` | `ProveedorController.php` | `handle()` — CRUD proveedores y ordenes via AJAX |
 | `ProveedorGestionController` | `ProveedorGestionController.php` | `handle()` — CRUD proveedores (gestion) via AJAX |
 | `ActivoController` | `ActivoController.php` | `handle()` — CRUD activos fijos via AJAX |
-| `AsesoriaController` | `AsesoriaController.php` | `handle()` — CRUD asesorias via AJAX |
+| `AsesoriaController` | `AsesoriaController.php` | `handle()` — registro y consulta de asesorias via AJAX |
 | `CiberController` | `CiberController.php` | `handle()` — control de estaciones cyber via AJAX |
 | `DashboardController` | `DashboardController.php` | `handle()` — metricas del dashboard via AJAX |
 | `ReporteController` | `ReporteController.php` | `handle()` — generacion de reportes via AJAX |
@@ -560,12 +560,12 @@ Formulario de generacion con selectores (tipo, fechas, formato), 4 metricas mens
 #### 8.7 `activos.php` (207 lineas) - ACTIVOS (FUNCIONAL CON BD)
 Activos agrupados por categoria (Equipos, Licencias, Herramientas) con resumen de totales. Conectado a BD via `ActivoController.php` + `Activo.php` + `app.activos.js`.
 
-#### 8.8 `asesorias.php` (128 lineas) - ASESORIA LEGAL (FUNCIONAL CON BD)
+#### 8.8 `asesorias.php` - ASESORIA LEGAL (FUNCIONAL CON BD)
 Formulario de registro con validacion de documentos permitidos (11 tipos). Toda la logica en `app.legal.js` + `AsesoriaController.php` + `Asesoria.php`.
 - Validacion en tiempo real: boton cambia de color segun tipo de documento
-- Historial de asesorias registradas en la sesion
+- Historial de asesorias registradas (persistidas en BD) con DataTables
 - Busqueda en el historial con debounce
-- Eliminacion de registros
+- Las opciones de editar y eliminar se retiraron del historial (solo registro y consulta)
 
 #### 8.9 `menu.php` (170 lineas)
 Pagina alternativa con diseno tipo tarjeta, estilo independiente, enlaces a 7 modulos.
@@ -592,7 +592,7 @@ Gestion de roles y permisos conectada a BD via `Rol.php` + `RolController.php` +
 
 ### Arquitectura
 
-El monolito `app.js` original se dividio en **17 archivos modulares** organizados por funcionalidad, mas el motor de **jQuery DataTables** (local):
+El antiguo monolito `app.js` (hoy eliminado) se dividio en **16 archivos modulares** organizados por funcionalidad, mas el motor de **jQuery DataTables** (local):
 
 | Archivo | Proposito | Carga |
 |---------|-----------|-------|
@@ -735,7 +735,6 @@ $(function () {
 
     // #asesoriaForm - Submit: validacion y registro
     // #documento - Input: validacion en tiempo real
-    // .btn-eliminar-asesoria - Eliminar registro
     // #searchAsesoria - Busqueda en historial
 });
 ```
