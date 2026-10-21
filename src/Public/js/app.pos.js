@@ -443,10 +443,20 @@ $(function () {
             return;
         }
 
-        // La validación de los campos del cliente la hace el servidor (PHP):
-        // los errores se muestran en pantalla de forma persistente.
+        // Validación del lado del cliente: si hay errores, se muestran y no
+        // se envía la petición (el servidor vuelve a validar por seguridad).
         var $form = $('#posClienteForm');
         EIS.limpiarErroresFormulario($form);
+        if (EIS.validarFormulario) {
+            var errores = EIS.validarFormulario($form);
+            if (Object.keys(errores).length) {
+                EIS.mostrarErroresFormulario($form, {
+                    error: 'Revisa los campos marcados e intenta de nuevo.',
+                    fieldErrors: errores
+                });
+                return;
+            }
+        }
 
         if (!confirm('¿Procesar venta por $' + posTotal.toFixed(2) + '?')) return;
 

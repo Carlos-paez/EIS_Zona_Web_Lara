@@ -121,8 +121,9 @@ $(function () {
         e.preventDefault();
         var $form = $(this);
 
-        // La validación de campos obligatorios la hace el servidor (PHP):
-        // los errores se muestran en pantalla de forma persistente.
+        // La validación del lado del cliente la aplica app.validate.js en la
+        // fase de captura del submit (bloquea el envío y marca los campos). El
+        // servidor vuelve a validar por seguridad y devuelve "fieldErrors".
 
         var id = $('#proveedor-id').val();
         var accion = id ? 'actualizar' : 'crear';

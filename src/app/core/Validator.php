@@ -33,6 +33,7 @@ final class Validator
     public const MAX_NUMERO_ORDEN       = 50;
     public const MAX_USERNAME           = 50;
     public const MAX_PASSWORD           = 255;
+    public const MIN_PASSWORD           = 8;
     public const MAX_TIEMPO_USO         = 50;
     public const MAX_NOMBRE_ROL         = 50;
     public const MAX_DESCRIPCION_ROL    = 500;
@@ -477,6 +478,205 @@ final class Validator
             'pattern'        => self::PATTERN_NUMERO,
             'patternMessage' => "El campo '$field' contiene caracteres no permitidos",
         ]);
+    }
+
+    /**
+     * Validación de una contraseña.
+     *
+     * A diferencia del resto de campos, NO recorta espacios porque un
+     * espacio puede formar parte legítima de la contraseña. Si se activa
+     * 'complejidad' exige al menos una letra y un número/símbolo.
+     *
+     * @param array<string,mixed> $opts {required, min, max, complejidad}
+     */
+    public static function password(mixed $value, string $field, array $opts = []): string
+    {
+        $required    = (bool)($opts['required'] ?? true);
+        $min         = (int)($opts['min'] ?? self::MIN_PASSWORD);
+        $max         = (int)($opts['max'] ?? self::MAX_PASSWORD);
+        $complejidad = (bool)($opts['complejidad'] ?? false);
+
+        if ($value === null || is_bool($value) || is_array($value) || is_object($value)) {
+            if (($value === null || $value === '') && !$required) {
+                return '';
+            }
+            throw new \InvalidArgumentException("El campo '$field' es obligatorio");
+        }
+
+        $pass = (string)$value;
+
+        if ($pass === '') {
+            if ($required) {
+                throw new \InvalidArgumentException("El campo '$field' es obligatorio");
+            }
+            return '';
+        }
+
+        self::rechazarControl($pass, $field);
+
+        if (mb_strlen($pass) < $min) {
+            throw new \InvalidArgumentException("El campo '$field' debe tener al menos $min caracteres");
+        }
+        if (mb_strlen($pass) > $max) {
+            throw new \InvalidArgumentException("El campo '$field' no puede exceder $max caracteres");
+        }
+
+        if ($complejidad && (!preg_match('/[A-Za-z]/', $pass) || !preg_match('/[0-9]/', $pass))) {
+            throw new \InvalidArgumentException("El campo '$field' debe incluir al menos una letra y un número");
+        }
+
+        return $pass;
+    }
+
+    /**
+     * Alias compatible con llamadas heredadas al validador de booleanos.
+     */
+    public static function booleano(mixed $value, string $field, bool $required = false): int
+    {
+        return self::bool($value, $field, $required);
+    }
+
+    /**
+     * Valida un conjunto de campos contra un esquema y DEVUELVE todos los
+     * errores a la vez en una {@see ValidationException}.
+     *
+     * Cada regla es un arreglo asociativo con al menos una 'type' (por
+     * defecto 'texto'). Ejemplo:
+     *
+     *     Validator::validar($_POST, [
+     *         'cedula' => ['type' => 'cedula'],
+     *         'nombre' => ['type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100],
+     *         'email'  => ['type' => 'email', 'required' => false],
+     *         'precio' => ['type' => 'decimal', 'required' => true, 'min' => 0.01],
+     *     ]);
+     *
+     * Los tipos soportados son: texto, cedula, rif, telefono, username,
+     * email, password, entero, id, decimal, fecha, bool, enum, tiempoUso,
+     * numeroOrden y busqueda.
+     *
+     * @param array<string,mixed>  $data
+     * @param array<string,array<string,mixed>> $reglas
+     * @return array<string,mixed> Datos ya validados y normalizados.
+     * @throws ValidationException
+     */
+    public static function validar(array $data, array $reglas): array
+    {
+        $errores = [];
+        $limpio  = [];
+
+        foreach ($reglas as $campo => $regla) {
+            $valor    = $data[$campo] ?? null;
+            $etiqueta = (string)($regla['label'] ?? $campo);
+
+            try {
+                $limpio[$campo] = self::aplicarRegla($valor, $etiqueta, $regla);
+            } catch (ValidationException $e) {
+                // Reglas compuestas (p. ej. confirmación) pueden aportar varios.
+                foreach ($e->errores() as $k => $v) {
+                    $errores[$k] = $v;
+                }
+            } catch (\InvalidArgumentException $e) {
+                $errores[$campo] = $e->getMessage();
+            }
+        }
+
+        if ($errores) {
+            throw new ValidationException($errores);
+        }
+
+        return $limpio;
+    }
+
+    /**
+     * Aplica una única regla de esquema a un valor.
+     *
+     * @param array<string,mixed> $regla
+     * @return mixed
+     */
+    private static function aplicarRegla(mixed $valor, string $etiqueta, array $regla): mixed
+    {
+        $tipo     = (string)($regla['type'] ?? 'texto');
+        $required = (bool)($regla['required'] ?? false);
+
+        switch ($tipo) {
+            case 'id':
+                return self::id($valor, $etiqueta);
+
+            case 'entero':
+            case 'integer':
+            case 'int':
+                return self::entero($valor, $etiqueta, [
+                    'required' => $required,
+                    'min'      => $regla['min'] ?? PHP_INT_MIN,
+                    'max'      => $regla['max'] ?? PHP_INT_MAX,
+                ]);
+
+            case 'decimal':
+            case 'float':
+            case 'numeric':
+                return self::decimal($valor, $etiqueta, [
+                    'required' => $required,
+                    'min'      => $regla['min'] ?? 0.0,
+                    'max'      => $regla['max'] ?? self::MAX_MONEY,
+                ]);
+
+            case 'fecha':
+            case 'date':
+                return self::fecha($valor, $etiqueta, [
+                    'required' => $required,
+                    'noFutura' => (bool)($regla['noFutura'] ?? false),
+                ]);
+
+            case 'bool':
+            case 'boolean':
+                return self::bool($valor, $etiqueta, $required);
+
+            case 'email':
+                return self::email($valor, $etiqueta, $required);
+
+            case 'enum':
+                return self::enum($valor, $etiqueta, (array)($regla['allowed'] ?? []), $required);
+
+            case 'password':
+                return self::password($valor, $etiqueta, $regla);
+
+            case 'cedula':
+                return self::cedula($valor, $etiqueta, $required);
+
+            case 'rif':
+                return self::rif($valor, $etiqueta, $required);
+
+            case 'telefono':
+                return self::telefono($valor, $etiqueta, $required);
+
+            case 'username':
+                return self::username($valor, $etiqueta, $required);
+
+            case 'tiempoUso':
+                return self::tiempoUso($valor, $etiqueta, $required);
+
+            case 'numeroOrden':
+                return self::numeroOrden($valor, $etiqueta, $required);
+
+            case 'busqueda':
+                return self::busqueda($valor, $etiqueta);
+
+            case 'texto':
+            case 'string':
+            default:
+                $opts = [
+                    'required' => $required,
+                    'min'      => (int)($regla['min'] ?? 1),
+                    'max'      => (int)($regla['max'] ?? PHP_INT_MAX),
+                ];
+                if (isset($regla['pattern'])) {
+                    $opts['pattern'] = $regla['pattern'];
+                }
+                if (isset($regla['patternMessage'])) {
+                    $opts['patternMessage'] = $regla['patternMessage'];
+                }
+                return self::texto($valor, $etiqueta, $opts);
+        }
     }
 
     /**

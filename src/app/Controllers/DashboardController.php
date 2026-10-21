@@ -11,7 +11,7 @@ use App\Models\Dashboard;
  * Proporciona el endpoint AJAX de KPIs reales; la vista se renderiza en
  * servidor a partir del modelo.
  */
-class DashboardController
+class DashboardController extends BaseController
 {
     private Dashboard $model;
 
@@ -25,9 +25,10 @@ class DashboardController
         return $this->model;
     }
 
-    public function setModel(Dashboard $model): void
+    public function setModel(Dashboard $model): self
     {
         $this->model = $model;
+        return $this;
     }
 
     public function handle(): void
@@ -39,24 +40,16 @@ class DashboardController
         try {
             match ($action) {
                 'kpis'   => $this->kpis(),
-                default  => $this->json(false, null, 'Acción no válida'),
+                default  => $this->jsonError('Acción no válida', null, 400),
             };
         } catch (\Exception $e) {
             Logger::error($e, 'Dashboard');
-            echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
+            $this->jsonError('Error interno del servidor', null, 500);
         }
     }
 
     private function kpis(): void
     {
-        echo json_encode(['success' => true, 'data' => $this->model->kpis()]);
-    }
-
-    private function json(bool $success, mixed $data = null, string $error = ''): void
-    {
-        $result = ['success' => $success];
-        if ($data !== null) $result['data'] = $data;
-        if ($error) $result['error'] = $error;
-        echo json_encode($result);
+        $this->jsonSuccess($this->model->kpis());
     }
 }

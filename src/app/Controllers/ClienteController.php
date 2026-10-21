@@ -4,10 +4,11 @@ namespace App\Controllers;
 
 use App\Core\Logger;
 use App\Core\Router;
+use App\Core\ValidationException;
 use App\Core\Validator;
 use App\Models\Cliente;
 
-class ClienteController
+class ClienteController extends BaseController
 {
     private Cliente $model;
 
@@ -21,9 +22,10 @@ class ClienteController
         return $this->model;
     }
 
-    public function setModel(Cliente $model): void
+    public function setModel(Cliente $model): self
     {
         $this->model = $model;
+        return $this;
     }
 
     public function handle(): void
@@ -40,148 +42,151 @@ class ClienteController
                 'actualizar' => $this->actualizar(),
                 'eliminar'   => $this->eliminar(),
                 'kpis'       => $this->kpis(),
-                default      => $this->json(false, null, 'Acción no válida'),
+                default      => $this->jsonError('Acción no válida', null, 400),
             };
+        } catch (ValidationException $e) {
+            $this->jsonValidationException($e);
         } catch (\PDOException $e) {
             Logger::error($e, 'Clientes - consulta SQL');
             $msg = $e->getMessage();
             if (str_contains($msg, 'foreign key constraint') || str_contains($msg, 'a foreign key constraint fails')) {
-                echo json_encode(['success' => false, 'error' => 'No se puede eliminar: el cliente tiene registros asociados.']);
+                $this->jsonError('No se puede eliminar: el cliente tiene registros asociados.', null, 400);
             } else {
-                echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
+                $this->jsonError('Error de base de datos', null, 500);
             }
         } catch (\InvalidArgumentException $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            $this->jsonError($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             Logger::error($e, 'Clientes');
-            echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
+            $this->jsonError('Error interno del servidor', null, 500);
         }
     }
 
     private function listar(): void
     {
         $clientes = $this->model->obtenerClientes();
-        echo json_encode(['success' => true, 'data' => $clientes]);
+        $this->jsonSuccess($clientes);
     }
 
     private function kpis(): void
     {
-        echo json_encode([
-            'success' => true,
-            'data' => [
-                'total' => $this->model->totalClientes(),
-            ]
+        $this->setResult([
+            'total' => $this->model->totalClientes(),
         ]);
+        $this->jsonSuccess($this->getResult());
     }
 
     private function detalle(): void
     {
-        $id = Validator::id($_GET['id'] ?? null, 'ID del cliente');
+        $this->hydrateFromGet(['id' => 'int']);
+        $id = $this->get('id', 0) > 0 ? (int)$this->get('id') : Validator::id($_GET['id'] ?? null, 'ID del cliente');
         $cliente = $this->model->obtenerClientePorId($id);
         if ($cliente) {
-            echo json_encode(['success' => true, 'data' => $cliente]);
+            $this->jsonSuccess($cliente);
         } else {
-            echo json_encode(['success' => false, 'error' => 'Cliente no encontrado']);
+            $this->jsonError('Cliente no encontrado', null, 404);
         }
     }
 
     private function crear(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            $this->jsonError('Token de seguridad inválido', null, 400);
             return;
         }
 
-        $errores = Validator::requeridos($_POST, [
-            'cedula'   => 'cédula',
-            'nombre'   => 'nombre',
-            'apellido' => 'apellido',
-            'direccion' => 'dirección',
+        $datos = $this->validarCampos([
+            'cedula'    => ['label' => 'cédula', 'type' => 'cedula'],
+            'nombre'    => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
+            'apellido'  => ['label' => 'apellido', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos'],
+            'direccion' => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => 500],
+            'telefono'  => ['label' => 'teléfono', 'type' => 'telefono'],
         ]);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
 
-        $cedula    = Validator::cedula($_POST['cedula'] ?? null, 'cédula');
-        $nombre    = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos']);
-        $apellido  = Validator::texto($_POST['apellido'] ?? null, 'apellido', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos']);
-        $direccion = Validator::texto($_POST['direccion'] ?? null, 'dirección', ['required' => false, 'max' => 500]);
-        $telefono  = Validator::telefono($_POST['telefono'] ?? null, 'teléfono');
+        $cedula    = $datos['cedula'];
+        $nombre    = $datos['nombre'];
+        $apellido  = $datos['apellido'];
+        $direccion = $datos['direccion'];
+        $telefono  = $datos['telefono'];
+
+        $this->set('cedula', $cedula)
+            ->set('nombre', $nombre)
+            ->set('apellido', $apellido)
+            ->set('direccion', $direccion)
+            ->set('telefono', $telefono);
 
         if ($this->model->existeCedula($cedula)) {
-            echo json_encode(['success' => false, 'error' => 'Ya existe un cliente con esa cédula']);
+            $this->jsonError('Ya existe un cliente con esa cédula', null, 400);
             return;
         }
 
         $resultado = $this->model->crearCliente($cedula, $nombre, $apellido, $direccion, $telefono);
-        echo json_encode(
-            $resultado
-                ? ['success' => true, 'message' => 'Cliente creado exitosamente']
-                : ['success' => false, 'error' => 'Error al crear el cliente']
-        );
+        if ($resultado) {
+            $this->jsonSuccess(null, 'Cliente creado exitosamente');
+        } else {
+            $this->jsonError('Error al crear el cliente', null, 400);
+        }
     }
 
     private function actualizar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            $this->jsonError('Token de seguridad inválido', null, 400);
             return;
         }
 
-        $errores = Validator::requeridos($_POST, [
-            'id'       => 'ID del cliente',
-            'cedula'   => 'cédula',
-            'nombre'   => 'nombre',
-            'apellido' => 'apellido',
-            'direccion' => 'dirección',
+        $datos = $this->validarCampos([
+            'id'        => ['label' => 'ID del cliente', 'type' => 'id'],
+            'cedula'    => ['label' => 'cédula', 'type' => 'cedula'],
+            'nombre'    => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
+            'apellido'  => ['label' => 'apellido', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos'],
+            'direccion' => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => 500],
+            'telefono'  => ['label' => 'teléfono', 'type' => 'telefono'],
         ]);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
 
-        $id        = Validator::id($_POST['id'] ?? null, 'ID del cliente');
-        $cedula    = Validator::cedula($_POST['cedula'] ?? null, 'cédula');
-        $nombre    = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos']);
-        $apellido  = Validator::texto($_POST['apellido'] ?? null, 'apellido', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos']);
-        $direccion = Validator::texto($_POST['direccion'] ?? null, 'dirección', ['required' => false, 'max' => 500]);
-        $telefono  = Validator::telefono($_POST['telefono'] ?? null, 'teléfono');
+        $id        = $datos['id'];
+        $cedula    = $datos['cedula'];
+        $nombre    = $datos['nombre'];
+        $apellido  = $datos['apellido'];
+        $direccion = $datos['direccion'];
+        $telefono  = $datos['telefono'];
+
+        $this->set('id', $id)
+            ->set('cedula', $cedula)
+            ->set('nombre', $nombre)
+            ->set('apellido', $apellido)
+            ->set('direccion', $direccion)
+            ->set('telefono', $telefono);
 
         if ($this->model->existeCedula($cedula, $id)) {
-            echo json_encode(['success' => false, 'error' => 'Ya existe otro cliente con esa cédula']);
+            $this->jsonError('Ya existe otro cliente con esa cédula', null, 400);
             return;
         }
 
         $resultado = $this->model->actualizarCliente($id, $cedula, $nombre, $apellido, $direccion, $telefono);
-        echo json_encode(
-            $resultado
-                ? ['success' => true, 'message' => 'Cliente actualizado exitosamente']
-                : ['success' => false, 'error' => 'Error al actualizar el cliente']
-        );
+        if ($resultado) {
+            $this->jsonSuccess(null, 'Cliente actualizado exitosamente');
+        } else {
+            $this->jsonError('Error al actualizar el cliente', null, 400);
+        }
     }
 
     private function eliminar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            $this->jsonError('Token de seguridad inválido', null, 400);
             return;
         }
 
         $id = Validator::id($_POST['id'] ?? null, 'ID del cliente');
+        $this->set('id', $id);
         $resultado = $this->model->eliminarCliente($id);
-        echo json_encode(
-            $resultado
-                ? ['success' => true, 'message' => 'Cliente eliminado exitosamente']
-                : ['success' => false, 'error' => 'Error al eliminar el cliente']
-        );
+        if ($resultado) {
+            $this->jsonSuccess(null, 'Cliente eliminado exitosamente');
+        } else {
+            $this->jsonError('Error al eliminar el cliente', null, 400);
+        }
     }
 
-    private function json(bool $success, mixed $data = null, string $error = ''): void
-    {
-        $result = ['success' => $success];
-        if ($data !== null) $result['data'] = $data;
-        if ($error) $result['error'] = $error;
-        echo json_encode($result);
-    }
+    // json helper heredado desde BaseController
 }

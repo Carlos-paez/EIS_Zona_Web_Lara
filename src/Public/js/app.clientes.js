@@ -92,8 +92,9 @@ $(function () {
         e.preventDefault();
         var $form = $(this);
 
-        // La validación la hace el servidor (PHP): los errores se muestran
-        // en pantalla de forma persistente a través de fieldErrors.
+        // Primero valido del lado del cliente y, además, el servidor (PHP)
+        // vuelve a validar: los errores se muestran de forma persistente a
+        // través de fieldErrors.
 
         var id = $('#cliente-id').val();
         var accion = id ? 'actualizar' : 'crear';

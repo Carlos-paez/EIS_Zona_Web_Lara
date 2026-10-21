@@ -241,8 +241,8 @@ $(function () {
         var esNueva = !id;
         var accion = esNueva ? 'crear' : 'actualizar';
 
-        // La validación de campos obligatorios la hace el servidor (PHP):
-        // los errores se muestran en pantalla de forma persistente.
+        // El envío ya fue validado en el cliente por app.validate.js; el
+        // servidor vuelve a validar (fieldErrors) por seguridad.
 
         $.post(API + accion, $form.serialize(), function (r) {
             if (r.success) {
@@ -292,8 +292,8 @@ $(function () {
 
         if (!orden_id) { EIS.toast('Seleccione una solicitud primero', 'red', 'error'); return; }
 
-        // La validación de campos obligatorios la hace el servidor (PHP):
-        // los errores se muestran en pantalla de forma persistente.
+        // El envío ya fue validado en el cliente por app.validate.js; el
+        // servidor vuelve a validar (fieldErrors) por seguridad.
 
         $.post(API + 'agregarLinea', $form.serialize() + '&orden_id=' + orden_id, function (r) {
             if (r.success) {

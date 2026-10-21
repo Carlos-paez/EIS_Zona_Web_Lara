@@ -4,10 +4,11 @@ namespace App\Controllers;
 
 use App\Core\Logger;
 use App\Core\Router;
+use App\Core\ValidationException;
 use App\Core\Validator;
 use App\Models\Rol;
 
-class RolController
+class RolController extends BaseController
 {
     private Rol $model;
 
@@ -21,9 +22,10 @@ class RolController
         return $this->model;
     }
 
-    public function setModel(Rol $model): void
+    public function setModel(Rol $model): self
     {
         $this->model = $model;
+        return $this;
     }
 
     public function handle(): void
@@ -44,33 +46,36 @@ class RolController
                 'guardarPermisos' => $this->guardarPermisos(),
                 'usuarios'        => $this->usuarios(),
                 'asignarRol'      => $this->asignarRol(),
-                default           => $this->json(false, null, 'Acción no válida'),
+                default           => $this->jsonError('Acción no válida', null, 400),
             };
+        } catch (ValidationException $e) {
+            $this->jsonValidationException($e);
         } catch (\PDOException $e) {
             Logger::error($e, 'Roles - consulta SQL');
-            echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
+            $this->jsonError('Error de base de datos', null, 500);
         } catch (\InvalidArgumentException $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            $this->jsonError($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             Logger::error($e, 'Roles');
-            echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
+            $this->jsonError('Error interno del servidor', null, 500);
         }
     }
 
     private function listar(): void
     {
         $roles = $this->model->listarRoles();
-        echo json_encode(['success' => true, 'data' => $roles]);
+        $this->jsonSuccess($roles);
     }
 
     private function detalle(): void
     {
         $id = Validator::id($_GET['id'] ?? null, 'ID del rol');
+        $this->set('id', $id);
         $rol = $this->model->obtenerRolPorId($id);
         if ($rol) {
-            echo json_encode(['success' => true, 'data' => $rol]);
+            $this->jsonSuccess($rol);
         } else {
-            echo json_encode(['success' => false, 'error' => 'Rol no encontrado']);
+            $this->jsonError('Rol no encontrado', null, 404);
         }
     }
 
@@ -81,30 +86,26 @@ class RolController
             return;
         }
 
-        $errores = Validator::requeridos($_POST, ['nombre' => 'nombre de rol']);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
+        $datos = $this->validarCampos([
+            'nombre'      => ['label' => 'nombre de rol', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 50],
+            'descripcion' => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 500],
+        ]);
+        $nombre_rol  = $datos['nombre'];
+        $descripcion = $datos['descripcion'];
 
-        $nombre_rol = trim($_POST['nombre'] ?? '');
-        $descripcion = trim($_POST['descripcion'] ?? '');
-        if (empty($nombre_rol)) {
-            echo json_encode(['success' => false, 'error' => 'El nombre del rol es obligatorio', 'fieldErrors' => ['nombre' => 'El campo nombre de rol es obligatorio']]);
-            return;
-        }
+        $this->set('nombre_rol', $nombre_rol)->set('descripcion', $descripcion);
 
         if ($this->model->existeNombreRol($nombre_rol)) {
-            echo json_encode(['success' => false, 'error' => 'Ya existe un rol con ese nombre']);
+            $this->jsonError('Ya existe un rol con ese nombre', null, 400);
             return;
         }
 
         $resultado = $this->model->crearRol($nombre_rol, $descripcion);
-        echo json_encode(
-            $resultado
-                ? ['success' => true, 'message' => 'Rol creado exitosamente']
-                : ['success' => false, 'error' => 'Error al crear el rol']
-        );
+        if ($resultado) {
+            $this->jsonSuccess(null, 'Rol creado exitosamente');
+        } else {
+            $this->jsonError('Error al crear el rol', null, 400);
+        }
     }
 
     private function actualizar(): void
@@ -114,66 +115,72 @@ class RolController
             return;
         }
 
-        $errores = Validator::requeridos($_POST, ['id' => 'ID del rol', 'nombre' => 'nombre de rol']);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
+        $datos = $this->validarCampos([
+            'id'          => ['label' => 'ID del rol', 'type' => 'id', 'required' => true],
+            'nombre'      => ['label' => 'nombre de rol', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 50],
+            'descripcion' => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 500],
+        ]);
 
-        $id = Validator::id($_POST['id'] ?? null, 'ID del rol');
-        $nombre_rol = Validator::texto($_POST['nombre'] ?? null, 'nombre de rol', ['required' => true, 'min' => 2, 'max' => 50]);
-        $descripcion = Validator::texto($_POST['descripcion'] ?? null, 'descripción', ['required' => false, 'max' => 500]);
+        $id          = $datos['id'];
+        $nombre_rol  = $datos['nombre'];
+        $descripcion = $datos['descripcion'];
+
+        $this->set('id', $id)
+            ->set('nombre_rol', $nombre_rol)
+            ->set('descripcion', $descripcion);
 
         if ($this->model->existeNombreRol($nombre_rol, $id)) {
-            echo json_encode(['success' => false, 'error' => 'Ya existe otro rol con ese nombre']);
+            $this->jsonError('Ya existe otro rol con ese nombre', null, 400);
             return;
         }
 
         $resultado = $this->model->actualizarRol($id, $nombre_rol, $descripcion);
-        echo json_encode(
-            $resultado
-                ? ['success' => true, 'message' => 'Rol actualizado exitosamente']
-                : ['success' => false, 'error' => 'Error al actualizar el rol']
-        );
+        if ($resultado) {
+            $this->jsonSuccess(null, 'Rol actualizado exitosamente');
+        } else {
+            $this->jsonError('Error al actualizar el rol', null, 400);
+        }
     }
 
     private function eliminar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            $this->jsonError('Token de seguridad inválido', null, 400);
             return;
         }
 
         $id = Validator::id($_POST['id'] ?? null, 'ID del rol');
+        $this->set('id', $id);
         if ($id === 1) {
-            echo json_encode(['success' => false, 'error' => 'No se puede eliminar el rol de Administrador']);
+            $this->jsonError('No se puede eliminar el rol de Administrador', null, 400);
             return;
         }
         $resultado = $this->model->eliminarRol($id);
-        echo json_encode(
-            $resultado
-                ? ['success' => true, 'message' => 'Rol eliminado exitosamente']
-                : ['success' => false, 'error' => 'No se puede eliminar el rol porque tiene usuarios asignados']
-        );
+        if ($resultado) {
+            $this->jsonSuccess(null, 'Rol eliminado exitosamente');
+        } else {
+            $this->jsonError('No se puede eliminar el rol porque tiene usuarios asignados', null, 400);
+        }
     }
 
     private function permisos(): void
     {
         $permisos = $this->model->obtenerPermisos();
-        echo json_encode(['success' => true, 'data' => $permisos]);
+        $this->jsonSuccess($permisos);
     }
 
     private function permisosRol(): void
     {
         $rol_id = Validator::id($_GET['rol_id'] ?? null, 'ID del rol');
+        $this->set('rol_id', $rol_id);
         $permisos = $this->model->obtenerPermisosPorRol($rol_id);
-        echo json_encode(['success' => true, 'data' => $permisos]);
+        $this->jsonSuccess($permisos);
     }
 
     private function guardarPermisos(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            $this->jsonError('Token de seguridad inválido', null, 400);
             return;
         }
 
@@ -183,53 +190,46 @@ class RolController
             Validator::entero($p, 'permiso', ['required' => true, 'min' => 1]);
         }
 
+        $this->set('rol_id', $rol_id)
+            ->set('permisos', $permiso_ids);
+
         $resultado = $this->model->guardarPermisosRol($rol_id, $permiso_ids);
-        echo json_encode(
-            $resultado
-                ? ['success' => true, 'message' => 'Permisos guardados exitosamente']
-                : ['success' => false, 'error' => 'Error al guardar permisos']
-        );
+        if ($resultado) {
+            $this->jsonSuccess(null, 'Permisos guardados exitosamente');
+        } else {
+            $this->jsonError('Error al guardar permisos', null, 400);
+        }
     }
 
     private function usuarios(): void
     {
         $usuarios = $this->model->obtenerUsuarios();
         $roles = $this->model->obtenerRoles();
-        echo json_encode([
-            'success' => true,
-            'data' => [
-                'usuarios' => $usuarios,
-                'roles'    => $roles,
-            ]
+        $this->jsonSuccess([
+            'usuarios' => $usuarios,
+            'roles'    => $roles,
         ]);
     }
 
     private function asignarRol(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            $this->jsonError('Token de seguridad inválido', null, 400);
             return;
         }
 
         $usuario_id = Validator::id($_POST['usuario_id'] ?? null, 'ID del usuario');
         $rol_id = Validator::id($_POST['rol_id'] ?? null, 'ID del rol');
+        $this->set('usuario_id', $usuario_id)->set('rol_id', $rol_id);
         if ($rol_id === 1) {
-            echo json_encode(['success' => false, 'error' => 'No se puede asignar el rol de Administrador directamente']);
+            $this->jsonError('No se puede asignar el rol de Administrador directamente', null, 400);
             return;
         }
         $resultado = $this->model->asignarRolAUsuario($usuario_id, $rol_id);
-        echo json_encode(
-            $resultado
-                ? ['success' => true, 'message' => 'Rol asignado exitosamente']
-                : ['success' => false, 'error' => 'Error al asignar rol']
-        );
-    }
-
-    private function json(bool $success, mixed $data = null, string $error = ''): void
-    {
-        $result = ['success' => $success];
-        if ($data !== null) $result['data'] = $data;
-        if ($error) $result['error'] = $error;
-        echo json_encode($result);
+        if ($resultado) {
+            $this->jsonSuccess(null, 'Rol asignado exitosamente');
+        } else {
+            $this->jsonError('Error al asignar rol', null, 400);
+        }
     }
 }

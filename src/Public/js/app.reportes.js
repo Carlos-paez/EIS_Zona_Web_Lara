@@ -33,7 +33,35 @@
             return $form.find('[name="formato"]:checked').val() || 'pdf';
         }
 
+        function tipoSinFechas() {
+            var tipo = tipoSeleccionado();
+            return tipo === 'inventario' || tipo === 'cyber';
+        }
+
+        function toggleFechas() {
+            var sinFechas = tipoSinFechas();
+            var $desde = $form.find('[name="desde"]');
+            var $hasta = $form.find('[name="hasta"]');
+            var $row = $form.find('.fechas-row');
+            if (sinFechas) {
+                if ($row.length) {
+                    $row.hide();
+                }
+                $desde.removeAttr('required');
+                $hasta.removeAttr('required');
+            } else {
+                if ($row.length) {
+                    $row.show();
+                }
+                $desde.attr('required', 'required');
+                $hasta.attr('required', 'required');
+            }
+        }
+
         function fechasValidas() {
+            if (tipoSinFechas()) {
+                return true;
+            }
             var desde = $form.find('[name="desde"]').val();
             var hasta = $form.find('[name="hasta"]').val();
             if (!desde || !hasta) {
@@ -97,6 +125,11 @@
             }
         }
 
+        toggleFechas();
+        $form.find('[name="tipo"]').on('change', function () {
+            toggleFechas();
+        });
+
         $form.on('submit', function (e) {
             e.preventDefault();
             if (!fechasValidas()) {
@@ -106,14 +139,18 @@
                 M.toast({ html: 'Consultando...', displayLength: 800, classes: 'indigo' });
             }
 
+            var data = {
+                tipo: tipoSeleccionado()
+            };
+            if (!tipoSinFechas()) {
+                data.desde = $form.find('[name="desde"]').val();
+                data.hasta = $form.find('[name="hasta"]').val();
+            }
+
             $.ajax({
                 url: '?pagina=reportes&action=consultar',
                 method: 'GET',
-                data: {
-                    tipo: tipoSeleccionado(),
-                    desde: $form.find('[name="desde"]').val(),
-                    hasta: $form.find('[name="hasta"]').val()
-                },
+                data: data,
                 dataType: 'json',
                 success: function (resp) {
                     if (resp && resp.success) {
@@ -132,15 +169,18 @@
             if (!fechasValidas()) {
                 return;
             }
-            var params = $.param({
+            var paramsObj = {
                 pagina: 'reportes',
                 action: 'exportar',
                 tipo: tipoSeleccionado(),
                 formato: formatoSeleccionado(),
-                desde: $form.find('[name="desde"]').val(),
-                hasta: $form.find('[name="hasta"]').val(),
                 csrf_token: window.EIS.csrfToken
-            });
+            };
+            if (!tipoSinFechas()) {
+                paramsObj.desde = $form.find('[name="desde"]').val();
+                paramsObj.hasta = $form.find('[name="hasta"]').val();
+            }
+            var params = $.param(paramsObj);
             window.open('?' + params, '_blank');
         });
     });

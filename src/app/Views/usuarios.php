@@ -120,33 +120,33 @@ foreach ($usuarios as $u) {
             </h4>
             <a href="#!" class="modal-close btn-flat" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="material-icons">close</i></a>
         </div>
-        <form id="form-usuario">
+        <form id="form-usuario" data-validate>
             <input type="hidden" name="id" id="usuario-id" value="">
 
             <div class="row" style="margin-bottom:0;">
                 <div class="col s12 m6 input-field">
                     <i class="material-icons prefix">person</i>
-                    <input type="text" name="nombre" id="usuario-nombre" maxlength="100" title="Entre 2 y 100 caracteres">
+                    <input type="text" name="nombre" id="usuario-nombre" maxlength="100" title="Entre 2 y 100 caracteres" required minlength="2" data-validate="nombre">
                     <label for="usuario-nombre">Nombre</label>
                 </div>
                 <div class="col s12 m6 input-field">
                     <i class="material-icons prefix">person_outline</i>
-                    <input type="text" name="apellido" id="usuario-apellido" maxlength="100" title="Máximo 100 caracteres">
+                    <input type="text" name="apellido" id="usuario-apellido" maxlength="100" title="Máximo 100 caracteres" data-validate="nombre">
                     <label for="usuario-apellido">Apellido</label>
                 </div>
                 <div class="col s12 m6 input-field">
                     <i class="material-icons prefix">badge</i>
-                    <input type="text" name="user_name" id="usuario-username" maxlength="50" title="Entre 3 y 50 caracteres: letras, números, puntos, guiones">
+                    <input type="text" name="user_name" id="usuario-username" maxlength="50" title="Entre 3 y 50 caracteres: letras, números, puntos, guiones" required minlength="3" data-validate="username">
                     <label for="usuario-username">Nombre de usuario</label>
                 </div>
                 <div class="col s12 m6 input-field">
                     <i class="material-icons prefix">email</i>
-                    <input type="email" name="email" id="usuario-email" maxlength="100">
+                    <input type="email" name="email" id="usuario-email" maxlength="100" required>
                     <label for="usuario-email">Email</label>
                 </div>
                 <div class="col s12 m6 input-field">
                     <i class="material-icons prefix">lock</i>
-                    <input type="password" name="password" id="usuario-password" autocomplete="new-password">
+                    <input type="password" name="password" id="usuario-password" autocomplete="new-password" minlength="8" maxlength="255" data-validate="password">
                     <label for="usuario-password" id="label-password">Contraseña (mín. 8 caracteres)</label>
                 </div>
                 <div class="col s12 m6 input-field">

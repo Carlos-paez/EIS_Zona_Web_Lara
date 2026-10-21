@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\Exporter;
 use App\Core\Logger;
 use App\Core\Router;
+use App\Core\ValidationException;
 use App\Core\Validator;
 use App\Models\Reporte;
 
@@ -44,6 +45,9 @@ class ReporteController
                 'exportar'  => $this->exportar(),
                 default     => $this->json(false, null, 'Acción no válida'),
             };
+        } catch (ValidationException $e) {
+            http_response_code(422);
+            $this->json(false, ['fieldErrors' => $e->errores()], $e->getMessage());
         } catch (\InvalidArgumentException $e) {
             $this->json(false, null, $e->getMessage());
         } catch (\Exception $e) {
@@ -59,10 +63,20 @@ class ReporteController
 
     private function consultar(): void
     {
-        $tipo  = trim($_GET['tipo'] ?? '');
-        $desde = trim($_GET['desde'] ?? '');
-        $hasta = trim($_GET['hasta'] ?? '');
-        $this->validarRango($desde, $hasta);
+        $datos = $this->validarFiltros();
+
+        $tipo = $datos['tipo'];
+        $desde = $datos['desde'] ?? date('Y-m-01');
+        $hasta = $datos['hasta'] ?? date('Y-m-d');
+
+        if (in_array($tipo, ['inventario', 'cyber'], true)) {
+            $desde = $datos['desde'] ?? date('Y-m-01');
+            $hasta = $datos['hasta'] ?? date('Y-m-d');
+        } else {
+            if (($datos['desde'] ?? '') === '' || ($datos['hasta'] ?? '') === '') {
+                throw new ValidationException(['desde' => 'Debe seleccionar el rango de fechas', 'hasta' => 'Debe seleccionar el rango de fechas']);
+            }
+        }
 
         $resultado = $this->model->consultar($tipo, $desde, $hasta);
         header('Content-Type: application/json');
@@ -77,33 +91,65 @@ class ReporteController
             return;
         }
 
-        $tipo    = trim($_GET['tipo'] ?? '');
-        $formato = strtolower(trim($_GET['formato'] ?? ''));
-        $desde   = trim($_GET['desde'] ?? '');
-        $hasta   = trim($_GET['hasta'] ?? '');
-        $this->validarRango($desde, $hasta);
-
-        if (!in_array($formato, ['csv', 'excel', 'pdf'], true)) {
-            throw new \InvalidArgumentException('Formato de salida no válido');
-        }
+        $datos   = $this->validarFiltros(true);
+        $tipo    = $datos['tipo'];
+        $formato = $datos['formato'];
+        $desde   = $datos['desde'] ?? date('Y-m-01');
+        $hasta   = $datos['hasta'] ?? date('Y-m-d');
 
         $resultado = $this->model->consultar($tipo, $desde, $hasta);
         $titulo    = $this->model->nombreTipo($tipo);
+        $meta      = ['tipo' => $tipo, 'desde' => $desde, 'hasta' => $hasta];
 
         match ($formato) {
-            'csv'   => Exporter::csv($titulo, $resultado['columnas'], $resultado['filas']),
-            'excel' => Exporter::excel($titulo, $resultado['columnas'], $resultado['filas']),
-            'pdf'   => Exporter::pdf($titulo, $resultado['columnas'], $resultado['filas']),
+            'csv'   => Exporter::csv($titulo, $resultado['columnas'], $resultado['filas'], $meta),
+            'excel' => Exporter::excel($titulo, $resultado['columnas'], $resultado['filas'], $meta),
+            'pdf'   => Exporter::pdf($titulo, $resultado['columnas'], $resultado['filas'], $meta),
+            default => throw new \InvalidArgumentException('Formato no válido'),
         };
     }
 
-    private function validarRango(string $desde, string $hasta): void
+    /**
+     * Valida los filtros comunes de un reporte (tipo y rango de fechas) y,
+     * cuando se solicita, el formato de exportación.
+     *
+     * @return array{tipo:string,desde?:string,hasta?:string,formato?:string}
+     * @throws ValidationException
+     */
+    private function validarFiltros(bool $conFormato = false): array
     {
-        $desde = Validator::fecha($desde, 'fecha inicial', ['required' => true]);
-        $hasta = Validator::fecha($hasta, 'fecha final', ['required' => true]);
-        if ($hasta < $desde) {
-            throw new \InvalidArgumentException('La fecha inicial no puede ser posterior a la final');
+        $reglas = [
+            'tipo' => ['label' => 'tipo de reporte', 'type' => 'enum', 'allowed' => array_keys(Reporte::TIPOS), 'required' => true],
+        ];
+
+        $tipo = $_GET['tipo'] ?? '';
+        $requiereFechas = !in_array($tipo, ['inventario', 'cyber'], true);
+
+        if ($requiereFechas) {
+            $reglas['desde'] = ['label' => 'fecha inicial', 'type' => 'fecha', 'required' => true];
+            $reglas['hasta'] = ['label' => 'fecha final', 'type' => 'fecha', 'required' => true];
+        } elseif (isset($_GET['desde']) && $_GET['desde'] !== '') {
+            $reglas['desde'] = ['label' => 'fecha inicial', 'type' => 'fecha', 'required' => false];
         }
+        if ($requiereFechas) {
+            // already added
+        } elseif (isset($_GET['hasta']) && $_GET['hasta'] !== '') {
+            $reglas['hasta'] = ['label' => 'fecha final', 'type' => 'fecha', 'required' => false];
+        }
+
+        if ($conFormato) {
+            $reglas['formato'] = ['label' => 'formato de salida', 'type' => 'enum', 'allowed' => ['csv', 'excel', 'pdf'], 'required' => true];
+        }
+
+        $datos = Validator::validar($_GET, $reglas);
+
+        if (isset($datos['desde']) && isset($datos['hasta']) && $datos['desde'] !== '' && $datos['hasta'] !== '') {
+            if ($datos['hasta'] < $datos['desde']) {
+                throw new ValidationException(['hasta' => 'La fecha inicial no puede ser posterior a la final']);
+            }
+        }
+
+        return $datos;
     }
 
     private function json(bool $success, mixed $data = null, string $error = ''): void

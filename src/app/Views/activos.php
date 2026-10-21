@@ -119,17 +119,17 @@ $tiposActivo = $activoModel->listarTiposActivo();
             </h4>
             <a href="#!" class="modal-close btn-flat" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="material-icons">close</i></a>
         </div>
-        <form id="form-activo">
+        <form id="form-activo" data-validate>
             <input type="hidden" name="id" id="activo-id" value="">
             <div class="row" style="margin-bottom:0;">
                 <div class="col s12 m6 input-field" style="margin-bottom:0;">
                     <i class="material-icons prefix">branding_watermark</i>
-                    <input type="text" name="marca" id="activo-marca" maxlength="100" title="Entre 2 y 100 caracteres">
+                    <input type="text" name="marca" id="activo-marca" maxlength="100" title="Entre 2 y 100 caracteres" required minlength="2">
                     <label for="activo-marca">Marca</label>
                 </div>
                 <div class="col s12 m6 input-field" style="margin-bottom:0;">
                     <i class="material-icons prefix">category</i>
-                    <select name="tipo_activo_id" id="activo-tipo">
+                    <select name="tipo_activo_id" id="activo-tipo" required>
                         <option value="" disabled selected>Selecciona un tipo...</option>
                         <?php foreach ($tiposActivo as $tipo): ?>
                             <option value="<?php echo (int)$tipo['id']; ?>"><?php echo htmlspecialchars($tipo['nombre_tipo'], ENT_QUOTES, 'UTF-8'); ?></option>

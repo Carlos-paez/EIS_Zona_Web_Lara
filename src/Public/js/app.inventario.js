@@ -408,9 +408,9 @@ $(function () {
         e.preventDefault();
         var $form = $(this);
 
-        // La validación de campos obligatorios la hace el servidor (PHP);
-        // si falta algún campo, el controlador devuelve "fieldErrors" y los
-        // mostramos en pantalla de forma persistente.
+        // El envío ya fue validado en el cliente por app.validate.js; el
+        // servidor vuelve a validar y devuelve "fieldErrors" si falta algún
+        // campo, que mostramos en pantalla de forma persistente.
 
         var id = $('#producto-id').val();
         var accion = id ? 'actualizar' : 'crear';

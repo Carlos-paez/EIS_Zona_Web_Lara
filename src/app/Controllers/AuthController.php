@@ -3,11 +3,12 @@
 namespace App\Controllers;
 
 use App\Core\Logger;
+use App\Core\LoginThrottle;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Models\Usuario;
 
-class AuthController
+class AuthController extends BaseController
 {
     private Usuario $model;
 
@@ -21,43 +22,47 @@ class AuthController
         return $this->model;
     }
 
-    public function setModel(Usuario $model): void
+    public function setModel(Usuario $model): self
     {
         $this->model = $model;
+        return $this;
     }
 
     public function login(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: ?pagina=login');
-            exit;
+            $this->redirigirLogin();
         }
 
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            header('Location: ?pagina=login&error=1');
-            exit;
+            $this->redirigirLogin('1');
         }
 
         $username = trim($_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
 
+        // Protección contra fuerza bruta: se comprueba el bloqueo antes de
+        // tocar la base de datos para no gastar recursos en intentos inválidos.
+        $throttle = new LoginThrottle($username);
+        if ($throttle->bloqueado()) {
+            $this->redirigirLogin('bloqueado');
+        }
+
+        $this->set('username', $username)
+            ->set('password', $password);
+
         // Campos vacíos: se distingue del error de credenciales para poder
         // mostrar en el formulario el mensaje de "completa todos los campos".
         if ($username === '' || $password === '') {
-            header('Location: ?pagina=login&error=vacio');
-            exit;
+            $this->redirigirLogin('vacio');
         }
 
         try {
             $username = Validator::username($username, 'usuario');
+            $this->set('username', $username);
         } catch (\InvalidArgumentException) {
-            header('Location: ?pagina=login&error=1');
-            exit;
-        }
-
-        if (mb_strlen($username) < 3) {
-            header('Location: ?pagina=login&error=1');
-            exit;
+            $throttle->registrarFallo();
+            $this->redirigirLogin('1');
         }
 
         $usuario = null;
@@ -65,15 +70,14 @@ class AuthController
             $usuario = $this->model->autenticar($username, $password);
         } catch (\PDOException $e) {
             Logger::error($e, 'Login - error de base de datos');
-            header('Location: ?pagina=login&error=1');
-            exit;
+            $this->redirigirLogin('1');
         } catch (\Exception $e) {
             Logger::error($e, 'Login');
-            header('Location: ?pagina=login&error=1');
-            exit;
+            $this->redirigirLogin('1');
         }
 
         if ($usuario) {
+            $throttle->limpiar();
             session_regenerate_id(true);
 
             $_SESSION['logged_in'] = true;
@@ -85,19 +89,45 @@ class AuthController
             $permisos = $this->model->obtenerPermisosPorUsuario((int)$usuario['id']);
             $_SESSION['permisos'] = $permisos;
 
-            header('Location: ?pagina=dashboard');
-            exit;
+            $this->setResult([
+                'username' => $_SESSION['username'],
+                'nombre'   => $_SESSION['nombre'],
+                'rol'      => $_SESSION['rol'],
+                'permisos' => $_SESSION['permisos'],
+            ]);
+
+            $this->redirigir('?pagina=dashboard');
         }
 
-        header('Location: ?pagina=login&error=1');
-        exit;
+        $throttle->registrarFallo();
+        $this->redirigirLogin('1');
     }
 
     public function logout(): void
     {
         session_regenerate_id(true);
         session_destroy();
-        header('Location: ?pagina=login');
+        $this->redirigir('?pagina=login');
+    }
+
+    /**
+     * Redirige a la página de login conservando el código de error.
+     */
+    private function redirigirLogin(string $error = ''): void
+    {
+        $destino = '?pagina=login';
+        if ($error !== '') {
+            $destino .= '&error=' . urlencode($error);
+        }
+        $this->redirigir($destino);
+    }
+
+    /**
+     * Envía una redirección HTTP y termina la ejecución.
+     */
+    private function redirigir(string $destino): void
+    {
+        header('Location: ' . $destino);
         exit;
     }
 }

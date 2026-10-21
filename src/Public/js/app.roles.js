@@ -317,12 +317,25 @@ $(function () {
     // Botón "Guardar" en modal de rol
     $('#btnGuardarRol').on('click', function () {
         var $form = $('#formRol');
+
+        // Validación del lado del cliente antes de enviar (si está disponible).
+        if (EIS.validarFormulario) {
+            var errores = EIS.validarFormulario($form);
+            if (Object.keys(errores).length) {
+                EIS.mostrarErroresFormulario($form, {
+                    error: 'Revisa los campos marcados e intenta de nuevo.',
+                    fieldErrors: errores
+                });
+                return;
+            }
+        }
+
         var id = $('#rol-id').val(); // ID del rol (vacío si es nuevo)
         var accion = id ? 'actualizar' : 'crear'; // Determino la acción
         var data = $form.serialize(); // Envía id, nombre y descripción
 
-        // La validación de campos obligatorios la hace el servidor (PHP):
-        // los errores se muestran en pantalla de forma persistente.
+        // El envío ya fue validado en el cliente por EIS.validarFormulario;
+        // el servidor vuelve a validar (fieldErrors) por seguridad.
 
         // POST request para crear o actualizar el rol
         $.post(API + accion, data, function (r) {

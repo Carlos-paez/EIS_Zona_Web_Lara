@@ -66,9 +66,9 @@ $nombreMes = $mesesEsp[$mesActual] ?? strtolower($mesActual);
         <div class="card">
             <div class="card-content">
                 <span class="card-title"><i class="material-icons left">assessment</i>Generador de Reportes</span>
-                <form id="formReporte">
+                <form id="formReporte" data-validate>
                     <div class="input-field">
-                        <select name="tipo" id="reporteTipo">
+                        <select name="tipo" id="reporteTipo" required>
                             <option value="ventas" selected>Ventas por fecha</option>
                             <option value="inventario">Estado de inventario</option>
                             <option value="movimientos">Movimientos de stock</option>
@@ -77,7 +77,7 @@ $nombreMes = $mesesEsp[$mesActual] ?? strtolower($mesActual);
                         </select>
                         <label>Tipo de Reporte</label>
                     </div>
-                    <div class="row" style="margin-bottom:0;">
+                    <div class="row fechas-row" style="margin-bottom:0;">
                         <div class="col s12 m6">
                             <div class="input-field">
                                 <input type="date" id="fechaInicio" name="desde" value="<?php echo date('Y-m-01'); ?>">

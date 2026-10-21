@@ -127,20 +127,20 @@
             <a href="#!" class="modal-close btn-flat" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="material-icons">close</i></a>
         </div>
         <!-- Formulario de rol -->
-        <form id="formRol">
+        <form id="formRol" data-validate>
             <!-- Campo oculto para el ID del rol (vacío si es nuevo) -->
             <input type="hidden" name="id" id="rol-id" value="">
             <div class="row" style="margin-bottom:0;">
                 <!-- Campo: Nombre del rol -->
                 <div class="col s12 input-field">
                     <i class="material-icons prefix">badge</i>
-                    <input type="text" name="nombre" id="rol-nombre" maxlength="50" title="Entre 2 y 50 caracteres">
+                    <input type="text" name="nombre" id="rol-nombre" maxlength="50" title="Entre 2 y 50 caracteres" required minlength="2">
                     <label for="rol-nombre">Nombre del rol</label>
                 </div>
                 <!-- Campo: Descripción del rol -->
                 <div class="col s12 input-field">
                     <i class="material-icons prefix">description</i>
-                    <textarea name="descripcion" id="rol-descripcion" class="materialize-textarea"></textarea>
+                    <textarea name="descripcion" id="rol-descripcion" class="materialize-textarea" maxlength="500"></textarea>
                     <label for="rol-descripcion">Descripción</label>
                 </div>
             </div>

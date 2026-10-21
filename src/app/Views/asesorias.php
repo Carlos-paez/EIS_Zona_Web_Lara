@@ -44,24 +44,24 @@
                 </div>
 
                 <!-- Formulario de registro de asesoría -->
-                <form id="asesoriaForm">
+                <form id="asesoriaForm" data-validate>
                     <div class="row" style="margin-bottom:0;">
                         <!-- Campo: Nombre del ciudadano -->
                         <div class="input-field col s12">
                             <i class="material-icons prefix">person</i>
-                            <input type="text" id="ciudadano" name="ciudadano" maxlength="100" title="Entre 2 y 100 caracteres">
+                            <input type="text" id="ciudadano" name="ciudadano" maxlength="200" title="Entre 2 y 200 caracteres" required minlength="2">
                             <label for="ciudadano">Nombre del Ciudadano</label>
                         </div>
                         <!-- Campo: Cédula de identidad -->
                         <div class="input-field col s12">
                             <i class="material-icons prefix">badge</i>
-                            <input type="text" id="cedula" name="cedula" maxlength="20" title="Entre 5 y 20 caracteres">
+                            <input type="text" id="cedula" name="cedula" maxlength="20" title="Entre 5 y 20 caracteres" required minlength="5" data-validate="cedula">
                             <label for="cedula">Cédula de Identidad</label>
                         </div>
                         <!-- Campo: Teléfono de contacto del cliente -->
                         <div class="input-field col s12">
                             <i class="material-icons prefix">phone</i>
-                            <input type="text" id="telefono" name="telefono" maxlength="20">
+                            <input type="tel" id="telefono" name="telefono" maxlength="20" minlength="7">
                             <label for="telefono">Teléfono de Contacto</label>
                         </div>
                         <!-- Campo: Dirección del cliente -->
@@ -74,7 +74,7 @@
                         <div class="input-field col s12">
                             <i class="material-icons prefix">description</i>
                             <!-- Input con datalist para sugerencias de tipos de documentos -->
-                            <input type="text" id="documento" name="documento" list="documentSuggestions" placeholder="Ej: Consulta Laboral" maxlength="100">
+                            <input type="text" id="documento" name="documento" list="documentSuggestions" placeholder="Ej: Consulta Laboral" maxlength="100" required>
                             <label for="documento">Tipo de Documento / Asesoría</label>
                             <!-- Lista de sugerencias de documentos para autocompletado -->
                             <datalist id="documentSuggestions">
@@ -99,7 +99,7 @@
                         <!-- Campo: Descripción del motivo de la consulta -->
                         <div class="input-field col s12">
                             <i class="material-icons prefix">notes</i>
-                            <textarea id="descripcion" name="descripcion" class="materialize-textarea"></textarea>
+                            <textarea id="descripcion" name="descripcion" class="materialize-textarea" maxlength="1000"></textarea>
                             <label for="descripcion">Descripción / Motivo de la Consulta</label>
                         </div>
                         <!-- Botón de envío del formulario (deshabilitado hasta validar el documento) -->

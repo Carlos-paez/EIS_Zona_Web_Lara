@@ -61,7 +61,7 @@ class PdfBuilder
             $bold ? 2 : 1,
             $this->num($size * self::UNITS),
             $this->num($this->marginLeft) . ' ' . $this->num($py),
-            $this->escape($texto)
+            $this->escape((string)$texto)
         ));
         $this->cursorY += $alto;
     }
@@ -74,27 +74,77 @@ class PdfBuilder
      */
     public function addTable(array $columnas, array $filas): void
     {
-        $colWidth = $this->maxWidth / max(1, count($columnas));
-        $cellPad  = 3;
-
-        $this->drawRow($columnas, $colWidth, $cellPad, true);
-
+        $columnasPlanas = array_values($columnas);
+        $filasPlanas = [];
         foreach ($filas as $fila) {
-            $this->drawRow(self::filaPlana($fila), $colWidth, $cellPad, false);
+            $filasPlanas[] = self::filaPlana($fila);
+        }
+
+        $countCols = count($columnasPlanas);
+        if ($countCols === 0) {
+            return;
+        }
+
+        $pesos = array_fill(0, $countCols, 1);
+        foreach ($columnasPlanas as $i => $col) {
+            $pesos[$i] = max(1, mb_strlen((string)$col));
+        }
+        foreach ($filasPlanas as $fila) {
+            foreach ($fila as $i => $valor) {
+                if (!isset($pesos[$i])) {
+                    $pesos[$i] = 1;
+                }
+                $len = mb_strlen((string)$valor);
+                if ($len > $pesos[$i]) {
+                    $pesos[$i] = $len;
+                }
+            }
+        }
+
+        $suma = array_sum($pesos);
+        if ($suma <= 0) {
+            $suma = $countCols;
+        }
+
+        $colWidths = [];
+        foreach ($pesos as $p) {
+            $colWidths[] = ($p / $suma) * $this->maxWidth;
+        }
+
+        $cellPad = 2.8;
+
+        $this->drawRow($columnasPlanas, $colWidths, $cellPad, true);
+
+        foreach ($filasPlanas as $fila) {
+            $this->drawRow($fila, $colWidths, $cellPad, false);
         }
     }
 
-    private function drawRow(array $valores, float $colWidth, float $pad, bool $header): void
+    private function drawRow(array $valores, array|float $colWidths, float $pad, bool $header): void
     {
+        $anchoCols = is_array($colWidths) ? array_values($colWidths) : array_fill(0, count($valores), (float)$colWidths);
         $charWidth = $this->fontSize * self::UNITS * 0.5;
+
         $lineas = [];
         foreach ($valores as $idx => $valor) {
             $texto = (string)$valor;
-            $maxChars = (int)floor(($colWidth - $pad * 2) / max(0.1, $charWidth));
+            $w = $anchoCols[$idx] ?? $this->maxWidth / max(1, count($valores));
+            $maxChars = (int)floor(($w - $pad * 2) / max(0.1, $charWidth));
+            if ($maxChars < 1) {
+                $maxChars = 1;
+            }
             $lineas[$idx] = $this->envolver($texto, $maxChars);
         }
+
         $altoLinea = $this->fontSize * 0.5 + $pad;
-        $altura = max(array_map('count', $lineas)) * $altoLinea + $pad;
+        $altura = 0;
+        foreach ($lineas as $l) {
+            $c = count($l);
+            if ($c > $altura) {
+                $altura = $c;
+            }
+        }
+        $altura = $altura * $altoLinea + $pad * 2;
 
         if ($this->cursorY + $altura > $this->pageHeight - 25) {
             $this->newPage();
@@ -102,17 +152,17 @@ class PdfBuilder
 
         $filaTop = $this->cursorY;
 
-        // Borde de las celdas (rect con y ascendente del PDF)
         $x = $this->marginLeft;
         foreach ($valores as $idx => $valor) {
-            $this->rect($x, $this->pageHeight - ($filaTop + $altura), $colWidth, $altura);
-            $x += $colWidth;
+            $w = $anchoCols[$idx] ?? $this->maxWidth / max(1, count($valores));
+            $this->rect($x, $this->pageHeight - ($filaTop + $altura), $w, $altura);
+            $x += $w;
         }
 
-        // Texto: la primera línea se coloca cerca del borde superior de la celda
         $tx = $this->marginLeft + $pad;
         $ty = $filaTop + $pad + $this->fontSize * 0.55;
         foreach ($lineas as $idx => $lineasTexto) {
+            $w = $anchoCols[$idx] ?? $this->maxWidth / max(1, count($valores));
             foreach ($lineasTexto as $linea) {
                 $this->c(sprintf(
                     "BT /F%d %s Tf %s Td (%s) Tj ET\n",
@@ -123,11 +173,11 @@ class PdfBuilder
                 ));
                 $ty += $altoLinea;
             }
-            $tx += $colWidth;
+            $tx += $w;
             $ty = $filaTop + $pad + $this->fontSize * 0.55;
         }
 
-        $this->cursorY = $filaTop + $altura + $this->fontSize * 0.2;
+        $this->cursorY = $filaTop + $altura + $this->fontSize * 0.1;
     }
 
     private function envolver(string $texto, int $maxChars): array
@@ -135,13 +185,33 @@ class PdfBuilder
         if ($maxChars < 1) {
             $maxChars = 1;
         }
-        $texto = trim($texto);
-        $partes = [];
-        while (mb_strlen($texto) > $maxChars) {
-            $partes[] = mb_substr($texto, 0, $maxChars);
-            $texto = mb_substr($texto, $maxChars);
+        $texto = trim((string)$texto);
+        if ($texto === '') {
+            return [''];
         }
-        $partes[] = $texto;
+        if (mb_strlen($texto) <= $maxChars) {
+            return [$texto];
+        }
+
+        $partes = [];
+        while (mb_strlen($texto) > 0) {
+            if (mb_strlen($texto) <= $maxChars) {
+                $partes[] = $texto;
+                break;
+            }
+            $slice = mb_substr($texto, 0, $maxChars);
+            $ultimoEspacio = mb_strrpos($slice, ' ');
+            if ($ultimoEspacio !== false && $ultimoEspacio > 0) {
+                $partes[] = mb_substr($slice, 0, $ultimoEspacio);
+                $texto = ltrim(mb_substr($texto, $ultimoEspacio));
+            } else {
+                $partes[] = $slice;
+                $texto = ltrim(mb_substr($texto, $maxChars));
+            }
+            if ($texto === '') {
+                break;
+            }
+        }
         return $partes;
     }
 
@@ -196,7 +266,15 @@ class PdfBuilder
 
     private static function utf8ToLatin1(string $texto): string
     {
-        return mb_convert_encoding($texto, 'ISO-8859-1', 'UTF-8');
+        $texto = (string)$texto;
+        if (!mb_check_encoding($texto, 'UTF-8')) {
+            $texto = mb_convert_encoding($texto, 'UTF-8');
+        }
+        $converted = @mb_convert_encoding($texto, 'ISO-8859-1', 'UTF-8');
+        if ($converted === false) {
+            $converted = iconv('UTF-8', 'ISO-8859-1//TRANSLIT//IGNORE', $texto) ?: $texto;
+        }
+        return $converted;
     }
 
     private function num(float $valor): string

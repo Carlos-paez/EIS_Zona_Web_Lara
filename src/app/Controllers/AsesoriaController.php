@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Core\Logger;
 use App\Core\Router;
+use App\Core\ValidationException;
 use App\Core\Validator;
 use App\Models\Asesoria;
 
@@ -41,6 +42,8 @@ class AsesoriaController
                 'kpis'       => $this->kpis(),
                 default      => $this->json(false, null, 'Acción no válida'),
             };
+        } catch (ValidationException $e) {
+            echo json_encode(['success' => false, 'error' => $e->getMessage(), 'fieldErrors' => $e->errores()]);
         } catch (\PDOException $e) {
             Logger::error($e, 'Asesorías - consulta SQL');
             echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
@@ -96,13 +99,9 @@ class AsesoriaController
 
     private function buscar(): void
     {
-        $cedula = trim($_GET['cedula'] ?? '');
+        $cedula = Validator::busqueda($_GET['cedula'] ?? '', 'cédula');
         if ($cedula === '') {
             echo json_encode(['success' => true, 'data' => []]);
-            return;
-        }
-        if (!preg_match(Validator::PATTERN_CEDULA, $cedula)) {
-            echo json_encode(['success' => false, 'error' => 'La cédula no tiene un formato válido']);
             return;
         }
         $resultados = $this->model->buscarPorCedula($cedula);
@@ -116,22 +115,21 @@ class AsesoriaController
             return;
         }
 
-        $errores = Validator::requeridos($_POST, [
-            'ciudadano' => 'ciudadano',
-            'cedula'    => 'cédula',
-            'documento' => 'tipo de documento',
+        $datos = Validator::validar($_POST, [
+            'ciudadano'   => ['label' => 'ciudadano', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 200, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El ciudadano contiene caracteres no permitidos'],
+            'cedula'      => ['label' => 'cédula', 'type' => 'cedula'],
+            'documento'   => ['label' => 'tipo de documento', 'type' => 'texto', 'required' => true, 'min' => 1, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El tipo de documento contiene caracteres no permitidos'],
+            'descripcion' => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000],
+            'direccion'   => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => 500],
+            'telefono'    => ['label' => 'teléfono', 'type' => 'telefono'],
         ]);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
 
-        $ciudadano   = Validator::texto($_POST['ciudadano'] ?? null, 'ciudadano', ['required' => true, 'min' => 2, 'max' => 200, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El ciudadano contiene caracteres no permitidos']);
-        $cedula      = Validator::cedula($_POST['cedula'] ?? null, 'cédula');
-        $documento   = Validator::texto($_POST['documento'] ?? null, 'tipo de documento', ['required' => true, 'min' => 1, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El tipo de documento contiene caracteres no permitidos']);
-        $descripcion = Validator::texto($_POST['descripcion'] ?? null, 'descripción', ['required' => false, 'max' => 1000]);
-        $direccion   = Validator::texto($_POST['direccion'] ?? null, 'dirección', ['required' => false, 'max' => 500]);
-        $telefono    = Validator::telefono($_POST['telefono'] ?? null, 'teléfono');
+        $ciudadano   = $datos['ciudadano'];
+        $cedula      = $datos['cedula'];
+        $documento   = $datos['documento'];
+        $descripcion = $datos['descripcion'];
+        $direccion   = $datos['direccion'];
+        $telefono    = $datos['telefono'];
 
         $resultado = $this->model->crear($ciudadano, $cedula, $documento, $descripcion, $direccion, $telefono);
         echo json_encode(

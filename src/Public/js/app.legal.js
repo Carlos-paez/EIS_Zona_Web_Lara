@@ -167,9 +167,9 @@ $(function () {
         var telefono    = $('#telefono').val().trim();
         var direccion   = $('#direccion').val().trim();
 
-        // La validación de campos obligatorios la hace el servidor (PHP):
-        // si algún campo obligatorio viene vacío, el controlador devuelve
-        // "fieldErrors" y los mostramos de forma persistente en pantalla.
+        // El envío ya fue validado en el cliente por app.validate.js; el
+        // servidor vuelve a validar y devuelve "fieldErrors" si algo falla,
+        // que mostramos de forma persistente en pantalla.
 
         // Feedback visual previo según el tipo de documento
         var permitido = documentoPermitido(documento);

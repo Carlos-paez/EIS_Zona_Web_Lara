@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Core\Logger;
 use App\Core\Router;
+use App\Core\ValidationException;
 use App\Core\Validator;
 use App\Models\Activo;
 
@@ -44,6 +45,8 @@ class ActivoController
                 'tipos'      => $this->tipos(),
                 default      => $this->json(false, null, 'Acción no válida'),
             };
+        } catch (ValidationException $e) {
+            echo json_encode(['success' => false, 'error' => $e->getMessage(), 'fieldErrors' => $e->errores()]);
         } catch (\PDOException $e) {
             Logger::error($e, 'Activos - consulta SQL');
             $msg = $e->getMessage();
@@ -102,21 +105,19 @@ class ActivoController
             return;
         }
 
-        $errores = Validator::requeridos($_POST, [
-            'marca'          => 'marca',
-            'descripcion'    => 'descripción',
-            'tipo_activo_id' => 'tipo de activo',
+        $datos = Validator::validar($_POST, [
+            'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'La marca contiene caracteres no permitidos'],
+            'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000],
+            'tipo_activo_id' => ['label' => 'tipo de activo', 'type' => 'id'],
+            'activa'         => ['label' => 'estado', 'type' => 'bool', 'required' => false],
+            'is_ciber'       => ['label' => 'ciber', 'type' => 'bool', 'required' => false],
         ]);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
 
-        $marca       = Validator::texto($_POST['marca'] ?? null, 'marca', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'La marca contiene caracteres no permitidos']);
-        $descripcion = Validator::texto($_POST['descripcion'] ?? null, 'descripción', ['required' => false, 'max' => 1000]);
-        $tipoActivo  = Validator::id($_POST['tipo_activo_id'] ?? null, 'tipo de activo');
-        $activa      = isset($_POST['activa']) ? (int)$_POST['activa'] : 0;
-        $isCiber     = isset($_POST['is_ciber']) ? (int)$_POST['is_ciber'] : 0;
+        $marca       = $datos['marca'];
+        $descripcion = $datos['descripcion'];
+        $tipoActivo  = $datos['tipo_activo_id'];
+        $activa      = $datos['activa'];
+        $isCiber     = $datos['is_ciber'];
 
         $resultado = $this->model->crearActivo($marca, $descripcion, $tipoActivo, $activa, $isCiber);
         echo json_encode(
@@ -133,28 +134,21 @@ class ActivoController
             return;
         }
 
-        $errores = Validator::requeridos($_POST, [
-            'id'             => 'ID del activo',
-            'marca'          => 'marca',
-            'descripcion'    => 'descripción',
-            'tipo_activo_id' => 'tipo de activo',
+        $datos = Validator::validar($_POST, [
+            'id'             => ['label' => 'ID del activo', 'type' => 'id'],
+            'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'La marca contiene caracteres no permitidos'],
+            'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000],
+            'tipo_activo_id' => ['label' => 'tipo de activo', 'type' => 'id'],
+            'activa'         => ['label' => 'estado', 'type' => 'bool', 'required' => false],
+            'is_ciber'       => ['label' => 'ciber', 'type' => 'bool', 'required' => false],
         ]);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
 
-        $id          = Validator::id($_POST['id'] ?? null, 'ID del activo');
-        $marca       = Validator::texto($_POST['marca'] ?? null, 'marca', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'La marca contiene caracteres no permitidos']);
-        $descripcion = Validator::texto($_POST['descripcion'] ?? null, 'descripción', ['required' => false, 'max' => 1000]);
-        $tipoActivo  = Validator::id($_POST['tipo_activo_id'] ?? null, 'tipo de activo');
-        $activa      = isset($_POST['activa']) ? (int)$_POST['activa'] : 0;
-        $isCiber     = isset($_POST['is_ciber']) ? (int)$_POST['is_ciber'] : 0;
-
-        if (!$id) {
-            echo json_encode(['success' => false, 'error' => 'ID no válido']);
-            return;
-        }
+        $id          = $datos['id'];
+        $marca       = $datos['marca'];
+        $descripcion = $datos['descripcion'];
+        $tipoActivo  = $datos['tipo_activo_id'];
+        $activa      = $datos['activa'];
+        $isCiber     = $datos['is_ciber'];
 
         $resultado = $this->model->actualizarActivo($id, $marca, $descripcion, $tipoActivo, $activa, $isCiber);
         echo json_encode(
@@ -172,7 +166,7 @@ class ActivoController
         }
 
         $id     = Validator::id($_POST['id'] ?? null, 'ID del activo');
-        $activa = isset($_POST['activa']) ? (int)$_POST['activa'] : 0;
+        $activa = Validator::bool($_POST['activa'] ?? null, 'estado', true);
 
         $resultado = $this->model->cambiarEstadoActivo($id, $activa);
         echo json_encode(

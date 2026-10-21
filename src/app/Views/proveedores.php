@@ -234,7 +234,7 @@ foreach ($kpis as $row) {
         <h4 id="modal-orden-title">Nueva Solicitud</h4>
 
         <!-- Formulario de la orden -->
-        <form id="form-orden">
+        <form id="form-orden" data-validate>
             <input type="hidden" name="id" id="orden-id" value="">
             <div class="row">
                 <div class="input-field col s12 m6">
@@ -242,13 +242,13 @@ foreach ($kpis as $row) {
                     <label for="orden-numero">Número de Orden</label>
                 </div>
                 <div class="input-field col s12 m6">
-                    <input type="date" name="fecha" id="orden-fecha">
+                    <input type="date" name="fecha" id="orden-fecha" required>
                     <label for="orden-fecha" class="active">Fecha</label>
                 </div>
             </div>
             <div class="row">
                 <div class="input-field col s12 m6">
-                    <select name="fk_proveedor" id="orden-proveedor">
+                    <select name="fk_proveedor" id="orden-proveedor" required>
                         <option value="" disabled selected>Seleccione</option>
                         <?php foreach ($proveedores as $p): ?>
                         <option value="<?php echo $p['id']; ?>"><?php echo htmlspecialchars($p['nombre'] . ' (' . $p['rif'] . ')'); ?></option>
@@ -257,7 +257,7 @@ foreach ($kpis as $row) {
                     <label>Proveedor</label>
                 </div>
                 <div class="input-field col s12 m6">
-                    <select name="fk_status" id="orden-status">
+                    <select name="fk_status" id="orden-status" required>
                         <option value="" disabled selected>Seleccione</option>
                         <?php foreach ($statuses as $s): ?>
                         <option value="<?php echo $s['id']; ?>"><?php echo htmlspecialchars($s['status']); ?></option>
@@ -298,10 +298,10 @@ foreach ($kpis as $row) {
 
             <div class="card-panel grey lighten-4" style="margin-top:1rem;padding:1rem;">
                 <span style="font-weight:600;font-size:0.9rem;"><i class="material-icons left" style="font-size:1.1rem;">add_circle</i> Agregar Producto</span>
-                <form id="form-linea" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;">
+                <form id="form-linea" data-validate style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;">
                     <input type="hidden" name="orden_id" id="linea-orden-id" value="">
                     <div class="input-field" style="flex:2;min-width:120px;margin:0;">
-                        <select name="producto_id" id="linea-producto">
+                        <select name="producto_id" id="linea-producto" required>
                             <option value="" disabled selected>Producto</option>
                             <?php foreach ($productos as $pr): ?>
                             <option value="<?php echo $pr['id']; ?>" data-precio="<?php echo $pr['precio_compra']; ?>"><?php echo htmlspecialchars($pr['nombre'] . ' (' . $pr['codigo'] . ')'); ?></option>
@@ -309,10 +309,10 @@ foreach ($kpis as $row) {
                         </select>
                     </div>
                     <div class="input-field" style="flex:1;min-width:60px;margin:0;">
-                        <input type="number" name="cantidad" id="linea-cantidad" min="1" max="99999" value="1">
+                        <input type="number" name="cantidad" id="linea-cantidad" min="1" max="99999" value="1" required>
                     </div>
                     <div class="input-field" style="flex:1;min-width:80px;margin:0;">
-                        <input type="number" name="precio" id="linea-precio" min="0.01" step="0.01">
+                        <input type="number" name="precio" id="linea-precio" min="0.01" step="0.01" required>
                     </div>
                     <button type="submit" class="btn waves-effect waves-light green" style="height:44px;line-height:44px;padding:0 1rem;border-radius:24px;"><i class="material-icons">add</i></button>
                 </form>

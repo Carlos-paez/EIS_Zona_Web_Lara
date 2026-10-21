@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use App\Core\Logger;
 use App\Core\Router;
+use App\Core\ValidationException;
+use App\Core\Validator;
 use App\Models\CiberControl;
 
 /**
@@ -57,6 +59,8 @@ class CiberController
                 'cambiarEstadoPC' => $this->cambiarEstadoPC(),
                 default         => $this->json(false, null, 'Acción no válida'),
             };
+        } catch (ValidationException $e) {
+            echo json_encode(['success' => false, 'error' => $e->getMessage(), 'fieldErrors' => $e->errores()]);
         } catch (\PDOException $e) {
             Logger::error($e, 'Cyber (CiberController) - consulta SQL');
             echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
@@ -151,7 +155,7 @@ class CiberController
      */
     private function buscarCliente(): void
     {
-        $cedula = trim($_GET['cedula'] ?? '');
+        $cedula = Validator::busqueda($_GET['cedula'] ?? '', 'cédula');
         if ($cedula === '') {
             echo json_encode(['success' => true, 'data' => null]);
             return;
@@ -174,27 +178,23 @@ class CiberController
             return;
         }
 
-        $errores = Validator::requeridos($_POST, [
-            'ciudadano'  => 'ciudadano',
-            'cedula'     => 'cédula',
-            'activo_id'  => 'equipo (PC)',
-            'tarifa_id'  => 'tarifa',
-            'tiempo_uso' => 'tiempo de uso',
+        $datos = Validator::validar($_POST, [
+            'ciudadano'  => ['label' => 'ciudadano', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre del ciudadano contiene caracteres no permitidos'],
+            'cedula'     => ['label' => 'cédula', 'type' => 'cedula'],
+            'direccion'  => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => 500],
+            'telefono'   => ['label' => 'teléfono', 'type' => 'telefono'],
+            'activo_id'  => ['label' => 'equipo (PC)', 'type' => 'id'],
+            'tarifa_id'  => ['label' => 'tarifa', 'type' => 'id'],
+            'tiempo_uso' => ['label' => 'tiempo de uso', 'type' => 'tiempoUso'],
         ]);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
 
-        $ciudadano  = trim($_POST['ciudadano'] ?? '');
-        $cedula     = trim($_POST['cedula'] ?? '');
-        $direccion  = trim($_POST['direccion'] ?? '');
-        $telefono   = trim($_POST['telefono'] ?? '');
-        $activoId   = (int)($_POST['activo_id'] ?? 0);
-        $tarifaId   = (int)($_POST['tarifa_id'] ?? 0);
-        $tiempoUso  = trim($_POST['tiempo_uso'] ?? '');
-
-        $sesionId = $this->model->iniciarSesion($ciudadano, $cedula, $direccion, $telefono, $activoId, $tarifaId, $tiempoUso);
+        $ciudadano = $datos['ciudadano'];
+        $cedula    = $datos['cedula'];
+        $direccion = $datos['direccion'];
+        $telefono  = $datos['telefono'];
+        $activoId  = $datos['activo_id'];
+        $tarifaId  = $datos['tarifa_id'];
+        $tiempoUso = $datos['tiempo_uso'];
 
         echo json_encode(
             $sesionId
@@ -217,11 +217,7 @@ class CiberController
             return;
         }
 
-        $sesionId = (int)($_POST['sesion_id'] ?? 0);
-        if ($sesionId <= 0) {
-            echo json_encode(['success' => false, 'error' => 'ID de sesión no válido']);
-            return;
-        }
+        $sesionId = Validator::id($_POST['sesion_id'] ?? null, 'ID de sesión');
 
         $resultado = $this->model->finalizarSesion($sesionId);
         echo json_encode(
@@ -257,11 +253,7 @@ class CiberController
      */
     private function historial(): void
     {
-        $activoId = (int)($_GET['activo_id'] ?? 0);
-        if ($activoId <= 0) {
-            echo json_encode(['success' => false, 'data' => []]);
-            return;
-        }
+        $activoId = Validator::id($_GET['activo_id'] ?? null, 'ID del equipo');
         $historial = $this->model->historialEstacion($activoId);
         echo json_encode(['success' => true, 'data' => $historial]);
     }
@@ -279,11 +271,7 @@ class CiberController
      */
     private function obtenerPC(): void
     {
-        $id = (int)($_GET['id'] ?? 0);
-        if ($id <= 0) {
-            echo json_encode(['success' => false, 'error' => 'ID inválido']);
-            return;
-        }
+        $id = Validator::id($_GET['id'] ?? null, 'ID de la PC');
         $pc = $this->model->obtenerPC($id);
         echo json_encode(
             $pc
@@ -306,24 +294,17 @@ class CiberController
             return;
         }
 
-        $errores = Validator::requeridos($_POST, [
-            'marca'          => 'marca',
-            'tipo_activo_id' => 'tipo de PC',
+        $datos = Validator::validar($_POST, [
+            'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'La marca contiene caracteres no permitidos'],
+            'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000],
+            'tipo_activo_id' => ['label' => 'tipo de PC', 'type' => 'id'],
+            'activa'         => ['label' => 'estado', 'type' => 'bool', 'required' => false],
         ]);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
 
-        $marca       = trim($_POST['marca'] ?? '');
-        $descripcion = trim($_POST['descripcion'] ?? '');
-        $tipoActivo  = (int)($_POST['tipo_activo_id'] ?? 0);
-        $activa      = (int)($_POST['activa'] ?? 1);
-
-        if ($tipoActivo <= 0) {
-            echo json_encode(['success' => false, 'error' => 'Debes seleccionar un tipo de PC']);
-            return;
-        }
+        $marca       = $datos['marca'];
+        $descripcion = $datos['descripcion'];
+        $tipoActivo  = $datos['tipo_activo_id'];
+        $activa      = $datos['activa'];
 
         $id = $this->model->crearPC($marca, $descripcion, $tipoActivo, $activa);
         echo json_encode(
@@ -347,26 +328,19 @@ class CiberController
             return;
         }
 
-        $errores = Validator::requeridos($_POST, [
-            'id'             => 'ID de la PC',
-            'marca'          => 'marca',
-            'tipo_activo_id' => 'tipo de PC',
+        $datos = Validator::validar($_POST, [
+            'id'             => ['label' => 'ID de la PC', 'type' => 'id'],
+            'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'La marca contiene caracteres no permitidos'],
+            'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000],
+            'tipo_activo_id' => ['label' => 'tipo de PC', 'type' => 'id'],
+            'activa'         => ['label' => 'estado', 'type' => 'bool', 'required' => false],
         ]);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
 
-        $id          = (int)($_POST['id'] ?? 0);
-        $marca       = trim($_POST['marca'] ?? '');
-        $descripcion = trim($_POST['descripcion'] ?? '');
-        $tipoActivo  = (int)($_POST['tipo_activo_id'] ?? 0);
-        $activa      = (int)($_POST['activa'] ?? 1);
-
-        if ($id <= 0 || $tipoActivo <= 0) {
-            echo json_encode(['success' => false, 'error' => 'Datos no válidos']);
-            return;
-        }
+        $id          = $datos['id'];
+        $marca       = $datos['marca'];
+        $descripcion = $datos['descripcion'];
+        $tipoActivo  = $datos['tipo_activo_id'];
+        $activa      = $datos['activa'];
 
         $resultado = $this->model->actualizarPC($id, $marca, $descripcion, $tipoActivo, $activa);
         echo json_encode(
@@ -390,13 +364,8 @@ class CiberController
             return;
         }
 
-        $id     = (int)($_POST['id'] ?? 0);
-        $activa = (int)($_POST['activa'] ?? 0);
-
-        if ($id <= 0) {
-            echo json_encode(['success' => false, 'error' => 'ID inválido']);
-            return;
-        }
+        $id     = Validator::id($_POST['id'] ?? null, 'ID de la PC');
+        $activa = Validator::bool($_POST['activa'] ?? null, 'estado', true);
 
         $resultado = $this->model->cambiarEstadoPC($id, $activa);
         echo json_encode(
@@ -420,11 +389,7 @@ class CiberController
             return;
         }
 
-        $id = (int)($_POST['id'] ?? 0);
-        if ($id <= 0) {
-            echo json_encode(['success' => false, 'error' => 'ID inválido']);
-            return;
-        }
+        $id = Validator::id($_POST['id'] ?? null, 'ID de la PC');
 
         $resultado = $this->model->eliminarPC($id);
         echo json_encode(

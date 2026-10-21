@@ -297,8 +297,8 @@ $(function () {
     $(document).on('submit', '#cyberForm', function (e) {
         e.preventDefault();
 
-        // La validación de campos obligatorios la hace el servidor (PHP):
-        // los errores se muestran en pantalla de forma persistente.
+        // El envío ya fue validado en el cliente por app.validate.js; el
+        // servidor vuelve a validar (fieldErrors) por seguridad.
         var $form = $(this);
         var $btn = $('#btnIniciarSesion');
         $btn.prop('disabled', true);
@@ -419,11 +419,22 @@ $(function () {
         var $form = $('#formPC');
         var id = $('#pcId').val();
 
-        // La validación de campos obligatorios la hace el servidor (PHP):
-        // los errores se muestran en pantalla de forma persistente.
+        // Validación del lado del cliente: si hay errores, se muestran y no se
+        // envía la petición (el servidor vuelve a validar por seguridad).
+        EIS.limpiarErroresFormulario($form);
+        if (EIS.validarFormulario) {
+            var errores = EIS.validarFormulario($form);
+            if (Object.keys(errores).length) {
+                EIS.mostrarErroresFormulario($form, {
+                    error: 'Revisa los campos marcados e intenta de nuevo.',
+                    fieldErrors: errores
+                });
+                return;
+            }
+        }
+
         var $btn = $(this);
         $btn.prop('disabled', true).html('<i class="material-icons left" style="margin:0;">hourglass_top</i> Guardando...');
-        EIS.limpiarErroresFormulario($form);
         $('#pcFormError').hide();
 
         var url = id ? API + 'actualizarPC' : API + 'crearPC';

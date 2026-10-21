@@ -123,7 +123,7 @@
         <span style="font-weight:600;font-size:0.95rem;display:flex;align-items:center;gap:0.35rem;margin-bottom:0.25rem;">
             <i class="material-icons" style="font-size:1.2rem;color:var(--primary);">person</i> Datos del Cliente
         </span>
-        <form id="posClienteForm">
+        <form id="posClienteForm" data-validate>
             <div class="row" style="margin-bottom:0;">
                 <!-- Selector de cliente: permite elegir un cliente registrado
                      o dejar el valor por defecto para crear uno nuevo -->
@@ -137,13 +137,13 @@
                 <!-- Nombre completo del cliente -->
                 <div class="input-field col s12 m6">
                     <i class="material-icons prefix">badge</i>
-                    <input type="text" id="posCiudadano" name="ciudadano" maxlength="100" placeholder="Nombre y apellido">
+                    <input type="text" id="posCiudadano" name="ciudadano" maxlength="100" placeholder="Nombre y apellido" required minlength="2">
                     <label for="posCiudadano">Cliente *</label>
                 </div>
                 <!-- Cédula de identidad -->
                 <div class="input-field col s12 m6">
                     <i class="material-icons prefix">person_pin</i>
-                    <input type="text" id="posCedula" name="cedula" maxlength="20" placeholder="Ej: 12345678">
+                    <input type="text" id="posCedula" name="cedula" maxlength="20" placeholder="Ej: 12345678" required data-validate="cedula">
                     <label for="posCedula">Cédula *</label>
                 </div>
                 <!-- Dirección del cliente -->
@@ -155,7 +155,7 @@
                 <!-- Teléfono del cliente -->
                 <div class="input-field col s12 m6">
                     <i class="material-icons prefix">phone</i>
-                    <input type="text" id="posTelefono" name="telefono" maxlength="20" placeholder="Opcional">
+                    <input type="text" id="posTelefono" name="telefono" maxlength="20" minlength="7" placeholder="Opcional" data-validate="telefono">
                     <label for="posTelefono">Teléfono</label>
                 </div>
             </div>

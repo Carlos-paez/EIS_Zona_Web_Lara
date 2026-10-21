@@ -148,7 +148,11 @@ EIS.mostrarErroresFormulario = function (form, data) {
     EIS.limpiarErroresFormulario($form);
 
     // --- Errores por campo --------------------------------------------
-    var fieldErrors = (data && data.fieldErrors) ? data.fieldErrors : {};
+    // Se aceptan tanto a nivel raíz (fieldErrors) como anidados en data
+    // (data.fieldErrors) para tolerar distintos formatos de respuesta.
+    var fieldErrors = (data && data.fieldErrors)
+        ? data.fieldErrors
+        : (data && data.data && data.data.fieldErrors) ? data.data.fieldErrors : {};
     $.each(fieldErrors, function (name, msg) {
         var $field = $form.find('[name="' + name + '"]').first();
         if (!$field.length) return;

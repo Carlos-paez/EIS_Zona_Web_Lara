@@ -83,21 +83,21 @@ $totalClientes = $clienteModel->totalClientes();
             </h4>
             <a href="#!" class="modal-close btn-flat" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="material-icons">close</i></a>
         </div>
-        <form id="form-cliente">
+        <form id="form-cliente" data-validate>
             <input type="hidden" name="id" id="cliente-id" value="">
             <div class="input-field">
                 <i class="material-icons prefix">badge</i>
-                <input type="text" name="cedula" id="cliente-cedula" maxlength="20" title="Entre 5 y 20 caracteres">
+                <input type="text" name="cedula" id="cliente-cedula" maxlength="20" title="Entre 5 y 20 caracteres" required minlength="5" data-validate="cedula">
                 <label for="cliente-cedula">Cédula</label>
             </div>
             <div class="row" style="margin-bottom:0;">
                 <div class="col s6 input-field" style="margin-bottom:0;">
                     <i class="material-icons prefix">person</i>
-                    <input type="text" name="nombre" id="cliente-nombre" maxlength="100" title="Entre 2 y 100 caracteres">
+                    <input type="text" name="nombre" id="cliente-nombre" maxlength="100" title="Entre 2 y 100 caracteres" required minlength="2" data-validate="nombre">
                     <label for="cliente-nombre">Nombre</label>
                 </div>
                 <div class="col s6 input-field" style="margin-bottom:0;">
-                    <input type="text" name="apellido" id="cliente-apellido" maxlength="100" title="Entre 2 y 100 caracteres">
+                    <input type="text" name="apellido" id="cliente-apellido" maxlength="100" title="Entre 2 y 100 caracteres" required minlength="2" data-validate="nombre">
                     <label for="cliente-apellido">Apellido</label>
                 </div>
             </div>
@@ -108,7 +108,7 @@ $totalClientes = $clienteModel->totalClientes();
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">phone</i>
-                <input type="text" name="telefono" id="cliente-telefono" maxlength="20">
+                <input type="tel" name="telefono" id="cliente-telefono" maxlength="20" minlength="7">
                 <label for="cliente-telefono">Teléfono</label>
             </div>
         </form>

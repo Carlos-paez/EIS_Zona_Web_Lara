@@ -65,6 +65,12 @@
                         <i class="material-icons left" style="font-size:1.2rem;">error</i>
                         Por favor, completa todos los campos para iniciar sesión.
                     </div>
+                <?php elseif (($_GET['error'] ?? '') === 'bloqueado'): ?>
+                    <!-- Error de seguridad: demasiados intentos fallidos seguidos -->
+                    <div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:0.75rem 1rem;">
+                        <i class="material-icons left" style="font-size:1.2rem;">lock</i>
+                        Demasiados intentos fallidos. Espera unos minutos antes de volver a intentarlo.
+                    </div>
                 <?php else: ?>
                     <!-- Error de autenticación: credenciales incorrectas -->
                     <div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:0.75rem 1rem;">
@@ -82,7 +88,7 @@
             <!-- FORMULARIO DE INICIO DE SESIÓN -->
             <!-- Envía los datos por método POST al controlador login_validate -->
             <!-- ================================================================ -->
-            <form action="?pagina=login_validate" method="post">
+            <form action="?pagina=login_validate" method="post" data-validate>
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
 
                 <!-- ---------------------------------------------------------------- -->
@@ -92,7 +98,7 @@
                     <!-- Ícono de persona (prefijo dentro del input) -->
                     <i class="material-icons prefix">person</i>
                     <!-- Input de tipo texto para el nombre de usuario; autofocus = cursor automático al cargar -->
-                    <input type="text" name="username" id="username" autofocus>
+                    <input type="text" name="username" id="username" autofocus required minlength="3" maxlength="50" data-validate="username" data-msg-required="Ingresa tu usuario.">
                     <!-- Etiqueta flotante que se mueve al escribir -->
                     <label for="username">Usuario</label>
                 </div>
@@ -104,7 +110,7 @@
                     <!-- Ícono de candado (prefijo dentro del input) -->
                     <i class="material-icons prefix">lock</i>
                     <!-- Input de tipo password para ocultar los caracteres mientras se escribe -->
-                    <input type="password" name="password" id="password">
+                    <input type="password" name="password" id="password" required maxlength="255" data-msg-required="Ingresa tu contraseña.">
                     <!-- Etiqueta flotante -->
                     <label for="password">Contraseña</label>
                 </div>
@@ -198,6 +204,7 @@
     <script src="Public/js/materialize.min.js"></script>
     <!-- Archivo JS principal de la aplicación (funciones globales) -->
     <script src="Public/js/app.core.js"></script>
+    <script src="Public/js/app.validate.js"></script>
 
     <!-- ================================================================ -->
     <!-- SCRIPT: CAMBIO DE TEMA (OSCURO / CLARO) -->

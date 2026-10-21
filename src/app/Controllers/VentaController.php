@@ -4,11 +4,12 @@ namespace App\Controllers;
 
 use App\Core\Logger;
 use App\Core\Router;
+use App\Core\ValidationException;
 use App\Core\Validator;
 use App\Models\Cliente;
 use App\Models\Venta;
 
-class VentaController
+class VentaController extends BaseController
 {
     private Venta $model;
 
@@ -22,9 +23,10 @@ class VentaController
         return $this->model;
     }
 
-    public function setModel(Venta $model): void
+    public function setModel(Venta $model): self
     {
         $this->model = $model;
+        return $this;
     }
 
     public function handle(): void
@@ -39,80 +41,84 @@ class VentaController
                 'clientes'      => $this->clientes(),
                 'buscarCliente' => $this->buscarCliente(),
                 'registrar'     => $this->registrar(),
-                default         => $this->json(false, null, 'Acción no válida'),
+                default         => $this->jsonError('Acción no válida', null, 400),
             };
+        } catch (ValidationException $e) {
+            $this->jsonValidationException($e);
         } catch (\PDOException $e) {
             Logger::error($e, 'Ventas - consulta SQL');
-            echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
+            $this->jsonError('Error de base de datos', null, 500);
         } catch (\InvalidArgumentException $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            $this->jsonError($e->getMessage(), null, 400);
         } catch (\Throwable $e) {
             Logger::error($e, 'Ventas');
-            echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
+            $this->jsonError('Error interno del servidor', null, 500);
         }
     }
 
     private function productos(): void
     {
         $productos = $this->model->listarProductos();
-        echo json_encode(['success' => true, 'data' => $productos]);
+        $this->jsonSuccess($productos);
     }
 
     private function clientes(): void
     {
         $clientes = (new Cliente())->obtenerClientes();
-        echo json_encode(['success' => true, 'data' => $clientes]);
+        $this->jsonSuccess($clientes);
     }
 
     private function buscarCliente(): void
     {
         $cedula = Validator::texto($_GET['cedula'] ?? '', 'cédula', ['required' => false, 'max' => 20]);
+        $this->set('cedula', $cedula);
         if ($cedula === '') {
-            echo json_encode(['success' => true, 'data' => null]);
+            $this->jsonSuccess(null);
             return;
         }
         $cliente = (new Cliente())->obtenerClientePorCedula($cedula);
-        echo json_encode(['success' => true, 'data' => $cliente ?: null]);
+        $this->jsonSuccess($cliente ?: null);
     }
 
     private function registrar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            $this->jsonError('Token de seguridad inválido', null, 400);
             return;
         }
 
-        $errores = Validator::requeridos($_POST, [
-            'ciudadano' => 'nombre del cliente',
-            'cedula'    => 'cédula',
-            'items'     => 'productos de la venta',
+        $datos = $this->validarCampos([
+            'ciudadano' => ['label' => 'nombre del cliente', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => Validator::MAX_NOMBRE, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre del cliente contiene caracteres no permitidos'],
+            'cedula'    => ['label' => 'cédula', 'type' => 'cedula'],
+            'direccion' => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => Validator::MAX_DIRECCION],
+            'telefono'  => ['label' => 'teléfono', 'type' => 'telefono'],
         ]);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
+
+        $ciudadano = $datos['ciudadano'];
+        $cedula    = $datos['cedula'];
+        $direccion = $datos['direccion'];
+        $telefono  = $datos['telefono'];
+        try {
+            $items = Validator::itemsVenta($_POST['items'] ?? '');
+        } catch (\InvalidArgumentException $e) {
+            throw new ValidationException(['items' => $e->getMessage()]);
         }
 
-        $ciudadano = Validator::texto($_POST['ciudadano'] ?? null, 'nombre del cliente', ['required' => true, 'min' => 2, 'max' => 100]);
-        $cedula    = Validator::cedula($_POST['cedula'] ?? null, 'cédula');
-        $direccion = Validator::texto($_POST['direccion'] ?? null, 'dirección', ['required' => false, 'max' => 500]);
-        $telefono  = Validator::telefono($_POST['telefono'] ?? null, 'teléfono');
-        $items     = Validator::itemsVenta($_POST['items'] ?? '');
+        $this->set('ciudadano', $ciudadano)
+            ->set('cedula', $cedula)
+            ->set('direccion', $direccion)
+            ->set('telefono', $telefono)
+            ->set('items', $items);
 
         $usuarioId = (int)($_SESSION['user_id'] ?? 0);
 
         $orden_id = $this->model->registrarVenta($items, $ciudadano, $cedula, $direccion, $telefono, $usuarioId);
-        echo json_encode(
-            $orden_id
-                ? ['success' => true, 'message' => 'Venta registrada exitosamente', 'data' => ['orden_id' => $orden_id]]
-                : ['success' => false, 'error' => 'Error al registrar la venta']
-        );
+        if ($orden_id) {
+            $this->jsonSuccess(['orden_id' => $orden_id], 'Venta registrada exitosamente');
+        } else {
+            $this->jsonError('Error al registrar la venta', null, 400);
+        }
     }
 
-    private function json(bool $success, mixed $data = null, string $error = ''): void
-    {
-        $result = ['success' => $success];
-        if ($data !== null) $result['data'] = $data;
-        if ($error) $result['error'] = $error;
-        echo json_encode($result);
-    }
+    // json heredado desde BaseController
 }

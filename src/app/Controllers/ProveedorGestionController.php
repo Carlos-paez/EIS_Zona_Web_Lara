@@ -4,10 +4,11 @@ namespace App\Controllers;
 
 use App\Core\Logger;
 use App\Core\Router;
+use App\Core\ValidationException;
 use App\Core\Validator;
 use App\Models\ProveedorGestion;
 
-class ProveedorGestionController
+class ProveedorGestionController extends BaseController
 {
     private ProveedorGestion $model;
 
@@ -21,9 +22,10 @@ class ProveedorGestionController
         return $this->model;
     }
 
-    public function setModel(ProveedorGestion $model): void
+    public function setModel(ProveedorGestion $model): self
     {
         $this->model = $model;
+        return $this;
     }
 
     public function handle(): void
@@ -40,47 +42,44 @@ class ProveedorGestionController
                 'actualizar' => $this->actualizar(),
                 'eliminar'   => $this->eliminar(),
                 'kpis'       => $this->kpis(),
-                default      => $this->json(false, null, 'Acción no válida'),
+                default      => $this->jsonError('Acción no válida', null, 400),
             };
+        } catch (ValidationException $e) {
+            $this->jsonValidationException($e);
         } catch (\PDOException $e) {
             Logger::error($e, 'Proveedores (gestión) - consulta SQL');
-            echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
+            $this->jsonError('Error de base de datos', null, 500);
         } catch (\InvalidArgumentException $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            $this->jsonError($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             Logger::error($e, 'Proveedores (gestión)');
-            echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
+            $this->jsonError('Error interno del servidor', null, 500);
         }
     }
 
     private function listar(): void
     {
         $proveedores = $this->model->obtenerProveedores();
-        echo json_encode(['success' => true, 'data' => $proveedores]);
+        $this->jsonSuccess($proveedores);
     }
 
     private function kpis(): void
     {
-        echo json_encode([
-            'success' => true,
-            'data' => [
-                'total' => $this->model->totalProveedores(),
-            ]
+        $this->setResult([
+            'total' => $this->model->totalProveedores(),
         ]);
+        $this->jsonSuccess($this->getResult());
     }
 
     private function detalle(): void
     {
-        $id = (int)($_GET['id'] ?? 0);
-        if (!$id) {
-            echo json_encode(['success' => false, 'error' => 'ID no válido']);
-            return;
-        }
+        $id = Validator::id($_GET['id'] ?? null, 'ID del proveedor');
+        $this->set('id', $id);
         $proveedor = $this->model->obtenerProveedorPorId($id);
         if ($proveedor) {
-            echo json_encode(['success' => true, 'data' => $proveedor]);
+            $this->jsonSuccess($proveedor);
         } else {
-            echo json_encode(['success' => false, 'error' => 'Proveedor no encontrado']);
+            $this->jsonError('Proveedor no encontrado', null, 404);
         }
     }
 
@@ -91,31 +90,34 @@ class ProveedorGestionController
             return;
         }
 
-        $errores = Validator::requeridos($_POST, [
-            'rif'    => 'RIF',
-            'nombre' => 'nombre',
+        $datos = $this->validarCampos([
+            'rif'      => ['label' => 'RIF', 'type' => 'rif'],
+            'nombre'   => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
+            'email'    => ['label' => 'email', 'type' => 'email', 'required' => false],
+            'telefono' => ['label' => 'teléfono', 'type' => 'telefono'],
         ]);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
 
-        $rif      = Validator::rif($_POST['rif'] ?? null, 'RIF');
-        $nombre   = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos']);
-        $email    = Validator::email($_POST['email'] ?? null, 'email');
-        $telefono = Validator::telefono($_POST['telefono'] ?? null, 'teléfono');
+        $rif      = $datos['rif'];
+        $nombre   = $datos['nombre'];
+        $email    = $datos['email'];
+        $telefono = $datos['telefono'];
+
+        $this->set('rif', $rif)
+            ->set('nombre', $nombre)
+            ->set('email', $email)
+            ->set('telefono', $telefono);
 
         if ($this->model->existeRif($rif)) {
-            echo json_encode(['success' => false, 'error' => 'Ya existe un proveedor con ese RIF']);
+            $this->jsonError('Ya existe un proveedor con ese RIF', null, 400);
             return;
         }
 
         $resultado = $this->model->crearProveedor($rif, $nombre, $email, $telefono);
-        echo json_encode(
-            $resultado
-                ? ['success' => true, 'message' => 'Proveedor creado exitosamente']
-                : ['success' => false, 'error' => 'Error al crear el proveedor']
-        );
+        if ($resultado) {
+            $this->jsonSuccess(null, 'Proveedor creado exitosamente');
+        } else {
+            $this->jsonError('Error al crear el proveedor', null, 400);
+        }
     }
 
     private function actualizar(): void
@@ -125,33 +127,37 @@ class ProveedorGestionController
             return;
         }
 
-        $errores = Validator::requeridos($_POST, [
-            'id'     => 'ID del proveedor',
-            'rif'    => 'RIF',
-            'nombre' => 'nombre',
+        $datos = $this->validarCampos([
+            'id'       => ['label' => 'ID del proveedor', 'type' => 'id'],
+            'rif'      => ['label' => 'RIF', 'type' => 'rif'],
+            'nombre'   => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
+            'email'    => ['label' => 'email', 'type' => 'email', 'required' => false],
+            'telefono' => ['label' => 'teléfono', 'type' => 'telefono'],
         ]);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
 
-        $id       = Validator::id($_POST['id'] ?? null, 'ID del proveedor');
-        $rif      = Validator::rif($_POST['rif'] ?? null, 'RIF');
-        $nombre   = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos']);
-        $email    = Validator::email($_POST['email'] ?? null, 'email');
-        $telefono = Validator::telefono($_POST['telefono'] ?? null, 'teléfono');
+        $id       = $datos['id'];
+        $rif      = $datos['rif'];
+        $nombre   = $datos['nombre'];
+        $email    = $datos['email'];
+        $telefono = $datos['telefono'];
+
+        $this->set('id', $id)
+            ->set('rif', $rif)
+            ->set('nombre', $nombre)
+            ->set('email', $email)
+            ->set('telefono', $telefono);
 
         if ($this->model->existeRif($rif, $id)) {
-            echo json_encode(['success' => false, 'error' => 'Ya existe otro proveedor con ese RIF']);
+            $this->jsonError('Ya existe otro proveedor con ese RIF', null, 400);
             return;
         }
 
         $resultado = $this->model->actualizarProveedor($id, $rif, $nombre, $email, $telefono);
-        echo json_encode(
-            $resultado
-                ? ['success' => true, 'message' => 'Proveedor actualizado exitosamente']
-                : ['success' => false, 'error' => 'Error al actualizar el proveedor']
-        );
+        if ($resultado) {
+            $this->jsonSuccess(null, 'Proveedor actualizado exitosamente');
+        } else {
+            $this->jsonError('Error al actualizar el proveedor', null, 400);
+        }
     }
 
     private function eliminar(): void
@@ -162,19 +168,12 @@ class ProveedorGestionController
         }
 
         $id = Validator::id($_POST['id'] ?? null, 'ID del proveedor');
+        $this->set('id', $id);
         $resultado = $this->model->eliminarProveedor($id);
-        echo json_encode(
-            $resultado
-                ? ['success' => true, 'message' => 'Proveedor eliminado exitosamente']
-                : ['success' => false, 'error' => 'Error al eliminar el proveedor']
-        );
-    }
-
-    private function json(bool $success, mixed $data = null, string $error = ''): void
-    {
-        $result = ['success' => $success];
-        if ($data !== null) $result['data'] = $data;
-        if ($error) $result['error'] = $error;
-        echo json_encode($result);
+        if ($resultado) {
+            $this->jsonSuccess(null, 'Proveedor eliminado exitosamente');
+        } else {
+            $this->jsonError('Error al eliminar el proveedor', null, 400);
+        }
     }
 }

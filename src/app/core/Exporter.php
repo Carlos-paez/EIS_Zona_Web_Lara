@@ -17,18 +17,23 @@ class Exporter
      * @param array  $columnas
      * @param array  $filas
      */
-    public static function csv(string $titulo, array $columnas, array $filas): void
+    public static function csv(string $titulo, array $columnas, array $filas, array $meta = []): void
     {
         $out = fopen('php://temp', 'r+');
         fputcsv($out, $columnas);
         foreach ($filas as $fila) {
-            fputcsv($out, self::filaPlana($fila));
+            fputcsv($out, self::filaPlana($fila), ',', '"', '\\');
         }
         rewind($out);
         $contenido = stream_get_contents($out);
         fclose($out);
+        if (substr($contenido, -1) !== "\n" && substr($contenido, -1) !== "\r") {
+            $contenido .= "\r\n";
+        }
+        $contenido = preg_replace("/([^\r])\n/", "$1\r\n", $contenido);
+        $contenido = preg_replace("/\r\n?/", "\r\n", $contenido);
 
-        self::send("text/csv; charset=UTF-8", self::nombre($titulo, 'csv'), "\xEF\xBB\xBF" . $contenido);
+        self::send("text/csv; charset=UTF-8", self::nombre($titulo, 'csv', $meta), "\xEF\xBB\xBF" . $contenido);
     }
 
     /**
@@ -38,25 +43,29 @@ class Exporter
      * @param array  $columnas
      * @param array  $filas
      */
-    public static function excel(string $titulo, array $columnas, array $filas): void
+    public static function excel(string $titulo, array $columnas, array $filas, array $meta = []): void
     {
         $html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">';
         $html .= '<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Datos</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>';
-        $html .= '<body><table border="1"><thead><tr>';
+        $html .= '<body><table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;font-size:11pt;">';
+        $html .= '<thead><tr style="background:#4472C4;color:#ffffff;font-weight:bold;">';
         foreach ($columnas as $col) {
-            $html .= '<th>' . htmlspecialchars((string)$col, ENT_QUOTES, 'UTF-8') . '</th>';
+            $html .= '<th style="border:1px solid #000000;">' . htmlspecialchars((string)$col, ENT_QUOTES, 'UTF-8') . '</th>';
         }
         $html .= '</tr></thead><tbody>';
+        $i = 0;
         foreach ($filas as $fila) {
-            $html .= '<tr>';
+            $bg = ($i % 2 === 0) ? 'background:#F2F7FF;' : 'background:#FFFFFF;';
+            $html .= '<tr style="' . $bg . '">';
             foreach (self::filaPlana($fila) as $valor) {
-                $html .= '<td>' . htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8') . '</td>';
+                $html .= '<td style="border:1px solid #CCCCCC;mso-number-format:\@;">' . htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8') . '</td>';
             }
             $html .= '</tr>';
+            $i++;
         }
         $html .= '</tbody></table></body></html>';
 
-        self::send("application/vnd.ms-excel; charset=UTF-8", self::nombre($titulo, 'xls'), $html);
+        self::send("application/vnd.ms-excel; charset=UTF-8", self::nombre($titulo, 'xls', $meta), $html);
     }
 
     /**
@@ -67,14 +76,19 @@ class Exporter
      * @param array  $filas
      * @param int    $anchoMax  PyX ancho aproximado de página.
      */
-    public static function pdf(string $titulo, array $columnas, array $filas): void
+    public static function pdf(string $titulo, array $columnas, array $filas, array $meta = []): void
     {
         $pdf = new PdfBuilder();
         $pdf->addText($titulo, 14, true);
         $pdf->addText('Generado: ' . date('d/m/Y H:i'), 10);
+        if (!empty($meta['desde']) || !empty($meta['hasta'])) {
+            $desde = $meta['desde'] ?? '';
+            $hasta = $meta['hasta'] ?? '';
+            $pdf->addText('Periodo: ' . $desde . ' - ' . $hasta, 9);
+        }
         $pdf->addText('');
         $pdf->addTable($columnas, $filas);
-        self::send("application/pdf", self::nombre($titulo, 'pdf'), $pdf->output());
+        self::send("application/pdf", self::nombre($titulo, 'pdf', $meta), $pdf->output());
     }
 
     private static function filaPlana(array $fila): array
@@ -90,12 +104,29 @@ class Exporter
         return $plana;
     }
 
-    private static function nombre(string $titulo, string $ext): string
+    private static function nombre(string $titulo, string $ext, array $meta = []): string
     {
-        $base = preg_replace('/[^A-Za-z0-9_\-]+/', '_', strtolower(trim($titulo)));
+        $base = trim((string)$titulo);
+        $base = mb_convert_encoding($base, 'ASCII', 'UTF-8');
+        $base = preg_replace('/[^A-Za-z0-9_\-]+/', '_', strtolower($base));
         $base = trim($base, '_');
         if ($base === '') {
             $base = 'reporte';
+        }
+        if (!empty($meta['tipo'])) {
+            $tipo = mb_convert_encoding((string)$meta['tipo'], 'ASCII', 'UTF-8');
+            $tipo = preg_replace('/[^A-Za-z0-9_\-]+/', '_', strtolower($tipo));
+            $tipo = trim($tipo, '_');
+            if ($tipo !== '') {
+                $base = $tipo . '_' . $base;
+            }
+        }
+        if (!empty($meta['desde']) && !empty($meta['hasta'])) {
+            $desde = preg_replace('/[^0-9]/', '', (string)$meta['desde']);
+            $hasta = preg_replace('/[^0-9]/', '', (string)$meta['hasta']);
+            if ($desde !== '' && $hasta !== '') {
+                $base .= '_' . $desde . '_' . $hasta;
+            }
         }
         return $base . '_' . date('Ymd_His') . '.' . $ext;
     }

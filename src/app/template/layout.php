@@ -198,6 +198,8 @@
 
     <!-- Core: funciones compartidas en todas las páginas (namespace EIS, utilidades) -->
     <script src="Public/js/app.core.js"></script>
+    <!-- Validate: validación de formularios del lado del cliente (lado navegador) -->
+    <script src="Public/js/app.validate.js"></script>
     <!-- Init: inicialización de componentes Materialize, reloj, tema oscuro/claro, animaciones -->
     <script src="Public/js/app.init.js"></script>
     <!-- Selects: barra de búsqueda en los menús desplegables (selects de Materialize) -->

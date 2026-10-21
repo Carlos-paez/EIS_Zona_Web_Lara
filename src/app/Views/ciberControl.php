@@ -105,26 +105,26 @@ try {
             <i class="material-icons left" style="color:var(--success);">play_circle</i>
             Iniciar Sesión
         </h4>
-        <form id="cyberForm">
+        <form id="cyberForm" data-validate>
             <div class="input-field">
                 <i class="material-icons prefix">person</i>
-                <input type="text" id="cyberCiudadano" name="ciudadano" class="form-control" placeholder="Nombre completo del cliente">
+                <input type="text" id="cyberCiudadano" name="ciudadano" class="form-control" placeholder="Nombre completo del cliente" maxlength="100" required minlength="2">
                 <label for="cyberCiudadano" class="active">Cliente</label>
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">badge</i>
-                <input type="text" id="cyberCedula" name="cedula" class="form-control" placeholder="Ej: V-12345678">
+                <input type="text" id="cyberCedula" name="cedula" class="form-control" placeholder="Ej: V-12345678" maxlength="20" required minlength="5" data-validate="cedula">
                 <label for="cyberCedula" class="active">Cédula</label>
                 <span class="helper-text" style="font-size:0.8rem;color:var(--text-muted);">Al salir de este campo se precargan los datos del cliente</span>
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">phone</i>
-                <input type="text" id="cyberTelefono" name="telefono" class="form-control" placeholder="Opcional">
+                <input type="tel" id="cyberTelefono" name="telefono" class="form-control" placeholder="Opcional" maxlength="20" minlength="7">
                 <label for="cyberTelefono" class="active">Teléfono</label>
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">place</i>
-                <input type="text" id="cyberDireccion" name="direccion" class="form-control" placeholder="Opcional">
+                <input type="text" id="cyberDireccion" name="direccion" class="form-control" placeholder="Opcional" maxlength="500">
                 <label for="cyberDireccion" class="active">Dirección</label>
             </div>
             <div class="input-field">
@@ -143,7 +143,7 @@ try {
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">timer</i>
-                <input type="text" id="cyberTiempo" name="tiempo_uso" value="01:00:00" class="form-control">
+                <input type="text" id="cyberTiempo" name="tiempo_uso" value="01:00:00" class="form-control" maxlength="50" data-validate="tiempo">
                 <label for="cyberTiempo" class="active">Tiempo (HH:MM:SS)</label>
                 <span class="helper-text" style="font-size:0.8rem;color:var(--text-muted);">Ej: 01:30:00 = 1 hora 30 minutos</span>
             </div>
@@ -164,11 +164,11 @@ try {
             <i class="material-icons left" style="color:var(--primary);" id="modalPCTitleIcon">computer</i>
             <span id="modalPCTitle">Nueva PC</span>
         </h4>
-        <form id="formPC">
+        <form id="formPC" data-validate>
             <input type="hidden" name="id" id="pcId" value="">
             <div class="input-field">
                 <i class="material-icons prefix">branding_watermark</i>
-                <input type="text" id="pcMarca" name="marca" class="form-control" placeholder="Ej: HP, Dell, Lenovo" maxlength="100">
+                <input type="text" id="pcMarca" name="marca" class="form-control" placeholder="Ej: HP, Dell, Lenovo" maxlength="100" required minlength="2">
                 <label for="pcMarca" class="active">Marca</label>
             </div>
             <div class="input-field">
@@ -178,7 +178,7 @@ try {
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">devices</i>
-                <select id="pcTipo" name="tipo_activo_id">
+                <select id="pcTipo" name="tipo_activo_id" required>
                     <option value="" disabled selected>Seleccionar tipo</option>
                     <?php foreach ($tiposActivo as $tipo): ?>
                         <option value="<?= (int)$tipo['id'] ?>"><?= htmlspecialchars($tipo['nombre_tipo']) ?></option>

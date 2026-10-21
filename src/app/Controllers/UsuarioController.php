@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Core\Logger;
 use App\Core\Router;
+use App\Core\ValidationException;
 use App\Core\Validator;
 use App\Models\Usuario;
 
@@ -45,6 +46,8 @@ class UsuarioController
                 'password'     => $this->password(),
                 default        => $this->json(false, null, 'Acción no válida'),
             };
+        } catch (ValidationException $e) {
+            echo json_encode(['success' => false, 'error' => $e->getMessage(), 'fieldErrors' => $e->errores()]);
         } catch (\PDOException $e) {
             Logger::error($e, 'Usuarios - consulta SQL');
             $msg = $e->getMessage();
@@ -116,29 +119,24 @@ class UsuarioController
             return;
         }
 
-        $errores = Validator::requeridos($_POST, [
-            'user_name' => 'nombre de usuario',
-            'nombre'    => 'nombre',
-            'email'     => 'email',
-            'password'  => 'contraseña',
+        $datos = Validator::validar($_POST, [
+            'user_name' => ['label' => 'nombre de usuario', 'type' => 'username'],
+            'nombre'    => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
+            'apellido'  => ['label' => 'apellido', 'type' => 'texto', 'required' => false, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos'],
+            'email'     => ['label' => 'email', 'type' => 'email', 'required' => true],
+            'password'  => ['label' => 'contraseña', 'type' => 'password', 'required' => true, 'min' => 8, 'complejidad' => true],
+            'rol'       => ['label' => 'rol', 'type' => 'entero', 'required' => false, 'min' => 1],
         ]);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
 
-        $user_name = Validator::username($_POST['user_name'] ?? null, 'nombre de usuario');
-        $nombre    = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos']);
-        $apellido  = Validator::texto($_POST['apellido'] ?? null, 'apellido', ['required' => false, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos']);
-        $email     = Validator::email($_POST['email'] ?? null, 'email');
-        $password  = (string)($_POST['password'] ?? '');
-        $rol       = Validator::entero($_POST['rol'] ?? null, 'rol', ['required' => false, 'min' => 1]);
+        $user_name = $datos['user_name'];
+        $nombre    = $datos['nombre'];
+        $apellido  = $datos['apellido'];
+        $email     = $datos['email'];
+        $password  = $datos['password'];
+        $rol       = $datos['rol'];
 
-        if (mb_strlen($password) < 8) {
-            throw new \InvalidArgumentException('La contraseña debe tener al menos 8 caracteres');
-        }
         if ($this->model->existeUsername($user_name)) {
-            throw new \InvalidArgumentException('Ya existe un usuario con ese nombre de usuario');
+            throw new ValidationException(['user_name' => 'Ya existe un usuario con ese nombre de usuario']);
         }
 
         $resultado = $this->model->crear($user_name, $password, $nombre, $apellido, $email, $rol > 0 ? $rol : null);
@@ -156,17 +154,24 @@ class UsuarioController
             return;
         }
 
-        $id       = Validator::id($_POST['id'] ?? null, 'ID del usuario');
-        $nombre   = Validator::texto($_POST['nombre'] ?? null, 'nombre', ['required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos']);
-        $apellido = Validator::texto($_POST['apellido'] ?? null, 'apellido', ['required' => false, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos']);
-        $email    = Validator::email($_POST['email'] ?? null, 'email');
-        $rol      = Validator::entero($_POST['rol'] ?? null, 'rol', ['required' => false, 'min' => 1]);
-        $estatus  = (string)($_POST['estatus'] ?? '1');
-        $password = (string)($_POST['password'] ?? '');
+        $datos = Validator::validar($_POST, [
+            'id'       => ['label' => 'ID del usuario', 'type' => 'id'],
+            'nombre'   => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
+            'apellido' => ['label' => 'apellido', 'type' => 'texto', 'required' => false, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos'],
+            'email'    => ['label' => 'email', 'type' => 'email', 'required' => true],
+            'rol'      => ['label' => 'rol', 'type' => 'entero', 'required' => false, 'min' => 1],
+            'estatus'  => ['label' => 'estado', 'type' => 'enum', 'allowed' => ['0', '1'], 'required' => true],
+            'password' => ['label' => 'contraseña', 'type' => 'password', 'required' => false, 'min' => 8, 'complejidad' => true],
+        ]);
 
-        if (!in_array($estatus, ['0', '1'], true)) {
-            throw new \InvalidArgumentException('El estado no es válido');
-        }
+        $id       = $datos['id'];
+        $nombre   = $datos['nombre'];
+        $apellido = $datos['apellido'];
+        $email    = $datos['email'];
+        $rol      = $datos['rol'];
+        $estatus  = $datos['estatus'];
+        $password = $datos['password'];
+
         if ((int)$estatus === 0 && $id === (int)($_SESSION['user_id'] ?? 0)) {
             throw new \InvalidArgumentException('No puedes desactivar tu propio usuario');
         }
@@ -191,24 +196,18 @@ class UsuarioController
 
     private function estado(): void
     {
-if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
             return;
         }
 
-        $errores = Validator::requeridos($_POST, [
-            'id'      => 'ID del usuario',
-            'nombre'  => 'nombre',
-            'email'   => 'email',
-            'estatus' => 'estado',
+        $datos = Validator::validar($_POST, [
+            'id'     => ['label' => 'ID del usuario', 'type' => 'id'],
+            'activo' => ['label' => 'estado', 'type' => 'bool', 'required' => true],
         ]);
-        if ($errores) {
-            echo json_encode(['success' => false, 'error' => 'Completa todos los campos obligatorios.', 'fieldErrors' => $errores]);
-            return;
-        }
 
-        $id       = Validator::id($_POST['id'] ?? null, 'ID del usuario');
-        $activo = Validator::bool($_POST['activo'] ?? null, 'estado');
+        $id     = $datos['id'];
+        $activo = $datos['activo'];
 
         if ($activo === 0 && $id === (int)($_SESSION['user_id'] ?? 0)) {
             throw new \InvalidArgumentException('No puedes desactivar tu propio usuario');
@@ -229,8 +228,13 @@ if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             return;
         }
 
-        $id       = Validator::id($_POST['id'] ?? null, 'ID del usuario');
-        $password = (string)($_POST['password'] ?? '');
+        $datos = Validator::validar($_POST, [
+            'id'       => ['label' => 'ID del usuario', 'type' => 'id'],
+            'password' => ['label' => 'contraseña', 'type' => 'password', 'required' => true, 'min' => 8, 'complejidad' => true],
+        ]);
+
+        $id       = $datos['id'];
+        $password = $datos['password'];
 
         $resultado = $this->model->actualizarPassword($id, $password);
         echo json_encode(
