@@ -71,6 +71,12 @@
                         <i class="material-icons left" style="font-size:1.2rem;">lock</i>
                         Demasiados intentos fallidos. Espera unos minutos antes de volver a intentarlo.
                     </div>
+                <?php elseif (($_GET['error'] ?? '') === 'deshabilitado'): ?>
+                    <!-- Error de estado: la cuenta fue desactivada o perdió acceso -->
+                    <div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:0.75rem 1rem;">
+                        <i class="material-icons left" style="font-size:1.2rem;">block</i>
+                        Tu cuenta ha sido desactivada. Contacta al administrador para reactivarla.
+                    </div>
                 <?php else: ?>
                     <!-- Error de autenticación: credenciales incorrectas -->
                     <div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:0.75rem 1rem;">

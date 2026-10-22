@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Core\Logger;
 use App\Core\LoginThrottle;
+use App\Core\Permisos;
 use App\Core\Router;
 use App\Core\Validator;
 use App\Models\Usuario;
@@ -81,19 +82,26 @@ class AuthController extends BaseController
             session_regenerate_id(true);
 
             $_SESSION['logged_in'] = true;
-            $_SESSION['user_id']   = $usuario['id'];
+            $_SESSION['user_id']   = (int)$usuario['id'];
             $_SESSION['username']  = $usuario['user_name'];
             $_SESSION['nombre']    = $usuario['nombre'];
-            $_SESSION['rol']       = $usuario['rol_nombre'] ?? null;
 
-            $permisos = $this->model->obtenerPermisosPorUsuario((int)$usuario['id']);
-            $_SESSION['permisos'] = $permisos;
+            // Se cargan el rol y los permisos efectivos del usuario. Si el
+            // refresco falla, el usuario ya no está activo y el inicio de
+            // sesión no debe completarse.
+            if (!Permisos::refrescar()) {
+                Logger::error('Login - el usuario no está activo tras autenticar', 'Auth');
+                Permisos::cerrarSesion();
+                $this->redirigirLogin('1');
+            }
+
+            $_SESSION['rol'] = Permisos::rolNombre() ?? ($usuario['rol_nombre'] ?? null);
 
             $this->setResult([
                 'username' => $_SESSION['username'],
                 'nombre'   => $_SESSION['nombre'],
                 'rol'      => $_SESSION['rol'],
-                'permisos' => $_SESSION['permisos'],
+                'permisos' => Permisos::permisosDeSesion(),
             ]);
 
             $this->redirigir('?pagina=dashboard');

@@ -24,9 +24,13 @@ INSERT INTO roles (nombre_rol) VALUES
 ('Recursos Humanos');
 
 -- ============================================================
--- PERMISOS (15 registros)
+-- PERMISOS (47 registros)
 -- ============================================================
+-- 15 permisos base (11 del catálogo + 4 adicionales de prueba) y
+-- 32 permisos de acción ("base:verbo"). El orden importa: los IDs se
+-- usan de forma explícita en permisos_rol.
 INSERT INTO permisos (permisos) VALUES
+-- Base de módulo (1-15)
 ('gestion_usuarios'),
 ('gestion_productos'),
 ('gestion_ventas'),
@@ -41,7 +45,40 @@ INSERT INTO permisos (permisos) VALUES
 ('gestion_contabilidad'),
 ('auditoria'),
 ('gestion_marketing'),
-('gestion_compras');
+('gestion_compras'),
+-- Verbo de acción (16-47)
+('gestion_productos:crear'),
+('gestion_productos:editar'),
+('gestion_productos:eliminar'),
+('gestion_productos:categoria'),
+('gestion_ventas:registrar'),
+('gestion_clientes:crear'),
+('gestion_clientes:editar'),
+('gestion_clientes:eliminar'),
+('gestion_abastecimiento:crear'),
+('gestion_abastecimiento:editar'),
+('gestion_abastecimiento:eliminar'),
+('gestion_abastecimiento:linea'),
+('gestion_proveedores:crear'),
+('gestion_proveedores:editar'),
+('gestion_proveedores:eliminar'),
+('gestion_ciber:iniciar'),
+('gestion_ciber:finalizar'),
+('gestion_ciber:pc'),
+('gestion_activos:crear'),
+('gestion_activos:editar'),
+('gestion_activos:eliminar'),
+('gestion_activos:estado'),
+('gestion_asesoria:crear'),
+('gestion_usuarios:crear'),
+('gestion_usuarios:editar'),
+('gestion_usuarios:eliminar'),
+('gestion_usuarios:estado'),
+('gestion_usuarios:password'),
+('configuracion:rol'),
+('configuracion:permisos'),
+('configuracion:asignacion'),
+('ver_reportes:exportar');
 
 -- ============================================================
 -- CATEGORIA (18 registros)
@@ -807,12 +844,22 @@ INSERT INTO usuarios (nombre, apellido, user_name, password_hash, email, estatus
 ('Simón', 'Briceño2', 'simbri', '$2y$10$bca1qYoXF3KYxsot7bVU1O3GbR5/4KAyStTHFUrK1tJL4wiD4zimm', 'simbri@zonaweb.com', '1', 2);
 
 -- ============================================================
--- PERMISOS_ROL (47 registros)
+-- PERMISOS_ROL (79 registros)
 -- ============================================================
+-- El Administrador (fk_rol = 1) recibe los 15 permisos base y los 32 verbos.
+-- Los demás roles conservan solo permisos base: al no tener verbos de un
+-- módulo, heredan el acceso completo a ese módulo.
 INSERT INTO permisos_rol (fk_rol, fk_permiso) VALUES
 (1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
 (1, 6), (1, 7), (1, 8), (1, 9), (1, 10),
 (1, 11), (1, 12), (1, 13), (1, 14), (1, 15),
+(1, 16), (1, 17), (1, 18), (1, 19), (1, 20),
+(1, 21), (1, 22), (1, 23), (1, 24), (1, 25),
+(1, 26), (1, 27), (1, 28), (1, 29), (1, 30),
+(1, 31), (1, 32), (1, 33), (1, 34), (1, 35),
+(1, 36), (1, 37), (1, 38), (1, 39), (1, 40),
+(1, 41), (1, 42), (1, 43), (1, 44), (1, 45),
+(1, 46), (1, 47),
 (2, 3), (2, 7), (2, 9),
 (3, 2), (3, 4), (3, 9),
 (4, 5), (4, 7), (4, 9),
@@ -4600,7 +4647,7 @@ INSERT INTO sesion_ciber (tiempo_uso, fk_cliente, fk_tarifa, fk_activo) VALUES
 -- ============================================================
 -- RESUMEN DE REGISTROS INSERTADOS
 -- roles: 8
--- permisos: 15
+-- permisos: 47
 -- categoria: 18
 -- clientes: 500
 -- cliente_asesoria: 150
@@ -4611,7 +4658,7 @@ INSERT INTO sesion_ciber (tiempo_uso, fk_cliente, fk_tarifa, fk_activo) VALUES
 -- tipo_activo: 12
 -- rol_usuarios: 8
 -- usuarios: 80
--- permisos_rol: 47
+-- permisos_rol: 79
 -- productos: 300
 -- orden_de_venta: 500
 -- lineas_venta: ~2000

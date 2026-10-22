@@ -111,6 +111,21 @@ class Router
             $this->redirect('login');
         }
 
+        // El rol y los permisos se releen de la base de datos en cada
+        // petición: un cambio de rol, de estado o de la matriz de permisos
+        // surte efecto de inmediato, sin esperar a que caduque la sesión.
+        if (isset($_SESSION['logged_in']) && !Permisos::refrescar()) {
+            // El usuario fue desactivado o eliminado: la sesión se invalida.
+            Permisos::cerrarSesion();
+            $this->redirectLogin('deshabilitado');
+        }
+
+        // Control de acceso por página: cada módulo exige su permiso base.
+        // Las páginas sin vista se resuelven después con un 404, no con un 403.
+        if (!$this->esPaginaPublica() && $this->tieneVista() && !Permisos::accesoPagina($this->pagina)) {
+            $this->denegar('No tienes permisos para acceder a este módulo.');
+        }
+
         // Despacho de peticiones AJAX de los módulos (?pagina=X&action=Y).
         if (array_key_exists($this->pagina, self::CONTROLLERS) && isset($_GET['action'])) {
             $this->dispatchAction();
@@ -141,9 +156,18 @@ class Router
 
     /**
      * Despacha una petición AJAX al controlador de la página actual.
+     *
+     * Antes de invocar al controlador se comprueba el permiso de la acción:
+     * una acción no mapeada se deniega (fail closed).
      */
     private function dispatchAction(): void
     {
+        $accion = (string)$_GET['action'];
+
+        if (!Permisos::puedeAccion($this->pagina, $accion)) {
+            $this->denegar('No tienes permisos para realizar esta acción.', true);
+        }
+
         $controllerClass = self::CONTROLLERS[$this->pagina];
         $controller      = new $controllerClass();
 
@@ -154,14 +178,84 @@ class Router
     }
 
     /**
+     * Responde con un rechazo de acceso.
+     *
+     * Las peticiones AJAX reciben un JSON con HTTP 403; el resto, la vista
+     * de acceso denegado dentro del layout principal.
+     *
+     * @param bool $ajax Fuerza la respuesta JSON.
+     */
+    private function denegar(string $motivo, bool $ajax = false): void
+    {
+        http_response_code(403);
+
+        if ($ajax || $this->esPeticionAjax()) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'error'   => $motivo,
+            ]);
+            exit;
+        }
+
+        $this->renderLayout(
+            $this->viewsDir() . 'acceso_denegado.php',
+            'Acceso denegado'
+        );
+        exit;
+    }
+
+    /**
+     * Indica si la solicitud actual espera una respuesta JSON.
+     */
+    private function esPeticionAjax(): bool
+    {
+        if (isset($_GET['action'])) {
+            return true;
+        }
+
+        $requestedWith = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
+        if (strcasecmp($requestedWith, 'XMLHttpRequest') === 0) {
+            return true;
+        }
+
+        $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
+        return stripos($accept, 'application/json') !== false;
+    }
+
+    /**
+     * Indica si la página actual es pública (no requiere permisos).
+     */
+    private function esPaginaPublica(): bool
+    {
+        return in_array($this->pagina, self::PUBLIC_PAGES, true);
+    }
+
+    /**
+     * Indica si existe la vista asociada a la página actual.
+     */
+    private function tieneVista(): bool
+    {
+        return is_file($this->viewsDir() . $this->pagina . '.php');
+    }
+
+    /**
      * Cierra la sesión del usuario actual.
      */
     private function logout(): void
     {
-        session_regenerate_id(true);
-        $_SESSION = [];
-        session_destroy();
+        Permisos::cerrarSesion();
         $this->redirect('login');
+    }
+
+    /**
+     * Redirige al login con un código de error.
+     */
+    private function redirectLogin(string $error): void
+    {
+        Permisos::cerrarSesion();
+        header('Location: ?pagina=login&error=' . urlencode($error));
+        exit;
     }
 
     /**
@@ -194,8 +288,26 @@ class Router
 
         $pageTitle  = self::PAGE_TITLES[$this->pagina] ?? 'EIS System';
         $headerExtra = self::PAGE_EXTRA_HEADERS[$this->pagina] ?? '';
-        $contentView = $rutaVista;
-        $pagina      = $this->pagina;
+
+        $this->renderLayout($rutaVista, $pageTitle, $headerExtra);
+    }
+
+    /**
+     * Renderiza una vista dentro del layout principal.
+     *
+     * El layout recibe el contexto de autorización para poder filtrar el
+     * menú lateral: $permisosUsuario, $puede y $paginasPermitidas.
+     *
+     * @param string $contentView Ruta absoluta de la vista a inyectar.
+     * @param string $pageTitle   Título de la pestaña.
+     * @param string $headerExtra Contenido extra de la cabecera.
+     */
+    private function renderLayout(string $contentView, string $pageTitle, string $headerExtra = ''): void
+    {
+        $pagina            = $this->pagina;
+        $permisosUsuario   = Permisos::permisosDeSesion();
+        $paginasPermitidas = Permisos::paginasPermitidas();
+        $puede             = static fn(string $permiso): bool => Permisos::puede($permiso);
 
         require __DIR__ . '/../template/layout.php';
     }

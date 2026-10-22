@@ -281,21 +281,80 @@ class Usuario extends Model
         return false;
     }
 
+    /**
+     * Permisos asignados al rol del usuario, tomados de la matriz permisos_rol.
+     *
+     * La cadena de relaciones es: usuarios.fk_rol_usuario → rol_usuarios.id →
+     * rol_usuarios.fk_rol → roles.id → permisos_rol.fk_rol → permisos.id.
+     */
     public function obtenerPermisosPorUsuario(int $user_id): array
     {
         $user_id = $this->sanitizeInt($user_id);
         $stmt = $this->db->prepare("
             SELECT DISTINCT p.permisos AS nombre
-            FROM permisos p
-            INNER JOIN permisos_rol pr ON p.id = pr.fk_permiso
-            INNER JOIN rol_usuarios ru ON pr.fk_rol = ru.id
-            INNER JOIN usuarios u ON ru.id = u.fk_rol_usuario
+            FROM usuarios u
+            INNER JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
+            INNER JOIN roles r ON ru.fk_rol = r.id
+            INNER JOIN permisos_rol pr ON pr.fk_rol = r.id
+            INNER JOIN permisos p ON p.id = pr.fk_permiso
             WHERE u.id = ? AND u.estatus IN ('1','activo') AND u.activo = 1
         ");
         $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
         $stmt->execute();
         $rows = $stmt->fetchAll();
         return array_column($rows, 'nombre');
+    }
+
+    /**
+     * Estado y rol del usuario en una sola consulta.
+     *
+     * Se usa en cada petición para comprobar que la sesión sigue siendo
+     * válida y para conocer el rol con el que se resuelven los permisos.
+     *
+     * @return array{id:int,estatus:string,activo:int,rol_id:?int,rol_nombre:?string}|null
+     */
+    public function obtenerEstadoYRol(int $id): ?array
+    {
+        $id = $this->sanitizeInt($id);
+        $stmt = $this->db->prepare("
+            SELECT u.id,
+                   u.estatus,
+                   u.activo,
+                   r.id AS rol_id,
+                   r.nombre_rol AS rol_nombre
+            FROM usuarios u
+            LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
+            LEFT JOIN roles r ON ru.fk_rol = r.id
+            WHERE u.id = ?
+        ");
+        $stmt->bindParam(1, $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch();
+        if (!$row) {
+            return null;
+        }
+
+        return [
+            'id'         => (int)$row['id'],
+            'estatus'    => (string)($row['estatus'] ?? ''),
+            'activo'     => (int)($row['activo'] ?? 0),
+            'rol_id'     => $row['rol_id'] !== null ? (int)$row['rol_id'] : null,
+            'rol_nombre' => $row['rol_nombre'] !== null ? (string)$row['rol_nombre'] : null,
+        ];
+    }
+
+    /**
+     * Todos los permisos existentes en el sistema.
+     *
+     * Se reserva al superusuario (roles.id = 1), que dispone de acceso total
+     * con independencia de la matriz permisos_rol.
+     *
+     * @return string[]
+     */
+    public function obtenerTodosLosPermisos(): array
+    {
+        $stmt = $this->db->query("SELECT permisos AS nombre FROM permisos ORDER BY permisos");
+        return array_column($stmt->fetchAll(), 'nombre');
     }
 
     public function obtenerRolUsuario(int $user_id): ?string

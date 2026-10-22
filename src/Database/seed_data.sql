@@ -13,7 +13,10 @@ INSERT INTO roles (nombre_rol) VALUES
 -- ============================================================
 -- PERMISOS
 -- ============================================================
+-- 11 permisos base de módulo + 32 permisos de acción ("base:verbo").
+-- El orden importa: los IDs se usan de forma explícita en permisos_rol.
 INSERT INTO permisos (permisos) VALUES
+-- Base de módulo (1-11)
 ('gestion_usuarios'),
 ('gestion_productos'),
 ('gestion_ventas'),
@@ -24,7 +27,40 @@ INSERT INTO permisos (permisos) VALUES
 ('gestion_proveedores'),
 ('ver_reportes'),
 ('configuracion'),
-('gestion_ciber');
+('gestion_ciber'),
+-- Verbo de acción (12-43)
+('gestion_productos:crear'),
+('gestion_productos:editar'),
+('gestion_productos:eliminar'),
+('gestion_productos:categoria'),
+('gestion_ventas:registrar'),
+('gestion_clientes:crear'),
+('gestion_clientes:editar'),
+('gestion_clientes:eliminar'),
+('gestion_abastecimiento:crear'),
+('gestion_abastecimiento:editar'),
+('gestion_abastecimiento:eliminar'),
+('gestion_abastecimiento:linea'),
+('gestion_proveedores:crear'),
+('gestion_proveedores:editar'),
+('gestion_proveedores:eliminar'),
+('gestion_ciber:iniciar'),
+('gestion_ciber:finalizar'),
+('gestion_ciber:pc'),
+('gestion_activos:crear'),
+('gestion_activos:editar'),
+('gestion_activos:eliminar'),
+('gestion_activos:estado'),
+('gestion_asesoria:crear'),
+('gestion_usuarios:crear'),
+('gestion_usuarios:editar'),
+('gestion_usuarios:eliminar'),
+('gestion_usuarios:estado'),
+('gestion_usuarios:password'),
+('configuracion:rol'),
+('configuracion:permisos'),
+('configuracion:asignacion'),
+('ver_reportes:exportar');
 
 -- ============================================================
 -- CATEGORIA
@@ -152,9 +188,19 @@ INSERT INTO usuarios (nombre, apellido, user_name, password_hash, email, estatus
 -- ============================================================
 -- PERMISOS_ROL (Administrador tiene todos los permisos)
 -- ============================================================
+-- El Administrador (fk_rol = 1) recibe los 11 permisos base y los 32 verbos.
+-- Los demás roles conservan solo permisos base: al no tener verbos de un
+-- módulo, heredan el acceso completo a ese módulo.
 INSERT INTO permisos_rol (fk_rol, fk_permiso) VALUES
 (1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
 (1, 6), (1, 7), (1, 8), (1, 9), (1, 10), (1, 11),
+(1, 12), (1, 13), (1, 14), (1, 15), (1, 16),
+(1, 17), (1, 18), (1, 19), (1, 20), (1, 21),
+(1, 22), (1, 23), (1, 24), (1, 25), (1, 26),
+(1, 27), (1, 28), (1, 29), (1, 30), (1, 31),
+(1, 32), (1, 33), (1, 34), (1, 35), (1, 36),
+(1, 37), (1, 38), (1, 39), (1, 40), (1, 41),
+(1, 42), (1, 43),
 (2, 3), (2, 7), (2, 9),
 (3, 2), (3, 4), (3, 9),
 (4, 5), (4, 7), (4, 9),

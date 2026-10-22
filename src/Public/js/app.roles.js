@@ -176,8 +176,8 @@ $(function () {
     // ================================================================
     // FUNCIÓN: abrirModalPermisos(rol_id, rol_nombre)
     // PROPÓSITO: Abre el modal de gestión de permisos para un rol.
-    //            Carga todos los permisos disponibles y marca los que
-    //            ya están asignados al rol actual.
+    //            Agrupa los permisos por módulo para facilitar la
+    //            asignación y carga los que ya están asignados.
     // PARÁMETROS:
     //   rol_id     - ID del rol
     //   rol_nombre - Nombre del rol (para mostrar en el título)
@@ -188,7 +188,7 @@ $(function () {
         $('#permisos-container').html('<p style="color:var(--text-muted);text-align:center;">Cargando...</p>'); // Mensaje de carga
         $('#modalPermisos').modal('open');           // Abro el modal
 
-        // Primera llamada: obtengo todos los permisos disponibles
+        // Primera llamada: obtengo todos los permisos disponibles (enriquecidos con catálogo)
         $.getJSON(API + 'permisos', function (rPermisos) {
             if (!rPermisos.success || !rPermisos.data) {
                 $('#permisos-container').html('<p style="color:var(--danger);text-align:center;">Error al cargar permisos</p>');
@@ -198,23 +198,53 @@ $(function () {
             // Segunda llamada: obtengo los permisos ya asignados a este rol
             $.getJSON(API + 'permisosRol&rol_id=' + rol_id, function (rAsignados) {
                 var asignados = rAsignados.success ? (rAsignados.data || []) : []; // IDs de permisos asignados
-                var html = ''; // Acumulador HTML
+                var html = '';
 
-                // Recorro cada permiso disponible
+                // Agrupo los permisos por módulo.
+                var grupos = {};
+                var orden = [];
                 $.each(rPermisos.data, function (i, p) {
-                    var checked = asignados.indexOf(p.id) !== -1; // Verifico si ya está asignado
-                    var icono = p.icono || 'lock_open'; // Ícono del permiso (o default)
+                    var modulo = p.modulo || 'otros';
+                    if (!grupos[modulo]) {
+                        grupos[modulo] = {
+                            etiqueta: p.etiquetaModulo || modulo,
+                            icono: p.icono || 'lock_open',
+                            items: []
+                        };
+                        orden.push(modulo);
+                    }
+                    grupos[modulo].items.push(p);
+                });
 
-                    // Construyo un item con nombre, ícono y toggle switch
-                    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 1rem;background:var(--surface-hover);border-radius:8px;">';
-                    html += '<span style="font-weight:500;font-size:0.9rem;display:flex;align-items:center;gap:0.5rem;"><i class="material-icons" style="font-size:1.1rem;color:var(--primary);">' + icono + '</i> ' + $('<span>').text(p.nombre).html() + '</span>';
-                    // Switch de Materialize: checked si está asignado
-                    html += '<div class="switch"><label><input type="checkbox" class="permiso-checkbox" value="' + p.id + '"' + (checked ? ' checked' : '') + '><span class="lever"></span></label></div>';
+                // Renderizo cada grupo con su cabecera y permisos.
+                $.each(orden, function (idx, modulo) {
+                    var grupo = grupos[modulo];
+                    html += '<div class="permiso-grupo" style="margin-bottom:1rem;">';
+                    html += '  <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:linear-gradient(90deg, rgba(57,73,171,0.08) 0%, transparent 100%);border-left:3px solid var(--primary);border-radius:4px;">';
+                    html += '    <i class="material-icons" style="color:var(--primary);font-size:1.2rem;">' + $('<span>').text(grupo.icono).html() + '</i>';
+                    html += '    <span style="font-weight:600;font-size:0.95rem;">' + $('<span>').text(grupo.etiqueta).html() + '</span>';
+                    html += '  </div>';
+                    html += '  <div style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.5rem;padding-left:0.25rem;">';
+
+                    $.each(grupo.items, function (j, p) {
+                        var checked = asignados.indexOf(p.id) !== -1; // Verifico si ya está asignado
+                        var icono = p.icono || grupo.icono || 'lock_open';
+                        var etiqueta = p.etiqueta || p.nombre;
+
+                        // Construyo un item con etiqueta, ícono y toggle switch
+                        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.55rem 0.75rem;background:var(--surface-hover);border-radius:8px;">';
+                        html += '  <span style="font-weight:500;font-size:0.88rem;display:flex;align-items:center;gap:0.5rem;"><i class="material-icons" style="font-size:1rem;color:var(--text-muted);">' + $('<span>').text(icono).html() + '</i> ' + $('<span>').text(etiqueta).html() + '</span>';
+                        // Switch de Materialize: checked si está asignado
+                        html += '  <div class="switch"><label><input type="checkbox" class="permiso-checkbox" value="' + p.id + '"' + (checked ? ' checked' : '') + '><span class="lever"></span></label></div>';
+                        html += '</div>';
+                    });
+
+                    html += '  </div>';
                     html += '</div>';
                 });
 
-                // Inserto los items de permisos en el contenedor
-                $('#permisos-container').html(html);
+                // Inserto los grupos de permisos en el contenedor
+                $('#permisos-container').html(html || '<p style="color:var(--text-muted);text-align:center;">No hay permisos disponibles</p>');
             }).fail(function () {
                 $('#permisos-container').html('<p style="color:var(--danger);text-align:center;">Error al cargar permisos del rol</p>');
             });

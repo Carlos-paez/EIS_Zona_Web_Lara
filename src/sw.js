@@ -1,4 +1,4 @@
-var CACHE_NAME = 'eis-cache-v5';
+var CACHE_NAME = 'eis-cache-v6';
 
 var STATIC_ASSETS = [
   'Public/css/material-icons.css',
@@ -15,9 +15,18 @@ var STATIC_ASSETS = [
   'Public/js/app.selects.js',
   'Public/js/app.tables.js',
   'Public/js/app.ui.js',
+  'Public/js/app.validate.js',
   'Public/js/app.pos.js',
   'Public/js/app.cyber.js',
   'Public/js/app.legal.js',
+  'Public/js/app.inventario.js',
+  'Public/js/app.roles.js',
+  'Public/js/app.proveedores.js',
+  'Public/js/app.proveedores-gestion.js',
+  'Public/js/app.clientes.js',
+  'Public/js/app.reportes.js',
+  'Public/js/app.activos.js',
+  'Public/js/app.usuarios.js',
   'Public/fonts/MaterialIcons-Regular.ttf',
   'manifest.json',
   'Public/icons/icon-192.svg',

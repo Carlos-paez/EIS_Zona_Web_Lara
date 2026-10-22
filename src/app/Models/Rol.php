@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Core\Logger;
 use App\Core\Model;
+use App\Core\Permisos;
 use PDO;
 
 class Rol extends Model
@@ -128,10 +129,30 @@ class Rol extends Model
         return $stmt->execute();
     }
 
+    /**
+     * Todos los permisos del sistema, con los metadatos del catálogo.
+     *
+     * Cada fila incluye el módulo al que pertenece, la etiqueta legible y el
+     * verbo de acción (null en los permisos base de módulo), de modo que la
+     * interfaz de roles y permisos pueda agruparlos sin duplicar el catálogo.
+     *
+     * @return array<int,array{id:int,nombre:string,modulo:string,etiquetaModulo:string,etiqueta:string,icono:string,verbo:?string,esBase:bool}>
+     */
     public function obtenerPermisos(): array
     {
         $stmt = $this->db->query("SELECT id, permisos AS nombre FROM permisos ORDER BY permisos");
-        return $stmt->fetchAll();
+        $filas = $stmt->fetchAll();
+
+        $salida = [];
+        foreach ($filas as $fila) {
+            $descripcion = Permisos::describirPermiso((string)$fila['nombre']);
+            $salida[] = array_merge(
+                ['id' => (int)$fila['id']],
+                $descripcion
+            );
+        }
+
+        return $salida;
     }
 
     public function obtenerPermisosPorRol(int $rol_id): array

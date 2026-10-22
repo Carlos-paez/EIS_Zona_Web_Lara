@@ -77,15 +77,22 @@
         <li><a href="?pagina=dashboard" class="sidenav-link<?php echo $pagina === 'dashboard' ? ' active' : ''; ?>"><i
                     class="material-icons left">dashboard</i>Dashboard</a></li>
         <!-- Inventario - Gestión de productos y stock -->
+        <?php if ($puede('gestion_productos')): ?>
         <li><a href="?pagina=inventario" class="sidenav-link<?php echo $pagina === 'inventario' ? ' active' : ''; ?>"><i
                     class="material-icons left">inventory_2</i>Inventario</a></li>
+        <?php endif; ?>
         <!-- Ventas (POS) - Punto de venta -->
+        <?php if ($puede('gestion_ventas')): ?>
         <li><a href="?pagina=ventas" class="sidenav-link<?php echo $pagina === 'ventas' ? ' active' : ''; ?>"><i
                     class="material-icons left">shopping_cart</i>Ventas (POS)</a></li>
+        <?php endif; ?>
         <!-- Clientes - Gestión de información de clientes -->
+        <?php if ($puede('gestion_clientes')): ?>
         <li><a href="?pagina=clientes" class="sidenav-link<?php echo $pagina === 'clientes' ? ' active' : ''; ?>"><i
                     class="material-icons left">badge</i>Clientes</a></li>
+        <?php endif; ?>
         <!-- Solicitudes - Menú desplegable con submódulos -->
+        <?php if ($puede('gestion_abastecimiento') || $puede('gestion_proveedores')): ?>
         <li class="has-submenu<?php echo in_array($pagina, ['proveedores', 'proveedores-gestion']) ? ' open' : ''; ?>">
             <a href="#!" class="sidenav-link submenu-parent<?php echo in_array($pagina, ['proveedores', 'proveedores-gestion']) ? ' active' : ''; ?>">
                 <i class="material-icons left">request_quote</i>
@@ -93,32 +100,51 @@
                 <i class="material-icons submenu-arrow" style="position:absolute;right:1rem;">arrow_right</i>
             </a>
             <ul class="submenu-list">
+                <?php if ($puede('gestion_abastecimiento')): ?>
                 <li><a href="?pagina=proveedores" class="sidenav-link<?php echo $pagina === 'proveedores' ? ' active' : ''; ?>">Órdenes de Compra</a></li>
+                <?php endif; ?>
+                <?php if ($puede('gestion_proveedores')): ?>
                 <li><a href="?pagina=proveedores-gestion" class="sidenav-link<?php echo $pagina === 'proveedores-gestion' ? ' active' : ''; ?>">Proveedores</a></li>
+                <?php endif; ?>
             </ul>
         </li>
+        <?php endif; ?>
         <!-- Cyber - Control de estaciones de cybercafé -->
+        <?php if ($puede('gestion_ciber')): ?>
         <li><a href="?pagina=ciberControl"
                 class="sidenav-link<?php echo $pagina === 'ciberControl' ? ' active' : ''; ?>"><i
                     class="material-icons left">computer</i>Cyber</a></li>
+        <?php endif; ?>
         <!-- Reportes - Generación de reportes -->
+        <?php if ($puede('ver_reportes')): ?>
         <li><a href="?pagina=reportes" class="sidenav-link<?php echo $pagina === 'reportes' ? ' active' : ''; ?>"><i
                     class="material-icons left">bar_chart</i>Reportes</a></li>
+        <?php endif; ?>
         <!-- Activos - Gestión de activos fijos -->
+        <?php if ($puede('gestion_activos')): ?>
         <li><a href="?pagina=activos" class="sidenav-link<?php echo $pagina === 'activos' ? ' active' : ''; ?>"><i
                     class="material-icons left">build</i>Activos</a></li>
+        <?php endif; ?>
         <!-- Asesoría Legal - Módulo de consultas legales -->
+        <?php if ($puede('gestion_asesoria')): ?>
         <li><a href="?pagina=asesorias" class="sidenav-link<?php echo $pagina === 'asesorias' ? ' active' : ''; ?>"><i
                     class="material-icons left">gavel</i>Asesoría Legal</a></li>
+        <?php endif; ?>
+        <?php if ($puede('gestion_usuarios') || $puede('configuracion')): ?>
         <li>
             <div class="divider"></div>
         </li> <!-- Separador visual entre menú principal y configuración -->
+        <?php endif; ?>
         <!-- Usuarios/Configuración - Administración de usuarios del sistema -->
+        <?php if ($puede('gestion_usuarios')): ?>
         <li><a href="?pagina=usuarios" class="sidenav-link<?php echo $pagina === 'usuarios' ? ' active' : ''; ?>"><i
                     class="material-icons left">settings</i>Configuración</a></li>
+        <?php endif; ?>
         <!-- Roles y Permisos -->
+        <?php if ($puede('configuracion')): ?>
         <li><a href="?pagina=roles" class="sidenav-link<?php echo $pagina === 'roles' ? ' active' : ''; ?>"><i
                     class="material-icons left">admin_panel_settings</i>Roles y Permisos</a></li>
+        <?php endif; ?>
         <!-- Manual de Usuario - Ayuda incrustada en el sistema -->
         <li><a href="?pagina=manual_usuario" class="sidenav-link<?php echo $pagina === 'manual_usuario' ? ' active' : ''; ?>"><i
                     class="material-icons left">menu_book</i>Manual de Usuario</a></li>
@@ -285,11 +311,22 @@
     <script src="Public/js/app.usuarios.js"></script>
     <?php endif; ?>
 
-    <!-- Toggle del submenú de Solicitudes -->
+    <!-- Global 403 handler for AJAX requests -->
     <script>
-    $(document).on('click', '.submenu-parent', function(e) {
-        e.preventDefault();
-        $(this).closest('.has-submenu').toggleClass('open');
+    $(document).ajaxError(function(event, jqxhr) {
+        if (jqxhr.status === 403) {
+            try {
+                var response = jqxhr.responseJSON;
+                var message = (response && response.error) ? response.error : 'No tienes permisos para realizar esta acción.';
+            } catch (e) {
+                var message = 'No tienes permisos para realizar esta acción.';
+            }
+            if (typeof M !== 'undefined' && M.toast) {
+                M.toast({html: '<i class="material-icons left">block</i>' + message, classes: 'red darken-2'});
+            } else {
+                alert(message);
+            }
+        }
     });
     </script>
 
