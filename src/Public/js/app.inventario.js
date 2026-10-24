@@ -277,7 +277,12 @@ $(function () {
         e.preventDefault();
         var $form = $(this);
         var accion = $('#categoria-id').val() ? 'actualizarCategoria' : 'crearCategoria';
-        $.post(API + accion, $form.serialize(), function (r) {
+        $.ajax({
+            url: API + accion,
+            type: 'POST',
+            data: $form.serialize(),
+            dataType: 'json',
+            success: function (r) {
             if (r.success) {
                 EIS.toast(r.message, 'green', 'check_circle');
                 $('#form-categoria')[0].reset();
@@ -287,8 +292,10 @@ $(function () {
             } else {
                 EIS.mostrarErroresFormulario($form, r);
             }
-        }, 'json').fail(function () {
+        },
+        error: function () {
             EIS.toast('Error de conexión', 'red', 'error');
+        }
         });
     });
 
@@ -312,15 +319,22 @@ $(function () {
         var id = $(this).data('id');
         var nombre = $(this).data('nombre');
         if (confirm('¿Está seguro de eliminar la categoría "' + nombre + '"?')) {
-            $.post(API + 'eliminarCategoria', { id: id }, function (r) {
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
-                    cargarCategorias();
-                } else {
-                    EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+            $.ajax({
+                url: API + 'eliminarCategoria',
+                type: 'POST',
+                data: { id: id },
+                dataType: 'json',
+                success: function (r) {
+                    if (r.success) {
+                        EIS.toast(r.message, 'green', 'check_circle');
+                        cargarCategorias();
+                    } else {
+                        EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                    }
+                },
+                error: function () {
+                    EIS.toast('Error de conexión', 'red', 'error');
                 }
-            }, 'json').fail(function () {
-                EIS.toast('Error de conexión', 'red', 'error');
             });
         }
     });
@@ -356,15 +370,21 @@ $(function () {
     // ================================================================
     $(document).on('click', '.btn-editar', function () {
         var id = $(this).data('id');
-        $.getJSON(API + 'detalle&id=' + id, function (r) {
-            if (r.success) {
-                cargarSelectCategorias(r.data.categoria_id);
-                abrirModalProducto('Editar Producto', r.data);
-            } else {
-                EIS.toast(r.error || 'Error al cargar producto', 'red', 'error');
+        $.ajax({
+            url: API + 'detalle&id=' + id,
+            type: 'GET',
+            dataType: 'json',
+            success: function (r) {
+                if (r.success) {
+                    cargarSelectCategorias(r.data.categoria_id);
+                    abrirModalProducto('Editar Producto', r.data);
+                } else {
+                    EIS.toast(r.error || 'Error al cargar producto', 'red', 'error');
+                }
+            },
+            error: function () {
+                EIS.toast('Error de conexión al cargar producto', 'red', 'error');
             }
-        }).fail(function () {
-            EIS.toast('Error de conexión al cargar producto', 'red', 'error');
         });
     });
 
@@ -378,19 +398,26 @@ $(function () {
         // Confirmación nativa del navegador antes de eliminar
         if (confirm('¿Está seguro de eliminar el producto "' + nombre + '"?')) {
             // POST request para eliminar el producto
-            $.post(API + 'eliminar', { id: id }, function (r) {
-                if (r.success) {
-                    // Si la eliminación es exitosa, muestro toast y refresco
-                    EIS.toast(r.message, 'green', 'check_circle');
-                    refrescarTabla(); // Recargo la tabla
-                    refrescarKPI();   // Actualizo los indicadores
-                } else {
-                    // Si hay error, muestro el mensaje del servidor
-                    EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+            $.ajax({
+                url: API + 'eliminar',
+                type: 'POST',
+                data: { id: id },
+                dataType: 'json',
+                success: function (r) {
+                    if (r.success) {
+                        // Si la eliminación es exitosa, muestro toast y refresco
+                        EIS.toast(r.message, 'green', 'check_circle');
+                        refrescarTabla(); // Recargo la tabla
+                        refrescarKPI();   // Actualizo los indicadores
+                    } else {
+                        // Si hay error, muestro el mensaje del servidor
+                        EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                    }
+                },
+                error: function () {
+                    // Si hay error de conexión, muestro toast de error
+                    EIS.toast('Error de conexión al eliminar', 'red', 'error');
                 }
-            }, 'json').fail(function () {
-                // Si hay error de conexión, muestro toast de error
-                EIS.toast('Error de conexión al eliminar', 'red', 'error');
             });
         }
     });
@@ -416,17 +443,24 @@ $(function () {
         var accion = id ? 'actualizar' : 'crear';
         var data = $form.serialize();
 
-        $.post(API + accion, data, function (r) {
-            if (r.success) {
-                EIS.toast(r.message, 'green', 'check_circle');
-                $('#modal-producto').modal('close');
-                refrescarTabla();
-                refrescarKPI();
-            } else {
-                EIS.mostrarErroresFormulario($form, r);
+        $.ajax({
+            url: API + accion,
+            type: 'POST',
+            data: data,
+            dataType: 'json',
+            success: function (r) {
+                if (r.success) {
+                    EIS.toast(r.message, 'green', 'check_circle');
+                    $('#modal-producto').modal('close');
+                    refrescarTabla();
+                    refrescarKPI();
+                } else {
+                    EIS.mostrarErroresFormulario($form, r);
+                }
+            },
+            error: function () {
+                EIS.toast('Error de conexión al guardar', 'red', 'error');
             }
-        }, 'json').fail(function () {
-            EIS.toast('Error de conexión al guardar', 'red', 'error');
         });
     });
 

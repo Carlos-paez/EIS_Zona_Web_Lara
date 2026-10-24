@@ -216,16 +216,23 @@ $(function () {
         var id = $(this).data('id');
         var num = $(this).data('numero');
         if (confirm('Eliminar la solicitud #' + num + '? También se eliminarán sus productos asociados.')) {
-            $.post(API + 'eliminar', { id: id }, function (r) {
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
-                    refrescarTabla();
-                    refrescarKPI();
-                } else {
-                    EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+            $.ajax({
+                url: API + 'eliminar',
+                type: 'POST',
+                data: { id: id },
+                dataType: 'json',
+                success: function (r) {
+                    if (r.success) {
+                        EIS.toast(r.message, 'green', 'check_circle');
+                        refrescarTabla();
+                        refrescarKPI();
+                    } else {
+                        EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                    }
+                },
+                error: function () {
+                    EIS.toast('Error de conexión', 'red', 'error');
                 }
-            }, 'json').fail(function () {
-                EIS.toast('Error de conexión', 'red', 'error');
             });
         }
     });
@@ -244,28 +251,35 @@ $(function () {
         // El envío ya fue validado en el cliente por app.validate.js; el
         // servidor vuelve a validar (fieldErrors) por seguridad.
 
-        $.post(API + accion, $form.serialize(), function (r) {
-            if (r.success) {
-                EIS.toast(r.message, 'green', 'check_circle');
+        $.ajax({
+            url: API + accion,
+            type: 'POST',
+            data: $form.serialize(),
+            dataType: 'json',
+            success: function (r) {
+                if (r.success) {
+                    EIS.toast(r.message, 'green', 'check_circle');
 
-                if (esNueva && r.data && r.data.id) {
-                    $('#orden-id').val(r.data.id);
-                    $('#linea-orden-id').val(r.data.id);
-                    $('#orden-lineas-section').show();
-                    $('#tabla-lineas tbody').empty();
-                    $('#detalle-total').text('$0.00');
-                    refrescarTabla();
-                    refrescarKPI();
+                    if (esNueva && r.data && r.data.id) {
+                        $('#orden-id').val(r.data.id);
+                        $('#linea-orden-id').val(r.data.id);
+                        $('#orden-lineas-section').show();
+                        $('#tabla-lineas tbody').empty();
+                        $('#detalle-total').text('$0.00');
+                        refrescarTabla();
+                        refrescarKPI();
+                    } else {
+                        $('#modal-orden').modal('close');
+                        refrescarTabla();
+                        refrescarKPI();
+                    }
                 } else {
-                    $('#modal-orden').modal('close');
-                    refrescarTabla();
-                    refrescarKPI();
+                    EIS.mostrarErroresFormulario($form, r);
                 }
-            } else {
-                EIS.mostrarErroresFormulario($form, r);
+            },
+            error: function () {
+                EIS.toast('Error de conexión', 'red', 'error');
             }
-        }, 'json').fail(function () {
-            EIS.toast('Error de conexión', 'red', 'error');
         });
     });
 
@@ -295,27 +309,39 @@ $(function () {
         // El envío ya fue validado en el cliente por app.validate.js; el
         // servidor vuelve a validar (fieldErrors) por seguridad.
 
-        $.post(API + 'agregarLinea', $form.serialize() + '&orden_id=' + orden_id, function (r) {
-            if (r.success) {
-                EIS.toast(r.message, 'green', 'check_circle');
-                EIS.limpiarErroresFormulario($form);
-                $('#linea-producto').val('');
-                $('#linea-cantidad').val(1);
-                $('#linea-precio').val('');
-                EIS.formSelect('#linea-producto');
-                cargarLineas(parseInt(orden_id));
-            } else {
-                EIS.mostrarErroresFormulario($form, r);
+        $.ajax({
+            url: API + 'agregarLinea',
+            type: 'POST',
+            data: $form.serialize() + '&orden_id=' + orden_id,
+            dataType: 'json',
+            success: function (r) {
+                if (r.success) {
+                    EIS.toast(r.message, 'green', 'check_circle');
+                    EIS.limpiarErroresFormulario($form);
+                    $('#linea-producto').val('');
+                    $('#linea-cantidad').val(1);
+                    $('#linea-precio').val('');
+                    EIS.formSelect('#linea-producto');
+                    cargarLineas(parseInt(orden_id));
+                } else {
+                    EIS.mostrarErroresFormulario($form, r);
+                }
+            },
+            error: function () {
+                EIS.toast('Error de conexión', 'red', 'error');
             }
-        }, 'json').fail(function () {
-            EIS.toast('Error de conexión', 'red', 'error');
         });
     });
 
     $(document).on('click', '.btn-eliminar-linea', function () {
         var id = $(this).data('id');
         if (confirm('Eliminar este producto de la solicitud?')) {
-            $.post(API + 'eliminarLinea', { id: id }, function (r) {
+            $.ajax({
+            url: API + 'eliminarLinea',
+            type: 'POST',
+            data: { id: id },
+            dataType: 'json',
+            success: function (r) {
                 if (r.success) {
                     EIS.toast(r.message, 'green', 'check_circle');
                     var orden_id = $('#linea-orden-id').val();
@@ -323,9 +349,11 @@ $(function () {
                 } else {
                     EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
                 }
-            }, 'json').fail(function () {
+            },
+            error: function () {
                 EIS.toast('Error de conexión', 'red', 'error');
-            });
+            }
+        });
         }
     });
 

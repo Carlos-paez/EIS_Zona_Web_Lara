@@ -301,14 +301,20 @@ $(function () {
     $(document).on('click', '.btn-editar-rol', function () {
         var id = $(this).data('id'); // ID del rol
         // Cargo los datos del rol vía AJAX
-        $.getJSON(API + 'detalle&id=' + id, function (r) {
-            if (r.success) {
-                abrirModalRol('Editar Rol', r.data); // Abro modal con datos
-            } else {
-                EIS.toast(r.error || 'Error al cargar rol', 'red', 'error');
+        $.ajax({
+            url: API + 'detalle&id=' + id,
+            type: 'GET',
+            dataType: 'json',
+            success: function (r) {
+                if (r.success) {
+                    abrirModalRol('Editar Rol', r.data); // Abro modal con datos
+                } else {
+                    EIS.toast(r.error || 'Error al cargar rol', 'red', 'error');
+                }
+            },
+            error: function () {
+                EIS.toast('Error de conexi&oacute;n', 'red', 'error');
             }
-        }).fail(function () {
-            EIS.toast('Error de conexi&oacute;n', 'red', 'error');
         });
     });
 
@@ -319,7 +325,12 @@ $(function () {
         // Confirmación antes de eliminar
         if (confirm('¿Est&aacute; seguro de eliminar el rol "' + nombre + '"?')) {
             // POST request para eliminar el rol
-            $.post(API + 'eliminar', { id: id }, function (r) {
+            $.ajax({
+            url: API + 'eliminar',
+            type: 'POST',
+            data: { id: id },
+            dataType: 'json',
+            success: function (r) {
                 if (r.success) {
                     EIS.toast(r.message, 'green', 'check_circle');
                     refrescarTabla(); // Recargo tabla
@@ -327,9 +338,11 @@ $(function () {
                 } else {
                     EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
                 }
-            }, 'json').fail(function () {
+            },
+            error: function () {
                 EIS.toast('Error de conexi&oacute;n', 'red', 'error');
-            });
+            }
+        });
         }
     });
 
@@ -368,17 +381,24 @@ $(function () {
         // el servidor vuelve a validar (fieldErrors) por seguridad.
 
         // POST request para crear o actualizar el rol
-        $.post(API + accion, data, function (r) {
-            if (r.success) {
-                EIS.toast(r.message, 'green', 'check_circle');
-                $('#modalRol').modal('close'); // Cierro modal
-                refrescarTabla(); // Recargo tabla
-                refrescarKPI();   // Actualizo KPIs
-            } else {
-                EIS.mostrarErroresFormulario($form, r);
+        $.ajax({
+            url: API + accion,
+            type: 'POST',
+            data: data,
+            dataType: 'json',
+            success: function (r) {
+                if (r.success) {
+                    EIS.toast(r.message, 'green', 'check_circle');
+                    $('#modalRol').modal('close'); // Cierro modal
+                    refrescarTabla(); // Recargo tabla
+                    refrescarKPI();   // Actualizo KPIs
+                } else {
+                    EIS.mostrarErroresFormulario($form, r);
+                }
+            },
+            error: function () {
+                EIS.toast('Error de conexi&oacute;n', 'red', 'error');
             }
-        }, 'json').fail(function () {
-            EIS.toast('Error de conexi&oacute;n', 'red', 'error');
         });
     });
 
@@ -392,15 +412,22 @@ $(function () {
         });
 
         // POST request para guardar los permisos del rol
-        $.post(API + 'guardarPermisos', { rol_id: rol_id, permisos: permisos }, function (r) {
-            if (r.success) {
-                EIS.toast(r.message, 'green', 'check_circle');
-                $('#modalPermisos').modal('close'); // Cierro modal
-            } else {
-                EIS.toast(r.error || 'Error al guardar permisos', 'red', 'error');
+        $.ajax({
+            url: API + 'guardarPermisos',
+            type: 'POST',
+            data: { rol_id: rol_id, permisos: permisos },
+            dataType: 'json',
+            success: function (r) {
+                if (r.success) {
+                    EIS.toast(r.message, 'green', 'check_circle');
+                    $('#modalPermisos').modal('close'); // Cierro modal
+                } else {
+                    EIS.toast(r.error || 'Error al guardar permisos', 'red', 'error');
+                }
+            },
+            error: function () {
+                EIS.toast('Error de conexi&oacute;n', 'red', 'error');
             }
-        }, 'json').fail(function () {
-            EIS.toast('Error de conexi&oacute;n', 'red', 'error');
         });
     });
 
@@ -416,17 +443,24 @@ $(function () {
         }
 
         // POST request para asignar el rol al usuario
-        $.post(API + 'asignarRol', { usuario_id: usuario_id, rol_id: rol_id }, function (r) {
-            if (r.success) {
-                EIS.toast(r.message, 'green', 'check_circle');
-                $('#modalAsignar').modal('close'); // Cierro modal
-                refrescarTabla(); // Recargo tabla
-                refrescarKPI();   // Actualizo KPIs
-            } else {
-                EIS.toast(r.error || 'Error al asignar rol', 'red', 'error');
+        $.ajax({
+            url: API + 'asignarRol',
+            type: 'POST',
+            data: { usuario_id: usuario_id, rol_id: rol_id },
+            dataType: 'json',
+            success: function (r) {
+                if (r.success) {
+                    EIS.toast(r.message, 'green', 'check_circle');
+                    $('#modalAsignar').modal('close'); // Cierro modal
+                    refrescarTabla(); // Recargo tabla
+                    refrescarKPI();   // Actualizo KPIs
+                } else {
+                    EIS.toast(r.error || 'Error al asignar rol', 'red', 'error');
+                }
+            },
+            error: function () {
+                EIS.toast('Error de conexi&oacute;n', 'red', 'error');
             }
-        }, 'json').fail(function () {
-            EIS.toast('Error de conexi&oacute;n', 'red', 'error');
         });
     });
 

@@ -14,6 +14,15 @@
 $(function () {
 
     // ================================================================
+    // SUBMENÚ "SOLICITUDES"
+    // ================================================================
+    $(document).on('click', '.submenu-parent', function (e) {
+        e.preventDefault();
+        var $li = $(this).closest('.has-submenu');
+        $li.toggleClass('open');
+    });
+
+    // ================================================================
     // INICIALIZACIÓN DE COMPONENTES MATERIALIZE
     // ================================================================
 

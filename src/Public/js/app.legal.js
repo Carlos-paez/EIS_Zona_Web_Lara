@@ -192,7 +192,12 @@ $(function () {
             return a.cedula === cedula;
         });
 
-        $.post(API + 'crear', $form.serialize(), function (r) {
+        $.ajax({
+            url: API + 'crear',
+            type: 'POST',
+            data: $form.serialize(),
+            dataType: 'json',
+            success: function (r) {
             if (r.success) {
                 EIS.toast(
                     existeCliente
@@ -211,8 +216,10 @@ $(function () {
             } else {
                 EIS.mostrarErroresFormulario($form, r);
             }
-        }, 'json').fail(function () {
+        },
+        error: function () {
             EIS.toast('Error de conexión', 'red', 'error');
+        }
         });
     });
 

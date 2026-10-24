@@ -258,15 +258,22 @@ $(function () {
             abrirModalIniciar(id);
         } else if (status === 'ocupada') {
             if (confirm('¿Finalizar la sesión en la estación ' + id + '?')) {
-                $.post(API + 'finalizar', { sesion_id: sesionId }, function (r) {
-                    if (r.success) {
-                        EIS.toast(r.message, 'green', 'stop_circle');
-                        cargarEstado();
-                    } else {
-                        EIS.toast(r.error || 'Error al finalizar la sesión', 'red', 'error');
+                $.ajax({
+                    url: API + 'finalizar',
+                    type: 'POST',
+                    data: { sesion_id: sesionId },
+                    dataType: 'json',
+                    success: function (r) {
+                        if (r.success) {
+                            EIS.toast(r.message, 'green', 'stop_circle');
+                            cargarEstado();
+                        } else {
+                            EIS.toast(r.error || 'Error al finalizar la sesión', 'red', 'error');
+                        }
+                    },
+                    error: function () {
+                        EIS.toast('Error de conexión', 'red', 'error');
                     }
-                }, 'json').fail(function () {
-                    EIS.toast('Error de conexión', 'red', 'error');
                 });
             }
         }
@@ -303,18 +310,25 @@ $(function () {
         var $btn = $('#btnIniciarSesion');
         $btn.prop('disabled', true);
 
-        $.post(API + 'iniciar', $form.serialize(), function (r) {
-            $btn.prop('disabled', false);
-            if (r.success) {
-                EIS.toast(r.message || 'Sesión iniciada', 'green', 'play_circle');
-                $('#cyberModal').modal('close');
-                cargarEstado();
-            } else {
-                EIS.mostrarErroresFormulario($form, r);
+        $.ajax({
+            url: API + 'iniciar',
+            type: 'POST',
+            data: $form.serialize(),
+            dataType: 'json',
+            success: function (r) {
+                $btn.prop('disabled', false);
+                if (r.success) {
+                    EIS.toast(r.message || 'Sesión iniciada', 'green', 'play_circle');
+                    $('#cyberModal').modal('close');
+                    cargarEstado();
+                } else {
+                    EIS.mostrarErroresFormulario($form, r);
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false);
+                EIS.toast('Error de conexión', 'red', 'error');
             }
-        }, 'json').fail(function () {
-            $btn.prop('disabled', false);
-            EIS.toast('Error de conexión', 'red', 'error');
         });
     });
 
@@ -364,22 +378,28 @@ $(function () {
         $('#btnGuardarPC').removeClass('indigo').addClass('orange');
         $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Actualizar PC');
 
-        $.getJSON(API + 'obtenerPC&id=' + encodeURIComponent(id), function (r) {
-            if (!r.success || !r.data) {
-                EIS.toast((r.error) || 'Error al cargar la PC', 'red', 'error');
-                return;
+        $.ajax({
+            url: API + 'obtenerPC&id=' + encodeURIComponent(id),
+            type: 'GET',
+            dataType: 'json',
+            success: function (r) {
+                if (!r.success || !r.data) {
+                    EIS.toast((r.error) || 'Error al cargar la PC', 'red', 'error');
+                    return;
+                }
+                var pc = r.data;
+                $('#pcId').val(pc.id);
+                $('#pcMarca').val(pc.marca || '');
+                $('#pcDescripcion').val(pc.descripcion || '');
+                $('#pcTipo').val(String(pc.tipo_activo_id || ''));
+                refrescarSelect($('#pcTipo'));
+                $('input[name="activa"][value="' + (pc.activa ? 1 : 0) + '"]').prop('checked', true);
+                M.updateTextFields();
+                $('#modalPCForm').modal('open');
+            },
+            error: function () {
+                EIS.toast('Error de conexión al cargar la PC', 'red', 'error');
             }
-            var pc = r.data;
-            $('#pcId').val(pc.id);
-            $('#pcMarca').val(pc.marca || '');
-            $('#pcDescripcion').val(pc.descripcion || '');
-            $('#pcTipo').val(String(pc.tipo_activo_id || ''));
-            refrescarSelect($('#pcTipo'));
-            $('input[name="activa"][value="' + (pc.activa ? 1 : 0) + '"]').prop('checked', true);
-            M.updateTextFields();
-            $('#modalPCForm').modal('open');
-        }).fail(function () {
-            EIS.toast('Error de conexión al cargar la PC', 'red', 'error');
         });
     });
 
@@ -399,18 +419,25 @@ $(function () {
         var $btn = $(this);
         $btn.prop('disabled', true).html('<i class="material-icons left">hourglass_top</i> Eliminando...');
 
-        $.post(API + 'eliminarPC', { id: id }, function (r) {
-            $btn.prop('disabled', false).html('<i class="material-icons left">delete_forever</i> Eliminar');
-            if (r.success) {
-                EIS.toast(r.message, 'green', 'delete');
-                $('#modalConfirmarEliminar').modal('close');
-                cargarEstado();
-            } else {
-                EIS.toast(r.error || 'Error al eliminar la PC', 'red', 'error');
+        $.ajax({
+            url: API + 'eliminarPC',
+            type: 'POST',
+            data: { id: id },
+            dataType: 'json',
+            success: function (r) {
+                $btn.prop('disabled', false).html('<i class="material-icons left">delete_forever</i> Eliminar');
+                if (r.success) {
+                    EIS.toast(r.message, 'green', 'delete');
+                    $('#modalConfirmarEliminar').modal('close');
+                    cargarEstado();
+                } else {
+                    EIS.toast(r.error || 'Error al eliminar la PC', 'red', 'error');
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false).html('<i class="material-icons left">delete_forever</i> Eliminar');
+                EIS.toast('Error de conexión', 'red', 'error');
             }
-        }, 'json').fail(function () {
-            $btn.prop('disabled', false).html('<i class="material-icons left">delete_forever</i> Eliminar');
-            EIS.toast('Error de conexión', 'red', 'error');
         });
     });
 
@@ -439,23 +466,30 @@ $(function () {
 
         var url = id ? API + 'actualizarPC' : API + 'crearPC';
 
-        $.post(url, $form.serialize(), function (r) {
-            $btn.prop('disabled', false);
-            $('#btnGuardarPC').removeClass('orange').addClass('indigo');
-            $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
-            if (r.success) {
-                EIS.toast(r.message, 'green', 'check_circle');
-                $('#modalPCForm').modal('close');
-                cargarEstado();
-            } else {
-                EIS.mostrarErroresFormulario($form, r);
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: $form.serialize(),
+            dataType: 'json',
+            success: function (r) {
+                $btn.prop('disabled', false);
+                $('#btnGuardarPC').removeClass('orange').addClass('indigo');
+                $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
+                if (r.success) {
+                    EIS.toast(r.message, 'green', 'check_circle');
+                    $('#modalPCForm').modal('close');
+                    cargarEstado();
+                } else {
+                    EIS.mostrarErroresFormulario($form, r);
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false);
+                $('#btnGuardarPC').removeClass('orange').addClass('indigo');
+                $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
+                $('#pcFormErrorMessage').text('Error de conexión al servidor');
+                $('#pcFormError').slideDown(300);
             }
-        }, 'json').fail(function () {
-            $btn.prop('disabled', false);
-            $('#btnGuardarPC').removeClass('orange').addClass('indigo');
-            $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
-            $('#pcFormErrorMessage').text('Error de conexión al servidor');
-            $('#pcFormError').slideDown(300);
         });
     });
 
@@ -502,33 +536,39 @@ $(function () {
         var $resultados = $('#historialResultados');
         $resultados.html('<div class="center-align" style="padding:2rem 0;"><div class="preloader-wrapper small active"><div class="spinner-layer spinner-green-only"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div><p style="color:var(--text-muted);margin-top:1rem;">Cargando historial de ' + escHtml(nombre) + '...</p></div>');
 
-        $.getJSON(API + 'historial&activo_id=' + encodeURIComponent(activoId), function (r) {
-            if (!r.success) {
-                $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>' + escHtml(r.error || 'Error al cargar el historial') + '</div>');
-                return;
-            }
-            var datos = r.data || [];
-            if (datos.length === 0) {
-                $resultados.html('<div class="center-align" style="padding:2rem 0;"><i class="material-icons" style="font-size:3.5rem;display:block;margin-bottom:0.5rem;opacity:0.3;">hourglass_empty</i><p style="color:var(--text-muted);font-size:1rem;"><strong>' + escHtml(nombre) + '</strong> no tiene sesiones registradas</p></div>');
-                return;
-            }
-            var html = '<div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border-light);"><table class="striped responsive-table" id="tabla-historial" style="margin-bottom:0;font-size:0.9rem;"><thead><tr style="background:var(--surface-hover);"><th style="padding:0.6rem 0.8rem;">#</th><th style="padding:0.6rem 0.8rem;">Cliente</th><th style="padding:0.6rem 0.8rem;">Tiempo</th><th style="padding:0.6rem 0.8rem;text-align:right;">Precio</th><th style="padding:0.6rem 0.8rem;">Estado</th></tr></thead><tbody>';
-            datos.forEach(function (s, i) {
-                var precioT = (s.precio_tiempo !== null && s.precio_tiempo !== undefined) ? '$' + parseFloat(s.precio_tiempo).toFixed(2) : '-';
-                var estadoBadge = s.estado === 'activa' ? '<span class="new badge orange" style="background:#fb8c00;">Activa</span>' : '<span class="new badge green" style="background:#43a047;">Cerrada</span>';
-                html += '<tr style="border-bottom:1px solid var(--border-light);"><td style="padding:0.5rem 0.8rem;font-weight:600;color:var(--text-muted);">' + (i + 1) + '</td><td style="padding:0.5rem 0.8rem;font-weight:500;">' + escHtml(s.cliente_nombre || 'Anónimo') + '</td><td style="padding:0.5rem 0.8rem;font-size:0.85rem;color:var(--text-muted);">' + escHtml(s.tiempo_uso || '-') + '</td><td style="padding:0.5rem 0.8rem;text-align:right;font-weight:700;color:var(--primary);">' + precioT + '</td><td style="padding:0.5rem 0.8rem;">' + estadoBadge + '</td></tr>';
-            });
-            html += '</tbody></table></div><div style="margin-top:0.75rem;text-align:right;color:var(--text-muted);font-size:0.8rem;"><i class="material-icons left" style="font-size:0.9rem;">info</i>Mostrando ' + datos.length + ' sesiones de ' + escHtml(nombre) + '</div>';
+        $.ajax({
+            url: API + 'historial&activo_id=' + encodeURIComponent(activoId),
+            type: 'GET',
+            dataType: 'json',
+            success: function (r) {
+                if (!r.success) {
+                    $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>' + escHtml(r.error || 'Error al cargar el historial') + '</div>');
+                    return;
+                }
+                var datos = r.data || [];
+                if (datos.length === 0) {
+                    $resultados.html('<div class="center-align" style="padding:2rem 0;"><i class="material-icons" style="font-size:3.5rem;display:block;margin-bottom:0.5rem;opacity:0.3;">hourglass_empty</i><p style="color:var(--text-muted);font-size:1rem;"><strong>' + escHtml(nombre) + '</strong> no tiene sesiones registradas</p></div>');
+                    return;
+                }
+                var html = '<div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border-light);"><table class="striped responsive-table" id="tabla-historial" style="margin-bottom:0;font-size:0.9rem;"><thead><tr style="background:var(--surface-hover);"><th style="padding:0.6rem 0.8rem;">#</th><th style="padding:0.6rem 0.8rem;">Cliente</th><th style="padding:0.6rem 0.8rem;">Tiempo</th><th style="padding:0.6rem 0.8rem;text-align:right;">Precio</th><th style="padding:0.6rem 0.8rem;">Estado</th></tr></thead><tbody>';
+                datos.forEach(function (s, i) {
+                    var precioT = (s.precio_tiempo !== null && s.precio_tiempo !== undefined) ? '$' + parseFloat(s.precio_tiempo).toFixed(2) : '-';
+                    var estadoBadge = s.estado === 'activa' ? '<span class="new badge orange" style="background:#fb8c00;">Activa</span>' : '<span class="new badge green" style="background:#43a047;">Cerrada</span>';
+                    html += '<tr style="border-bottom:1px solid var(--border-light);"><td style="padding:0.5rem 0.8rem;font-weight:600;color:var(--text-muted);">' + (i + 1) + '</td><td style="padding:0.5rem 0.8rem;font-weight:500;">' + escHtml(s.cliente_nombre || 'Anónimo') + '</td><td style="padding:0.5rem 0.8rem;font-size:0.85rem;color:var(--text-muted);">' + escHtml(s.tiempo_uso || '-') + '</td><td style="padding:0.5rem 0.8rem;text-align:right;font-weight:700;color:var(--primary);">' + precioT + '</td><td style="padding:0.5rem 0.8rem;">' + estadoBadge + '</td></tr>';
+                });
+                html += '</tbody></table></div><div style="margin-top:0.75rem;text-align:right;color:var(--text-muted);font-size:0.8rem;"><i class="material-icons left" style="font-size:0.9rem;">info</i>Mostrando ' + datos.length + ' sesiones de ' + escHtml(nombre) + '</div>';
 
-            if (window.EIS && EIS.datatableDestroy) {
-                EIS.datatableDestroy('#tabla-historial');
+                if (window.EIS && EIS.datatableDestroy) {
+                    EIS.datatableDestroy('#tabla-historial');
+                }
+                $resultados.html(html);
+                if (window.EIS && EIS.datatable) {
+                    EIS.datatable('#tabla-historial');
+                }
+            },
+            error: function () {
+                $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>Error de conexión al servidor</div>');
             }
-            $resultados.html(html);
-            if (window.EIS && EIS.datatable) {
-                EIS.datatable('#tabla-historial');
-            }
-        }).fail(function () {
-            $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>Error de conexión al servidor</div>');
         });
     }
 

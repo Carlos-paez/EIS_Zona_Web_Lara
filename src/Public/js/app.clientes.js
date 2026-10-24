@@ -2,17 +2,27 @@ $(function () {
     var API = '?pagina=clientes&action=';
 
     function refrescarKPI() {
-        $.getJSON(API + 'kpis', function (r) {
-            if (!r.success) return;
-            $('#kpi-total').text(r.data.total);
-        }).fail(function () {
-            EIS.toast('Error al cargar indicadores', 'red', 'error');
+        $.ajax({
+            url: API + 'kpis',
+            type: 'GET',
+            dataType: 'json',
+            success: function (r) {
+                if (!r.success) return;
+                $('#kpi-total').text(r.data.total);
+            },
+            error: function () {
+                EIS.toast('Error al cargar indicadores', 'red', 'error');
+            }
         });
     }
 
     function refrescarTabla() {
-        $.getJSON(API + 'listar', function (r) {
-            if (!r.success) return;
+        $.ajax({
+            url: API + 'listar',
+            type: 'GET',
+            dataType: 'json',
+            success: function (r) {
+                if (!r.success) return;
 
             var tbody = $('#tabla-clientes tbody');
             tbody.empty();
@@ -45,8 +55,10 @@ $(function () {
 
             $('.tooltipped').tooltip();
             EIS.datatableRefresh('#tabla-clientes');
-        }).fail(function () {
+        },
+        error: function () {
             EIS.toast('Error al cargar clientes', 'red', 'error');
+        }
         });
     }
 
@@ -70,21 +82,27 @@ $(function () {
 
     $(document).on('click', '.btn-editar-cliente', function () {
         var id = $(this).data('id');
-        $.getJSON(API + 'detalle&id=' + id, function (r) {
-            if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
-            EIS.limpiarErroresFormulario('#form-cliente');
-            var c = r.data;
-            $('#cliente-id').val(c.id);
-            $('#cliente-cedula').val(c.cedula);
-            $('#cliente-nombre').val(c.nombre);
-            $('#cliente-apellido').val(c.apellido);
-            $('#cliente-direccion').val(c.direccion);
-            $('#cliente-telefono').val(c.telefono);
-            $('#modal-cliente-title').text('Editar Cliente: ' + c.nombre + ' ' + c.apellido);
-            M.updateTextFields();
-            $('#modal-cliente').modal('open');
-        }).fail(function () {
-            EIS.toast('Error de conexión', 'red', 'error');
+        $.ajax({
+            url: API + 'detalle&id=' + id,
+            type: 'GET',
+            dataType: 'json',
+            success: function (r) {
+                if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
+                EIS.limpiarErroresFormulario('#form-cliente');
+                var c = r.data;
+                $('#cliente-id').val(c.id);
+                $('#cliente-cedula').val(c.cedula);
+                $('#cliente-nombre').val(c.nombre);
+                $('#cliente-apellido').val(c.apellido);
+                $('#cliente-direccion').val(c.direccion);
+                $('#cliente-telefono').val(c.telefono);
+                $('#modal-cliente-title').text('Editar Cliente: ' + c.nombre + ' ' + c.apellido);
+                M.updateTextFields();
+                $('#modal-cliente').modal('open');
+            },
+            error: function () {
+                EIS.toast('Error de conexión', 'red', 'error');
+            }
         });
     });
 
@@ -98,17 +116,24 @@ $(function () {
 
         var id = $('#cliente-id').val();
         var accion = id ? 'actualizar' : 'crear';
-        $.post(API + accion, $form.serialize(), function (r) {
-            if (r.success) {
-                EIS.toast(r.message, 'green', 'check_circle');
-                $('#modal-cliente').modal('close');
-                refrescarKPI();
-                refrescarTabla();
-            } else {
-                EIS.mostrarErroresFormulario($form, r);
+        $.ajax({
+            url: API + accion,
+            type: 'POST',
+            data: $form.serialize(),
+            dataType: 'json',
+            success: function (r) {
+                if (r.success) {
+                    EIS.toast(r.message, 'green', 'check_circle');
+                    $('#modal-cliente').modal('close');
+                    refrescarKPI();
+                    refrescarTabla();
+                } else {
+                    EIS.mostrarErroresFormulario($form, r);
+                }
+            },
+            error: function () {
+                EIS.toast('Error de conexión', 'red', 'error');
             }
-        }, 'json').fail(function () {
-            EIS.toast('Error de conexión', 'red', 'error');
         });
     });
 
@@ -116,16 +141,23 @@ $(function () {
         var id = $(this).data('id');
         var nombre = $(this).data('nombre');
         if (confirm('¿Eliminar el cliente "' + nombre + '"?\nNota: No se puede eliminar si tiene asesorías, ventas o sesiones asociadas.')) {
-            $.post(API + 'eliminar', { id: id }, function (r) {
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
-                    refrescarKPI();
-                    refrescarTabla();
-                } else {
-                    EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+            $.ajax({
+                url: API + 'eliminar',
+                type: 'POST',
+                data: { id: id },
+                dataType: 'json',
+                success: function (r) {
+                    if (r.success) {
+                        EIS.toast(r.message, 'green', 'check_circle');
+                        refrescarKPI();
+                        refrescarTabla();
+                    } else {
+                        EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                    }
+                },
+                error: function () {
+                    EIS.toast('Error de conexión', 'red', 'error');
                 }
-            }, 'json').fail(function () {
-                EIS.toast('Error de conexión', 'red', 'error');
             });
         }
     });

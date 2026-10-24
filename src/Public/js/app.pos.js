@@ -467,24 +467,31 @@ $(function () {
         var $btn = $('#procesarVenta');
         $btn.prop('disabled', true);
 
-        $.post(API + 'registrar', $form.serialize() + '&items=' + encodeURIComponent(JSON.stringify(items)), function (r) {
-            $btn.prop('disabled', false);
-            if (r.success) {
-                EIS.toast(r.message || '¡Venta registrada!', 'green', 'paid');
-                posCart = [];
-                posTotal = 0;
-                actualizarPosUI();
-                renderProductos();
-                limpiarClienteForm();
-                $('#posCartModal').modal('close');
-                cargarProductos();
-                cargarClientes();
-            } else {
-                EIS.mostrarErroresFormulario($form, r);
+        $.ajax({
+            url: API + 'registrar',
+            type: 'POST',
+            data: $form.serialize() + '&items=' + encodeURIComponent(JSON.stringify(items)),
+            dataType: 'json',
+            success: function (r) {
+                $btn.prop('disabled', false);
+                if (r.success) {
+                    EIS.toast(r.message || '¡Venta registrada!', 'green', 'paid');
+                    posCart = [];
+                    posTotal = 0;
+                    actualizarPosUI();
+                    renderProductos();
+                    limpiarClienteForm();
+                    $('#posCartModal').modal('close');
+                    cargarProductos();
+                    cargarClientes();
+                } else {
+                    EIS.mostrarErroresFormulario($form, r);
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false);
+                EIS.toast('Error de conexión', 'red', 'error');
             }
-        }, 'json').fail(function () {
-            $btn.prop('disabled', false);
-            EIS.toast('Error de conexión', 'red', 'error');
         });
     });
 

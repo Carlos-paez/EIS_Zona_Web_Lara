@@ -127,7 +127,12 @@ $(function () {
 
         var id = $('#proveedor-id').val();
         var accion = id ? 'actualizar' : 'crear';
-        $.post(API + accion, $form.serialize(), function (r) {
+        $.ajax({
+            url: API + accion,
+            type: 'POST',
+            data: $form.serialize(),
+            dataType: 'json',
+            success: function (r) {
             if (r.success) {
                 EIS.toast(r.message, 'green', 'check_circle');
                 $('#modal-proveedor').modal('close');
@@ -136,8 +141,10 @@ $(function () {
             } else {
                 EIS.mostrarErroresFormulario($form, r);
             }
-        }, 'json').fail(function () {
+        },
+        error: function () {
             EIS.toast('Error de conexión', 'red', 'error');
+        }
         });
     });
 
@@ -146,16 +153,23 @@ $(function () {
         var id = $(this).data('id');
         var nombre = $(this).data('nombre');
         if (confirm('Eliminar el proveedor "' + nombre + '"?\nNota: No se puede eliminar si tiene solicitudes asociadas.')) {
-            $.post(API + 'eliminar', { id: id }, function (r) {
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
-                    refrescarKPI();
-                    refrescarTabla();
-                } else {
-                    EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+            $.ajax({
+                url: API + 'eliminar',
+                type: 'POST',
+                data: { id: id },
+                dataType: 'json',
+                success: function (r) {
+                    if (r.success) {
+                        EIS.toast(r.message, 'green', 'check_circle');
+                        refrescarKPI();
+                        refrescarTabla();
+                    } else {
+                        EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                    }
+                },
+                error: function () {
+                    EIS.toast('Error de conexión', 'red', 'error');
                 }
-            }, 'json').fail(function () {
-                EIS.toast('Error de conexión', 'red', 'error');
             });
         }
     });

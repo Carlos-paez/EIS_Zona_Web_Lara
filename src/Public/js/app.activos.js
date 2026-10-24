@@ -2,21 +2,31 @@ $(function () {
     var API = '?pagina=activos&action=';
 
     function refrescarKPI() {
-        $.getJSON(API + 'kpis', function (r) {
-            if (!r.success) return;
-            var d = r.data || {};
-            $('#kpi-total').text(d.total || 0);
-            $('#kpi-ciber').text(d.ciber || 0);
-            $('#kpi-ocupados').text(d.ocupados || 0);
-            $('#kpi-inactivos').text(d.inactivos || 0);
-        }).fail(function () {
-            EIS.toast('Error al cargar indicadores', 'red', 'error');
+        $.ajax({
+            url: API + 'kpis',
+            type: 'GET',
+            dataType: 'json',
+            success: function (r) {
+                if (!r.success) return;
+                var d = r.data || {};
+                $('#kpi-total').text(d.total || 0);
+                $('#kpi-ciber').text(d.ciber || 0);
+                $('#kpi-ocupados').text(d.ocupados || 0);
+                $('#kpi-inactivos').text(d.inactivos || 0);
+            },
+            error: function () {
+                EIS.toast('Error al cargar indicadores', 'red', 'error');
+            }
         });
     }
 
     function refrescarTabla() {
-        $.getJSON(API + 'listar', function (r) {
-            if (!r.success) return;
+        $.ajax({
+            url: API + 'listar',
+            type: 'GET',
+            dataType: 'json',
+            success: function (r) {
+                if (!r.success) return;
 
             var tbody = $('#tabla-activos tbody');
             tbody.empty();
@@ -55,8 +65,10 @@ $(function () {
 
             $('.tooltipped').tooltip();
             EIS.datatableRefresh('#tabla-activos');
-        }).fail(function () {
+        },
+        error: function () {
             EIS.toast('Error al cargar activos', 'red', 'error');
+        }
         });
     }
 
@@ -85,22 +97,28 @@ $(function () {
 
     $(document).on('click', '.btn-editar-activo', function () {
         var id = $(this).data('id');
-        $.getJSON(API + 'detalle&id=' + id, function (r) {
-            if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
-            EIS.limpiarErroresFormulario('#form-activo');
-            var a = r.data;
-            $('#activo-id').val(a.id);
-            $('#activo-marca').val(a.marca);
-            $('#activo-descripcion').val(a.descripcion);
-            $('#activo-tipo').val(String(a.tipo_activo_id));
-            M.FormSelect.init($('#activo-tipo'));
-            $('#activo-activa').prop('checked', a.activa == 1);
-            $('#activo-ciber').prop('checked', a.is_ciber == 1);
-            $('#modal-activo-title').text('Editar Activo: ' + a.marca);
-            M.updateTextFields();
-            $('#modal-activo').modal('open');
-        }).fail(function () {
-            EIS.toast('Error de conexión', 'red', 'error');
+        $.ajax({
+            url: API + 'detalle&id=' + id,
+            type: 'GET',
+            dataType: 'json',
+            success: function (r) {
+                if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
+                EIS.limpiarErroresFormulario('#form-activo');
+                var a = r.data;
+                $('#activo-id').val(a.id);
+                $('#activo-marca').val(a.marca);
+                $('#activo-descripcion').val(a.descripcion);
+                $('#activo-tipo').val(String(a.tipo_activo_id));
+                M.FormSelect.init($('#activo-tipo'));
+                $('#activo-activa').prop('checked', a.activa == 1);
+                $('#activo-ciber').prop('checked', a.is_ciber == 1);
+                $('#modal-activo-title').text('Editar Activo: ' + a.marca);
+                M.updateTextFields();
+                $('#modal-activo').modal('open');
+            },
+            error: function () {
+                EIS.toast('Error de conexión', 'red', 'error');
+            }
         });
     });
 
@@ -113,17 +131,24 @@ $(function () {
 
         var id = $('#activo-id').val();
         var accion = id ? 'actualizar' : 'crear';
-        $.post(API + accion, $form.serialize(), function (r) {
-            if (r.success) {
-                EIS.toast(r.message, 'green', 'check_circle');
-                $('#modal-activo').modal('close');
-                refrescarKPI();
-                refrescarTabla();
-            } else {
-                EIS.mostrarErroresFormulario($form, r);
+        $.ajax({
+            url: API + accion,
+            type: 'POST',
+            data: $form.serialize(),
+            dataType: 'json',
+            success: function (r) {
+                if (r.success) {
+                    EIS.toast(r.message, 'green', 'check_circle');
+                    $('#modal-activo').modal('close');
+                    refrescarKPI();
+                    refrescarTabla();
+                } else {
+                    EIS.mostrarErroresFormulario($form, r);
+                }
+            },
+            error: function () {
+                EIS.toast('Error de conexión', 'red', 'error');
             }
-        }, 'json').fail(function () {
-            EIS.toast('Error de conexión', 'red', 'error');
         });
     });
 
@@ -131,16 +156,23 @@ $(function () {
         var id = $(this).data('id');
         var nombre = $(this).data('nombre');
         if (confirm('¿Eliminar el activo "' + nombre + '"?\nNota: No se puede eliminar si tiene sesiones de cybercafé asociadas.')) {
-            $.post(API + 'eliminar', { id: id }, function (r) {
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
-                    refrescarKPI();
-                    refrescarTabla();
-                } else {
-                    EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+            $.ajax({
+                url: API + 'eliminar',
+                type: 'POST',
+                data: { id: id },
+                dataType: 'json',
+                success: function (r) {
+                    if (r.success) {
+                        EIS.toast(r.message, 'green', 'check_circle');
+                        refrescarKPI();
+                        refrescarTabla();
+                    } else {
+                        EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                    }
+                },
+                error: function () {
+                    EIS.toast('Error de conexión', 'red', 'error');
                 }
-            }, 'json').fail(function () {
-                EIS.toast('Error de conexión', 'red', 'error');
             });
         }
     });
