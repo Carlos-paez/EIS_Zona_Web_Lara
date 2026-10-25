@@ -88,9 +88,9 @@ class VentaController extends BaseController
         }
 
         $datos = $this->validarCampos([
-            'ciudadano' => ['label' => 'nombre del cliente', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => Validator::MAX_NOMBRE, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre del cliente contiene caracteres no permitidos'],
+            'ciudadano' => ['label' => 'nombre del cliente', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => Validator::MAX_NOMBRE, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El nombre del cliente contiene caracteres no permitidos'],
             'cedula'    => ['label' => 'cédula', 'type' => 'cedula'],
-            'direccion' => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => Validator::MAX_DIRECCION],
+            'direccion' => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => Validator::MAX_DIRECCION, 'pattern' => Validator::patron('aplicacion.direccion'), 'patternMessage' => 'La dirección contiene caracteres no permitidos'],
             'telefono'  => ['label' => 'teléfono', 'type' => 'telefono'],
         ]);
 

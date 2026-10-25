@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Model;
+use App\Core\Validator;
 use PDO;
 
 class Usuario extends Model
@@ -44,7 +45,7 @@ class Usuario extends Model
         $this->validateNotEmpty($userName, 'nombre de usuario');
         $this->validateMinLength($userName, 'nombre de usuario', self::MIN_USERNAME);
         $this->validateLength($userName, 'nombre de usuario', self::MAX_USERNAME);
-        $this->validatePattern($userName, '/^[A-Za-z0-9][A-Za-z0-9_.\-]{0,49}$/', 'El nombre de usuario solo puede contener letras, números, puntos, guiones y guiones bajos');
+        $this->validatePattern($userName, Validator::patron('texto_y_personas.nombre_usuario'), 'El nombre de usuario solo puede contener letras, números, puntos, guiones y guiones bajos');
         $this->userName = $userName;
     }
 

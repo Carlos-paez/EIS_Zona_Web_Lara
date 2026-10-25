@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Core\Logger;
 use App\Core\Model;
 use App\Core\Permisos;
+use App\Core\Validator;
 use PDO;
 
 class Rol extends Model
@@ -41,6 +42,10 @@ class Rol extends Model
     {
         $descripcion = $this->sanitizeString($descripcion);
         $this->validateLength($descripcion, 'descripción', self::MAX_DESCRIPCION);
+        $this->validarSinControl($descripcion, 'descripción');
+        if ($descripcion !== '') {
+            $this->validatePattern($descripcion, Validator::patron('aplicacion.descripcion'), 'La descripción contiene caracteres no permitidos');
+        }
         $this->descripcion = $descripcion;
     }
 
@@ -50,6 +55,7 @@ class Rol extends Model
         $this->validateNotEmpty($nombreRol, 'nombre de rol');
         $this->validateMinLength($nombreRol, 'nombre de rol', self::MIN_NOMBRE_ROL);
         $this->validateLength($nombreRol, 'nombre de rol', self::MAX_NOMBRE_ROL);
+        $this->validatePattern($nombreRol, Validator::patron('aplicacion.nombre_rol'), 'El nombre del rol contiene caracteres no permitidos');
         $this->nombreRol = $nombreRol;
     }
 

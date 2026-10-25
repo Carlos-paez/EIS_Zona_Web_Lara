@@ -4,6 +4,7 @@ namespace App\Models;
 
 // Se importa la clase Model del núcleo de la aplicación
 use App\Core\Model;
+use App\Core\Validator;
 use PDO;
 
 /**
@@ -55,7 +56,7 @@ class Asesoria extends Model
         $this->validateNotEmpty($cedula, 'cédula');
         $this->validateMinLength($cedula, 'cédula', self::MIN_CEDULA);
         $this->validateLength($cedula, 'cédula', self::MAX_CEDULA);
-        $this->validatePattern($cedula, '/^[0-9A-Za-z][0-9A-Za-z.\-\s]{3,18}[0-9A-Za-z]$/', 'La cédula no tiene un formato válido');
+        $this->validatePattern($cedula, Validator::patron('identificacion_venezuela.cedula_venezolana'), 'La cédula no tiene un formato válido');
         $this->cedula = $cedula;
     }
 
@@ -109,9 +110,11 @@ class Asesoria extends Model
     public function setDescripcion(string $descripcion): void
     {
         $descripcion = $this->sanitizeString($descripcion);
-        $this->validateNotEmpty($descripcion, 'descripción');
-        $this->validateLength($descripcion, 'descripción', self::MAX_DESCRIPCION);
-        $this->validarSinControl($descripcion, 'descripción');
+        if ($descripcion !== '') {
+            $this->validateLength($descripcion, 'descripción', self::MAX_DESCRIPCION);
+            $this->validarSinControl($descripcion, 'descripción');
+            $this->validatePattern($descripcion, Validator::patron('aplicacion.descripcion'), 'La descripción contiene caracteres no permitidos');
+        }
         $this->descripcion = $descripcion;
     }
 

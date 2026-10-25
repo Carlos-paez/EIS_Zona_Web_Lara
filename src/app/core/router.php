@@ -147,7 +147,7 @@ class Router
     {
         $pagina = $_GET['pagina'] ?? 'login';
 
-        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $pagina)) {
+        if (!is_string($pagina) || !RegexRules::test('aplicacion.pagina_modulo', $pagina)) {
             $pagina = 'login';
         }
 

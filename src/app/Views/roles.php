@@ -134,13 +134,13 @@
                 <!-- Campo: Nombre del rol -->
                 <div class="col s12 input-field">
                     <i class="material-icons prefix">badge</i>
-                    <input type="text" name="nombre" id="rol-nombre" maxlength="50" title="Entre 2 y 50 caracteres" required minlength="2">
+                    <input type="text" name="nombre" id="rol-nombre" maxlength="50" title="Entre 2 y 50 caracteres" required minlength="2" data-validate="nombre_rol">
                     <label for="rol-nombre">Nombre del rol</label>
                 </div>
                 <!-- Campo: Descripción del rol -->
                 <div class="col s12 input-field">
                     <i class="material-icons prefix">description</i>
-                    <textarea name="descripcion" id="rol-descripcion" class="materialize-textarea" maxlength="500"></textarea>
+                    <textarea name="descripcion" id="rol-descripcion" class="materialize-textarea" maxlength="500" data-validate="descripcion"></textarea>
                     <label for="rol-descripcion">Descripción</label>
                 </div>
             </div>

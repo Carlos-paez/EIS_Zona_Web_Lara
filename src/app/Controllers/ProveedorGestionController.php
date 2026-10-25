@@ -92,7 +92,7 @@ class ProveedorGestionController extends BaseController
 
         $datos = $this->validarCampos([
             'rif'      => ['label' => 'RIF', 'type' => 'rif'],
-            'nombre'   => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
+            'nombre'   => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
             'email'    => ['label' => 'email', 'type' => 'email', 'required' => false],
             'telefono' => ['label' => 'teléfono', 'type' => 'telefono'],
         ]);
@@ -130,7 +130,7 @@ class ProveedorGestionController extends BaseController
         $datos = $this->validarCampos([
             'id'       => ['label' => 'ID del proveedor', 'type' => 'id'],
             'rif'      => ['label' => 'RIF', 'type' => 'rif'],
-            'nombre'   => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
+            'nombre'   => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
             'email'    => ['label' => 'email', 'type' => 'email', 'required' => false],
             'telefono' => ['label' => 'teléfono', 'type' => 'telefono'],
         ]);

@@ -1,0 +1,692 @@
+/* =====================================================================
+ * ARCHIVO GENERADO AUTOMÁTICAMENTE. NO EDITAR A MANO.
+ *
+ * Fuente:  regex_validations.json (versión 2.0.0)
+ * Generado: 2026-10-25 17:17:08
+ * Comando: php src/cli/generar_regex_js.php
+ *
+ * Expone window.EIS.Regex con:
+ *   get(clave)             -> regla completa o null
+ *   has(clave)             -> true si la regla existe
+ *   test(clave, valor)     -> true/false
+ *   maxlength(clave)       -> número o null
+ *   minlength(clave)       -> número o null
+ *   mensaje(clave, def)    -> mensaje de la regla
+ *   label(clave, def)      -> etiqueta legible
+ *   all()                  -> objeto completo de reglas
+ *   version()              -> versión del JSON de origen
+ *   clearCache()           -> limpia las expresiones compiladas
+ * ===================================================================== */
+
+(function (global) {
+    'use strict';
+
+    var RULES = {
+        "_meta": {
+            "version": "2.0.0",
+            "descripcion": "Fuente única de expresiones regulares para validación de formularios en PHP y JavaScript.",
+            "generado_js": "src/Public/js/regex_validations.js (generado con: php src/cli/generar_regex_js.php)",
+            "uso_php": "App\\Core\\RegexRules::test('contacto.email', $valor); Validator::patron('contacto.email') devuelve el patrón PCRE listo para preg_match().",
+            "uso_js": "EIS.Regex.test('contacto.email', valor); EIS.Regex.get('contacto.email').maxlength",
+            "notas": [
+                "Los patrones están delimitados con ^ y $ para validar el valor completo, salvo los de detección (p. ej. caracteres de control).",
+                "El flag 'u' se aplica siempre en PHP y JavaScript para tratar el texto como UTF-8.",
+                "La validación del servidor siempre es obligatoria; la validación en JavaScript es solo UX.",
+                "La sección 'aplicacion' contiene reglas específicas de este sistema (EIS Zona Web)."
+            ]
+        },
+        "texto_y_personas": {
+            "nombre_persona": {
+                "label": "Nombre o apellido de persona",
+                "pattern": "^[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+(?:[ '-][A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+)*$",
+                "flags": "u",
+                "minlength": 2,
+                "maxlength": 80,
+                "mensaje": "Ingresa un nombre válido (solo letras, apóstrofes o guiones).",
+                "ejemplo_valido": "Carlos Leomar",
+                "ejemplo_invalido": "carlos123"
+            },
+            "nombre_completo": {
+                "label": "Nombre completo (mínimo dos palabras)",
+                "pattern": "^[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+(?:[ '-][A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+){1,4}$",
+                "flags": "u",
+                "minlength": 5,
+                "maxlength": 120,
+                "mensaje": "Ingresa el nombre completo (nombre y apellido).",
+                "ejemplo_valido": "Carlos Leomar Paez Guerra"
+            },
+            "texto_alfabetico": {
+                "label": "Solo letras y espacios",
+                "pattern": "^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?: [A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)*$",
+                "flags": "u",
+                "maxlength": 255,
+                "mensaje": "Solo se permiten letras y espacios."
+            },
+            "texto_alfanumerico": {
+                "label": "Letras, números y espacios",
+                "pattern": "^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ]+(?: [A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ]+)*$",
+                "flags": "u",
+                "maxlength": 255,
+                "mensaje": "Solo se permiten letras, números y espacios."
+            },
+            "nombre_usuario": {
+                "label": "Usuario: letras, números, punto, guion o guion bajo",
+                "pattern": "^(?=.{3,50}$)(?!.*[._-]{2})[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$",
+                "flags": "u",
+                "minlength": 3,
+                "maxlength": 50,
+                "mensaje": "El usuario debe tener entre 3 y 50 caracteres y solo puede usar letras, números, punto, guion o guion bajo (sin repetirlos).",
+                "ejemplo_valido": "carlos.paez-01",
+                "ejemplo_invalido": "carlos..paez"
+            },
+            "iniciales": {
+                "label": "Iniciales de 2 a 5 letras",
+                "pattern": "^[A-ZÁÉÍÓÚÜÑ]{2,5}$",
+                "flags": "u",
+                "mensaje": "Ingresa entre 2 y 5 iniciales en mayúsculas."
+            }
+        },
+        "contacto": {
+            "email": {
+                "label": "Correo electrónico",
+                "pattern": "^(?!.*\\.\\.)(?!^[.-])[A-Za-z0-9](?:[A-Za-z0-9._%+-]{0,62}[A-Za-z0-9])?@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,63}$",
+                "flags": "u",
+                "maxlength": 254,
+                "mensaje": "Ingresa un correo electrónico válido (ej.: usuario@dominio.com).",
+                "ejemplo_valido": "usuario.nombre+tag@sub.dominio.com",
+                "ejemplo_invalido": "usuario..doble@dominio.com"
+            },
+            "email_simple": {
+                "label": "Correo electrónico básico",
+                "pattern": "^[^@\\s]+@[^@\\s]+\\.[A-Za-z]{2,}$",
+                "flags": "u",
+                "maxlength": 254,
+                "mensaje": "Ingresa un correo electrónico válido."
+            },
+            "telefono_flexible": {
+                "label": "Teléfono venezolano (fijo o móvil)",
+                "pattern": "^(?:(?:\\+?58|0058)[\\s.-]?)?\\(?0?(?:2\\d{2}|4\\d{2})\\)?[\\s.-]?\\d{3}[\\s.-]?\\d{4}$",
+                "flags": "u",
+                "minlength": 10,
+                "maxlength": 22,
+                "mensaje": "Ingresa un teléfono válido (ej.: 0412-1234567 o 0212-1234567).",
+                "ejemplo_valido": "0412-1234567"
+            },
+            "telefono_venezuela": {
+                "label": "Teléfono móvil venezolano",
+                "pattern": "^(?:(?:\\+?58|0058)[\\s.-]?)?\\(?0?4\\d{2}\\)?[\\s.-]?\\d{3}[\\s.-]?\\d{4}$",
+                "flags": "u",
+                "minlength": 10,
+                "maxlength": 22,
+                "mensaje": "Ingresa un teléfono móvil válido (ej.: 0414-1234567).",
+                "ejemplo_valido": "0414-1234567"
+            },
+            "telefono_fijo_venezuela": {
+                "label": "Teléfono fijo venezolano",
+                "pattern": "^(?:(?:\\+?58|0058)[\\s.-]?)?\\(?0?2\\d{2}\\)?[\\s.-]?\\d{3}[\\s.-]?\\d{4}$",
+                "flags": "u",
+                "minlength": 10,
+                "maxlength": 22,
+                "mensaje": "Ingresa un teléfono fijo válido (ej.: 0212-1234567).",
+                "ejemplo_valido": "0212-1234567"
+            },
+            "telefono_internacional": {
+                "label": "Teléfono internacional E.164",
+                "pattern": "^\\+[1-9]\\d{7,14}$",
+                "maxlength": 16,
+                "mensaje": "Ingresa un teléfono internacional que inicie con + y el código de país.",
+                "ejemplo_valido": "+584141234567"
+            },
+            "telefono_generico": {
+                "label": "Teléfono con formato flexible",
+                "pattern": "^\\+?[0-9]{1,3}[\\s.-]?(?:\\([0-9]{2,4}\\)[\\s.-]?)?[0-9]{3,4}(?:[\\s.-]?[0-9]{3,4}){1,2}$",
+                "maxlength": 22,
+                "mensaje": "Ingresa un teléfono válido con números y los signos + - ( ) ."
+            },
+            "whatsapp": {
+                "label": "Número de WhatsApp internacional",
+                "pattern": "^\\+[1-9]\\d{7,14}$",
+                "maxlength": 16,
+                "mensaje": "Ingresa el WhatsApp con código de país (ej.: +584141234567)."
+            },
+            "sitio_web": {
+                "label": "URL HTTP o HTTPS",
+                "pattern": "^https?:\\/\\/(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,63}(?::\\d{1,5})?(?:[\\/?#][^\\s]*)?$",
+                "flags": "u",
+                "maxlength": 2048,
+                "mensaje": "Ingresa una URL válida que inicie con http:// o https://.",
+                "ejemplo_valido": "https://www.ejemplo.com/ruta?query=1"
+            },
+            "dominio": {
+                "label": "Nombre de dominio",
+                "pattern": "^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,63}$",
+                "flags": "u",
+                "maxlength": 253,
+                "mensaje": "Ingresa un dominio válido (ej.: ejemplo.com)."
+            }
+        },
+        "identificacion_venezuela": {
+            "cedula_venezolana": {
+                "label": "Cédula venezolana",
+                "pattern": "^(?:[VEJPG][-.\\s]?)?(?:\\d{5,9}|\\d{1,2}\\.\\d{3}\\.\\d{3})$",
+                "flags": "iu",
+                "minlength": 5,
+                "maxlength": 14,
+                "mensaje": "Ingresa una cédula válida (ej.: V-12345678 o 12345678).",
+                "ejemplo_valido": "V-12345678",
+                "ejemplo_invalido": "V-12"
+            },
+            "rif_venezolano": {
+                "label": "RIF venezolano",
+                "pattern": "^(?:[VEJPG][-.\\s]?)?\\d{7,9}-?\\d$",
+                "flags": "iu",
+                "minlength": 8,
+                "maxlength": 14,
+                "mensaje": "Ingresa un RIF válido (ej.: J-12345678-9).",
+                "ejemplo_valido": "J-12345678-9"
+            },
+            "pasaporte": {
+                "label": "Pasaporte genérico",
+                "pattern": "^[A-Z]{1,2}\\d{6,9}$",
+                "flags": "iu",
+                "minlength": 7,
+                "maxlength": 11,
+                "mensaje": "Ingresa un pasaporte válido (1 o 2 letras y 6 a 9 números)."
+            }
+        },
+        "fechas_y_horas": {
+            "fecha_iso": {
+                "label": "Fecha ISO 8601 YYYY-MM-DD",
+                "pattern": "^\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])$",
+                "mensaje": "Usa una fecha válida en formato AAAA-MM-DD.",
+                "ejemplo_valido": "2026-10-25"
+            },
+            "fecha_latina": {
+                "label": "Fecha DD/MM/YYYY",
+                "pattern": "^(?:0[1-9]|[12]\\d|3[01])\\/(?:0[1-9]|1[0-2])\\/\\d{4}$",
+                "mensaje": "Usa una fecha válida en formato DD/MM/AAAA.",
+                "ejemplo_valido": "25/10/2026"
+            },
+            "fecha_hora_iso": {
+                "label": "Fecha y hora ISO YYYY-MM-DD HH:MM",
+                "pattern": "^\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01]) (?:[01]\\d|2[0-3]):[0-5]\\d$",
+                "mensaje": "Usa una fecha y hora válida en formato AAAA-MM-DD HH:MM.",
+                "ejemplo_valido": "2026-10-25 12:30"
+            },
+            "hora_24": {
+                "label": "Hora de 24 horas HH:MM",
+                "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
+                "mensaje": "Usa una hora válida en formato HH:MM (24 horas).",
+                "ejemplo_valido": "23:59"
+            },
+            "hora_12": {
+                "label": "Hora de 12 horas con AM/PM",
+                "pattern": "^(?:0?[1-9]|1[0-2]):[0-5]\\d\\s?(?:AM|PM|am|pm)$",
+                "mensaje": "Usa una hora válida con AM/PM (ej.: 12:30 PM).",
+                "ejemplo_valido": "12:30 PM"
+            },
+            "tiempo_hms": {
+                "label": "Tiempo HH:MM:SS",
+                "pattern": "^\\d{1,3}:[0-5]\\d:[0-5]\\d$",
+                "minlength": 7,
+                "maxlength": 9,
+                "mensaje": "Usa el formato HH:MM:SS (ej.: 01:30:00).",
+                "ejemplo_valido": "01:30:00"
+            }
+        },
+        "numerico": {
+            "entero": {
+                "label": "Número entero",
+                "pattern": "^(?:0|[1-9]\\d*)$",
+                "mensaje": "Ingresa un número entero válido."
+            },
+            "entero_negativo": {
+                "label": "Número entero con signo opcional",
+                "pattern": "^[+-]?(?:0|[1-9]\\d*)$",
+                "mensaje": "Ingresa un número entero válido (puede incluir signo)."
+            },
+            "decimal": {
+                "label": "Número decimal con punto",
+                "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d{1,4})?$",
+                "mensaje": "Ingresa un número decimal válido (máximo 4 decimales).",
+                "ejemplo_valido": "123.45"
+            },
+            "decimal_positivo": {
+                "label": "Decimal mayor que cero",
+                "pattern": "^(?:0\\.(?!0+$)\\d{1,4}|[1-9]\\d*(?:\\.\\d{1,4})?)$",
+                "mensaje": "Ingresa un número mayor que cero."
+            },
+            "moneda": {
+                "label": "Monto monetario hasta 2 decimales",
+                "pattern": "^(?:0|[1-9]\\d{0,11})(?:\\.\\d{1,2})?$",
+                "maxlength": 16,
+                "mensaje": "Ingresa un monto válido con hasta 2 decimales.",
+                "ejemplo_valido": "1250.99"
+            },
+            "porcentaje": {
+                "label": "Porcentaje de 0 a 100 con hasta 2 decimales",
+                "pattern": "^(?:100(?:\\.00?)?|\\d{1,2}(?:\\.\\d{1,2})?)$",
+                "mensaje": "Ingresa un porcentaje entre 0 y 100 (máximo 2 decimales).",
+                "ejemplo_valido": "87.5"
+            },
+            "codigo_postal": {
+                "label": "Código postal genérico",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9 -]{2,9}$",
+                "maxlength": 10,
+                "mensaje": "Ingresa un código postal válido."
+            },
+            "coordenada_latitud": {
+                "label": "Latitud decimal",
+                "pattern": "^(?:-?(?:90(?:\\.0+)?|[1-8]?\\d(?:\\.\\d{1,8})?))$",
+                "mensaje": "Ingresa una latitud válida entre -90 y 90."
+            },
+            "coordenada_longitud": {
+                "label": "Longitud decimal",
+                "pattern": "^(?:-?(?:180(?:\\.0+)?|(?:1[0-7]\\d|[1-9]?\\d)(?:\\.\\d{1,8})?))$",
+                "mensaje": "Ingresa una longitud válida entre -180 y 180."
+            }
+        },
+        "seguridad": {
+            "password_basica": {
+                "label": "Contraseña de 8 a 72 caracteres",
+                "pattern": "^.{8,72}$",
+                "minlength": 8,
+                "maxlength": 72,
+                "mensaje": "La contraseña debe tener entre 8 y 72 caracteres."
+            },
+            "password_media": {
+                "label": "Contraseña de 8 a 72 caracteres con al menos una letra y un número",
+                "pattern": "^(?=.*[A-Za-z])(?=.*\\d).{8,72}$",
+                "minlength": 8,
+                "maxlength": 72,
+                "mensaje": "La contraseña debe tener entre 8 y 72 caracteres e incluir al menos una letra y un número.",
+                "ejemplo_valido": "ClaveSegura2026"
+            },
+            "password_fuerte": {
+                "label": "Contraseña fuerte: 8+ caracteres, mayúscula, minúscula, número y símbolo",
+                "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9\\s])[^\\s]{8,72}$",
+                "minlength": 8,
+                "maxlength": 72,
+                "mensaje": "La contraseña debe tener entre 8 y 72 caracteres e incluir mayúscula, minúscula, número y símbolo.",
+                "ejemplo_valido": "Clave_Segura-2026"
+            },
+            "password_muy_fuerte": {
+                "label": "Contraseña muy fuerte: 12+ caracteres, mayúscula, minúscula, número y símbolo",
+                "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9\\s])(?!.*(.)\\1{2,})[^\\s]{12,72}$",
+                "minlength": 12,
+                "maxlength": 72,
+                "mensaje": "La contraseña debe tener entre 12 y 72 caracteres, mayúscula, minúscula, número y símbolo, sin caracteres repetidos tres veces."
+            },
+            "password_pin": {
+                "label": "PIN numérico de 4 a 8 dígitos",
+                "pattern": "^\\d{4,8}$",
+                "minlength": 4,
+                "maxlength": 8,
+                "mensaje": "Ingresa un PIN de 4 a 8 dígitos."
+            },
+            "token_hex": {
+                "label": "Token hexadecimal",
+                "pattern": "^[a-fA-F0-9]{16,128}$",
+                "minlength": 16,
+                "maxlength": 128,
+                "mensaje": "El token no tiene un formato hexadecimal válido."
+            },
+            "uuid_v4": {
+                "label": "UUID versión 4",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "flags": "iu",
+                "mensaje": "Ingresa un UUID v4 válido."
+            },
+            "base64": {
+                "label": "Cadena Base64",
+                "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$",
+                "mensaje": "La cadena no tiene un formato Base64 válido."
+            },
+            "jwt": {
+                "label": "Token JWT",
+                "pattern": "^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$",
+                "mensaje": "El token no tiene un formato JWT válido."
+            }
+        },
+        "redes": {
+            "ipv4": {
+                "label": "Dirección IPv4",
+                "pattern": "^(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)$",
+                "mensaje": "Ingresa una dirección IPv4 válida.",
+                "ejemplo_valido": "192.168.1.10"
+            },
+            "ipv4_cidr": {
+                "label": "IPv4 con máscara CIDR",
+                "pattern": "^(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\/(?:[0-2]?\\d|3[0-2])$",
+                "mensaje": "Ingresa una red IPv4 con máscara CIDR válida.",
+                "ejemplo_valido": "192.168.1.0/24"
+            },
+            "ipv6": {
+                "label": "Dirección IPv6",
+                "pattern": "^(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}$",
+                "mensaje": "Ingresa una dirección IPv6 válida.",
+                "nota": "Versión estricta sin abreviaturas ::"
+            },
+            "mac_address": {
+                "label": "Dirección MAC con dos puntos",
+                "pattern": "^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$",
+                "mensaje": "Ingresa una dirección MAC válida (ej.: AA:BB:CC:DD:EE:FF).",
+                "ejemplo_valido": "AA:BB:CC:DD:EE:FF"
+            },
+            "mac_hyphen": {
+                "label": "Dirección MAC con guiones",
+                "pattern": "^([0-9A-Fa-f]{2}-){5}[0-9A-Fa-f]{2}$",
+                "mensaje": "Ingresa una dirección MAC válida con guiones."
+            },
+            "hostname": {
+                "label": "Nombre de host",
+                "pattern": "^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
+                "maxlength": 253,
+                "mensaje": "Ingresa un nombre de host válido."
+            },
+            "puerto": {
+                "label": "Puerto TCP/UDP",
+                "pattern": "^(?:[1-9]\\d{0,3}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5])$",
+                "mensaje": "Ingresa un puerto válido entre 1 y 65535.",
+                "ejemplo_valido": "8080"
+            }
+        },
+        "archivos": {
+            "nombre_archivo_seguro": {
+                "label": "Nombre de archivo seguro",
+                "pattern": "^[A-Za-z0-9._-]{1,100}$",
+                "maxlength": 100,
+                "mensaje": "El nombre del archivo solo admite letras, números, punto, guion y guion bajo.",
+                "nota": "Evita espacios, acentos y rutas."
+            },
+            "extension_imagen": {
+                "label": "Nombre de imagen con extensión permitida",
+                "pattern": "^[A-Za-z0-9._-]+\\.(?:jpg|jpeg|png|gif|webp|svg)$",
+                "flags": "iu",
+                "mensaje": "Selecciona una imagen JPG, PNG, GIF, WEBP o SVG."
+            },
+            "extension_documento": {
+                "label": "Nombre de documento con extensión permitida",
+                "pattern": "^[A-Za-z0-9._-]+\\.(?:pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv)$",
+                "flags": "iu",
+                "mensaje": "Selecciona un documento PDF, Word, Excel, PowerPoint, TXT o CSV."
+            },
+            "ruta_linux_segura": {
+                "label": "Ruta relativa segura en Linux",
+                "pattern": "^(?:[A-Za-z0-9._-]+\\/)*[A-Za-z0-9._-]+$",
+                "mensaje": "La ruta solo puede ser relativa y no puede contener '../'.",
+                "nota": "No acepta rutas absolutas ni ../"
+            }
+        },
+        "desarrollo": {
+            "slug": {
+                "label": "Slug URL",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "mensaje": "Usa solo minúsculas, números y guiones simples.",
+                "ejemplo_valido": "curso-php-mysql"
+            },
+            "hex_color": {
+                "label": "Color hexadecimal de 3, 6 u 8 dígitos",
+                "pattern": "^#(?:[A-Fa-f0-9]{3}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$",
+                "mensaje": "Ingresa un color hexadecimal válido (ej.: #1E90FF).",
+                "ejemplo_valido": "#1E90FF"
+            },
+            "version_semver": {
+                "label": "Versión semántica",
+                "pattern": "^(?:0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+                "mensaje": "Ingresa una versión semántica válida (ej.: 1.4.2).",
+                "ejemplo_valido": "1.4.2-beta.1"
+            },
+            "etiqueta_html_simple": {
+                "label": "Etiqueta HTML básica",
+                "pattern": "^<\\/?[a-zA-Z][a-zA-Z0-9]*(?:\\s[^<>]*)?>$",
+                "mensaje": "La etiqueta HTML no es válida.",
+                "nota": "No usar para sanitizar HTML; usar htmlspecialchars o DOMPurify."
+            },
+            "comando_sql_identifier": {
+                "label": "Identificador SQL seguro",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$",
+                "maxlength": 64,
+                "mensaje": "El identificador SQL no es válido.",
+                "nota": "Útil para validar nombres de tabla o columna; nunca construir SQL concatenando entrada."
+            }
+        },
+        "aplicacion": {
+            "pagina_modulo": {
+                "label": "Nombre de página o módulo del sistema",
+                "pattern": "^[A-Za-z0-9_-]+$",
+                "flags": "u",
+                "maxlength": 100,
+                "mensaje": "El nombre de la página no es válido."
+            },
+            "tabla_sql": {
+                "label": "Nombre de tabla permitido",
+                "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                "flags": "u",
+                "maxlength": 64,
+                "mensaje": "El nombre de la tabla no es válido."
+            },
+            "entero": {
+                "label": "Número entero (con signo opcional)",
+                "pattern": "^-?\\d+$",
+                "mensaje": "Ingresa un número entero válido."
+            },
+            "monto": {
+                "label": "Monto del sistema (máximo 99.999.999,99)",
+                "pattern": "^(?:0|[1-9]\\d{0,7})(?:\\.\\d{1,2})?$",
+                "maxlength": 12,
+                "mensaje": "Ingresa un monto válido con hasta 2 decimales (máximo 99.999.999,99).",
+                "ejemplo_valido": "1250.99"
+            },
+            "termino_busqueda": {
+                "label": "Término de búsqueda",
+                "pattern": "^[\\p{L}\\p{N}\\p{M}\\s.,;:()\\-\\/_%#@+&'\"]+$",
+                "flags": "u",
+                "maxlength": 100,
+                "mensaje": "El término de búsqueda contiene caracteres no permitidos."
+            },
+            "texto_libre": {
+                "label": "Texto libre (nombres, marcas y documentos)",
+                "pattern": "^[\\p{L}\\p{N}\\p{M}\\s.,;:()\\-\\/_&'+°#@%*?!\"]+$",
+                "flags": "u",
+                "minlength": 1,
+                "maxlength": 1000,
+                "mensaje": "El texto contiene caracteres no permitidos."
+            },
+            "descripcion": {
+                "label": "Descripción (texto sin etiquetas HTML)",
+                "pattern": "^[^\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F<>]+$",
+                "flags": "u",
+                "maxlength": 1000,
+                "mensaje": "La descripción contiene caracteres no permitidos (no se admite HTML)."
+            },
+            "direccion": {
+                "label": "Dirección",
+                "pattern": "^[\\p{L}\\p{N}\\p{M}\\s.,;:()\\-\\/#°'\"&+]+$",
+                "flags": "u",
+                "minlength": 3,
+                "maxlength": 500,
+                "mensaje": "La dirección contiene caracteres no permitidos."
+            },
+            "codigo_producto": {
+                "label": "Código de producto",
+                "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9_.\\-\\/#\\s]{0,48}[A-Za-z0-9])?$",
+                "flags": "u",
+                "minlength": 1,
+                "maxlength": 50,
+                "mensaje": "El código solo admite letras, números y los signos . _ - / # (sin espacios al inicio o al final)."
+            },
+            "numero_orden": {
+                "label": "Número de orden",
+                "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._\\-\\/\\s]{0,48}[A-Za-z0-9])?$",
+                "flags": "u",
+                "minlength": 1,
+                "maxlength": 50,
+                "mensaje": "El número de orden contiene caracteres no permitidos."
+            },
+            "tiempo_uso_hms": {
+                "label": "Tiempo de uso HH:MM:SS",
+                "pattern": "^\\d{1,3}:[0-5]\\d:[0-5]\\d$",
+                "minlength": 7,
+                "maxlength": 9,
+                "mensaje": "Usa el formato HH:MM:SS (ej.: 01:30:00)."
+            },
+            "nombre_rol": {
+                "label": "Nombre de rol",
+                "pattern": "^[\\p{L}\\p{N}\\p{M}][\\p{L}\\p{N}\\p{M}\\s.,;:()\\-\\/_&'+°#@%*?!\"]{1,49}$",
+                "flags": "u",
+                "minlength": 2,
+                "maxlength": 50,
+                "mensaje": "El nombre del rol debe tener entre 2 y 50 caracteres y solo admite letras, números y puntuación básica."
+            },
+            "caracteres_control": {
+                "label": "Detección de caracteres de control",
+                "pattern": "[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]",
+                "flags": "u",
+                "mensaje": "El texto contiene caracteres de control no permitidos.",
+                "nota": "Patrón de detección: si coincide, el valor debe rechazarse."
+            }
+        }
+    };
+
+    var cache = Object.create(null);
+
+    function get(clave) {
+        if (typeof clave !== 'string' || clave === '') {
+            return null;
+        }
+
+        var nodo = RULES;
+        var partes = clave.split('.');
+
+        for (var i = 0; i < partes.length; i++) {
+            if (!nodo || typeof nodo !== 'object' || !Object.prototype.hasOwnProperty.call(nodo, partes[i])) {
+                return null;
+            }
+            nodo = nodo[partes[i]];
+        }
+
+        return (nodo && typeof nodo === 'object') ? nodo : null;
+    }
+
+    function has(clave) {
+        var regla = get(clave);
+        return !!(regla && typeof regla.pattern === 'string' && regla.pattern !== '');
+    }
+
+    function normalizarFlags(flags) {
+        var permitidos = 'imsu';
+        var salida = '';
+        var texto = (typeof flags === 'string') ? flags : '';
+
+        for (var i = 0; i < texto.length; i++) {
+            var flag = texto.charAt(i).toLowerCase();
+            if (permitidos.indexOf(flag) !== -1 && salida.indexOf(flag) === -1) {
+                salida += flag;
+            }
+        }
+
+        // Los patrones del proyecto son UTF-8.
+        if (salida.indexOf('u') === -1) {
+            salida += 'u';
+        }
+
+        return salida;
+    }
+
+    function compilar(clave) {
+        if (cache[clave]) {
+            return cache[clave];
+        }
+
+        var regla = get(clave);
+        if (!regla || typeof regla.pattern !== 'string' || regla.pattern === '') {
+            return null;
+        }
+
+        // Los patrones del JSON ya están anclados con ^ y $, igual que en PHP.
+        var regex = new RegExp(regla.pattern, normalizarFlags(regla.flags));
+        cache[clave] = regex;
+        return regex;
+    }
+
+    function test(clave, valor) {
+        var regex = compilar(clave);
+        if (!regex) {
+            return false;
+        }
+
+        var texto = (valor === null || valor === undefined) ? '' : String(valor);
+        return regex.test(texto);
+    }
+
+    function enteroDe(clave, propiedad) {
+        var regla = get(clave);
+        if (!regla) {
+            return null;
+        }
+
+        var valor = regla[propiedad];
+        if (typeof valor === 'number' && isFinite(valor)) {
+            return valor;
+        }
+        if (typeof valor === 'string' && /^\d+$/.test(valor)) {
+            return parseInt(valor, 10);
+        }
+        return null;
+    }
+
+    function maxlength(clave) {
+        return enteroDe(clave, 'maxlength');
+    }
+
+    function minlength(clave) {
+        return enteroDe(clave, 'minlength');
+    }
+
+    function label(clave, porDefecto) {
+        var regla = get(clave);
+        if (regla && typeof regla.label === 'string' && regla.label !== '') {
+            return regla.label;
+        }
+        return (porDefecto !== undefined) ? porDefecto : clave;
+    }
+
+    function mensaje(clave, porDefecto) {
+        var regla = get(clave);
+        if (regla && typeof regla.mensaje === 'string' && regla.mensaje !== '') {
+            return regla.mensaje;
+        }
+        if (porDefecto !== undefined) {
+            return porDefecto;
+        }
+        var etiqueta = label(clave, clave);
+        return 'El campo "' + etiqueta + '" no es válido.';
+    }
+
+    function all() {
+        return RULES;
+    }
+
+    function version() {
+        return (RULES._meta && RULES._meta.version) ? String(RULES._meta.version) : '2.0.0';
+    }
+
+    function clearCache() {
+        cache = Object.create(null);
+    }
+
+    global.EIS = global.EIS || {};
+    global.EIS.Regex = {
+        get: get,
+        has: has,
+        test: test,
+        maxlength: maxlength,
+        minlength: minlength,
+        mensaje: mensaje,
+        label: label,
+        all: all,
+        version: version,
+        clearCache: clearCache
+    };
+})(typeof window !== 'undefined' ? window : globalThis);

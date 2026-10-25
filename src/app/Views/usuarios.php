@@ -141,12 +141,12 @@ foreach ($usuarios as $u) {
                 </div>
                 <div class="col s12 m6 input-field">
                     <i class="material-icons prefix">email</i>
-                    <input type="email" name="email" id="usuario-email" maxlength="100" required>
+                    <input type="email" name="email" id="usuario-email" maxlength="100" required data-validate="email">
                     <label for="usuario-email">Email</label>
                 </div>
                 <div class="col s12 m6 input-field">
                     <i class="material-icons prefix">lock</i>
-                    <input type="password" name="password" id="usuario-password" autocomplete="new-password" minlength="8" maxlength="255" data-validate="password">
+                    <input type="password" name="password" id="usuario-password" autocomplete="new-password" minlength="8" maxlength="72" data-validate="password">
                     <label for="usuario-password" id="label-password">Contraseña (mín. 8 caracteres)</label>
                 </div>
                 <div class="col s12 m6 input-field">

@@ -429,12 +429,12 @@ $totalProductos = count($productos);
             <div class="row">
                 <!-- Campo: Codigo del producto (obligatorio) -->
                 <div class="input-field col s12 m6">
-                    <input type="text" name="codigo" id="producto-codigo" maxlength="50" required>
+                    <input type="text" name="codigo" id="producto-codigo" maxlength="50" required data-validate="codigo" pattern="^[A-Za-z0-9](?:[A-Za-z0-9_.\-\/#\s]{0,48}[A-Za-z0-9])?$" autocomplete="off">
                     <label for="producto-codigo">Código</label>
                 </div>
                 <!-- Campo: Nombre del producto (obligatorio) -->
                 <div class="input-field col s12 m6">
-                    <input type="text" name="nombre" id="producto-nombre" maxlength="100" title="Entre 2 y 100 caracteres" required minlength="2">
+                    <input type="text" name="nombre" id="producto-nombre" maxlength="100" title="Entre 2 y 100 caracteres" required minlength="2" data-validate="texto">
                     <label for="producto-nombre">Nombre del Producto</label>
                 </div>
             </div>
@@ -442,7 +442,7 @@ $totalProductos = count($productos);
             <div class="row">
                 <!-- Campo: Descripcion (textarea multilinea) -->
                 <div class="input-field col s12">
-                    <textarea name="descripcion" id="producto-descripcion" class="materialize-textarea" style="min-height:60px;" maxlength="1000"></textarea>
+                    <textarea name="descripcion" id="producto-descripcion" class="materialize-textarea" style="min-height:60px;" maxlength="1000" data-validate="descripcion"></textarea>
                     <label for="producto-descripcion">Descripción</label>
                 </div>
             </div>
@@ -457,12 +457,12 @@ $totalProductos = count($productos);
                 </div>
                 <!-- Campo: Stock actual (numero, minimo 0, valor por defecto 0) -->
                 <div class="input-field col s12 m3">
-                    <input type="number" name="stock" id="producto-stock" min="0" value="0" required>
+                    <input type="number" name="stock" id="producto-stock" min="0" max="999999" step="1" value="0" required data-validate="entero">
                     <label for="producto-stock">Stock</label>
                 </div>
                 <!-- Campo: Stock minimo (numero, minimo 1, valor por defecto 5) -->
                 <div class="input-field col s12 m3">
-                    <input type="number" name="stock_minimo" id="producto-stock-minimo" min="1" value="5" required>
+                    <input type="number" name="stock_minimo" id="producto-stock-minimo" min="1" max="999999" step="1" value="5" required data-validate="entero">
                     <label for="producto-stock-minimo">Stock Mínimo</label>
                 </div>
             </div>
@@ -470,12 +470,12 @@ $totalProductos = count($productos);
             <div class="row">
                 <!-- Campo: Costo de compra (numero decimal, paso 0.01, por defecto 0) -->
                 <div class="input-field col s12 m6">
-                    <input type="number" name="costo_compra" id="producto-costo" min="0" step="0.01" value="0">
+                    <input type="number" name="costo_compra" id="producto-costo" min="0" max="99999999.99" step="0.01" value="0" data-validate="moneda">
                     <label for="producto-costo">Costo de Compra ($)</label>
                 </div>
                 <!-- Campo: Precio de venta (obligatorio, numero decimal) -->
                 <div class="input-field col s12 m6">
-                    <input type="number" name="precio_venta" id="producto-precio" min="0.01" step="0.01" value="0" required>
+                    <input type="number" name="precio_venta" id="producto-precio" min="0.01" max="99999999.99" step="0.01" value="0" required data-validate="moneda">
                     <label for="producto-precio">Precio de Venta ($)</label>
                 </div>
             </div>
@@ -503,7 +503,7 @@ $totalProductos = count($productos);
             <form id="form-categoria" data-validate style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:flex-end;">
                 <input type="hidden" name="id" id="categoria-id" value="">
                 <div class="input-field" style="flex:2;min-width:150px;margin:0;">
-                    <input type="text" name="nombre" id="categoria-nombre" maxlength="100" required minlength="2">
+                    <input type="text" name="nombre" id="categoria-nombre" maxlength="100" title="Entre 2 y 100 caracteres" required minlength="2" data-validate="texto">
                     <label for="categoria-nombre">Nombre de la categoría</label>
                 </div>
                 <button type="submit" class="btn waves-effect waves-light green" style="height:44px;border-radius:24px;padding:0 1rem;">

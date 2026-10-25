@@ -103,12 +103,12 @@ $totalClientes = $clienteModel->totalClientes();
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">location_on</i>
-                <input type="text" name="direccion" id="cliente-direccion" maxlength="500">
+                <input type="text" name="direccion" id="cliente-direccion" maxlength="500" data-validate="direccion">
                 <label for="cliente-direccion">Dirección</label>
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">phone</i>
-                <input type="tel" name="telefono" id="cliente-telefono" maxlength="20" minlength="7">
+                <input type="tel" name="telefono" id="cliente-telefono" maxlength="20" minlength="7" data-validate="telefono">
                 <label for="cliente-telefono">Teléfono</label>
             </div>
         </form>

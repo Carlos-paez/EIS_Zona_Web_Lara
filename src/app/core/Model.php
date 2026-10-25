@@ -84,7 +84,7 @@ abstract class Model
 
     protected function validateEmail(string $email): bool
     {
-        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+        return RegexRules::test('contacto.email', $email);
     }
 
     protected function validateMax(float $value, string $field, float $max): void
@@ -111,7 +111,7 @@ abstract class Model
     protected function validateFecha(string $fecha, string $field): void
     {
         $fecha = trim($fecha);
-        if ($fecha === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+        if ($fecha === '' || !RegexRules::test('fechas_y_horas.fecha_iso', $fecha)) {
             throw new \InvalidArgumentException("El campo '$field' no es una fecha válida (use YYYY-MM-DD)");
         }
         if (!checkdate((int)substr($fecha, 5, 2), (int)substr($fecha, 8, 2), (int)substr($fecha, 0, 4))) {
@@ -121,7 +121,7 @@ abstract class Model
 
     protected function validateTelefono(string $telefono, string $field): void
     {
-        if ($telefono !== '' && !preg_match('/^[0-9+\-()\s.]+$/', $telefono)) {
+        if ($telefono !== '' && !RegexRules::test('contacto.telefono_flexible', $telefono)) {
             throw new \InvalidArgumentException("El campo '$field' no tiene un formato válido");
         }
     }
@@ -134,21 +134,21 @@ abstract class Model
         if (mb_strlen($texto) < $min || mb_strlen($texto) > $max) {
             throw new \InvalidArgumentException("El campo '$campo' debe tener entre $min y $max caracteres");
         }
-        if (!preg_match(Validator::PATTERN_TEXTO_LIBRE, $texto)) {
+        if (!RegexRules::test('aplicacion.texto_libre', $texto)) {
             throw new \InvalidArgumentException("El campo '$campo' contiene caracteres no permitidos");
         }
     }
 
     protected function validarSinControl(string $texto, string $campo): void
     {
-        if (preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $texto)) {
+        if (RegexRules::test('aplicacion.caracteres_control', $texto)) {
             throw new \InvalidArgumentException("El campo '$campo' contiene caracteres de control no permitidos");
         }
     }
 
     protected function existeEnTabla(string $tabla, int $id): bool
     {
-        if (!preg_match('/^[a-z_]+$/', $tabla)) {
+        if (!RegexRules::test('aplicacion.tabla_sql', $tabla)) {
             throw new \InvalidArgumentException('Nombre de tabla no válido');
         }
         $id = $this->sanitizeInt($id);

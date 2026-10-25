@@ -124,7 +124,7 @@ $tiposActivo = $activoModel->listarTiposActivo();
             <div class="row" style="margin-bottom:0;">
                 <div class="col s12 m6 input-field" style="margin-bottom:0;">
                     <i class="material-icons prefix">branding_watermark</i>
-                    <input type="text" name="marca" id="activo-marca" maxlength="100" title="Entre 2 y 100 caracteres" required minlength="2">
+                    <input type="text" name="marca" id="activo-marca" maxlength="100" title="Entre 2 y 100 caracteres" required minlength="2" data-validate="texto">
                     <label for="activo-marca">Marca</label>
                 </div>
                 <div class="col s12 m6 input-field" style="margin-bottom:0;">
@@ -140,7 +140,7 @@ $tiposActivo = $activoModel->listarTiposActivo();
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">notes</i>
-                <textarea name="descripcion" id="activo-descripcion" class="materialize-textarea" maxlength="1000"></textarea>
+                <textarea name="descripcion" id="activo-descripcion" class="materialize-textarea" maxlength="1000" data-validate="descripcion"></textarea>
                 <label for="activo-descripcion">Descripción</label>
             </div>
             <div style="display:flex;gap:2.5rem;margin-top:0.5rem;flex-wrap:wrap;">

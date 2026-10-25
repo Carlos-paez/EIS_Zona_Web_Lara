@@ -94,7 +94,7 @@
         <!-- Solicitudes - Menú desplegable con submódulos -->
         <?php if ($puede('gestion_abastecimiento') || $puede('gestion_proveedores')): ?>
         <li class="has-submenu<?php echo in_array($pagina, ['proveedores', 'proveedores-gestion']) ? ' open' : ''; ?>">
-            <a href="javascript:void(0);" class="sidenav-link submenu-parent<?php echo in_array($pagina, ['proveedores', 'proveedores-gestion']) ? ' active' : ''; ?>" onclick="event.preventDefault(); var li=this.closest('.has-submenu'); li.classList.toggle('open'); return false;">
+            <a href="javascript:void(0);" class="sidenav-link submenu-parent<?php echo in_array($pagina, ['proveedores', 'proveedores-gestion']) ? ' active' : ''; ?>">
                 <i class="material-icons left">request_quote</i>
                 <span>Solicitudes</span>
                 <i class="material-icons submenu-arrow" style="position:absolute;right:1rem;">arrow_right</i>
@@ -224,6 +224,8 @@
 
     <!-- Core: funciones compartidas en todas las páginas (namespace EIS, utilidades) -->
     <script src="Public/js/app.core.js"></script>
+    <!-- Regex: patrones generados desde regex_validations.json (fuente única) -->
+    <script src="Public/js/regex_validations.js"></script>
     <!-- Validate: validación de formularios del lado del cliente (lado navegador) -->
     <script src="Public/js/app.validate.js"></script>
     <!-- Init: inicialización de componentes Materialize, reloj, tema oscuro/claro, animaciones -->

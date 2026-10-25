@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Model;
+use App\Core\Validator;
 use PDO;
 
 class Venta extends Model
@@ -54,9 +55,12 @@ class Venta extends Model
         $this->validateNotEmpty($cedula, 'cédula');
         $this->validateLength($cedula, 'cédula', self::MAX_CEDULA);
         $this->validateMinLength($cedula, 'cédula', 5);
-        $this->validatePattern($cedula, '/^[0-9A-Za-z][0-9A-Za-z.\-\s]{3,18}[0-9A-Za-z]$/', 'La cédula no tiene un formato válido');
+        $this->validatePattern($cedula, Validator::patron('identificacion_venezuela.cedula_venezolana'), 'La cédula no tiene un formato válido');
         $this->validateLength($ciudadano, 'nombre del cliente', self::MAX_NOMBRE);
         $this->validateLength($direccion, 'dirección', self::MAX_DIRECCION);
+        if ($direccion !== '') {
+            $this->validatePattern($direccion, Validator::patron('aplicacion.direccion'), 'La dirección contiene caracteres no permitidos');
+        }
         $this->validateLength($telefono, 'teléfono', self::MAX_TELEFONO);
         $this->validateTelefono($telefono, 'teléfono');
 

@@ -87,8 +87,8 @@ class RolController extends BaseController
         }
 
         $datos = $this->validarCampos([
-            'nombre'      => ['label' => 'nombre de rol', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 50],
-            'descripcion' => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 500],
+            'nombre'      => ['label' => 'nombre de rol', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 50, 'pattern' => Validator::patron('aplicacion.nombre_rol'), 'patternMessage' => 'El nombre del rol contiene caracteres no permitidos'],
+            'descripcion' => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 500, 'pattern' => Validator::patron('aplicacion.descripcion'), 'patternMessage' => 'La descripción contiene caracteres no permitidos'],
         ]);
         $nombre_rol  = $datos['nombre'];
         $descripcion = $datos['descripcion'];
@@ -117,8 +117,8 @@ class RolController extends BaseController
 
         $datos = $this->validarCampos([
             'id'          => ['label' => 'ID del rol', 'type' => 'id', 'required' => true],
-            'nombre'      => ['label' => 'nombre de rol', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 50],
-            'descripcion' => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 500],
+            'nombre'      => ['label' => 'nombre de rol', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 50, 'pattern' => Validator::patron('aplicacion.nombre_rol'), 'patternMessage' => 'El nombre del rol contiene caracteres no permitidos'],
+            'descripcion' => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 500, 'pattern' => Validator::patron('aplicacion.descripcion'), 'patternMessage' => 'La descripción contiene caracteres no permitidos'],
         ]);
 
         $id          = $datos['id'];

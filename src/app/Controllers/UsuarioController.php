@@ -121,8 +121,8 @@ class UsuarioController
 
         $datos = Validator::validar($_POST, [
             'user_name' => ['label' => 'nombre de usuario', 'type' => 'username'],
-            'nombre'    => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
-            'apellido'  => ['label' => 'apellido', 'type' => 'texto', 'required' => false, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos'],
+            'nombre'    => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
+            'apellido'  => ['label' => 'apellido', 'type' => 'texto', 'required' => false, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El apellido contiene caracteres no permitidos'],
             'email'     => ['label' => 'email', 'type' => 'email', 'required' => true],
             'password'  => ['label' => 'contraseña', 'type' => 'password', 'required' => true, 'min' => 8, 'complejidad' => true],
             'rol'       => ['label' => 'rol', 'type' => 'entero', 'required' => false, 'min' => 1],
@@ -156,8 +156,8 @@ class UsuarioController
 
         $datos = Validator::validar($_POST, [
             'id'       => ['label' => 'ID del usuario', 'type' => 'id'],
-            'nombre'   => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
-            'apellido' => ['label' => 'apellido', 'type' => 'texto', 'required' => false, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos'],
+            'nombre'   => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
+            'apellido' => ['label' => 'apellido', 'type' => 'texto', 'required' => false, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El apellido contiene caracteres no permitidos'],
             'email'    => ['label' => 'email', 'type' => 'email', 'required' => true],
             'rol'      => ['label' => 'rol', 'type' => 'entero', 'required' => false, 'min' => 1],
             'estatus'  => ['label' => 'estado', 'type' => 'enum', 'allowed' => ['0', '1'], 'required' => true],

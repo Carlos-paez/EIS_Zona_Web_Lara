@@ -98,7 +98,7 @@ $totalProv = $gpModel->totalProveedores();
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">store</i>
-                <input type="text" name="nombre" id="proveedor-nombre" maxlength="100" title="Entre 2 y 100 caracteres" required minlength="2">
+                <input type="text" name="nombre" id="proveedor-nombre" maxlength="100" title="Entre 2 y 100 caracteres" required minlength="2" data-validate="texto">
                 <label for="proveedor-nombre">Nombre</label>
             </div>
             <div class="input-field">
@@ -108,7 +108,7 @@ $totalProv = $gpModel->totalProveedores();
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">phone</i>
-                <input type="tel" name="telefono" id="proveedor-telefono" maxlength="20" minlength="7">
+                <input type="tel" name="telefono" id="proveedor-telefono" maxlength="20" minlength="7" data-validate="telefono">
                 <label for="proveedor-telefono">Teléfono</label>
             </div>
         </form>

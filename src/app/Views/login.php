@@ -210,6 +210,7 @@
     <script src="Public/js/materialize.min.js"></script>
     <!-- Archivo JS principal de la aplicación (funciones globales) -->
     <script src="Public/js/app.core.js"></script>
+    <script src="Public/js/regex_validations.js"></script>
     <script src="Public/js/app.validate.js"></script>
 
     <!-- ================================================================ -->

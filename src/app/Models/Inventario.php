@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Model;
+use App\Core\Validator;
 use PDO;
 
 class Inventario extends Model
@@ -44,7 +45,7 @@ class Inventario extends Model
         $this->validateNotEmpty($codigo, 'código');
         $this->validateMinLength($codigo, 'código', self::MIN_CODIGO);
         $this->validateLength($codigo, 'código', self::MAX_CODIGO);
-        $this->validatePattern($codigo, '/^[A-Za-z0-9][A-Za-z0-9_.\-\/#\s]{0,49}$/', 'El código del producto contiene caracteres no permitidos');
+        $this->validatePattern($codigo, Validator::patron('aplicacion.codigo_producto'), 'El código del producto contiene caracteres no permitidos');
         $this->codigo = $codigo;
     }
 
@@ -71,6 +72,10 @@ class Inventario extends Model
     {
         $descripcion = $this->sanitizeString($descripcion);
         $this->validateLength($descripcion, 'descripción', self::MAX_DESCRIPCION);
+        $this->validarSinControl($descripcion, 'descripción');
+        if ($descripcion !== '') {
+            $this->validatePattern($descripcion, Validator::patron('aplicacion.descripcion'), 'La descripción contiene caracteres no permitidos');
+        }
         $this->descripcion = $descripcion;
     }
 

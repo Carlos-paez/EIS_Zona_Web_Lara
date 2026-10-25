@@ -137,7 +137,7 @@
                 <!-- Nombre completo del cliente -->
                 <div class="input-field col s12 m6">
                     <i class="material-icons prefix">badge</i>
-                    <input type="text" id="posCiudadano" name="ciudadano" maxlength="100" placeholder="Nombre y apellido" required minlength="2">
+                    <input type="text" id="posCiudadano" name="ciudadano" maxlength="100" placeholder="Nombre y apellido" required minlength="2" data-validate="texto">
                     <label for="posCiudadano">Cliente *</label>
                 </div>
                 <!-- Cédula de identidad -->
@@ -149,7 +149,7 @@
                 <!-- Dirección del cliente -->
                 <div class="input-field col s12 m6">
                     <i class="material-icons prefix">location_on</i>
-                    <input type="text" id="posDireccion" name="direccion" maxlength="500" placeholder="Opcional">
+                    <input type="text" id="posDireccion" name="direccion" maxlength="500" placeholder="Opcional" data-validate="direccion">
                     <label for="posDireccion">Dirección</label>
                 </div>
                 <!-- Teléfono del cliente -->

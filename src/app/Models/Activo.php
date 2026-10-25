@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Model;
+use App\Core\Validator;
 use PDO;
 
 class Activo extends Model
@@ -51,9 +52,11 @@ class Activo extends Model
     public function setDescripcion(string $descripcion): void
     {
         $descripcion = $this->sanitizeString($descripcion);
-        $this->validateNotEmpty($descripcion, 'descripción');
-        $this->validateLength($descripcion, 'descripción', self::MAX_DESCRIPCION);
-        $this->validarSinControl($descripcion, 'descripción');
+        if ($descripcion !== '') {
+            $this->validateLength($descripcion, 'descripción', self::MAX_DESCRIPCION);
+            $this->validarSinControl($descripcion, 'descripción');
+            $this->validatePattern($descripcion, Validator::patron('aplicacion.descripcion'), 'La descripción contiene caracteres no permitidos');
+        }
         $this->descripcion = $descripcion;
     }
 

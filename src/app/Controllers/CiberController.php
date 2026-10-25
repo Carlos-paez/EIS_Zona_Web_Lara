@@ -179,9 +179,9 @@ class CiberController
         }
 
         $datos = Validator::validar($_POST, [
-            'ciudadano'  => ['label' => 'ciudadano', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre del ciudadano contiene caracteres no permitidos'],
+            'ciudadano'  => ['label' => 'ciudadano', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El nombre del ciudadano contiene caracteres no permitidos'],
             'cedula'     => ['label' => 'cédula', 'type' => 'cedula'],
-            'direccion'  => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => 500],
+            'direccion'  => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => 500, 'pattern' => Validator::patron('aplicacion.direccion'), 'patternMessage' => 'La dirección contiene caracteres no permitidos'],
             'telefono'   => ['label' => 'teléfono', 'type' => 'telefono'],
             'activo_id'  => ['label' => 'equipo (PC)', 'type' => 'id'],
             'tarifa_id'  => ['label' => 'tarifa', 'type' => 'id'],
@@ -295,8 +295,8 @@ class CiberController
         }
 
         $datos = Validator::validar($_POST, [
-            'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'La marca contiene caracteres no permitidos'],
-            'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000],
+            'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'La marca contiene caracteres no permitidos'],
+            'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000, 'pattern' => Validator::patron('aplicacion.descripcion'), 'patternMessage' => 'La descripción contiene caracteres no permitidos'],
             'tipo_activo_id' => ['label' => 'tipo de PC', 'type' => 'id'],
             'activa'         => ['label' => 'estado', 'type' => 'bool', 'required' => false],
         ]);
@@ -330,8 +330,8 @@ class CiberController
 
         $datos = Validator::validar($_POST, [
             'id'             => ['label' => 'ID de la PC', 'type' => 'id'],
-            'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'La marca contiene caracteres no permitidos'],
-            'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000],
+            'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'La marca contiene caracteres no permitidos'],
+            'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000, 'pattern' => Validator::patron('aplicacion.descripcion'), 'patternMessage' => 'La descripción contiene caracteres no permitidos'],
             'tipo_activo_id' => ['label' => 'tipo de PC', 'type' => 'id'],
             'activa'         => ['label' => 'estado', 'type' => 'bool', 'required' => false],
         ]);

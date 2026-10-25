@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Model;
+use App\Core\Validator;
 use PDO;
 
 class ProveedorGestion extends Model
@@ -41,7 +42,7 @@ class ProveedorGestion extends Model
         $this->validateNotEmpty($rif, 'RIF');
         $this->validateMinLength($rif, 'RIF', self::MIN_RIF);
         $this->validateLength($rif, 'RIF', self::MAX_RIF);
-        $this->validatePattern($rif, '/^[0-9A-Za-z][0-9A-Za-z.\-\s]{3,18}[0-9A-Za-z]$/', 'El RIF no tiene un formato válido');
+        $this->validatePattern($rif, Validator::patron('identificacion_venezuela.rif_venezolano'), 'El RIF no tiene un formato válido');
         $this->rif = $rif;
     }
 
@@ -85,7 +86,6 @@ class ProveedorGestion extends Model
     public function setTelefono(string $telefono): void
     {
         $telefono = $this->sanitizeString($telefono);
-        $this->validateNotEmpty($telefono, 'teléfono');
         $this->validateLength($telefono, 'teléfono', self::MAX_TELEFONO);
         $this->validateTelefono($telefono, 'teléfono');
         $this->telefono = $telefono;

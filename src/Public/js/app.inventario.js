@@ -431,7 +431,37 @@ $(function () {
     // Detecta automáticamente si es creación o edición según si el
     // campo oculto #producto-id tiene un valor.
     // ================================================================
+    // Validación cruzada en tiempo real: precio_venta >= costo_compra
+    function validarMargenEnVivo() {
+        var $costo = $('#producto-costo');
+        var $precio = $('#producto-precio');
+        var costoVal = parseFloat($costo.val()) || 0;
+        var precioVal = parseFloat($precio.val()) || 0;
+
+        if (costoVal > 0 && precioVal > 0 && precioVal < costoVal) {
+            EIS.marcarErrorCampo($precio, 'El precio de venta no puede ser menor al costo de compra ($' + costoVal.toFixed(2) + ').');
+            return false;
+        } else {
+            var msgActual = $precio.siblings('.eis-field-error').text();
+            if (msgActual && msgActual.indexOf('no puede ser menor al costo') !== -1) {
+                var normalError = EIS.validarCampo($precio[0]);
+                if (normalError) EIS.marcarErrorCampo($precio, normalError);
+                else EIS.quitarErrorCampo($precio);
+            }
+            return true;
+        }
+    }
+
+    $(document).on('input change', '#producto-costo, #producto-precio', function () {
+        validarMargenEnVivo();
+    });
+
     $('#form-producto').on('submit', function (e) {
+        if (!validarMargenEnVivo()) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return false;
+        }
         e.preventDefault();
         var $form = $(this);
 

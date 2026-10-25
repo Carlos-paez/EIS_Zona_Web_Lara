@@ -4,6 +4,7 @@ namespace App\Models;
 
 // Se importa la clase Model del núcleo de la aplicación
 use App\Core\Model;
+use App\Core\Validator;
 use PDO;
 
 /**
@@ -51,7 +52,7 @@ class Proveedor extends Model
         $numero = $this->sanitizeString($numero);
         $this->validateNotEmpty($numero, 'número de orden');
         $this->validateLength($numero, 'número de orden', self::MAX_NUMERO);
-        $this->validatePattern($numero, '/^[A-Za-z0-9][A-Za-z0-9._\-\/\s]{0,49}$/', 'El número de orden contiene caracteres no permitidos');
+        $this->validatePattern($numero, Validator::patron('aplicacion.numero_orden'), 'El número de orden contiene caracteres no permitidos');
         $this->numero = $numero;
     }
 

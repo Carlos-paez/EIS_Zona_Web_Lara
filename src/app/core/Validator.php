@@ -43,42 +43,40 @@ final class Validator
     public const MAX_TERMINO_BUSQUEDA   = 100;
 
     // =========================================================
-    //  Patrones estrictos
+    //  Patrones (fuente única: regex_validations.json)
     // =========================================================
-    /** Cédula: alfanumérico con guiones/espacios/puntos, 5-20 caracteres. */
-    public const PATTERN_CEDULA   = '/^[0-9A-Za-z][0-9A-Za-z.\-\s]{3,18}[0-9A-Za-z]$/';
-    /** RIF: alfanumérico con guiones/espacios/puntos, 5-20 caracteres. */
-    public const PATTERN_RIF      = '/^[0-9A-Za-z][0-9A-Za-z.\-\s]{3,18}[0-9A-Za-z]$/';
-    /** Username: alfanumérico con _ . - (inicia con letra o número). */
-    public const PATTERN_USERNAME = '/^[A-Za-z0-9][A-Za-z0-9_.\-]{2,49}$/';
-    /** Código de producto: alfanumérico con _ - . / # (máx. 50). */
-    public const PATTERN_CODIGO    = '/^[A-Za-z0-9][A-Za-z0-9_.\-\/#\s]{0,49}$/';
-    /** Teléfono: dígitos, +, -, paréntesis, espacio, punto. */
-    public const PATTERN_TELEFONO  = '/^[0-9+\-()\s.]+$/';
-    /** Tiempo de uso HH:MM:SS con horas de 1 a 3 dígitos. */
-    public const PATTERN_TIEMPO    = '/^\d{1,3}:\d{2}:\d{2}$/';
-    /** Fecha YYYY-MM-DD (la validez real se comprueba con checkdate). */
-    public const PATTERN_FECHA     = '/^\d{4}-\d{2}-\d{2}$/';
-    /** Número de orden de abastecimiento. */
-    public const PATTERN_NUMERO    = '/^[A-Za-z0-9][A-Za-z0-9._\-\/\s]{0,49}$/';
-    /** Número de tipo literal con letras, números, espacios y puntuación básica. */
-    public const PATTERN_TEXTO_LIBRE = '/^[\p{L}\p{N}\p{M}\s.,;:()\-\/_&\'+°#@%*?!]+$/u';
+    /**
+     * Devuelve el patrón PCRE de una regla del archivo de validaciones.
+     *
+     * @param string $clave Clave con puntos, p. ej. 'contacto.email'.
+     */
+    public static function patron(string $clave): string
+    {
+        return RegexRules::pcre($clave);
+    }
 
     /**
      * Valle estricto de un campo de texto.
      *
      * @param mixed $value  Valor crudo recibido del cliente.
      * @param string $field Nombre legible del campo para los mensajes.
-     * @param array<string,mixed> $opts {required, min, max, pattern, patternMessage}
+     * @param array<string,mixed> $opts {required, min, max, pattern, patternMessage, rule}
      * @return string Valor recortado y validado.
      */
     public static function texto(mixed $value, string $field, array $opts = []): string
     {
         $required = (bool)($opts['required'] ?? false);
-        $min      = (int)($opts['min'] ?? 1);
-        $max      = (int)($opts['max'] ?? PHP_INT_MAX);
+        $ruleKey  = isset($opts['rule']) && is_string($opts['rule']) ? $opts['rule'] : null;
+        $min      = (int)($opts['min'] ?? ($ruleKey !== null ? (RegexRules::minlength($ruleKey) ?? 1) : 1));
+        $max      = (int)($opts['max'] ?? ($ruleKey !== null ? (RegexRules::maxlength($ruleKey) ?? PHP_INT_MAX) : PHP_INT_MAX));
         $pattern  = $opts['pattern'] ?? null;
-        $patternMessage = (string)($opts['patternMessage'] ?? "El campo '$field' contiene caracteres no permitidos");
+        $patternMessage = (string)($opts['patternMessage'] ?? ($ruleKey !== null
+            ? RegexRules::mensaje($ruleKey, "El campo '$field' contiene caracteres no permitidos")
+            : "El campo '$field' contiene caracteres no permitidos"));
+
+        if ($pattern === null && $ruleKey !== null) {
+            $pattern = RegexRules::pcre($ruleKey);
+        }
 
         if ($value === null || is_bool($value) || is_array($value) || is_object($value)) {
             throw new \InvalidArgumentException("El campo '$field' no es válido");
@@ -137,7 +135,7 @@ final class Validator
                 }
                 return 0;
             }
-            if (!preg_match('/^-?\d+$/', $value)) {
+            if (!RegexRules::test('aplicacion.entero', $value)) {
                 throw new \InvalidArgumentException("El campo '$field' no es un número entero válido");
             }
             // Evita desbordamientos absurdos (ej. 999999999999999999999)
@@ -180,8 +178,8 @@ final class Validator
                 }
                 return 0.0;
             }
-            if (!preg_match('/^-?\d{1,8}(?:\.\d{1,2})?$/', $value)) {
-                throw new \InvalidArgumentException("El campo '$field' debe ser un número con hasta 2 decimales");
+            if (!RegexRules::test('aplicacion.monto', $value)) {
+                throw new \InvalidArgumentException(RegexRules::mensaje('aplicacion.monto', "El campo '$field' debe ser un número con hasta 2 decimales"));
             }
         } elseif (is_int($value)) {
             $value = sprintf('%d', $value);
@@ -223,7 +221,7 @@ final class Validator
         }
 
         if (
-            !preg_match(self::PATTERN_FECHA, $fecha)
+            !RegexRules::test('fechas_y_horas.fecha_iso', $fecha)
             || !checkdate((int)substr($fecha, 5, 2), (int)substr($fecha, 8, 2), (int)substr($fecha, 0, 4))
         ) {
             throw new \InvalidArgumentException("El campo '$field' no es una fecha válida (use YYYY-MM-DD)");
@@ -269,7 +267,7 @@ final class Validator
         if (mb_strlen($value) > self::MAX_EMAIL) {
             throw new \InvalidArgumentException("El campo '$field' no puede exceder " . self::MAX_EMAIL . ' caracteres');
         }
-        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+        if (!RegexRules::test('contacto.email', $value)) {
             throw new \InvalidArgumentException("El formato del campo '$field' no es válido");
         }
         return $value;
@@ -321,8 +319,11 @@ final class Validator
      */
     public static function busqueda(mixed $value, string $field): string
     {
-        $texto = self::texto($value, $field, ['required' => false, 'max' => self::MAX_TERMINO_BUSQUEDA, 'pattern' => '/^[\p{L}\p{N}\s.,;:()\-\/_%#@+]+$/u', 'patternMessage' => "El campo '$field' contiene caracteres no permitidos"]);
-        return $texto;
+        return self::texto($value, $field, [
+            'required'       => false,
+            'rule'           => 'aplicacion.termino_busqueda',
+            'patternMessage' => "El campo '$field' contiene caracteres no permitidos",
+        ]);
     }
 
     /**
@@ -398,10 +399,8 @@ final class Validator
     {
         return self::texto($value, $field, [
             'required'       => $required,
-            'min'            => 5,
-            'max'            => self::MAX_CEDULA,
-            'pattern'        => self::PATTERN_CEDULA,
-            'patternMessage' => "El campo '$field' no tiene un formato válido",
+            'rule'           => 'identificacion_venezuela.cedula_venezolana',
+            'patternMessage' => "El campo '$field' no tiene un formato válido (ej.: V-12345678)",
         ]);
     }
 
@@ -412,10 +411,8 @@ final class Validator
     {
         return self::texto($value, $field, [
             'required'       => $required,
-            'min'            => 5,
-            'max'            => self::MAX_RIF,
-            'pattern'        => self::PATTERN_RIF,
-            'patternMessage' => "El campo '$field' no tiene un formato válido",
+            'rule'           => 'identificacion_venezuela.rif_venezolano',
+            'patternMessage' => "El campo '$field' no tiene un formato válido (ej.: J-12345678-9)",
         ]);
     }
 
@@ -426,10 +423,8 @@ final class Validator
     {
         return self::texto($value, $field, [
             'required'       => $required,
-            'min'            => 7,
-            'max'            => self::MAX_TELEFONO,
-            'pattern'        => self::PATTERN_TELEFONO,
-            'patternMessage' => "El campo '$field' no tiene un formato válido",
+            'rule'           => 'contacto.telefono_flexible',
+            'patternMessage' => "El campo '$field' no tiene un formato válido (ej.: 0412-1234567)",
         ]);
     }
 
@@ -440,9 +435,7 @@ final class Validator
     {
         return self::texto($value, $field, [
             'required'       => $required,
-            'min'            => 3,
-            'max'            => self::MAX_USERNAME,
-            'pattern'        => self::PATTERN_USERNAME,
+            'rule'           => 'texto_y_personas.nombre_usuario',
             'patternMessage' => "El campo '$field' debe contener solo letras, números, guiones o puntos y tener al menos 3 caracteres",
         ]);
     }
@@ -454,9 +447,7 @@ final class Validator
     {
         $t = self::texto($value, $field, [
             'required'       => $required,
-            'min'            => 8,
-            'max'            => self::MAX_TIEMPO_USO,
-            'pattern'        => self::PATTERN_TIEMPO,
+            'rule'           => 'aplicacion.tiempo_uso_hms',
             'patternMessage' => "El campo '$field' debe tener formato HH:MM:SS",
         ]);
         [$h, $m, $s] = array_map('intval', explode(':', $t));
@@ -473,9 +464,7 @@ final class Validator
     {
         return self::texto($value, $field, [
             'required'       => $required,
-            'min'            => 1,
-            'max'            => self::MAX_NUMERO_ORDEN,
-            'pattern'        => self::PATTERN_NUMERO,
+            'rule'           => 'aplicacion.numero_orden',
             'patternMessage' => "El campo '$field' contiene caracteres no permitidos",
         ]);
     }
@@ -492,9 +481,10 @@ final class Validator
     public static function password(mixed $value, string $field, array $opts = []): string
     {
         $required    = (bool)($opts['required'] ?? true);
-        $min         = (int)($opts['min'] ?? self::MIN_PASSWORD);
-        $max         = (int)($opts['max'] ?? self::MAX_PASSWORD);
         $complejidad = (bool)($opts['complejidad'] ?? false);
+        $reglaPass   = $complejidad ? 'seguridad.password_media' : 'seguridad.password_basica';
+        $min         = (int)($opts['min'] ?? (RegexRules::minlength($reglaPass) ?? self::MIN_PASSWORD));
+        $max         = (int)($opts['max'] ?? (RegexRules::maxlength($reglaPass) ?? self::MAX_PASSWORD));
 
         if ($value === null || is_bool($value) || is_array($value) || is_object($value)) {
             if (($value === null || $value === '') && !$required) {
@@ -521,8 +511,8 @@ final class Validator
             throw new \InvalidArgumentException("El campo '$field' no puede exceder $max caracteres");
         }
 
-        if ($complejidad && (!preg_match('/[A-Za-z]/', $pass) || !preg_match('/[0-9]/', $pass))) {
-            throw new \InvalidArgumentException("El campo '$field' debe incluir al menos una letra y un número");
+        if (!RegexRules::test($reglaPass, $pass)) {
+            throw new \InvalidArgumentException(RegexRules::mensaje($reglaPass, "El campo '$field' no tiene un formato válido"));
         }
 
         return $pass;
@@ -684,7 +674,7 @@ final class Validator
      */
     private static function rechazarControl(string $texto, string $field): void
     {
-        if (preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $texto)) {
+        if (RegexRules::test('aplicacion.caracteres_control', $texto)) {
             throw new \InvalidArgumentException("El campo '$field' contiene caracteres de control no permitidos");
         }
     }

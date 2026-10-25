@@ -108,7 +108,7 @@ try {
         <form id="cyberForm" data-validate>
             <div class="input-field">
                 <i class="material-icons prefix">person</i>
-                <input type="text" id="cyberCiudadano" name="ciudadano" class="form-control" placeholder="Nombre completo del cliente" maxlength="100" required minlength="2">
+                <input type="text" id="cyberCiudadano" name="ciudadano" class="form-control" placeholder="Nombre completo del cliente" maxlength="100" required minlength="2" data-validate="texto">
                 <label for="cyberCiudadano" class="active">Cliente</label>
             </div>
             <div class="input-field">
@@ -119,12 +119,12 @@ try {
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">phone</i>
-                <input type="tel" id="cyberTelefono" name="telefono" class="form-control" placeholder="Opcional" maxlength="20" minlength="7">
+                <input type="tel" id="cyberTelefono" name="telefono" class="form-control" placeholder="Opcional" maxlength="20" minlength="7" data-validate="telefono">
                 <label for="cyberTelefono" class="active">Teléfono</label>
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">place</i>
-                <input type="text" id="cyberDireccion" name="direccion" class="form-control" placeholder="Opcional" maxlength="500">
+                <input type="text" id="cyberDireccion" name="direccion" class="form-control" placeholder="Opcional" maxlength="500" data-validate="direccion">
                 <label for="cyberDireccion" class="active">Dirección</label>
             </div>
             <div class="input-field">
@@ -168,12 +168,12 @@ try {
             <input type="hidden" name="id" id="pcId" value="">
             <div class="input-field">
                 <i class="material-icons prefix">branding_watermark</i>
-                <input type="text" id="pcMarca" name="marca" class="form-control" placeholder="Ej: HP, Dell, Lenovo" maxlength="100" required minlength="2">
+                <input type="text" id="pcMarca" name="marca" class="form-control" placeholder="Ej: HP, Dell, Lenovo" maxlength="100" required minlength="2" data-validate="texto">
                 <label for="pcMarca" class="active">Marca</label>
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">description</i>
-                <input type="text" id="pcDescripcion" name="descripcion" class="form-control" placeholder="Ej: Intel i5, 8GB RAM, 256GB SSD" maxlength="1000">
+                <input type="text" id="pcDescripcion" name="descripcion" class="form-control" placeholder="Ej: Intel i5, 8GB RAM, 256GB SSD" maxlength="1000" data-validate="descripcion">
                 <label for="pcDescripcion" class="active">Descripción</label>
             </div>
             <div class="input-field">

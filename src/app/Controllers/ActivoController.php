@@ -106,8 +106,8 @@ class ActivoController
         }
 
         $datos = Validator::validar($_POST, [
-            'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'La marca contiene caracteres no permitidos'],
-            'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000],
+            'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'La marca contiene caracteres no permitidos'],
+            'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000, 'pattern' => Validator::patron('aplicacion.descripcion'), 'patternMessage' => 'La descripción contiene caracteres no permitidos'],
             'tipo_activo_id' => ['label' => 'tipo de activo', 'type' => 'id'],
             'activa'         => ['label' => 'estado', 'type' => 'bool', 'required' => false],
             'is_ciber'       => ['label' => 'ciber', 'type' => 'bool', 'required' => false],
@@ -136,8 +136,8 @@ class ActivoController
 
         $datos = Validator::validar($_POST, [
             'id'             => ['label' => 'ID del activo', 'type' => 'id'],
-            'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'La marca contiene caracteres no permitidos'],
-            'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000],
+            'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'La marca contiene caracteres no permitidos'],
+            'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000, 'pattern' => Validator::patron('aplicacion.descripcion'), 'patternMessage' => 'La descripción contiene caracteres no permitidos'],
             'tipo_activo_id' => ['label' => 'tipo de activo', 'type' => 'id'],
             'activa'         => ['label' => 'estado', 'type' => 'bool', 'required' => false],
             'is_ciber'       => ['label' => 'ciber', 'type' => 'bool', 'required' => false],

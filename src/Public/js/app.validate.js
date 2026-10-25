@@ -2,10 +2,14 @@
 // ARCHIVO: app.validate.js
 // FUNCIÓN: Validación de formularios del lado del cliente (frontend).
 //
+//   - Usa como fuente única de patrones el módulo EIS.Regex, generado
+//     desde regex_validations.json (src/Public/js/regex_validations.js).
 //   - Aprovecha los atributos HTML5 estándar (required, minlength,
 //     maxlength, min, max, pattern, type) y añade reglas reutilizables
-//     propias a través de data-validate (cedula, rif, telefono, username,
-//     email, nombre, moneda, entero, tiempo).
+//     propias a través de data-validate.
+//   - data-validate acepta alias cortos (cedula, rif, telefono, email,
+//     fecha, hora, moneda...) y también claves completas del JSON
+//     (contacto.email, aplicacion.descripcion, seguridad.password_media).
 //   - Valida en tiempo real: al salir de un campo (blur) marca el error y
 //     mientras el usuario lo corrige reevalúa en vivo.
 //   - Bloquea el envío cuando hay errores y muestra el mismo panel estable
@@ -23,57 +27,84 @@
 
     // Reutilizo el namespace global creado por app.core.js
     var EIS = window.EIS = window.EIS || {};
+    var Regex = EIS.Regex || null;
+
+    if (!Regex && window.console && console.warn) {
+        console.warn('app.validate.js: EIS.Regex no está disponible. Carga regex_validations.js antes de este archivo; solo se aplicarán las validaciones HTML5.');
+    }
 
     // -----------------------------------------------------------------
-    // Reglas reutilizables por tipo lógico (se activan con data-validate).
-    // Cada regla tiene una expresión regular y un mensaje por defecto.
-    // ---------------------------------------------------------------------
-    var TIPOS = {
-        cedula: {
-            regex: /^[0-9A-Za-z][0-9A-Za-z.\-\s]{3,18}[0-9A-Za-z]$/,
-            mensaje: 'Ingresa una cédula válida (entre 5 y 20 caracteres).'
-        },
-        rif: {
-            regex: /^[0-9A-Za-z][0-9A-Za-z.\-\s]{3,18}[0-9A-Za-z]$/,
-            mensaje: 'Ingresa un RIF válido (entre 5 y 20 caracteres).'
-        },
-        telefono: {
-            regex: /^[0-9+\-()\s.]+$/,
-            mensaje: 'Ingresa un teléfono válido (solo números y los signos + - ( ) .).'
-        },
-        username: {
-            regex: /^[A-Za-z0-9][A-Za-z0-9_.\-]{2,49}$/,
-            mensaje: 'El usuario debe tener al menos 3 caracteres: letras, números, punto, guion o guion bajo.'
-        },
-        email: {
-            // Coincide con el criterio permisivo del backend (filter_var):
-            // exige una arroba con texto a ambos lados, sin espacios.
-            regex: /^[^\s@]+@[^\s@]+$/,
-            mensaje: 'Ingresa un correo electrónico válido.'
-        },
-        nombre: {
-            // Mismo conjunto de caracteres que Validator::PATTERN_TEXTO_LIBRE
-            // (letras, números, espacios y puntuación básica) para no rechazar
-            // valores que el servidor sí acepta.
-            regex: /^[\p{L}\p{N}\p{M}\s.,;:()\-\/_&'+°#@%*?!]+$/u,
-            mensaje: 'El nombre contiene caracteres no permitidos.'
-        },
-        moneda: {
-            regex: /^\d{1,8}(?:\.\d{1,2})?$/,
-            mensaje: 'Ingresa un monto válido (hasta 2 decimales).'
-        },
-        entero: {
-            regex: /^-?\d+$/,
-            mensaje: 'Ingresa un número entero válido.'
-        },
-        tiempo: {
-            regex: /^\d{1,3}:[0-5]\d:[0-5]\d$/,
-            mensaje: 'Usa el formato HH:MM:SS.'
-        },
-        password: {
-            regex: /^(?=.*[A-Za-z])(?=.*\d).+$/,
-            mensaje: 'La contraseña debe incluir al menos una letra y un número.'
-        }
+    // Alias cortos -> clave del JSON de validaciones.
+    //
+    // Los alias conservan la compatibilidad con los formularios ya
+    // existentes. Cualquier clave del JSON también puede usarse
+    // directamente en data-validate.
+    // -----------------------------------------------------------------
+    var ALIASES = {
+        // Identificación
+        cedula:                 'identificacion_venezuela.cedula_venezolana',
+        rif:                    'identificacion_venezuela.rif_venezolano',
+        pasaporte:              'identificacion_venezuela.pasaporte',
+
+        // Contacto
+        email:                  'contacto.email',
+        correo:                 'contacto.email',
+        email_simple:           'contacto.email_simple',
+        telefono:               'contacto.telefono_flexible',
+        telefono_movil:         'contacto.telefono_venezuela',
+        telefono_fijo:          'contacto.telefono_fijo_venezuela',
+        telefono_internacional: 'contacto.telefono_internacional',
+        whatsapp:               'contacto.whatsapp',
+        url:                    'contacto.sitio_web',
+        sitio_web:              'contacto.sitio_web',
+        dominio:                'contacto.dominio',
+
+        // Textos y personas
+        username:               'texto_y_personas.nombre_usuario',
+        nombre:                 'aplicacion.texto_libre',
+        nombre_persona:         'texto_y_personas.nombre_persona',
+        nombre_completo:        'texto_y_personas.nombre_completo',
+        texto:                  'aplicacion.texto_libre',
+        texto_alfabetico:       'texto_y_personas.texto_alfabetico',
+        descripcion:            'aplicacion.descripcion',
+        direccion:              'aplicacion.direccion',
+        codigo:                 'aplicacion.codigo_producto',
+        numero_orden:           'aplicacion.numero_orden',
+        nombre_rol:             'aplicacion.nombre_rol',
+
+        // Fechas y horas
+        fecha:                  'fechas_y_horas.fecha_iso',
+        fecha_latina:           'fechas_y_horas.fecha_latina',
+        fecha_hora:             'fechas_y_horas.fecha_hora_iso',
+        hora:                   'fechas_y_horas.hora_24',
+        hora_12:                'fechas_y_horas.hora_12',
+        tiempo:                 'aplicacion.tiempo_uso_hms',
+
+        // Números
+        entero:                 'aplicacion.entero',
+        decimal:                'numerico.decimal',
+        decimal_positivo:       'numerico.decimal_positivo',
+        moneda:                 'aplicacion.monto',
+        porcentaje:             'numerico.porcentaje',
+        codigo_postal:          'numerico.codigo_postal',
+
+        // Seguridad
+        password:               'seguridad.password_media',
+        password_basica:        'seguridad.password_basica',
+        password_media:         'seguridad.password_media',
+        password_fuerte:        'seguridad.password_fuerte',
+        password_muy_fuerte:    'seguridad.password_muy_fuerte',
+        pin:                    'seguridad.password_pin',
+
+        // Redes y desarrollo
+        ipv4:                   'redes.ipv4',
+        ipv6:                   'redes.ipv6',
+        mac:                    'redes.mac_address',
+        puerto:                 'redes.puerto',
+        uuid:                   'seguridad.uuid_v4',
+        slug:                   'desarrollo.slug',
+        color:                  'desarrollo.hex_color',
+        version:                'desarrollo.version_semver'
     };
 
     // Mensajes genéricos; los que necesitan un dato se construyen con función.
@@ -91,19 +122,61 @@
 
     var SELECTOR_CAMPOS = 'input, select, textarea';
 
+    var TIPOS_CONTROL = {
+        hidden: true, submit: true, button: true, reset: true, image: true, file: true
+    };
+
     // -----------------------------------------------------------------
-    // Función interna: devuelve el valor textual de un control.
+    // Utilidades internas
     // -----------------------------------------------------------------
     function valorDe($el) {
         var v = $el.val();
         if (v === null || v === undefined) return '';
+        if ($.isArray(v)) return v.join(',');
         return (typeof v === 'string') ? v : String(v);
     }
 
-    // -----------------------------------------------------------------
-    // Función interna: mensaje para una regla, respetando el override
-    // data-msg-<regla> definido en el propio campo.
-    // -----------------------------------------------------------------
+    function aEntero(valor) {
+        var n = parseInt(valor, 10);
+        return isNaN(n) ? null : n;
+    }
+
+    function normalizarFlags(flags) {
+        // JavaScript solo admite estos modificadores para nuestros patrones.
+        // No se usan g/y para evitar el estado de lastIndex.
+        var permitidos = 'imsu';
+        var salida = '';
+        var texto = (typeof flags === 'string') ? flags : '';
+        for (var i = 0; i < texto.length; i++) {
+            var flag = texto.charAt(i).toLowerCase();
+            if (permitidos.indexOf(flag) !== -1 && salida.indexOf(flag) === -1) {
+                salida += flag;
+            }
+        }
+        if (salida.indexOf('u') === -1) salida += 'u';
+        return salida;
+    }
+
+    function compilarRegex(patron, flags) {
+        try {
+            return new RegExp(patron, normalizarFlags(flags));
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function regexDeRegla(regla) {
+        if (!regla) return null;
+        if (regla.regex instanceof RegExp) {
+            // Copia defensiva para no arrastrar lastIndex si el usuario usó /g.
+            return new RegExp(regla.regex.source, normalizarFlags(regla.regex.flags));
+        }
+        if (typeof regla.pattern === 'string' && regla.pattern !== '') {
+            return compilarRegex(regla.pattern, regla.flags);
+        }
+        return null;
+    }
+
     function mensaje(clave, $el, arg) {
         var override = $el.attr('data-msg-' + clave);
         if (override) return override;
@@ -111,14 +184,182 @@
         return (typeof m === 'function') ? m(arg) : m;
     }
 
-    // -----------------------------------------------------------------
-    // Función interna: contenedor visible donde insertar el mensaje de
-    // error (misma convención que EIS.mostrarErroresFormulario).
-    // -----------------------------------------------------------------
+    function overrideRegla($el, token, clave) {
+        var texto = $el.attr('data-msg-' + token);
+        if (texto) return texto;
+        if (clave && clave !== token) {
+            texto = $el.attr('data-msg-' + clave);
+            if (texto) return texto;
+        }
+        return '';
+    }
+
     function contenedorDe($el) {
         if ($el.closest('.select-wrapper').length) return $el.closest('.select-wrapper');
         if ($el.closest('.input-field, .select-wrapper').length) return $el.closest('.input-field, .select-wrapper');
         return $el.parent();
+    }
+
+    function tipoDe($el) {
+        return ($el.attr('type') || '').toLowerCase();
+    }
+
+    function esPassword($el) {
+        return tipoDe($el) === 'password';
+    }
+
+    function esCheckable($el) {
+        var tipo = tipoDe($el);
+        return tipo === 'checkbox' || tipo === 'radio';
+    }
+
+    function elementosDelGrupo(el) {
+        if (!el || !el.form || !el.name) return [el];
+        var lista = el.form.elements.namedItem(el.name);
+        if (!lista) return [el];
+        if (typeof lista.length === 'number' && !lista.tagName) {
+            return Array.prototype.slice.call(lista);
+        }
+        return [lista];
+    }
+
+    function grupoTieneRequerido(el) {
+        var grupo = elementosDelGrupo(el);
+        for (var i = 0; i < grupo.length; i++) {
+            if (grupo[i].required) return true;
+        }
+        return false;
+    }
+
+    function grupoMarcado(el) {
+        var grupo = elementosDelGrupo(el);
+        for (var i = 0; i < grupo.length; i++) {
+            if (grupo[i].checked) return true;
+        }
+        return false;
+    }
+
+    // -----------------------------------------------------------------
+    // Reglas de compatibilidad: se exponen como EIS.reglasValidacion y
+    // permiten que otros módulos añadan o sobrescriban reglas con la
+    // forma { regex: /.../, mensaje: '...' }.
+    // -----------------------------------------------------------------
+    function crearReglasCompat() {
+        var reglas = {};
+
+        if (!Regex) return reglas;
+
+        $.each(ALIASES, function (alias, clave) {
+            var regla = Regex.get(clave);
+            if (!regla || typeof regla.pattern !== 'string') return;
+
+            var regex = compilarRegex(regla.pattern, regla.flags);
+            if (!regex) return;
+
+            reglas[alias] = {
+                regex: regex,
+                mensaje: regla.mensaje,
+                label: regla.label,
+                minlength: regla.minlength,
+                maxlength: regla.maxlength,
+                clave: clave
+            };
+        });
+
+        return reglas;
+    }
+
+    EIS.reglasValidacion = $.extend({}, crearReglasCompat(), EIS.reglasValidacion || {});
+
+    // -----------------------------------------------------------------
+    // Resuelve una regla declarada en data-validate a un objeto con:
+    //   regex, mensaje, minlength, maxlength, label y clave (clave JSON).
+    // Devuelve null si la regla no existe, para no bloquear por errores
+    // de tipeo en el atributo.
+    // -----------------------------------------------------------------
+    function resolverRegla(clave) {
+        if (!clave) return null;
+
+        // 1) Reglas registradas/sobrescritas manualmente (compatibilidad).
+        var manual = EIS.reglasValidacion[clave];
+        if (manual && (manual.regex instanceof RegExp || typeof manual.pattern === 'string')) {
+            return {
+                regex: regexDeRegla(manual),
+                mensaje: manual.mensaje || '',
+                label: manual.label || clave,
+                minlength: aEntero(manual.minlength),
+                maxlength: aEntero(manual.maxlength),
+                clave: manual.clave || clave
+            };
+        }
+
+        if (!Regex) return null;
+
+        // 2) Alias corto -> clave del JSON.
+        var claveJson = ALIASES[clave] || null;
+
+        // 3) Clave completa del JSON usada directamente.
+        if (!claveJson && Regex.has(clave)) {
+            claveJson = clave;
+        }
+
+        if (!claveJson) return null;
+
+        var regla = Regex.get(claveJson);
+        if (!regla || typeof regla.pattern !== 'string') return null;
+
+        var regex = compilarRegex(regla.pattern, regla.flags);
+        if (!regex) return null;
+
+        return {
+            regex: regex,
+            mensaje: regla.mensaje || '',
+            label: regla.label || claveJson,
+            minlength: aEntero(regla.minlength),
+            maxlength: aEntero(regla.maxlength),
+            clave: claveJson
+        };
+    }
+
+    // -----------------------------------------------------------------
+    // Validaciones semánticas que un patrón no puede cubrir por sí solo
+    // (por ejemplo, 2026-02-31 cumple el formato pero no existe).
+    // -----------------------------------------------------------------
+    function esFechaISOReal(texto) {
+        var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(texto);
+        if (!m) return false;
+        return esFechaValida(+m[1], +m[2], +m[3]);
+    }
+
+    function esFechaLatinaReal(texto) {
+        var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(texto);
+        if (!m) return false;
+        return esFechaValida(+m[3], +m[2], +m[1]);
+    }
+
+    function esFechaHoraISOReal(texto) {
+        var m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})$/.exec(texto);
+        if (!m) return false;
+        if (!esFechaValida(+m[1], +m[2], +m[3])) return false;
+        return (+m[4] <= 23) && (+m[5] <= 59);
+    }
+
+    function esFechaValida(anio, mes, dia) {
+        if (mes < 1 || mes > 12 || dia < 1 || dia > 31) return false;
+        var fecha = new Date(Date.UTC(anio, mes - 1, dia));
+        return fecha.getUTCFullYear() === anio
+            && fecha.getUTCMonth() === mes - 1
+            && fecha.getUTCDate() === dia;
+    }
+
+    function validarSemantica(clave, valor) {
+        if (!clave) return true;
+
+        if (clave === 'fechas_y_horas.fecha_iso') return esFechaISOReal(valor);
+        if (clave === 'fechas_y_horas.fecha_latina') return esFechaLatinaReal(valor);
+        if (clave === 'fechas_y_horas.fecha_hora_iso') return esFechaHoraISOReal(valor);
+
+        return true;
     }
 
     // -----------------------------------------------------------------
@@ -144,7 +385,7 @@
         EIS.quitarErrorCampo($el);
 
         var $wrap = contenedorDe($el);
-        if ($el.is('select')) {
+        if ($el.is('select') || esCheckable($el)) {
             $wrap.addClass('invalid eis-invalid');
         } else {
             $el.addClass('invalid eis-invalid');
@@ -155,6 +396,37 @@
     };
 
     // -----------------------------------------------------------------
+    // Comprueba una regla concreta. Devuelve el mensaje de error o ''.
+    // -----------------------------------------------------------------
+    function comprobarRegla($el, token, valor) {
+        var regla = resolverRegla(token);
+        if (!regla || !regla.regex) return '';
+
+        // El valor que se prueba es el mismo que usa el backend (trim),
+        // salvo en contraseñas, donde los espacios son significativos.
+        var valorPrueba = valor;
+
+        // datetime-local usa 'T' como separador; el patrón JSON usa espacio.
+        if (regla.clave === 'fechas_y_horas.fecha_hora_iso' && tipoDe($el) === 'datetime-local') {
+            valorPrueba = valor.replace('T', ' ');
+        }
+
+        if (!regla.regex.test(valorPrueba)) {
+            return overrideRegla($el, token, regla.clave)
+                || regla.mensaje
+                || mensaje('pattern', $el);
+        }
+
+        if (!validarSemantica(regla.clave, valorPrueba)) {
+            return overrideRegla($el, token, regla.clave)
+                || regla.mensaje
+                || mensaje('pattern', $el);
+        }
+
+        return '';
+    }
+
+    // -----------------------------------------------------------------
     // EIS.validarCampo(el)
     // Devuelve el mensaje de error del campo o '' si es válido.
     // -----------------------------------------------------------------
@@ -162,85 +434,124 @@
         var $el = $(el);
         if (!$el.length) return '';
         if ($el.is(':disabled') || $el.is('[readonly]')) return '';
-        if ($el.is('[type="hidden"], [type="submit"], [type="button"], [type="reset"]')) return '';
 
-        var v      = valorDe($el);
-        var vTrim  = v.trim();
-        var vacio  = $el.is('select') ? ($el.val() === null || v === '') : (vTrim === '');
+        var tipo = tipoDe($el);
+        if (TIPOS_CONTROL[tipo]) return '';
 
-        // Campo obligatorio -------------------------------------------------
-        if ($el.is('[required]') && vacio) {
+        var esCheck = esCheckable($el);
+        var esRadio = tipo === 'radio';
+        var requerido = $el.is('[required]') || (esCheck && grupoTieneRequerido(el));
+
+        // Checkbox / radio ------------------------------------------------
+        if (esCheck) {
+            var marcado = esRadio ? grupoMarcado(el) : el.checked;
+            if (!marcado) {
+                return requerido ? mensaje('required', $el) : '';
+            }
+            // Si está marcado, se valida su value (normalmente 'on').
+        }
+
+        var valor = valorDe($el);
+        var password = esPassword($el);
+        var texto = password ? valor : valor.trim();
+        var vacio = esCheck ? false : (texto === '');
+
+        // Select sin opción elegida.
+        if ($el.is('select') && (valor === '' || valor === null)) {
+            return requerido ? mensaje('required', $el) : '';
+        }
+
+        // Campo obligatorio ----------------------------------------------
+        if (requerido && vacio) {
             return mensaje('required', $el);
         }
 
-        // Un campo opcional vacío no sigue validando (salvo selects, que ya
-        // se contemplaron arriba).
-        if (vacio && !$el.is('select')) {
-            return '';
-        }
+        // Un campo opcional vacío no sigue validando.
+        if (vacio) return '';
 
-        // Longitudes --------------------------------------------------------
-        var minlen = parseInt($el.attr('minlength'), 10);
-        if (!isNaN(minlen) && !$el.is('select') && v.length < minlen) {
-            return mensaje('minlength', $el, minlen);
-        }
-        var maxlen = parseInt($el.attr('maxlength'), 10);
-        if (!isNaN(maxlen) && v.length > maxlen) {
-            return mensaje('maxlength', $el, maxlen);
-        }
+        // Longitudes -----------------------------------------------------
+        // Se aplican tanto los atributos HTML5 como los metadatos del JSON.
+        var minAttr = aEntero($el.attr('minlength'));
+        var maxAttr = aEntero($el.attr('maxlength'));
+        var minJson = null;
+        var maxJson = null;
 
-        var tipo_input = ($el.attr('type') || '').toLowerCase();
-
-        // Numéricos ---------------------------------------------------------
-        if (tipo_input === 'number') {
-            var num = parseFloat(v);
-            if (isNaN(num)) return mensaje('numero', $el);
-            var min = parseFloat($el.attr('min'));
-            if (!isNaN(min) && num < min) return mensaje('min', $el, min);
-            var max = parseFloat($el.attr('max'));
-            if (!isNaN(max) && num > max) return mensaje('max', $el, max);
-        }
-
-        // Email nativo ------------------------------------------------------
-        if (tipo_input === 'email' && !TIPOS.email.regex.test(vTrim)) {
-            return mensaje('email', $el);
-        }
-
-        // Teléfono nativo ---------------------------------------------------
-        if (tipo_input === 'tel' && !TIPOS.telefono.regex.test(vTrim)) {
-            return $el.attr('data-msg-telefono') || TIPOS.telefono.mensaje;
-        }
-
-        // Reglas propias (data-validate="cedula telefono ...") --------------
         var declaradas = ($el.attr('data-validate') || '').toString().split(/[\s,]+/);
-        var aplicoPatron = false;
+        var aplicadas = [];
         for (var i = 0; i < declaradas.length; i++) {
-            var clave = declaradas[i];
-            if (!clave) continue;
-            var tipoDato = TIPOS[clave];
-            if (tipoDato) {
-                aplicoPatron = true;
-                if (!tipoDato.regex.test(vTrim)) {
-                    return $el.attr('data-msg-' + clave) || tipoDato.mensaje;
-                }
-            }
+            var token = declaradas[i];
+            if (!token) continue;
+            var regla = resolverRegla(token);
+            if (!regla || !regla.regex) continue;
+            aplicadas.push({ token: token, regla: regla });
+            if (regla.minlength !== null && (minJson === null || regla.minlength > minJson)) minJson = regla.minlength;
+            if (regla.maxlength !== null && (maxJson === null || regla.maxlength < maxJson)) maxJson = regla.maxlength;
         }
 
-        // Atributo pattern nativo (si ninguna regla propia lo cubrió) -------
+        var min = (minAttr !== null) ? minAttr : minJson;
+        if (min !== null && texto.length < min) {
+            return mensaje('minlength', $el, min);
+        }
+
+        // Si el atributo no existe pero el JSON sí impone un mínimo más
+        // estricto, también se respeta.
+        if (minJson !== null && minJson !== min && texto.length < minJson) {
+            return mensaje('minlength', $el, minJson);
+        }
+
+        var max = (maxAttr !== null) ? maxAttr : maxJson;
+        if (max !== null && texto.length > max) {
+            return mensaje('maxlength', $el, max);
+        }
+
+        // Si el atributo no existe pero el JSON sí impone un máximo más
+        // estricto, también se respeta (p. ej. contraseñas de 72 caracteres).
+        if (maxJson !== null && maxJson !== max && texto.length > maxJson) {
+            return mensaje('maxlength', $el, maxJson);
+        }
+
+        // Numéricos -------------------------------------------------------
+        if (tipo === 'number') {
+            var num = parseFloat(valor);
+            if (isNaN(num)) return mensaje('numero', $el);
+            var minNum = parseFloat($el.attr('min'));
+            if (!isNaN(minNum) && num < minNum) return mensaje('min', $el, minNum);
+            var maxNum = parseFloat($el.attr('max'));
+            if (!isNaN(maxNum) && num > maxNum) return mensaje('max', $el, maxNum);
+        }
+
+        // Tipos nativos HTML5 --------------------------------------------
+        if (tipo === 'email') {
+            var errorEmail = comprobarRegla($el, 'email', texto);
+            if (errorEmail) return errorEmail;
+        }
+
+        if (tipo === 'tel') {
+            var errorTel = comprobarRegla($el, 'telefono', texto);
+            if (errorTel) return errorTel;
+        }
+
+        if (tipo === 'url') {
+            var errorUrl = comprobarRegla($el, 'url', texto);
+            if (errorUrl) return errorUrl;
+        }
+
+        // Reglas declaradas en data-validate -----------------------------
+        for (var j = 0; j < aplicadas.length; j++) {
+            var error = comprobarRegla($el, aplicadas[j].token, texto);
+            if (error) return error;
+        }
+
+        // Atributo pattern nativo (solo si ninguna regla propia lo cubrió) -
         var patron = $el.attr('pattern');
-        if (patron && !aplicoPatron) {
-            var re;
-            try {
-                re = new RegExp('^(?:' + patron + ')$');
-            } catch (err) {
-                re = null;
-            }
-            if (re && !re.test(v)) {
+        if (patron && aplicadas.length === 0) {
+            var re = compilarRegex('^(?:' + patron + ')$', 'u');
+            if (re && !re.test(valor)) {
                 return mensaje('pattern', $el);
             }
         }
 
-        // Confirmación de contraseña / campo espejo -------------------------
+        // Confirmación de contraseña / campo espejo -----------------------
         var selectorMatch = $el.attr('data-match');
         if (selectorMatch) {
             var $otro = $(selectorMatch).first();
@@ -264,6 +575,7 @@
         $form.find(SELECTOR_CAMPOS).each(function () {
             var nombre = $(this).attr('name');
             if (!nombre) return;
+            if (Object.prototype.hasOwnProperty.call(errores, nombre)) return;
             var m = EIS.validarCampo(this);
             if (m) errores[nombre] = m;
         });
@@ -280,9 +592,20 @@
     };
 
     // -----------------------------------------------------------------
-    // Validación en vivo: al salir del campo y mientras se corrige.
+    // Validación en vivo: al escribir (input), cambiar (change) y salir (focusout).
+    // Si el usuario escribe una letra donde va un número (o viceversa),
+    // se le notifica en tiempo real inmediatamente.
     // -----------------------------------------------------------------
     $(document)
+        .on('input change', 'form[data-validate] ' + SELECTOR_CAMPOS, function () {
+            var $el = $(this);
+            var m = EIS.validarCampo(this);
+            if (m) {
+                EIS.marcarErrorCampo($el, m);
+            } else {
+                EIS.quitarErrorCampo($el);
+            }
+        })
         .on('focusout', 'form[data-validate] ' + SELECTOR_CAMPOS, function () {
             var $el = $(this);
             if (!$el.attr('name')) return;
@@ -292,16 +615,6 @@
             } else {
                 EIS.quitarErrorCampo($el);
             }
-        })
-        .on('input change', 'form[data-validate] ' + SELECTOR_CAMPOS, function () {
-            var $el = $(this);
-            var $wrap = contenedorDe($el);
-            // Solo reevalúo en vivo los campos que ya estaban en error.
-            var enError = $el.hasClass('eis-invalid') || $wrap.hasClass('eis-invalid') || $wrap.find('.eis-field-error').length;
-            if (!enError) return;
-            var m = EIS.validarCampo(this);
-            if (m) EIS.marcarErrorCampo($el, m);
-            else EIS.quitarErrorCampo($el);
         });
 
     // -----------------------------------------------------------------
@@ -362,8 +675,8 @@
 
     // -----------------------------------------------------------------
     // API pública para extender reglas desde otros módulos.
-    //   EIS.reglasValidacion.cedula = { regex: /.../, mensaje: '...' }
+    //   EIS.reglasValidacion.mi_regla = { regex: /.../, mensaje: '...' }
     // -----------------------------------------------------------------
-    EIS.reglasValidacion = TIPOS;
+    EIS.resolverReglaValidacion = resolverRegla;
 
 })(jQuery);

@@ -116,11 +116,11 @@ class AsesoriaController
         }
 
         $datos = Validator::validar($_POST, [
-            'ciudadano'   => ['label' => 'ciudadano', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 200, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El ciudadano contiene caracteres no permitidos'],
+            'ciudadano'   => ['label' => 'ciudadano', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 200, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El ciudadano contiene caracteres no permitidos'],
             'cedula'      => ['label' => 'cédula', 'type' => 'cedula'],
-            'documento'   => ['label' => 'tipo de documento', 'type' => 'texto', 'required' => true, 'min' => 1, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El tipo de documento contiene caracteres no permitidos'],
-            'descripcion' => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000],
-            'direccion'   => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => 500],
+            'documento'   => ['label' => 'tipo de documento', 'type' => 'texto', 'required' => true, 'min' => 1, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El tipo de documento contiene caracteres no permitidos'],
+            'descripcion' => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000, 'pattern' => Validator::patron('aplicacion.descripcion'), 'patternMessage' => 'La descripción contiene caracteres no permitidos'],
+            'direccion'   => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => 500, 'pattern' => Validator::patron('aplicacion.direccion'), 'patternMessage' => 'La dirección contiene caracteres no permitidos'],
             'telefono'    => ['label' => 'teléfono', 'type' => 'telefono'],
         ]);
 

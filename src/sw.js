@@ -1,4 +1,4 @@
-var CACHE_NAME = 'eis-cache-v6';
+var CACHE_NAME = 'eis-cache-v7';
 
 var STATIC_ASSETS = [
   'Public/css/material-icons.css',
@@ -15,6 +15,7 @@ var STATIC_ASSETS = [
   'Public/js/app.selects.js',
   'Public/js/app.tables.js',
   'Public/js/app.ui.js',
+  'Public/js/regex_validations.js',
   'Public/js/app.validate.js',
   'Public/js/app.pos.js',
   'Public/js/app.cyber.js',

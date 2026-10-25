@@ -97,9 +97,9 @@ class ClienteController extends BaseController
 
         $datos = $this->validarCampos([
             'cedula'    => ['label' => 'cédula', 'type' => 'cedula'],
-            'nombre'    => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
-            'apellido'  => ['label' => 'apellido', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos'],
-            'direccion' => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => 500],
+            'nombre'    => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
+            'apellido'  => ['label' => 'apellido', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El apellido contiene caracteres no permitidos'],
+            'direccion' => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => 500, 'pattern' => Validator::patron('aplicacion.direccion'), 'patternMessage' => 'La dirección contiene caracteres no permitidos'],
             'telefono'  => ['label' => 'teléfono', 'type' => 'telefono'],
         ]);
 
@@ -138,9 +138,9 @@ class ClienteController extends BaseController
         $datos = $this->validarCampos([
             'id'        => ['label' => 'ID del cliente', 'type' => 'id'],
             'cedula'    => ['label' => 'cédula', 'type' => 'cedula'],
-            'nombre'    => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
-            'apellido'  => ['label' => 'apellido', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::PATTERN_TEXTO_LIBRE, 'patternMessage' => 'El apellido contiene caracteres no permitidos'],
-            'direccion' => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => 500],
+            'nombre'    => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
+            'apellido'  => ['label' => 'apellido', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El apellido contiene caracteres no permitidos'],
+            'direccion' => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => 500, 'pattern' => Validator::patron('aplicacion.direccion'), 'patternMessage' => 'La dirección contiene caracteres no permitidos'],
             'telefono'  => ['label' => 'teléfono', 'type' => 'telefono'],
         ]);
 

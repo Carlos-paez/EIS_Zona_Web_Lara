@@ -124,9 +124,9 @@ class InventarioController extends BaseController
         }
 
         $datos = $this->validarCampos([
-            'codigo'       => ['label' => 'código', 'type' => 'texto', 'required' => true, 'max' => 50, 'pattern' => Validator::PATTERN_CODIGO, 'patternMessage' => 'El código del producto contiene caracteres no permitidos'],
+            'codigo'       => ['label' => 'código', 'type' => 'texto', 'required' => true, 'max' => 50, 'pattern' => Validator::patron('aplicacion.codigo_producto'), 'patternMessage' => 'El código del producto contiene caracteres no permitidos'],
             'nombre'       => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100],
-            'descripcion'  => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000],
+            'descripcion'  => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000, 'pattern' => Validator::patron('aplicacion.descripcion'), 'patternMessage' => 'La descripción contiene caracteres no permitidos'],
             'categoria_id' => ['label' => 'categoría', 'type' => 'id'],
             'stock'        => ['label' => 'stock', 'type' => 'entero', 'required' => true, 'min' => 0, 'max' => Validator::MAX_CANTIDAD],
             'stock_minimo' => ['label' => 'stock mínimo', 'type' => 'entero', 'required' => true, 'min' => 1],
@@ -179,9 +179,9 @@ class InventarioController extends BaseController
 
         $datos = $this->validarCampos([
             'id'           => ['label' => 'ID del producto', 'type' => 'id'],
-            'codigo'       => ['label' => 'código', 'type' => 'texto', 'required' => true, 'max' => 50, 'pattern' => Validator::PATTERN_CODIGO, 'patternMessage' => 'El código del producto contiene caracteres no permitidos'],
+            'codigo'       => ['label' => 'código', 'type' => 'texto', 'required' => true, 'max' => 50, 'pattern' => Validator::patron('aplicacion.codigo_producto'), 'patternMessage' => 'El código del producto contiene caracteres no permitidos'],
             'nombre'       => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100],
-            'descripcion'  => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000],
+            'descripcion'  => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000, 'pattern' => Validator::patron('aplicacion.descripcion'), 'patternMessage' => 'La descripción contiene caracteres no permitidos'],
             'categoria_id' => ['label' => 'categoría', 'type' => 'id'],
             'stock'        => ['label' => 'stock', 'type' => 'entero', 'required' => true, 'min' => 0],
             'stock_minimo' => ['label' => 'stock mínimo', 'type' => 'entero', 'required' => true, 'min' => 1],
