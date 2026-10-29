@@ -39,7 +39,7 @@ $(function () {
     }
 
     function refrescarKPI() {
-        $.getJSON(API + 'kpis', function (r) {
+        $.ajax({url: API + 'kpis', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) return;
             $('#kpi-total').text(r.data.total);
             $('#kpi-activos').text(r.data.activos);
@@ -52,7 +52,7 @@ $(function () {
     }
 
     function refrescarTabla() {
-        $.getJSON(API + 'listar', function (r) {
+        $.ajax({url: API + 'listar', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) return;
 
             var tbody = $('#tabla-usuarios tbody');
@@ -76,7 +76,7 @@ $(function () {
     }
 
     function cargarRoles() {
-        $.getJSON(API + 'roles', function (r) {
+        $.ajax({url: API + 'roles', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) return;
             var $filter = $('#filterRol');
             var $modal = $('#usuario-rol');
@@ -124,7 +124,7 @@ $(function () {
     }
 
     function abrirEditar(id) {
-        $.getJSON(API + 'detalle&id=' + id, function (r) {
+        $.ajax({url: API + 'detalle&id=' + id, method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
             var u = r.data;
             EIS.limpiarErroresFormulario('#form-usuario');

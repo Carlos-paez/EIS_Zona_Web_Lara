@@ -62,7 +62,7 @@ $(function () {
     //            actualiza el chip del banner y el badge.
     // ================================================================
     function refrescarKPI() {
-        $.getJSON(API + 'kpis', function (r) {
+        $.ajax({url: API + 'kpis', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) return;
             var k = r.data;
             $('#totalAsesoriasBadge').text(k.total);
@@ -119,7 +119,7 @@ $(function () {
     // PROPÓSITO: Solicita al backend el listado completo de asesorías.
     // ================================================================
     function cargarAsesorias() {
-        $.getJSON(API + 'listar', function (r) {
+        $.ajax({url: API + 'listar', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
             asesoriasRegistradas = r.data || [];
             actualizarHistorial();

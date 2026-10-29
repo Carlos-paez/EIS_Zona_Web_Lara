@@ -38,7 +38,7 @@ $(function () {
     // PROPÓSITO: Solicita al backend el catálogo de productos disponibles.
     // ================================================================
     function cargarProductos() {
-        $.getJSON(API + 'productos', function (r) {
+        $.ajax({url: API + 'productos', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) { EIS.toast(r.error || 'Error al cargar productos', 'red', 'error'); return; }
             productos = r.data || [];
             renderProductos();
@@ -268,7 +268,7 @@ $(function () {
     // PROPÓSITO: Solicita al backend la lista de clientes registrados.
     // ================================================================
     function cargarClientes() {
-        $.getJSON(API + 'clientes', function (r) {
+        $.ajax({url: API + 'clientes', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) { EIS.toast(r.error || 'Error al cargar clientes', 'red', 'error'); return; }
             clientes = r.data || [];
             poblarSelectClientes();
@@ -330,7 +330,7 @@ $(function () {
     // ================================================================
     function buscarCliente(cedula) {
         if (!cedula) return;
-        $.getJSON(API + 'buscarCliente&cedula=' + encodeURIComponent(cedula), function (r) {
+        $.ajax({url: API + 'buscarCliente&cedula=' + encodeURIComponent(cedula), method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success || !r.data) return;
             aplicarCliente(r.data);
             EIS.toast('Cliente encontrado: se precargaron sus datos', 'indigo', 'person');

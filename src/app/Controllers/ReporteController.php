@@ -12,8 +12,8 @@ use App\Models\Reporte;
 /**
  * Controlador de Reportes y Estadísticas.
  *
- * Expone endpoints AJAX para consultar KPIs y resultados de un reporte, y
- * genera la descarga de los resultados en CSV, Excel o PDF.
+ * Expone endpoints AJAX para consultar KPIs, catálogos de filtros y resultados
+ * de un reporte estratégico, y genera la descarga de los resultados en CSV, Excel o PDF.
  */
 class ReporteController
 {
@@ -41,6 +41,7 @@ class ReporteController
         try {
             match ($action) {
                 'kpis'      => $this->kpis(),
+                'filtros'   => $this->filtros(),
                 'consultar' => $this->consultar(),
                 'exportar'  => $this->exportar(),
                 default     => $this->json(false, null, 'Acción no válida'),
@@ -61,6 +62,11 @@ class ReporteController
         $this->json(true, $this->model->kpis());
     }
 
+    private function filtros(): void
+    {
+        $this->json(true, $this->model->catalogosFiltros());
+    }
+
     private function consultar(): void
     {
         $datos = $this->validarFiltros();
@@ -69,7 +75,7 @@ class ReporteController
         $desde = $datos['desde'] ?? date('Y-m-01');
         $hasta = $datos['hasta'] ?? date('Y-m-d');
 
-        if (in_array($tipo, ['inventario', 'cyber'], true)) {
+        if (in_array($tipo, ['inventario', 'stock_bajo', 'cyber'], true)) {
             $desde = $datos['desde'] ?? date('Y-m-01');
             $hasta = $datos['hasta'] ?? date('Y-m-d');
         } else {
@@ -78,7 +84,9 @@ class ReporteController
             }
         }
 
-        $resultado = $this->model->consultar($tipo, $desde, $hasta);
+        $filtros = $this->extraerFiltrosAdicionales();
+        $resultado = $this->model->consultar($tipo, $desde, $hasta, $filtros);
+
         header('Content-Type: application/json');
         echo json_encode(['success' => true, 'data' => $resultado]);
     }
@@ -97,7 +105,8 @@ class ReporteController
         $desde   = $datos['desde'] ?? date('Y-m-01');
         $hasta   = $datos['hasta'] ?? date('Y-m-d');
 
-        $resultado = $this->model->consultar($tipo, $desde, $hasta);
+        $filtros = $this->extraerFiltrosAdicionales();
+        $resultado = $this->model->consultar($tipo, $desde, $hasta, $filtros);
         $titulo    = $this->model->nombreTipo($tipo);
         $meta      = ['tipo' => $tipo, 'desde' => $desde, 'hasta' => $hasta];
 
@@ -107,6 +116,30 @@ class ReporteController
             'pdf'   => Exporter::pdf($titulo, $resultado['columnas'], $resultado['filas'], $meta),
             default => throw new \InvalidArgumentException('Formato no válido'),
         };
+    }
+
+    /**
+     * Extrae y sanea filtros secundarios opcionales (categoría, cliente, proveedor, status).
+     */
+    private function extraerFiltrosAdicionales(): array
+    {
+        $filtros = [];
+        if (!empty($_GET['categoria_id'])) {
+            $filtros['categoria_id'] = (int)$_GET['categoria_id'];
+        }
+        if (!empty($_GET['proveedor_id'])) {
+            $filtros['proveedor_id'] = (int)$_GET['proveedor_id'];
+        }
+        if (!empty($_GET['cliente_id'])) {
+            $filtros['cliente_id'] = (int)$_GET['cliente_id'];
+        }
+        if (!empty($_GET['status_id'])) {
+            $filtros['status_id'] = (int)$_GET['status_id'];
+        }
+        if (isset($_GET['estado_cyber']) && $_GET['estado_cyber'] !== '') {
+            $filtros['estado'] = (int)$_GET['estado_cyber'];
+        }
+        return $filtros;
     }
 
     /**
@@ -123,7 +156,7 @@ class ReporteController
         ];
 
         $tipo = $_GET['tipo'] ?? '';
-        $requiereFechas = !in_array($tipo, ['inventario', 'cyber'], true);
+        $requiereFechas = !in_array($tipo, ['inventario', 'stock_bajo', 'cyber'], true);
 
         if ($requiereFechas) {
             $reglas['desde'] = ['label' => 'fecha inicial', 'type' => 'fecha', 'required' => true];

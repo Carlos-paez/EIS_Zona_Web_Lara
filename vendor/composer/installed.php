@@ -3,7 +3,7 @@
         'name' => 'carlospez/clase',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'bc061a744f4db1b184f84d7ac1e0b541b04b0ee0',
+        'reference' => '6dcc79c7d28a5b98cf729384b10283254fec809b',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'carlospez/clase' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'bc061a744f4db1b184f84d7ac1e0b541b04b0ee0',
+            'reference' => '6dcc79c7d28a5b98cf729384b10283254fec809b',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

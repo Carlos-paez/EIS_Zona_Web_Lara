@@ -313,6 +313,7 @@ final class Permisos
         ],
         'reportes' => [
             'kpis'      => null,
+            'filtros'   => null,
             'consultar' => null,
             'exportar'  => 'exportar',
         ],

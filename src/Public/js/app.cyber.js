@@ -227,7 +227,7 @@ $(function () {
     // ================================================================
     function buscarCliente(cedula) {
         if (!cedula) return;
-        $.getJSON(API + 'buscarCliente&cedula=' + encodeURIComponent(cedula), function (r) {
+        $.ajax({url: API + 'buscarCliente&cedula=' + encodeURIComponent(cedula), method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success || !r.data) return;
             var c = r.data;
             var nombreCompleto = (c.nombre || '') + ((c.apellido || '') ? ' ' + c.apellido : '');

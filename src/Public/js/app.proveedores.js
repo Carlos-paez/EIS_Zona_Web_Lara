@@ -14,7 +14,7 @@ $(function () {
     // FUNCIÓN: refrescarKPI()
     // ================================================================
     function refrescarKPI() {
-        $.getJSON(API + 'kpis', function (r) {
+        $.ajax({url: API + 'kpis', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) return;
             $('#kpi-total').text(r.data.total);
             $('#kpi-pendientes').text(r.data.pendientes);
@@ -28,7 +28,7 @@ $(function () {
     // FUNCIÓN: refrescarTabla()
     // ================================================================
     function refrescarTabla() {
-        $.getJSON(API + 'listar', function (r) {
+        $.ajax({url: API + 'listar', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) return;
 
             var tbody = $('#tabla-ordenes tbody');
@@ -101,7 +101,7 @@ $(function () {
         $('#tabla-lineas tbody').html('<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Cargando...</td></tr>');
         $('#linea-orden-id').val(id);
 
-        $.getJSON(API + 'lineas&orden_id=' + id, function (r) {
+        $.ajax({url: API + 'lineas&orden_id=' + id, method: "GET", dataType: "json"}).done(function(r) {
             var tbody = $('#tabla-lineas tbody');
             tbody.empty();
 
@@ -154,7 +154,7 @@ $(function () {
         $('#tabla-lineas tbody').empty();
         $('#detalle-total').text('$0.00');
 
-        $.getJSON(API + 'siguienteNumero', function (r) {
+        $.ajax({url: API + 'siguienteNumero', method: "GET", dataType: "json"}).done(function(r) {
             if (r.success) {
                 $('#orden-numero').val(r.data.numero);
             }
@@ -171,7 +171,7 @@ $(function () {
     // PROPÓSITO: Abre el modal en modo edición con líneas visibles.
     // ================================================================
     function abrirModalEditar(id) {
-        $.getJSON(API + 'detalle&id=' + id, function (r) {
+        $.ajax({url: API + 'detalle&id=' + id, method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
             EIS.limpiarErroresFormulario('#form-orden');
             var o = r.data;

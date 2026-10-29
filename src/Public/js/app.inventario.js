@@ -37,7 +37,7 @@ $(function () {
     function refrescarKPI() {
         // GET request a ?pagina=inventario&action=kpis
         // El servidor responde con un JSON que contiene total, crítico, bajo y valor
-        $.getJSON(API + 'kpis', function (r) {
+        $.ajax({url: API + 'kpis', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) return; // Si la respuesta no es exitosa, no hago nada
             // Actualizo cada tarjeta KPI con los valores recibidos
             $('#kpi-total').text(r.data.total);       // Total de productos
@@ -60,7 +60,7 @@ $(function () {
     function refrescarTabla() {
         // GET request a ?pagina=inventario&action=listar
         // El servidor devuelve un arreglo con todos los productos activos
-        $.getJSON(API + 'listar', function (r) {
+        $.ajax({url: API + 'listar', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) return; // Si la respuesta no es exitosa, salgo
 
             // Referencia al <tbody> de la tabla de productos
@@ -213,7 +213,7 @@ $(function () {
     //            de producto para que siempre tenga datos frescos.
     // ================================================================
     function cargarSelectCategorias(selectedId) {
-        $.getJSON(API + 'categorias', function (r) {
+        $.ajax({url: API + 'categorias', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) return;
             var sel = $('#producto-categoria');
             sel.empty().append('<option value="" disabled selected>Seleccione</option>');
@@ -232,7 +232,7 @@ $(function () {
     //            gestión de categorías.
     // ================================================================
     function cargarCategorias() {
-        $.getJSON(API + 'categorias', function (r) {
+        $.ajax({url: API + 'categorias', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) return;
             var tbody = $('#tabla-categorias tbody');
             tbody.empty();

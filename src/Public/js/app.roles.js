@@ -22,7 +22,7 @@ $(function () {
     // ================================================================
     function refrescarKPI() {
         // Primera llamada: obtengo la lista de roles para calcular KPIs
-        $.getJSON(API + 'listar', function (r) {
+        $.ajax({url: API + 'listar', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success || !r.data) return; // Si hay error, salgo
             var totalRoles = r.data.length; // Cantidad total de roles
             var totalUsuarios = 0; // Acumulador de usuarios
@@ -43,7 +43,7 @@ $(function () {
         });
 
         // Segunda llamada: obtengo la lista de permisos para el KPI de permisos
-        $.getJSON(API + 'permisos', function (r) {
+        $.ajax({url: API + 'permisos', method: "GET", dataType: "json"}).done(function(r) {
             if (r.success && r.data) {
                 $('#kpi-permisos').text(r.data.length); // Total de permisos registrados
             }
@@ -60,7 +60,7 @@ $(function () {
     // ================================================================
     function refrescarTabla() {
         // GET request para obtener todos los roles
-        $.getJSON(API + 'listar', function (r) {
+        $.ajax({url: API + 'listar', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) return; // Si hay error, salgo
 
             var tbody = $('#tabla-roles-body'); // <tbody> de la tabla de roles
@@ -189,14 +189,14 @@ $(function () {
         $('#modalPermisos').modal('open');           // Abro el modal
 
         // Primera llamada: obtengo todos los permisos disponibles (enriquecidos con catálogo)
-        $.getJSON(API + 'permisos', function (rPermisos) {
+        $.ajax({url: API + 'permisos', method: "GET", dataType: "json"}).done(function(rPermisos) {
             if (!rPermisos.success || !rPermisos.data) {
                 $('#permisos-container').html('<p style="color:var(--danger);text-align:center;">Error al cargar permisos</p>');
                 return;
             }
 
             // Segunda llamada: obtengo los permisos ya asignados a este rol
-            $.getJSON(API + 'permisosRol&rol_id=' + rol_id, function (rAsignados) {
+            $.ajax({url: API + 'permisosRol&rol_id=' + rol_id, method: "GET", dataType: "json"}).done(function(rAsignados) {
                 var asignados = rAsignados.success ? (rAsignados.data || []) : []; // IDs de permisos asignados
                 var html = '';
 
@@ -265,7 +265,7 @@ $(function () {
         $('#asignar-rol').empty().append('<option value="" disabled selected>Seleccionar rol</option>');
 
         // Obtengo usuarios y roles del servidor
-        $.getJSON(API + 'usuarios', function (r) {
+        $.ajax({url: API + 'usuarios', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success || !r.data) return;
 
             // Lleno el select de usuarios

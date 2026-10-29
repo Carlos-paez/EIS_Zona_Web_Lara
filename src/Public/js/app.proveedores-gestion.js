@@ -12,7 +12,7 @@ $(function () {
     // PROPÓSITO: Actualiza el indicador del total de proveedores.
     // ================================================================
     function refrescarKPI() {
-        $.getJSON(API + 'kpis', function (r) {
+        $.ajax({url: API + 'kpis', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) return;
             $('#kpi-total').text(r.data.total);
         }).fail(function () {
@@ -25,7 +25,7 @@ $(function () {
     // PROPÓSITO: Recarga la tabla de proveedores desde el servidor.
     // ================================================================
     function refrescarTabla() {
-        $.getJSON(API + 'listar', function (r) {
+        $.ajax({url: API + 'listar', method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) return;
 
             var tbody = $('#tabla-proveedores tbody');
@@ -99,7 +99,7 @@ $(function () {
     // Botón "Editar" en cada fila
     $(document).on('click', '.btn-editar-proveedor', function () {
         var id = $(this).data('id');
-        $.getJSON(API + 'detalle&id=' + id, function (r) {
+        $.ajax({url: API + 'detalle&id=' + id, method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
             EIS.limpiarErroresFormulario('#form-proveedor');
             var p = r.data;
