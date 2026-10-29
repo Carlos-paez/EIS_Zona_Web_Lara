@@ -512,6 +512,9 @@
 
         // Numéricos -------------------------------------------------------
         if (tipo === 'number') {
+            if (valor !== '' && !/^-?\d*\.?\d*$/.test(valor)) {
+                return mensaje('numero', $el);
+            }
             var num = parseFloat(valor);
             if (isNaN(num)) return mensaje('numero', $el);
             var minNum = parseFloat($el.attr('min'));
@@ -592,12 +595,103 @@
     };
 
     // -----------------------------------------------------------------
-    // Validación en vivo: al escribir (input), cambiar (change) y salir (focusout).
-    // Si el usuario escribe una letra donde va un número (o viceversa),
-    // se le notifica en tiempo real inmediatamente.
+    // FILTRADO ESTRICTO EN TIEMPO REAL
     // -----------------------------------------------------------------
+
+    // Mapa de filtros por regla para bloquear caracteres inválidos al escribir
+    var FILTROS_TIPO = {
+        entero: function (v) { return v.replace(/[^0-9-]/g, ''); },
+        decimal: function (v) { return v.replace(/[^0-9.-]/g, ''); },
+        moneda: function (v) { return v.replace(/[^0-9.]/g, ''); },
+        numero: function (v) { return v.replace(/[^0-9]/g, ''); },
+        cedula: function (v) { return v.replace(/[^0-9VEJPGvejpg-]/g, ''); },
+        rif: function (v) { return v.replace(/[^0-9VEJPGvejpg-]/g, ''); },
+        telefono: function (v) { return v.replace(/[^0-9+\-\s()]/g, ''); },
+        username: function (v) { return v.replace(/[^A-Za-z0-9._-]/g, ''); },
+        codigo: function (v) { return v.replace(/[^A-Za-z0-9_.\-\/#\s]/g, ''); },
+        numero_orden: function (v) { return v.replace(/[^A-Za-z0-9._\-\/\s]/g, ''); },
+        nombre_usuario: function (v) { return v.replace(/[^A-Za-z0-9._-]/g, ''); },
+        ipv4: function (v) { return v.replace(/[^0-9.]/g, ''); },
+        puerto: function (v) { return v.replace(/[^0-9]/g, ''); }
+    };
+
+    function obtenerFiltro($el) {
+        var declaradas = ($el.attr('data-validate') || '').toString().split(/[\s,]+/);
+        for (var i = 0; i < declaradas.length; i++) {
+            var token = declaradas[i].toLowerCase();
+            if (FILTROS_TIPO[token]) return FILTROS_TIPO[token];
+            var regla = resolverRegla(token);
+            if (regla && regla.clave) {
+                if (regla.clave === 'aplicacion.entero') return FILTROS_TIPO.entero;
+                if (regla.clave === 'aplicacion.monto') return FILTROS_TIPO.moneda;
+                if (regla.clave === 'numerico.decimal') return FILTROS_TIPO.decimal;
+                if (regla.clave === 'identificacion_venezuela.cedula_venezolana') return FILTROS_TIPO.cedula;
+                if (regla.clave === 'identificacion_venezuela.rif_venezolano') return FILTROS_TIPO.rif;
+                if (regla.clave === 'contacto.telefono_flexible') return FILTROS_TIPO.telefono;
+                if (regla.clave === 'texto_y_personas.nombre_usuario') return FILTROS_TIPO.username;
+                if (regla.clave === 'aplicacion.codigo_producto') return FILTROS_TIPO.codigo;
+                if (regla.clave === 'aplicacion.numero_orden') return FILTROS_TIPO.numero_orden;
+            }
+        }
+        var tipo = tipoDe($el);
+        if (tipo === 'number') return function (v) { return v.replace(/[^0-9.-]/g, ''); };
+        return null;
+    }
+
     $(document)
+        .on('keypress', 'form[data-validate] input:not([type=checkbox]):not([type=radio]):not([type=password]):not([type=file]):not([type=hidden]):not([type=submit]):not([type=button])', function (e) {
+            var $el = $(this);
+            var filtro = obtenerFiltro($el);
+            if (!filtro) return;
+            var char = String.fromCharCode(e.which);
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (char === '\b' || char === '\t') return;
+            var nuevo = ($el.val() || '') + char;
+            var filtrado = filtro(nuevo);
+            if (filtrado !== nuevo) {
+                e.preventDefault();
+                return false;
+            }
+        })
+        .on('paste', 'form[data-validate] input:not([type=checkbox]):not([type=radio]):not([type=password]):not([type=file]):not([type=hidden])', function (e) {
+            var $el = $(this);
+            var filtro = obtenerFiltro($el);
+            if (!filtro) return;
+            setTimeout(function () {
+                var val = $el.val() || '';
+                var filtrado = filtro(val);
+                if (filtrado !== val) {
+                    $el.val(filtrado);
+                    var m = EIS.validarCampo($el[0]);
+                    if (m) { EIS.marcarErrorCampo($el[0], m); } else { EIS.quitarErrorCampo($el[0]); }
+                }
+            }, 0);
+        })
         .on('input change', 'form[data-validate] ' + SELECTOR_CAMPOS, function () {
+            var $el = $(this);
+            // Aplicar filtro en caso de que haya pasado algo
+            if (!$el.is('select') && !$el.is('textarea') && !esPassword($el) && !esCheckable($el)) {
+                var filtro = obtenerFiltro($el);
+                if (filtro) {
+                    var val = $el.val() || '';
+                    var filtrado = filtro(val);
+                    if (filtrado !== val) {
+                        var pos = this.selectionStart;
+                        $el.val(filtrado);
+                        if (pos !== null && this.setSelectionRange) {
+                            try { this.setSelectionRange(pos - 1, pos - 1); } catch (ex) {}
+                        }
+                    }
+                }
+            }
+            var m = EIS.validarCampo(this);
+            if (m) {
+                EIS.marcarErrorCampo($el, m);
+            } else {
+                EIS.quitarErrorCampo($el);
+            }
+        })
+        .on('keyup', 'form[data-validate] ' + SELECTOR_CAMPOS, function () {
             var $el = $(this);
             var m = EIS.validarCampo(this);
             if (m) {
