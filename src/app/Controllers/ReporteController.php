@@ -59,46 +59,101 @@ class ReporteController
 
     private function consultar(): void
     {
-        $tipo  = trim($_GET['tipo'] ?? '');
-        $desde = trim($_GET['desde'] ?? '');
-        $hasta = trim($_GET['hasta'] ?? '');
-        $this->validarRango($desde, $hasta);
+        $tipo   = $this->paramTexto('tipo');
+        $desde  = $this->paramTexto('desde');
+        $hasta  = $this->paramTexto('hasta');
+        $this->validarRango($tipo, $desde, $hasta);
 
-        $resultado = $this->model->consultar($tipo, $desde, $hasta);
+        $resultado = $this->model->consultar($tipo, $desde, $hasta, $this->filtrosDesdeRequest());
         header('Content-Type: application/json');
         echo json_encode(['success' => true, 'data' => $resultado]);
     }
 
     private function exportar(): void
     {
-        if (!Router::verifyCsrfToken($_GET['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->paramTexto('csrf_token'))) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
             return;
         }
 
-        $tipo    = trim($_GET['tipo'] ?? '');
-        $formato = strtolower(trim($_GET['formato'] ?? ''));
-        $desde   = trim($_GET['desde'] ?? '');
-        $hasta   = trim($_GET['hasta'] ?? '');
-        $this->validarRango($desde, $hasta);
+        $tipo    = $this->paramTexto('tipo');
+        $formato = strtolower($this->paramTexto('formato'));
+        $desde   = $this->paramTexto('desde');
+        $hasta   = $this->paramTexto('hasta');
+        $this->validarRango($tipo, $desde, $hasta);
 
         if (!in_array($formato, ['csv', 'excel', 'pdf'], true)) {
             throw new \InvalidArgumentException('Formato de salida no válido');
         }
 
-        $resultado = $this->model->consultar($tipo, $desde, $hasta);
+        $resultado = $this->model->consultar($tipo, $desde, $hasta, $this->filtrosDesdeRequest());
         $titulo    = $this->model->nombreTipo($tipo);
 
+        if (!empty($resultado['agrupacion'])) {
+            $titulo .= ' · ' . $resultado['agrupacion'];
+        }
+
+        $meta = [
+            'desde'      => Reporte::usaFechas($tipo) ? $desde : '',
+            'hasta'      => Reporte::usaFechas($tipo) ? $hasta : '',
+            'registros'  => count($resultado['filas']),
+            'agrupacion' => $resultado['agrupacion'] ?? '',
+            'filtros'    => $resultado['contexto'] ?? [],
+            'resumen'    => $resultado['resumen'] ?? [],
+        ];
+
         match ($formato) {
-            'csv'   => Exporter::csv($titulo, $resultado['columnas'], $resultado['filas']),
-            'excel' => Exporter::excel($titulo, $resultado['columnas'], $resultado['filas']),
-            'pdf'   => Exporter::pdf($titulo, $resultado['columnas'], $resultado['filas']),
+            'csv'   => Exporter::csv($titulo, $resultado['columnas'], $resultado['filas'], $meta),
+            'excel' => Exporter::excel($titulo, $resultado['columnas'], $resultado['filas'], $meta),
+            'pdf'   => Exporter::pdf($titulo, $resultado['columnas'], $resultado['filas'], $meta),
         };
     }
 
-    private function validarRango(string $desde, string $hasta): void
+    /**
+     * Reúne los filtros contextuales enviados por el formulario.
+     *
+     * El modelo valida cada valor contra listas blancas y convierte los tipos,
+     * de modo que los parámetros no válidos se ignoran de forma segura.
+     */
+    private function filtrosDesdeRequest(): array
     {
+        return [
+            'agrupar'      => $_GET['agrupar'] ?? '',
+            'orden'        => $_GET['orden'] ?? '',
+            'limite'       => $_GET['limite'] ?? 0,
+            'cliente'      => $_GET['cliente'] ?? 0,
+            'usuario'      => $_GET['usuario'] ?? 0,
+            'categoria'    => $_GET['categoria'] ?? 0,
+            'producto'     => $_GET['producto'] ?? 0,
+            'proveedor'    => $_GET['proveedor'] ?? 0,
+            'estado'       => $_GET['estado'] ?? 0,
+            'activo'       => $_GET['activo'] ?? 0,
+            'monto_min'    => $_GET['monto_min'] ?? 0,
+            'estado_stock' => $_GET['estado_stock'] ?? 'todos',
+            'estado_ciber' => $_GET['estado_ciber'] ?? '',
+        ];
+    }
+
+    /**
+     * Lee un parámetro GET escalar y descarta arrays u objetos manipulados.
+     */
+    private function paramTexto(string $nombre, string $default = ''): string
+    {
+        $valor = $_GET[$nombre] ?? $default;
+        return is_scalar($valor) ? trim((string)$valor) : $default;
+    }
+
+    private function validarRango(string $tipo, string $desde, string $hasta): void
+    {
+        if (!Reporte::existeTipo($tipo)) {
+            throw new \InvalidArgumentException('Tipo de reporte no válido');
+        }
+
+        if (!Reporte::usaFechas($tipo)) {
+            return;
+        }
+
         $desde = Validator::fecha($desde, 'fecha inicial', ['required' => true]);
         $hasta = Validator::fecha($hasta, 'fecha final', ['required' => true]);
         if ($hasta < $desde) {

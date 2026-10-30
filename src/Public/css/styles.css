@@ -1241,3 +1241,255 @@ button:focus-visible {
 /* Botón "volver arriba" y temas consistentes en dark */
 [data-theme="dark"] #backToTop { background-color: #283593 !important; }
 [data-theme="dark"] #backToTop:hover { background-color: #1a237e !important; }
+
+/* ============================================================
+   REPORTES: filtros dinámicos, resumen ejecutivo y resultados
+   ============================================================ */
+
+/* Grupos de filtros contextuales: el JS activa solo los que
+   aplican al tipo de reporte seleccionado. */
+.reporte-filtro-grupo { display: none; }
+.reporte-filtro-grupo.activo { display: block; }
+
+.reporte-form-section {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.reporte-form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.reporte-form-section-title i { font-size: 1rem; }
+
+/* Accesos rápidos de periodo */
+.reporte-presets {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    margin: 0 0 0.6rem;
+}
+
+.reporte-presets .btn {
+    height: 2rem;
+    line-height: 2rem;
+    padding: 0 0.75rem;
+    border-radius: 18px;
+    background: var(--surface-hover);
+    color: var(--text);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: none;
+    box-shadow: none;
+}
+
+.reporte-presets .btn:hover { background: var(--border-light); }
+.reporte-presets .btn.activo {
+    background: var(--primary);
+    color: #fff;
+}
+
+/* Acciones principales del formulario */
+.reporte-acciones {
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+}
+
+.reporte-acciones .btn {
+    flex: 1 1 145px;
+    height: 2.9rem;
+    line-height: 2.9rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-transform: none;
+}
+
+.reporte-formatos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    margin-bottom: 1.15rem;
+}
+
+.reporte-formatos label {
+    margin: 0;
+    color: var(--text);
+    font-size: 0.85rem;
+}
+
+/* Panel derecho: resumen y contexto de filtros */
+.reporte-resumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    gap: 0.7rem;
+    padding: 0.9rem 1.5rem 0;
+}
+
+.reporte-resumen:empty { display: none; }
+
+.reporte-resumen-card {
+    position: relative;
+    min-width: 0;
+    padding: 0.8rem 0.85rem 0.75rem 1rem;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.reporte-resumen-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--primary);
+}
+
+.reporte-resumen-card.success::before { background: var(--success); }
+.reporte-resumen-card.warning::before { background: var(--warning); }
+.reporte-resumen-card.info::before { background: var(--info); }
+.reporte-resumen-card.danger::before { background: var(--danger); }
+
+.reporte-resumen-icon {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.45rem;
+    color: var(--primary);
+    font-size: 1.35rem;
+    opacity: 0.14;
+}
+
+.reporte-resumen-card.success .reporte-resumen-icon { color: var(--success); }
+.reporte-resumen-card.warning .reporte-resumen-icon { color: var(--warning); }
+.reporte-resumen-card.info .reporte-resumen-icon { color: var(--info); }
+.reporte-resumen-card.danger .reporte-resumen-icon { color: var(--danger); }
+
+.reporte-resumen-label {
+    color: var(--text-muted);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.reporte-resumen-value {
+    margin-top: 0.22rem;
+    color: var(--text);
+    font-size: 1.12rem;
+    font-weight: 800;
+    line-height: 1.2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.reporte-resumen-nota {
+    padding: 0.35rem 1.5rem 0;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+}
+
+.reporte-contexto {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0.75rem 1.5rem 0;
+}
+
+.reporte-contexto:empty { display: none; }
+
+.reporte-contexto .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    max-width: 100%;
+    min-height: 25px;
+    height: auto;
+    margin: 0;
+    padding: 0.15rem 0.7rem 0.15rem 0.5rem;
+    border-radius: 14px;
+    background: var(--surface-hover);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    line-height: 1.35;
+    font-weight: 500;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.reporte-contexto .chip i {
+    flex: 0 0 auto;
+    color: var(--primary);
+    font-size: 0.9rem;
+    line-height: 1.35;
+}
+
+.reporte-tabla-wrap {
+    margin-top: 0.8rem;
+    padding: 0 1.5rem 1.5rem;
+    overflow-x: auto;
+}
+
+.reporte-tabla-wrap table { margin: 0; }
+
+.reporte-numero {
+    text-align: right !important;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Pequeñas etiquetas de estado dentro de la tabla */
+.reporte-badge {
+    display: inline-block;
+    padding: 0.12rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.reporte-badge.success { background: rgba(67, 160, 71, 0.14); color: var(--success); }
+.reporte-badge.warning { background: rgba(251, 140, 0, 0.16); color: #b26a00; }
+.reporte-badge.info { background: rgba(30, 136, 229, 0.14); color: var(--info); }
+.reporte-badge.danger { background: rgba(229, 57, 53, 0.13); color: var(--danger); }
+
+[data-theme="dark"] .reporte-badge.warning { color: #ffb74d; }
+[data-theme="dark"] .reporte-badge.success { color: #81c784; }
+[data-theme="dark"] .reporte-badge.info { color: #64b5f6; }
+[data-theme="dark"] .reporte-badge.danger { color: #ef9a9a; }
+
+/* Los controles ocultos no deben dejar huecos en el formulario */
+.reporte-filtro-grupo.col { padding-bottom: 0; }
+
+@media (max-width: 992px) {
+    .reporte-resumen { padding: 0.9rem 1.25rem 0; }
+    .reporte-contexto,
+    .reporte-tabla-wrap { padding-left: 1.25rem; padding-right: 1.25rem; }
+}
+
+@media (max-width: 600px) {
+    .reporte-resumen {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding: 0.75rem 1rem 0;
+    }
+
+    .reporte-resumen-value { font-size: 1rem; }
+
+    .reporte-contexto,
+    .reporte-tabla-wrap { padding-left: 1rem; padding-right: 1rem; }
+
+    .reporte-acciones .btn { flex-basis: 100%; }
+}
