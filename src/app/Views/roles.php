@@ -192,7 +192,7 @@
             <!-- Selector de usuario -->
             <div class="col s12 input-field">
                 <i class="material-icons prefix">person</i>
-                <select id="asignar-usuario">
+                <select id="asignar-usuario" required data-validate>
                     <option value="" disabled selected>Seleccionar usuario</option>
                 </select>
                 <label>Usuario</label>
@@ -200,7 +200,7 @@
             <!-- Selector de rol -->
             <div class="col s12 input-field">
                 <i class="material-icons prefix">admin_panel_settings</i>
-                <select id="asignar-rol">
+                <select id="asignar-rol" required data-validate>
                     <option value="" disabled selected>Seleccionar rol</option>
                 </select>
                 <label>Rol</label>

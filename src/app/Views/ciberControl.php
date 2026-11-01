@@ -178,7 +178,7 @@ try {
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">devices</i>
-                <select id="pcTipo" name="tipo_activo_id" required>
+                <select id="pcTipo" name="tipo_activo_id" required data-validate>
                     <option value="" disabled selected>Seleccionar tipo</option>
                     <?php foreach ($tiposActivo as $tipo): ?>
                         <option value="<?= (int)$tipo['id'] ?>"><?= htmlspecialchars($tipo['nombre_tipo']) ?></option>
@@ -189,11 +189,11 @@ try {
             <div class="input-field" style="margin-top:1.5rem;">
                 <div style="display:flex;gap:2rem;align-items:center;">
                     <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
-                        <input type="radio" name="activa" value="1" checked>
+                        <input type="radio" name="activa" value="1" checked required data-validate>
                         <span>Activa</span>
                     </label>
                     <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
-                        <input type="radio" name="activa" value="0">
+                        <input type="radio" name="activa" value="0" data-validate>
                         <span>Mantenimiento</span>
                     </label>
                 </div>

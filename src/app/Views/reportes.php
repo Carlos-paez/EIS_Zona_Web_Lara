@@ -72,7 +72,7 @@ $nombreMes = $mesesEsp[$mesActual] ?? strtolower($mesActual);
                 <form id="formReporte" data-validate>
                     <!-- Selector de Reporte Estratégico -->
                     <div class="input-field" style="margin-top:1.25rem;">
-                        <select name="tipo" id="reporteTipo" required>
+                        <select name="tipo" id="reporteTipo" required data-validate>
                             <optgroup label="Área Comercial y Ventas">
                                 <option value="ventas" selected>Ventas por fecha</option>
                                 <option value="ventas_por_producto">Ventas por producto (Top rotación)</option>
@@ -116,13 +116,13 @@ $nombreMes = $mesesEsp[$mesActual] ?? strtolower($mesActual);
                     <div class="row fechas-row" style="margin-bottom:0;">
                         <div class="col s12 m6">
                             <div class="input-field">
-                                <input type="date" id="fechaInicio" name="desde" value="<?php echo date('Y-m-01'); ?>">
+                                <input type="date" id="fechaInicio" name="desde" value="<?php echo date('Y-m-01'); ?>" data-validate="fecha">
                                 <label for="fechaInicio" class="active">Fecha Inicio</label>
                             </div>
                         </div>
                         <div class="col s12 m6">
                             <div class="input-field">
-                                <input type="date" id="fechaFin" name="hasta" value="<?php echo date('Y-m-d'); ?>">
+                                <input type="date" id="fechaFin" name="hasta" value="<?php echo date('Y-m-d'); ?>" data-validate="fecha">
                                 <label for="fechaFin" class="active">Fecha Fin</label>
                             </div>
                         </div>

@@ -450,7 +450,7 @@ $totalProductos = count($productos);
             <div class="row">
                 <!-- Select: Categoria del producto (obligatorio) -->
                 <div class="input-field col s12 m6">
-                    <select name="categoria_id" id="producto-categoria" required>
+                    <select name="categoria_id" id="producto-categoria" required data-validate>
                         <option value="" disabled selected>Seleccione</option>
                     </select>
                     <label>Categoría</label>

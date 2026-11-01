@@ -29,6 +29,11 @@
     var EIS = window.EIS = window.EIS || {};
     var Regex = EIS.Regex || null;
 
+    // Si el plugin jQuery Validation está cargado, lo usamos como motor de
+    // validación. La validación propia se conserva como respaldo y como
+    // fuente única de reglas (regex_validations.json).
+    var USAR_JQUERY_VALIDATE = !!(window.jQuery && $.fn && typeof $.fn.validate === 'function');
+
     if (!Regex && window.console && console.warn) {
         console.warn('app.validate.js: EIS.Regex no está disponible. Carga regex_validations.js antes de este archivo; solo se aplicarán las validaciones HTML5.');
     }
@@ -195,8 +200,11 @@
     }
 
     function contenedorDe($el) {
+        // Prefiero el .input-field porque contiene la etiqueta flotante y es
+        // donde Materialize espera los mensajes; el .select-wrapper queda
+        // como respaldo para selects sin .input-field.
+        if ($el.closest('.input-field').length) return $el.closest('.input-field');
         if ($el.closest('.select-wrapper').length) return $el.closest('.select-wrapper');
-        if ($el.closest('.input-field, .select-wrapper').length) return $el.closest('.input-field, .select-wrapper');
         return $el.parent();
     }
 
@@ -390,7 +398,7 @@
         } else {
             $el.addClass('invalid eis-invalid');
         }
-        $('<div class="eis-field-error helper-text" style="color:#c62828;font-weight:500;"></div>')
+        $('<div class="eis-field-error helper-text"></div>')
             .text(texto)
             .appendTo($wrap);
     };
@@ -575,6 +583,27 @@
         var errores = {};
         if (!$form.length) return errores;
 
+        // Motor principal: jQuery Validation Plugin (si está disponible).
+        // checkForm() valida sin pintar errores; el pintado lo hace
+        // EIS.mostrarErroresFormulario o el propio plugin en tiempo real.
+        if (USAR_JQUERY_VALIDATE && EIS.initValidacionJQuery) {
+            EIS.initValidacionJQuery($form[0]);
+            var validator = $form.data('validator');
+            if (validator) {
+                var valido = validator.checkForm();
+                if (!valido) {
+                    $.each(validator.errorList || [], function (_, error) {
+                        var nombre = $(error.element).attr('name');
+                        if (!nombre) return;
+                        if (Object.prototype.hasOwnProperty.call(errores, nombre)) return;
+                        errores[nombre] = error.message;
+                    });
+                }
+                return errores;
+            }
+        }
+
+        // Respaldo: validación propia (también se usa si el plugin no cargó).
         $form.find(SELECTOR_CAMPOS).each(function () {
             var nombre = $(this).attr('name');
             if (!nombre) return;
@@ -638,6 +667,10 @@
         return null;
     }
 
+    // Con jQuery Validation activo, el plugin se encarga de la validación en
+    // tiempo real (blur/keyup/click) y de pintar los mensajes. Solo se usa
+    // esta capa propia cuando el plugin no está disponible.
+    if (!USAR_JQUERY_VALIDATE) {
     $(document)
         .on('keypress', 'form[data-validate] input:not([type=checkbox]):not([type=radio]):not([type=password]):not([type=file]):not([type=hidden]):not([type=submit]):not([type=button])', function (e) {
             var $el = $(this);
@@ -710,6 +743,7 @@
                 EIS.quitarErrorCampo($el);
             }
         });
+    }
 
     // -----------------------------------------------------------------
     // Bloqueo del envío con errores.
@@ -766,6 +800,464 @@
     $(function () {
         $('form[data-validate]').each(function () { this.noValidate = true; });
     });
+
+    // =================================================================
+    // INTEGRACIÓN CON JQUERY VALIDATION PLUGIN
+    //
+    // El plugin se encarga del ciclo de vida (blur, keyup, click, submit),
+    // del foco al primer error y de pintar los mensajes. Las reglas siguen
+    // saliendo de regex_validations.json a través de EIS.validarCampo, de
+    // modo que cliente y servidor comparten la misma fuente.
+    // =================================================================
+    if (USAR_JQUERY_VALIDATE) {
+
+        // Mensajes en español para las reglas nativas del plugin.
+        $.extend($.validator.messages, {
+            required: 'Este campo es obligatorio.',
+            email: 'Ingresa un correo electrónico válido.',
+            url: 'Ingresa una URL válida.',
+            number: 'Ingresa un número válido.',
+            digits: 'Solo se permiten dígitos.',
+            minlength: $.validator.format('Debe tener al menos {0} caracteres.'),
+            maxlength: $.validator.format('No puede exceder {0} caracteres.'),
+            rangelength: $.validator.format('Debe tener entre {0} y {1} caracteres.'),
+            min: $.validator.format('El valor mínimo permitido es {0}.'),
+            max: $.validator.format('El valor máximo permitido es {0}.'),
+            equalTo: 'Los valores no coinciden.',
+            date: 'Ingresa una fecha válida.',
+            dateISO: 'Ingresa una fecha válida (AAAA-MM-DD).',
+            step: $.validator.format('El valor debe ser múltiplo de {0}.')
+        });
+
+        // Regla puente: toda la lógica de regex_validations.json se ejecuta
+        // dentro del plugin a través de EIS.validarCampo.
+        $.validator.addMethod('eisRegla', function (value, element) {
+            return EIS.validarCampo(element) === '';
+        }, function (param, element) {
+            return EIS.validarCampo(element) || 'El valor no es válido.';
+        });
+
+        function tokensDe($el) {
+            var texto = ($el.attr('data-validate') || '').toString();
+            var partes = texto.split(/[\s,]+/);
+            var tokens = [];
+            for (var i = 0; i < partes.length; i++) {
+                if (partes[i]) tokens.push(partes[i]);
+            }
+            return tokens;
+        }
+
+        function metadatosDe($el) {
+            var minimo = aEntero($el.attr('minlength'));
+            var maximo = aEntero($el.attr('maxlength'));
+            var tokens = tokensDe($el);
+
+            for (var i = 0; i < tokens.length; i++) {
+                var regla = resolverRegla(tokens[i]);
+                if (!regla) continue;
+                if (regla.minlength !== null) {
+                    minimo = (minimo === null) ? regla.minlength : Math.max(minimo, regla.minlength);
+                }
+                if (regla.maxlength !== null) {
+                    maximo = (maximo === null) ? regla.maxlength : Math.min(maximo, regla.maxlength);
+                }
+            }
+
+            return { minlength: minimo, maxlength: maximo, tokens: tokens };
+        }
+
+        // Construye el mapa de reglas del plugin a partir de los atributos
+        // HTML5 y de data-validate. Así cualquier formulario nuevo queda
+        // cubierto sin escribir JavaScript adicional.
+        function construirReglas($form) {
+            var rules = {};
+            var messages = {};
+
+            $form.find('input, select, textarea').each(function () {
+                var $el = $(this);
+                var nombre = $el.attr('name');
+                if (!nombre) return;
+
+                var tipo = tipoDe($el);
+                if (TIPOS_CONTROL[tipo] || tipo === 'hidden') return;
+
+                var meta = metadatosDe($el);
+                var reglas = rules[nombre] || {};
+
+                if ($el.is('[required]') || $el.prop('required')) {
+                    reglas.required = true;
+                }
+                if (meta.minlength !== null && meta.minlength > 0) {
+                    reglas.minlength = meta.minlength;
+                }
+                if (meta.maxlength !== null && meta.maxlength > 0) {
+                    reglas.maxlength = meta.maxlength;
+                }
+
+                if (tipo === 'email') reglas.email = true;
+                if (tipo === 'url') reglas.url = true;
+                if (tipo === 'number') {
+                    reglas.number = true;
+                    var minNum = parseFloat($el.attr('min'));
+                    var maxNum = parseFloat($el.attr('max'));
+                    if (!isNaN(minNum)) reglas.min = minNum;
+                    if (!isNaN(maxNum)) reglas.max = maxNum;
+                }
+
+                var selectorIgual = $el.attr('data-match');
+                if (selectorIgual) reglas.equalTo = selectorIgual;
+
+                // La regla puente cubre data-validate, los tipos email/tel/url,
+                // el atributo pattern y la confirmación de contraseña.
+                if (meta.tokens.length || tipo === 'email' || tipo === 'tel' ||
+                    tipo === 'url' || $el.attr('pattern') || selectorIgual) {
+                    reglas.eisRegla = true;
+                }
+
+                rules[nombre] = reglas;
+
+                // Mensajes personalizados por campo (data-msg-*).
+                var mensajesCampo = messages[nombre] || {};
+                var claves = ['required', 'email', 'url', 'number', 'minlength',
+                    'maxlength', 'min', 'max', 'equalTo', 'eisRegla'];
+                for (var k = 0; k < claves.length; k++) {
+                    var override = $el.attr('data-msg-' + claves[k]);
+                    if (override) mensajesCampo[claves[k]] = override;
+                }
+                if (Object.keys(mensajesCampo).length) {
+                    messages[nombre] = mensajesCampo;
+                }
+            });
+
+            return { rules: rules, messages: messages };
+        }
+
+        function inicializarFormulario(form) {
+            var $form = $(form);
+            if (!$form.length) return null;
+
+            var existente = $form.data('validator');
+            if (existente) return existente;
+
+            var config = construirReglas($form);
+
+            var validator = $form.validate({
+                rules: config.rules,
+                messages: config.messages,
+                errorElement: 'div',
+                errorClass: 'eis-field-error',
+                validClass: 'eis-valid',
+                // Incluye los <select> nativos aunque Materialize los oculte,
+                // pero excluye campos realmente ocultos y deshabilitados.
+                ignore: function (index, element) {
+                    if (element.disabled) return true;
+                    var tag = element.tagName.toLowerCase();
+                    if (tag === 'select' || tag === 'textarea') return false;
+                    return $(element).is(':hidden');
+                },
+                errorPlacement: function (error, element) {
+                    var $el = $(element);
+                    var $wrap = contenedorDe($el);
+                    // Evito mensajes duplicados (p. ej. un error del servidor
+                    // que sigue visible mientras el plugin pinta el suyo).
+                    $wrap.find('.eis-field-error').remove();
+                    error.addClass('eis-field-error helper-text');
+                    $wrap.append(error);
+                },
+                highlight: function (element) {
+                    var $el = $(element);
+                    if ($el.is('select') || esCheckable($el)) {
+                        contenedorDe($el).addClass('invalid eis-invalid');
+                    } else {
+                        $el.addClass('invalid eis-invalid');
+                    }
+                },
+                unhighlight: function (element) {
+                    var $el = $(element);
+                    var $wrap = contenedorDe($el);
+                    $el.removeClass('invalid eis-invalid');
+                    $wrap.removeClass('invalid eis-invalid');
+                    // Al corregir el campo, quito también el mensaje que haya
+                    // dejado una validación anterior del servidor.
+                    $wrap.find('.eis-field-error').remove();
+                },
+                invalidHandler: function (event, val) {
+                    if (!EIS.toast) return;
+                    var total = (val.errorList || []).length;
+                    EIS.toast(
+                        total > 1
+                            ? 'Revisa los ' + total + ' campos marcados e intenta de nuevo.'
+                            : 'Revisa el campo marcado e intenta de nuevo.',
+                        'red',
+                        'error'
+                    );
+                },
+                submitHandler: function (formEl, event) {
+                    // Los formularios AJAX no tienen action: los módulos hacen
+                    // su propio POST (algunos con delegación en document). Por
+                    // eso NO devolvemos false aquí: solo prevenimos el envío
+                    // nativo y dejamos que el evento siga propagándose.
+                    if ($(formEl).attr('action')) {
+                        formEl.submit();
+                        return false;
+                    }
+                    if (event && event.preventDefault) {
+                        event.preventDefault();
+                    }
+                    return true;
+                }
+            });
+
+            return validator;
+        }
+
+        // API pública para inicializar formularios creados dinámicamente.
+        EIS.initValidacionJQuery = function (form) {
+            var $form = $(form);
+            $form.each(function () { inicializarFormulario(this); });
+            return $form;
+        };
+
+        $(function () {
+            $('form[data-validate]').each(function () {
+                inicializarFormulario(this);
+            });
+        });
+
+        // Formularios inyectados después del DOM ready: se inicializan en el
+        // primer foco/clic sobre alguno de sus campos.
+        $(document).on('focusin click', 'form[data-validate] input, form[data-validate] select, form[data-validate] textarea', function () {
+            if (this.form) inicializarFormulario(this.form);
+        });
+    }
+
+    // =================================================================
+    // VALIDACIÓN EN TIEMPO REAL + ALERTAS TOAST AL TIPEAR
+    //
+    // Requisito: que apenas se empiece a tipear en un campo se muestren
+    // alertas de tipo, extensión, formato, etc.
+    //
+    // Este bloque funciona TANTO con el jQuery Validation Plugin activo
+    // como sin él, porque no depende del ciclo de vida del plugin: se
+    // apoya en la delegación de los eventos input/change sobre document
+    // y en EIS.validarCampo (fuente única: regex_validations.json).
+    //
+    //   1. Al primer tecleo en un campo con formato exigido muestra una
+    //      pista informativa (data-hint, title o la frase de la regla).
+    //   2. Pinta el error inline de forma inmediata.
+    //   3. Si el mensaje de error CAMBIA respecto al anterior, lanza un
+    //      toast naranja (nunca repite el mismo texto en cada tecla).
+    //   4. Si el campo pasa de inválido a válido, confirma en verde.
+    // =================================================================
+
+    var RETRASO_TOAST = 450;   // ms de espera tras la última tecla
+    var relojesToast = {};     // clave de campo -> id de setTimeout
+    var ultimoAviso = {};      // clave -> mensaje ya mostrado al usuario
+    var pistasDadas = {};      // clave -> la pista de formato ya se entregó
+    var pistasTexto = {};      // clave -> texto de esa pista (para no repetirlo)
+    var camposTocados = {};    // clave -> el usuario ya interactuó con él
+    var secuenciaCampo = 0;    // evita colisiones entre formularios
+
+    // Campos sobre los que aplica el tiempo real. Se excluyen checkbox,
+    // radio, file, hidden y botones: no se "tipean" y su aviso se gestiona
+    // en el envÃ­o (invalidHandler) o en su propio evento change.
+    var SEL_TIEMPO_REAL = 'form[data-validate] input' +
+        ':not([type=checkbox]):not([type=radio]):not([type=hidden])' +
+        ':not([type=submit]):not([type=button])' +
+        ':not([type=reset]):not([type=image])' +
+        ', form[data-validate] select, form[data-validate] textarea';
+
+    // Tipos nativos cuyo formato ya garantiza el navegador: no se les
+    // ofrece pista automática (aunque sí si declaran data-hint o title).
+    var SIN_PISTA_AUTO = {
+        date: 1, datetime: 1, 'datetime-local': 1, month: 1,
+        week: 1, time: 1, number: 1, range: 1, color: 1
+    };
+
+    // Identificador estable por elemento (no por nombre de campo), para
+    // que dos formularios con campos homónimos no compartan estado.
+    function claveCampo(el) {
+        if (!el.__eisClave) {
+            el.__eisClave = 'c' + (++secuenciaCampo) + '::' + (el.name || el.id || 'anon');
+        }
+        return el.__eisClave;
+    }
+
+    // Etiqueta legible del campo, usada para encabezar el toast y que
+    // varias alertas apiladas sean identificables de un vistazo.
+    function etiquetaCampo(el) {
+        var $el = $(el);
+        var texto = '';
+
+        if (el.id) {
+            $('label[for]').each(function () {
+                if (this.getAttribute('for') === el.id) {
+                    texto = $(this).text();
+                    return false;
+                }
+            });
+        }
+        if (!texto) {
+            texto = $el.closest('.input-field, .select-wrapper').find('label').first().text();
+        }
+        if (!texto) texto = $el.attr('placeholder') || '';
+        if (!texto) texto = (el.name || '').replace(/[_\-]/g, ' ');
+
+        return String(texto).replace(/\*/g, '').replace(/[:\s]+$/, '').trim();
+    }
+
+    // Indica si una clave del JSON describe un formato estricto (cédula,
+    // RIF, correo, teléfono, contraseña, fecha, monto, extensión...).
+    // Solo a esos campos se les ofrece pista: los textos libres (nombre,
+    // descripción, dirección) no la necesitan y solo añadirían ruido.
+    function esFormatoExigido(clave) {
+        if (!clave) return false;
+        return /^(identificacion_venezuela|contacto|seguridad|archivos|fechas_y_horas|numerico|redes|desarrollo)\./.test(clave)
+            || clave === 'aplicacion.codigo_producto'
+            || clave === 'aplicacion.monto'
+            || clave === 'aplicacion.entero'
+            || clave === 'texto_y_personas.nombre_usuario'
+            || clave === 'texto_y_personas.iniciales';
+    }
+
+    // Devuelve la pista de formato a mostrar al empezar a tipear, o ''
+    // si el campo no debe recibir ninguna.
+    function pistaFormato(el) {
+        var $el = $(el);
+
+        // Guía explícita declarada por el desarrollador de la vista.
+        var explicita = ($el.attr('data-hint') || '').trim()
+            || ($el.attr('title') || '').trim();
+        if (explicita) return explicita;
+
+        // Los <select> no se tipean: se les valida en change, sin pista.
+        if (String(el.tagName).toUpperCase() === 'SELECT') return '';
+
+        var tipo = tipoDe($el);
+        if (SIN_PISTA_AUTO[tipo]) return '';
+
+        // Tipos nativos sin data-validate.
+        if (tipo === 'email') { var re = resolverRegla('email'); if (re && re.mensaje) return re.mensaje; }
+        if (tipo === 'tel')   { var rt = resolverRegla('telefono'); if (rt && rt.mensaje) return rt.mensaje; }
+        if (tipo === 'url')   { var ru = resolverRegla('url'); if (ru && ru.mensaje) return ru.mensaje; }
+
+        // Reglas declaradas en data-validate (alias o clave completa).
+        var tokens = ($el.attr('data-validate') || '').toString().split(/[\s,]+/);
+        for (var i = 0; i < tokens.length; i++) {
+            if (!tokens[i]) continue;
+            var regla = resolverRegla(tokens[i]);
+            if (regla && regla.mensaje && esFormatoExigido(regla.clave)) return regla.mensaje;
+        }
+        return '';
+    }
+
+    // -----------------------------------------------------------------
+    // EIS.pintarEnVivo(el)
+    // Refresca el estado visual del campo y devuelve su mensaje de error.
+    // Si el plugin está activo se apoya en validator.element() para que
+    // su estado interno siga al día; si el plugin no pinta nada (campo
+    // sin reglas para él), se usa el pintado propio como respaldo.
+    // -----------------------------------------------------------------
+    function pintarEnVivo(el) {
+        var msg = EIS.validarCampo(el) || '';
+        var $wrap = contenedorDe($(el));
+        var validator = null;
+
+        if (el.form) {
+            try { validator = $(el.form).data('validator'); } catch (e) { validator = null; }
+        }
+        if (validator && typeof validator.element === 'function') {
+            try { validator.element(el); } catch (e) { /* campo sin reglas: se pinta abajo */ }
+        }
+
+        if (!msg) {
+            EIS.quitarErrorCampo(el);
+            return '';
+        }
+        if (!$wrap.find('.eis-field-error').length) {
+            EIS.marcarErrorCampo(el, msg);
+        }
+        return msg;
+    }
+
+    function avisarCampo(el, texto, color, icono) {
+        if (typeof EIS.toast !== 'function') return;
+        var etiqueta = etiquetaCampo(el);
+        EIS.toast(etiqueta ? (etiqueta + ': ' + texto) : texto, color, icono);
+    }
+
+    // Evaluación diferida: decide qué toast corresponde (si es que algo
+    // cambió) una vez que el usuario dejó de escribir.
+    function evaluarErrorTiempoReal(el) {
+        var clave = claveCampo(el);
+        if (!camposTocados[clave]) return;
+
+        var msg = pintarEnVivo(el);
+
+        if (!msg) {
+            // Campo corregido: solo se confirma si antes hubo un aviso.
+            if (ultimoAviso[clave]) {
+                ultimoAviso[clave] = '';
+                avisarCampo(el, 'Formato correcto.', 'green', 'success');
+            }
+            return;
+        }
+
+        if (ultimoAviso[clave] === msg) return;   // mismo error: no repetir
+
+        // El error coincide con la pista ya entregada al empezar a tipear:
+        // se registra (para poder confirmar la corrección más adelante) pero
+        // no se vuelve a avisar con el mismo texto.
+        if (pistasTexto[clave] && pistasTexto[clave] === msg) {
+            ultimoAviso[clave] = msg;
+            return;
+        }
+
+        ultimoAviso[clave] = msg;
+        avisarCampo(el, msg, 'orange', 'warning');
+    }
+
+    $(document)
+        .on('input change', SEL_TIEMPO_REAL, function (e) {
+            var el = this;
+            var clave = claveCampo(el);
+
+            // El evento `input` solo lo genera la interacción real del
+            // usuario (teclado, pegar o cortar), así que con él basta para
+            // marcar el campo como tocado. Sin esa marca no se emiten toasts,
+            // lo que mantiene fuera a los `change` programáticos que dispara
+            // Materialize al inicializar los selects.
+            if (e.type === 'input') {
+                camposTocados[clave] = true;
+            } else if (!camposTocados[clave]) {
+                // Cambio sin tipeo previo (p. ej. un <select> elegido con el
+                // ratón): solo se refresca el estado visual, sin alertas.
+                if (el.value === '' || el.value === null) return;
+                pintarEnVivo(el);
+                return;
+            }
+
+            // Feedback visual inmediato: sin esperar a la pausa.
+            pintarEnVivo(el);
+
+            // Pista de formato: solo una vez y al primer tecleo, para que
+            // el aviso aparezca de verdad en cuanto empieza a escribir.
+            if (!pistasDadas[clave]) {
+                pistasDadas[clave] = true;
+                var pista = pistaFormato(el);
+                if (pista) {
+                    pistasTexto[clave] = pista;
+                    ultimoAviso[clave] = EIS.validarCampo(el) || '';
+                    avisarCampo(el, pista, 'indigo', 'info');
+                    return;
+                }
+            }
+
+            clearTimeout(relojesToast[clave]);
+            relojesToast[clave] = setTimeout(function () {
+                evaluarErrorTiempoReal(el);
+            }, RETRASO_TOAST);
+        });
 
     // -----------------------------------------------------------------
     // API pública para extender reglas desde otros módulos.

@@ -103,7 +103,7 @@ $totalProv = $gpModel->totalProveedores();
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">email</i>
-                <input type="email" name="email" id="proveedor-email" maxlength="100">
+                <input type="email" name="email" id="proveedor-email" maxlength="100" data-validate="email">
                 <label for="proveedor-email">Email</label>
             </div>
             <div class="input-field">

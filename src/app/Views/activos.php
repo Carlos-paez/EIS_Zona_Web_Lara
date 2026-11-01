@@ -129,7 +129,7 @@ $tiposActivo = $activoModel->listarTiposActivo();
                 </div>
                 <div class="col s12 m6 input-field" style="margin-bottom:0;">
                     <i class="material-icons prefix">category</i>
-                    <select name="tipo_activo_id" id="activo-tipo" required>
+                    <select name="tipo_activo_id" id="activo-tipo" required data-validate>
                         <option value="" disabled selected>Selecciona un tipo...</option>
                         <?php foreach ($tiposActivo as $tipo): ?>
                             <option value="<?php echo (int)$tipo['id']; ?>"><?php echo htmlspecialchars($tipo['nombre_tipo'], ENT_QUOTES, 'UTF-8'); ?></option>

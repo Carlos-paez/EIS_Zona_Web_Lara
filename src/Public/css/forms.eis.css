@@ -1,0 +1,256 @@
+/* ============================================================
+   EIS System — Estilos de validación y notificaciones
+   ------------------------------------------------------------
+   Integra jQuery Validation Plugin y jQuery Toast Plugin con la
+   estética Materialize del sistema (tema claro y oscuro).
+   ============================================================ */
+
+/* ---------- Mensajes de error de jQuery Validation ---------- */
+.eis-field-error {
+    display: block;
+    margin-top: 0.25rem;
+    color: #c62828;
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: left;
+}
+
+.input-field.eis-invalid > label,
+.select-wrapper.eis-invalid > label,
+.eis-invalid > label,
+label.eis-invalid,
+label.eis-invalid > span,
+.input-field.eis-invalid .material-icons.prefix,
+.select-wrapper.eis-invalid .material-icons.prefix {
+    color: #c62828 !important;
+}
+
+input.eis-invalid,
+textarea.eis-invalid,
+select.eis-invalid,
+.select-wrapper.eis-invalid select,
+.input-field.eis-invalid input.select-dropdown,
+.select-wrapper.eis-invalid input.select-dropdown,
+.select-wrapper.eis-invalid .select-dropdown {
+    border-bottom: 1px solid #c62828 !important;
+    box-shadow: 0 1px 0 0 #c62828 !important;
+}
+
+.input-field.eis-invalid .caret,
+.select-wrapper.eis-invalid .caret {
+    border-top-color: #c62828 !important;
+    fill: #c62828 !important;
+}
+
+/* Transición suave al marcar/desmarcar un campo */
+input,
+textarea,
+select,
+.select-wrapper,
+.input-field > label {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+/* ---------- Tema oscuro ---------- */
+[data-theme="dark"] .eis-field-error {
+    color: #fca5a5;
+}
+
+[data-theme="dark"] .input-field.eis-invalid > label,
+[data-theme="dark"] .select-wrapper.eis-invalid > label,
+[data-theme="dark"] .eis-invalid > label,
+[data-theme="dark"] label.eis-invalid,
+[data-theme="dark"] label.eis-invalid > span,
+[data-theme="dark"] .input-field.eis-invalid .material-icons.prefix,
+[data-theme="dark"] .select-wrapper.eis-invalid .material-icons.prefix {
+    color: #fca5a5 !important;
+}
+
+[data-theme="dark"] input.eis-invalid,
+[data-theme="dark"] textarea.eis-invalid,
+[data-theme="dark"] select.eis-invalid,
+[data-theme="dark"] .select-wrapper.eis-invalid select,
+[data-theme="dark"] .input-field.eis-invalid input.select-dropdown,
+[data-theme="dark"] .select-wrapper.eis-invalid input.select-dropdown,
+[data-theme="dark"] .select-wrapper.eis-invalid .select-dropdown {
+    border-bottom-color: #fca5a5 !important;
+    box-shadow: 0 1px 0 0 #fca5a5 !important;
+}
+
+[data-theme="dark"] .input-field.eis-invalid .caret,
+[data-theme="dark"] .select-wrapper.eis-invalid .caret {
+    border-top-color: #fca5a5 !important;
+    fill: #fca5a5 !important;
+}
+
+/* ---------- Campo válido (confirmación en tiempo real) ----------
+   jQuery Validation añade .eis-valid cuando validator.element()
+   confirma que la regla se cumple al tipear. Se usa una línea verde
+   sutil, coherente con el rojo de error de arriba. */
+input.eis-valid,
+textarea.eis-valid,
+.select-wrapper.eis-valid select,
+.input-field.eis-valid input.select-dropdown {
+    border-bottom: 1px solid #2e7d32 !important;
+    box-shadow: 0 1px 0 0 #2e7d32 !important;
+}
+
+.input-field.eis-valid > label,
+.select-wrapper.eis-valid > label {
+    color: #2e7d32 !important;
+}
+
+[data-theme="dark"] input.eis-valid,
+[data-theme="dark"] textarea.eis-valid,
+[data-theme="dark"] .select-wrapper.eis-valid select,
+[data-theme="dark"] .input-field.eis-valid input.select-dropdown {
+    border-bottom-color: #4caf50 !important;
+    box-shadow: 0 1px 0 0 #4caf50 !important;
+}
+
+[data-theme="dark"] .input-field.eis-valid > label,
+[data-theme="dark"] .select-wrapper.eis-valid > label {
+    color: #4caf50 !important;
+}
+
+/* Los toasts de validación son más compactos que los del sistema para
+   que apilados no tapen el formulario donde se está escribiendo. */
+.jq-toast-single.eis-toast-campo {
+    font-size: 0.85rem;
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+}
+
+/* ---------- jQuery Toast Plugin ---------- */
+.jq-toast-wrap {
+    z-index: 10050 !important;
+    width: 340px;
+    max-width: calc(100vw - 2rem);
+    font-family: inherit;
+    letter-spacing: normal;
+}
+
+.jq-toast-single {
+    border-radius: 12px;
+    padding: 1rem 2.25rem 1rem 1.25rem;
+    margin-bottom: 0.6rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* Toast para errores de validación en tiempo real */
+.jq-toast-single.error,
+.jq-toast-single.jq-icon-error {
+    background: linear-gradient(135deg, #c62828 0%, #d32f2f 100%) !important;
+    color: #ffffff !important;
+}
+
+.jq-toast-single.warning,
+.jq-toast-single.jq-icon-warning {
+    background: linear-gradient(135deg, #ef6c00 0%, #f57c00 100%) !important;
+    color: #ffffff !important;
+}
+
+.jq-toast-single.success,
+.jq-toast-single.jq-icon-success {
+    background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%) !important;
+    color: #ffffff !important;
+}
+
+.jq-toast-single.info,
+.jq-toast-single.jq-icon-info {
+    background: linear-gradient(135deg, #283593 0%, #3949ab 100%) !important;
+    color: #ffffff !important;
+}
+
+.jq-toast-single h2.jq-toast-heading {
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 0.2rem;
+    color: inherit;
+    line-height: 1.35;
+}
+
+.jq-toast-single a {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.jq-toast-single .close-jq-toast-single {
+    top: 6px;
+    right: 10px;
+    font-size: 20px;
+    line-height: 1;
+    opacity: 0.85;
+}
+
+.jq-toast-single .close-jq-toast-single:hover {
+    opacity: 1;
+}
+
+/* Reemplaza los íconos PNG del plugin por Material Icons (assets locales) */
+.jq-toast-single.jq-has-icon {
+    padding-left: 3.4rem;
+    background-image: none !important;
+    background-position: left center;
+}
+
+.jq-toast-single.jq-has-icon::before {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 1.5rem;
+    line-height: 1;
+    position: absolute;
+    left: 1.1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.95;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}
+
+.jq-toast-single.jq-icon-success::before { content: 'check_circle'; }
+.jq-toast-single.jq-icon-error::before   { content: 'error'; }
+.jq-toast-single.jq-icon-warning::before { content: 'warning'; }
+.jq-toast-single.jq-icon-info::before    { content: 'info'; }
+
+@media only screen and (max-width: 600px) {
+    .jq-toast-wrap.top-right,
+    .jq-toast-wrap.top-left {
+        top: calc(0.75rem + env(safe-area-inset-top, 0px));
+        right: 0.75rem;
+        left: 0.75rem;
+        width: auto;
+    }
+
+    .jq-toast-wrap.bottom-right,
+    .jq-toast-wrap.bottom-left {
+        bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+        right: 0.75rem;
+        left: 0.75rem;
+        width: auto;
+    }
+
+    .jq-toast-single {
+        font-size: 0.85rem;
+        padding: 0.85rem 2rem 0.85rem 1rem;
+    }
+
+    .jq-toast-single.jq-has-icon {
+        padding-left: 3rem;
+    }
+}
