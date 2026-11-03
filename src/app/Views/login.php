@@ -161,7 +161,7 @@
             <!-- ================================================================ -->
             <div class="social-login-row" style="display:flex;justify-content:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
                 <!-- Botón de inicio de sesión con Google -->
-                <button type="button" class="btn-flat waves-effect waves-light" style="border:2px solid var(--border);border-radius:12px;padding:0.75rem 1.5rem;min-width:48px;min-height:48px;display:flex;align-items:center;justify-content:center;" onclick="alert('Funcionalidad no disponible')">
+                <button type="button" class="btn-flat waves-effect waves-light" style="border:2px solid var(--border);border-radius:12px;padding:0.75rem 1.5rem;min-width:48px;min-height:48px;display:flex;align-items:center;justify-content:center;" onclick="EIS.toast('Funcionalidad de Google no disponible temporalmente', 'indigo', 'info')">
                     <!-- SVG del logo de Google con los 4 colores característicos (azul, verde, amarillo, rojo) -->
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="20" height="20">
                         <!-- Letra "G" color azul (#4285F4) -->
@@ -175,7 +175,7 @@
                     </svg>
                 </button>
                 <!-- Botón de inicio de sesión con GitHub -->
-                <button type="button" class="btn-flat waves-effect waves-light" style="border:2px solid var(--border);border-radius:12px;padding:0.75rem 1.5rem;min-width:48px;min-height:48px;display:flex;align-items:center;justify-content:center;" onclick="alert('Funcionalidad no disponible')">
+                <button type="button" class="btn-flat waves-effect waves-light" style="border:2px solid var(--border);border-radius:12px;padding:0.75rem 1.5rem;min-width:48px;min-height:48px;display:flex;align-items:center;justify-content:center;" onclick="EIS.toast('Funcionalidad de GitHub no disponible temporalmente', 'indigo', 'info')">
                     <!-- SVG del logo de GitHub (ícono del gato) -->
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="20" height="20">
                         <!-- Silueta de GitHub en color casi negro (#1B1F23) -->
