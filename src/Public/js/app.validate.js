@@ -131,6 +131,22 @@
         hidden: true, submit: true, button: true, reset: true, image: true, file: true
     };
 
+    // Íconos Material usados en el feedback inline. Se mantienen en un solo
+    // lugar para que el lenguaje visual sea consistente en todo el sistema.
+    var ICONO_ERROR = 'error_outline';
+    var ICONO_PISTA = 'lightbulb_outline';
+    var ICONO_OK    = 'check_circle';
+
+    // Tipos que admiten un ícono de estado a la derecha del campo. Los
+    // selects ya tienen su propio caret y los date/time su propio ícono.
+    var TIPOS_CON_ESTADO = {
+        '': true, text: true, search: true, email: true, tel: true,
+        url: true, password: true, number: true
+    };
+
+    var secuenciaFeedback = 0;
+    var ultimosToasts = {};
+
     // -----------------------------------------------------------------
     // Utilidades internas
     // -----------------------------------------------------------------
@@ -205,6 +221,13 @@
         // como respaldo para selects sin .input-field.
         if ($el.closest('.input-field').length) return $el.closest('.input-field');
         if ($el.closest('.select-wrapper').length) return $el.closest('.select-wrapper');
+        // Checkbox/radio suelen vivir dentro de <label>; el mensaje debe
+        // quedar fuera de la etiqueta para no heredar su comportamiento de
+        // clic ni mezclarse con el texto de la opción.
+        if (esCheckable($el)) {
+            var $grupo = $el.closest('p, .form-group, .checkbox-group');
+            if ($grupo.length) return $grupo;
+        }
         return $el.parent();
     }
 
@@ -268,6 +291,7 @@
                 regex: regex,
                 mensaje: regla.mensaje,
                 label: regla.label,
+                ejemplo: regla.ejemplo_valido || '',
                 minlength: regla.minlength,
                 maxlength: regla.maxlength,
                 clave: clave
@@ -295,6 +319,7 @@
                 regex: regexDeRegla(manual),
                 mensaje: manual.mensaje || '',
                 label: manual.label || clave,
+                ejemplo: manual.ejemplo || manual.ejemplo_valido || '',
                 minlength: aEntero(manual.minlength),
                 maxlength: aEntero(manual.maxlength),
                 clave: manual.clave || clave
@@ -323,6 +348,7 @@
             regex: regex,
             mensaje: regla.mensaje || '',
             label: regla.label || claveJson,
+            ejemplo: regla.ejemplo_valido || '',
             minlength: aEntero(regla.minlength),
             maxlength: aEntero(regla.maxlength),
             clave: claveJson
@@ -371,16 +397,167 @@
     }
 
     // -----------------------------------------------------------------
+    // Utilidades de feedback inline
+    // -----------------------------------------------------------------
+    function escaparHtml(texto) {
+        return String(texto === null || texto === undefined ? '' : texto)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function idFeedback(el) {
+        if (!el.__eisFeedbackId) {
+            el.__eisFeedbackId = 'eis-feedback-' + (++secuenciaFeedback);
+        }
+        return el.__eisFeedbackId;
+    }
+
+    function puedeLlevarEstado($el) {
+        if ($el.is('select, textarea')) return false;
+        return !!TIPOS_CON_ESTADO[tipoDe($el)];
+    }
+
+    function quitarEstadoVisual($el) {
+        var $wrap = contenedorDe($el);
+        $wrap.find('.eis-field-status').remove();
+        $wrap.removeClass('eis-has-status');
+    }
+
+    function ponerEstadoVisual($el, estado, icono) {
+        if (!puedeLlevarEstado($el)) return;
+
+        // Solo dentro de contenedores Materialize posicionados, para que el
+        // ícono no termine flotando en un lugar inesperado de la página.
+        var $wrap = contenedorDe($el);
+        if (!$wrap.is('.input-field, .select-wrapper')) return;
+
+        quitarEstadoVisual($el);
+        $('<span class="eis-field-status eis-status-' + estado + '" aria-hidden="true">' +
+            '<i class="material-icons">' + icono + '</i></span>')
+            .appendTo($wrap);
+        $wrap.addClass('eis-has-status');
+    }
+
+    // Calcula el texto del contador de caracteres. Devuelve null cuando el
+    // campo no tiene maxlength o no conviene mostrarlo todavía.
+    function datosContador($el, forzar) {
+        var max = aEntero($el.attr('maxlength'));
+        if (max === null || max <= 0) return null;
+        // Controles donde el contador no aporta (opciones, archivos) y
+        // contraseñas, donde el límite suele ser técnico y no de contenido.
+        if ($el.is('select, input[type="checkbox"], input[type="radio"], input[type="file"]')) return null;
+        if (esPassword($el)) return null;
+
+        var largo = valorDe($el).length;
+        var mostrar = (forzar === true) || $el.is(':focus') || largo > 0;
+        if (!mostrar) return null;
+
+        var clase = '';
+        if (largo >= max) clase = 'eis-counter-limit';
+        else if (largo >= Math.max(1, Math.floor(max * 0.8))) clase = 'eis-counter-warn';
+
+        return {
+            texto: largo + ' / ' + max,
+            clase: clase,
+            restantes: max - largo
+        };
+    }
+
+    // Construye (o actualiza) la fila de feedback debajo del campo:
+    //   [icono] mensaje                        12 / 100
+    // tipo: 'error' | 'hint' | '' (sin mensaje, solo contador).
+    function actualizarFeedback($el, tipo, texto, forzarContador) {
+        var $wrap = contenedorDe($el);
+        var contador = datosContador($el, forzarContador);
+        var $fb = $wrap.children('.eis-field-feedback').first();
+
+        if (!texto && !contador) {
+            $fb.remove();
+            $el.removeAttr('aria-describedby');
+            return;
+        }
+
+        if (!$fb.length) {
+            $fb = $('<div class="eis-field-feedback" aria-live="polite"></div>').appendTo($wrap);
+        }
+
+        var anterior = $fb.attr('data-eis-mensaje') || '';
+        var cambio = (texto || '') !== anterior;
+
+        $fb
+            .removeClass('eis-field-error eis-field-hint eis-feedback-enter')
+            .addClass(texto ? 'eis-field-' + tipo : '')
+            .attr('data-eis-mensaje', texto || '');
+
+        $fb.empty();
+
+        if (texto) {
+            var icono = (tipo === 'error') ? ICONO_ERROR : ICONO_PISTA;
+            var $linea = $('<span class="eis-feedback-text"></span>');
+            $('<i class="material-icons eis-feedback-icon" aria-hidden="true"></i>')
+                .text(icono)
+                .appendTo($linea);
+            $('<span class="eis-feedback-message"></span>')
+                .text(texto)
+                .appendTo($linea);
+            $fb.append($linea);
+
+            $fb.attr({
+                id: idFeedback($el[0]),
+                role: (tipo === 'error') ? 'alert' : 'status'
+            });
+            $el.attr('aria-describedby', idFeedback($el[0]));
+        } else {
+            $fb.removeAttr('id role');
+            $el.removeAttr('aria-describedby');
+        }
+
+        if (contador) {
+            $('<span class="eis-field-counter"></span>')
+                .addClass(contador.clase)
+                .attr('title', contador.restantes + ' carácter(es) disponible(s)')
+                .text(contador.texto)
+                .appendTo($fb);
+        }
+
+        if (cambio) {
+            $fb.addClass('eis-feedback-enter').one('animationend', function () {
+                $(this).removeClass('eis-feedback-enter');
+            });
+        }
+    }
+
+    // Pinta la pista de formato inline (solo si no hay un error visible).
+    function mostrarPistaInline($el) {
+        var $wrap = contenedorDe($el);
+        if ($wrap.children('.eis-field-error').length) return;
+        var pista = pistaFormato($el[0]);
+        actualizarFeedback($el, pista ? 'hint' : '', pista || '', true);
+    }
+
+    // -----------------------------------------------------------------
     // EIS.quitarErrorCampo(el)
-    // Limpia el mensaje y el resaltado de un único campo.
+    // Limpia el mensaje, el resaltado y el estado visual de un único campo.
     // -----------------------------------------------------------------
     EIS.quitarErrorCampo = function (el) {
         var $el = $(el);
         if (!$el.length) return;
+
         var $wrap = contenedorDe($el);
-        $wrap.find('.eis-field-error').remove();
-        $wrap.removeClass('eis-invalid invalid');
-        $el.removeClass('invalid eis-invalid');
+        $wrap.children('.eis-field-feedback, .eis-field-error').remove();
+        quitarEstadoVisual($el);
+
+        $wrap.removeClass('eis-invalid eis-valid invalid');
+        $el.removeClass('invalid eis-invalid eis-valid')
+            .removeAttr('aria-invalid')
+            .removeAttr('aria-describedby');
+
+        if ($el.is('select')) {
+            $el.closest('.select-wrapper').removeClass('eis-invalid eis-valid invalid');
+        }
     };
 
     // -----------------------------------------------------------------
@@ -395,13 +572,35 @@
         var $wrap = contenedorDe($el);
         if ($el.is('select') || esCheckable($el)) {
             $wrap.addClass('invalid eis-invalid');
+            if ($el.is('select')) $el.closest('.select-wrapper').addClass('invalid eis-invalid');
         } else {
             $el.addClass('invalid eis-invalid');
         }
-        $('<div class="eis-field-error helper-text"></div>')
-            .text(texto)
-            .appendTo($wrap);
+
+        $el.attr('aria-invalid', 'true');
+        actualizarFeedback($el, 'error', texto, true);
+        ponerEstadoVisual($el, 'error', ICONO_ERROR);
     };
+
+    // -----------------------------------------------------------------
+    // EIS.marcarCampoValido(el)
+    // Confirma visualmente que el campo cumple su formato.
+    // -----------------------------------------------------------------
+    EIS.marcarCampoValido = function (el) {
+        var $el = $(el);
+        if (!$el.length) return;
+        EIS.quitarErrorCampo($el);
+
+        var $wrap = contenedorDe($el);
+        $wrap.addClass('eis-valid');
+        $el.addClass('eis-valid').attr('aria-invalid', 'false');
+        if ($el.is('select')) $el.closest('.select-wrapper').addClass('eis-valid');
+
+        actualizarFeedback($el, '', '', true);
+        ponerEstadoVisual($el, 'valid', ICONO_OK);
+    };
+
+    EIS.actualizarFeedbackCampo = actualizarFeedback;
 
     // -----------------------------------------------------------------
     // Comprueba una regla concreta. Devuelve el mensaje de error o ''.
@@ -955,41 +1154,51 @@
                     if (tag === 'select' || tag === 'textarea') return false;
                     return $(element).is(':hidden');
                 },
-                errorPlacement: function (error, element) {
-                    var $el = $(element);
-                    var $wrap = contenedorDe($el);
-                    // Evito mensajes duplicados (p. ej. un error del servidor
-                    // que sigue visible mientras el plugin pinta el suyo).
-                    $wrap.find('.eis-field-error').remove();
-                    error.addClass('eis-field-error helper-text');
-                    $wrap.append(error);
-                },
-                highlight: function (element) {
-                    var $el = $(element);
-                    if ($el.is('select') || esCheckable($el)) {
-                        contenedorDe($el).addClass('invalid eis-invalid');
-                    } else {
-                        $el.addClass('invalid eis-invalid');
-                    }
-                },
-                unhighlight: function (element) {
-                    var $el = $(element);
-                    var $wrap = contenedorDe($el);
-                    $el.removeClass('invalid eis-invalid');
-                    $wrap.removeClass('invalid eis-invalid');
-                    // Al corregir el campo, quito también el mensaje que haya
-                    // dejado una validación anterior del servidor.
-                    $wrap.find('.eis-field-error').remove();
+                // La capa propia (eventos input/change/focusout) gobierna el
+                // feedback en tiempo real. El plugin se usa como motor de
+                // validación al enviar y para EIS.validarFormulario.
+                onkeyup: false,
+                onfocusout: false,
+                onclick: false,
+                // Cuando el plugin valida (submit o checkForm), pinta con el
+                // mismo diseño inline que usa el resto del sistema.
+                showErrors: function (errorMap, errorList) {
+                    var form = this.currentForm;
+                    var conError = {};
+
+                    $.each(errorList || [], function (_, error) {
+                        var nombre = $(error.element).attr('name');
+                        if (nombre) conError[nombre] = true;
+                    });
+
+                    // Limpio los campos que ya no tienen error y repinto los
+                    // que sí, sin duplicar mensajes.
+                    $(form).find(SELECTOR_CAMPOS).each(function () {
+                        var nombre = $(this).attr('name');
+                        if (!nombre || !conError[nombre]) {
+                            EIS.quitarErrorCampo(this);
+                        }
+                    });
+                    $.each(errorList || [], function (_, error) {
+                        EIS.marcarErrorCampo(error.element, error.message);
+                    });
                 },
                 invalidHandler: function (event, val) {
                     if (!EIS.toast) return;
                     var total = (val.errorList || []).length;
+                    if (!total) return;
                     EIS.toast(
                         total > 1
                             ? 'Revisa los ' + total + ' campos marcados e intenta de nuevo.'
                             : 'Revisa el campo marcado e intenta de nuevo.',
                         'red',
-                        'error'
+                        'error',
+                        {
+                            heading: 'No se pudo enviar',
+                            hideAfter: 4200,
+                            className: 'eis-toast-form',
+                            stack: 3
+                        }
                     );
                 },
                 submitHandler: function (formEl, event) {
@@ -1032,25 +1241,28 @@
     }
 
     // =================================================================
-    // VALIDACIÓN EN TIEMPO REAL + ALERTAS TOAST AL TIPEAR
-    //
-    // Requisito: que apenas se empiece a tipear en un campo se muestren
-    // alertas de tipo, extensión, formato, etc.
+    // VALIDACIÓN EN TIEMPO REAL + ALERTAS TOAST
     //
     // Este bloque funciona TANTO con el jQuery Validation Plugin activo
     // como sin él, porque no depende del ciclo de vida del plugin: se
-    // apoya en la delegación de los eventos input/change sobre document
-    // y en EIS.validarCampo (fuente única: regex_validations.json).
+    // apoya en la delegación de los eventos input/change/focus sobre
+    // document y en EIS.validarCampo (fuente única: regex_validations.json).
     //
-    //   1. Al primer tecleo en un campo con formato exigido muestra una
-    //      pista informativa (data-hint, title o la frase de la regla).
-    //   2. Pinta el error inline de forma inmediata.
-    //   3. Si el mensaje de error CAMBIA respecto al anterior, lanza un
-    //      toast naranja (nunca repite el mismo texto en cada tecla).
-    //   4. Si el campo pasa de inválido a válido, confirma en verde.
+    // Flujo de la experiencia:
+    //   1. Al enfocar un campo con formato exigido aparece una pista
+    //      inline (data-hint, title, regla + ejemplo) y un solo toast
+    //      informativo con el formato esperado.
+    //   2. Mientras escribe, el borde y el mensaje inline se actualizan
+    //      al instante; el contador de caracteres se tiñe al acercarse
+    //      al máximo.
+    //   3. Tras una pausa o al salir del campo se lanza un toast de error
+    //      solo si el mensaje cambió (sin repetir en cada tecla).
+    //   4. Al corregir el campo se confirma en verde con un toast breve.
+    //   5. Los checkbox/radio se validan al marcarse, limpiando el error
+    //      de todo el grupo.
     // =================================================================
 
-    var RETRASO_TOAST = 450;   // ms de espera tras la última tecla
+    var RETRASO_TOAST = 600;   // ms de espera tras la última tecla
     var relojesToast = {};     // clave de campo -> id de setTimeout
     var ultimoAviso = {};      // clave -> mensaje ya mostrado al usuario
     var pistasDadas = {};      // clave -> la pista de formato ya se entregó
@@ -1060,12 +1272,15 @@
 
     // Campos sobre los que aplica el tiempo real. Se excluyen checkbox,
     // radio, file, hidden y botones: no se "tipean" y su aviso se gestiona
-    // en el envÃ­o (invalidHandler) o en su propio evento change.
+    // en su propio evento change (SEL_CHECK) o en el envío.
     var SEL_TIEMPO_REAL = 'form[data-validate] input' +
         ':not([type=checkbox]):not([type=radio]):not([type=hidden])' +
         ':not([type=submit]):not([type=button])' +
-        ':not([type=reset]):not([type=image])' +
+        ':not([type=reset]):not([type=image]):not([type=file])' +
         ', form[data-validate] select, form[data-validate] textarea';
+
+    var SEL_CHECK = 'form[data-validate] input[type=checkbox], ' +
+        'form[data-validate] input[type=radio]';
 
     // Tipos nativos cuyo formato ya garantiza el navegador: no se les
     // ofrece pista automática (aunque sí si declaran data-hint o title).
@@ -1100,6 +1315,8 @@
         if (!texto) {
             texto = $el.closest('.input-field, .select-wrapper').find('label').first().text();
         }
+        // Checkbox/radio envueltos por su propia etiqueta.
+        if (!texto) texto = $el.closest('label').text();
         if (!texto) texto = $el.attr('placeholder') || '';
         if (!texto) texto = (el.name || '').replace(/[_\-]/g, ' ');
 
@@ -1120,14 +1337,23 @@
             || clave === 'texto_y_personas.iniciales';
     }
 
+    // Devuelve el mensaje de una regla enriquecido con un ejemplo válido.
+    function textoPista(regla) {
+        if (!regla || !regla.mensaje) return '';
+        var texto = regla.mensaje;
+        if (regla.ejemplo && texto.indexOf(regla.ejemplo) === -1) {
+            texto += ' Ejemplo: ' + regla.ejemplo + '.';
+        }
+        return texto;
+    }
+
     // Devuelve la pista de formato a mostrar al empezar a tipear, o ''
     // si el campo no debe recibir ninguna.
     function pistaFormato(el) {
         var $el = $(el);
 
         // Guía explícita declarada por el desarrollador de la vista.
-        var explicita = ($el.attr('data-hint') || '').trim()
-            || ($el.attr('title') || '').trim();
+        var explicita = ($el.attr('data-hint') || '').trim();
         if (explicita) return explicita;
 
         // Los <select> no se tipean: se les valida en change, sin pista.
@@ -1137,57 +1363,150 @@
         if (SIN_PISTA_AUTO[tipo]) return '';
 
         // Tipos nativos sin data-validate.
-        if (tipo === 'email') { var re = resolverRegla('email'); if (re && re.mensaje) return re.mensaje; }
-        if (tipo === 'tel')   { var rt = resolverRegla('telefono'); if (rt && rt.mensaje) return rt.mensaje; }
-        if (tipo === 'url')   { var ru = resolverRegla('url'); if (ru && ru.mensaje) return ru.mensaje; }
+        if (tipo === 'email') { var re = resolverRegla('email'); if (re) return textoPista(re); }
+        if (tipo === 'tel')   { var rt = resolverRegla('telefono'); if (rt) return textoPista(rt); }
+        if (tipo === 'url')   { var ru = resolverRegla('url'); if (ru) return textoPista(ru); }
 
         // Reglas declaradas en data-validate (alias o clave completa).
         var tokens = ($el.attr('data-validate') || '').toString().split(/[\s,]+/);
         for (var i = 0; i < tokens.length; i++) {
             if (!tokens[i]) continue;
             var regla = resolverRegla(tokens[i]);
-            if (regla && regla.mensaje && esFormatoExigido(regla.clave)) return regla.mensaje;
+            if (regla && regla.mensaje && esFormatoExigido(regla.clave)) return textoPista(regla);
         }
-        return '';
+
+        // Último recurso: el title del campo (p. ej. "Entre 2 y 100 caracteres").
+        return ($el.attr('title') || '').trim();
+    }
+
+    // Indica si la pista merece un toast al enfocar. Los textos genéricos
+    // del atributo title se quedan solo como pista inline para no llenar la
+    // pantalla de notificaciones al recorrer un formulario.
+    function pistaEsFuerte(el) {
+        var $el = $(el);
+        if (($el.attr('data-hint') || '').trim()) return true;
+
+        var tipo = tipoDe($el);
+        if (tipo === 'email' || tipo === 'tel' || tipo === 'url') return true;
+        if (SIN_PISTA_AUTO[tipo]) return false;
+
+        var tokens = ($el.attr('data-validate') || '').toString().split(/[\s,]+/);
+        for (var i = 0; i < tokens.length; i++) {
+            if (!tokens[i]) continue;
+            var regla = resolverRegla(tokens[i]);
+            if (regla && esFormatoExigido(regla.clave)) return true;
+        }
+        return false;
     }
 
     // -----------------------------------------------------------------
     // EIS.pintarEnVivo(el)
     // Refresca el estado visual del campo y devuelve su mensaje de error.
-    // Si el plugin está activo se apoya en validator.element() para que
-    // su estado interno siga al día; si el plugin no pinta nada (campo
-    // sin reglas para él), se usa el pintado propio como respaldo.
+    // La pintura es siempre la misma (feedback propio), de modo que el
+    // usuario vea el mismo diseño venga el error del navegador o de PHP.
     // -----------------------------------------------------------------
     function pintarEnVivo(el) {
+        var $el = $(el);
+        var clave = claveCampo(el);
         var msg = EIS.validarCampo(el) || '';
-        var $wrap = contenedorDe($(el));
-        var validator = null;
-
-        if (el.form) {
-            try { validator = $(el.form).data('validator'); } catch (e) { validator = null; }
-        }
-        if (validator && typeof validator.element === 'function') {
-            try { validator.element(el); } catch (e) { /* campo sin reglas: se pinta abajo */ }
-        }
 
         if (!msg) {
-            EIS.quitarErrorCampo(el);
+            var valor = valorDe($el);
+            var vacio = valor.trim() === '';
+
+            if (camposTocados[clave] && !vacio) {
+                EIS.marcarCampoValido(el);
+            } else {
+                EIS.quitarErrorCampo(el);
+                actualizarFeedback($el, '', '', true);
+            }
             return '';
         }
-        if (!$wrap.find('.eis-field-error').length) {
-            EIS.marcarErrorCampo(el, msg);
-        }
+
+        EIS.marcarErrorCampo(el, msg);
         return msg;
     }
 
-    function avisarCampo(el, texto, color, icono) {
-        if (typeof EIS.toast !== 'function') return;
+    // Toast contextual: título = nombre del campo, cuerpo = explicación.
+    // Se evita repetir el mismo aviso para el mismo campo en pocos segundos.
+    function avisarCampo(el, texto, tipo, opciones) {
+        if (!texto || typeof EIS.toast !== 'function') return;
+
+        var clave = claveCampo(el);
+        var ahora = Date.now();
+        var previo = ultimosToasts[clave];
+        tipo = tipo || 'warning';
+
+        if (previo && previo.texto === texto && previo.tipo === tipo &&
+            (ahora - previo.ts) < 4000) {
+            return;
+        }
+        ultimosToasts[clave] = { texto: texto, tipo: tipo, ts: ahora };
+
+        var colores = { info: 'indigo', warning: 'orange', success: 'green' };
+        var iconos = { info: 'info', warning: 'warning', success: 'success' };
         var etiqueta = etiquetaCampo(el);
-        EIS.toast(etiqueta ? (etiqueta + ': ' + texto) : texto, color, icono);
+        var heading = 'Validación';
+
+        if (opciones && opciones.heading) {
+            heading = opciones.heading;
+        } else if (etiqueta) {
+            heading = etiqueta;
+        }
+        if (opciones && opciones.incluirEtiqueta && etiqueta) {
+            heading += ': ' + etiqueta;
+        }
+
+        EIS.toast(escaparHtml(texto), colores[tipo] || 'indigo', iconos[tipo] || 'info', {
+            heading: escaparHtml(heading),
+            hideAfter: (opciones && opciones.hideAfter !== undefined)
+                ? opciones.hideAfter
+                : (tipo === 'success' ? 2400 : 4200),
+            className: 'eis-toast-field eis-toast-' + tipo,
+            stack: 3
+        });
+    }
+
+    function quitarResumenFormulario(el) {
+        if (!el.form) return;
+        var $panel = $(el.form).find('.eis-form-error');
+        if (!$panel.length) return;
+        $panel.stop(true, true).slideUp(120, function () { $(this).remove(); });
+    }
+
+    // Aplica el filtro de caracteres al valor actual (pegar, arrastrar o
+    // escribir). Mantiene la posición del cursor cuando es posible.
+    function filtrarValorCampo(el) {
+        var $el = $(el);
+        if ($el.is('select, textarea') || esPassword($el) || esCheckable($el)) return;
+        if (tipoDe($el) === 'number' || tipoDe($el) === 'file') return;
+
+        var filtro = obtenerFiltro($el);
+        if (!filtro) return;
+
+        var valor = $el.val() || '';
+        var filtrado = filtro(valor);
+        if (filtrado === valor) return;
+
+        var pos = el.selectionStart || 0;
+        $el.val(filtrado);
+        if (el.setSelectionRange) {
+            try {
+                var nueva = Math.max(0, Math.min(pos, filtrado.length));
+                el.setSelectionRange(nueva, nueva);
+            } catch (ex) { /* campos sin selección */ }
+        }
+    }
+
+    function limpiarGrupoCheckable(el) {
+        var grupo = elementosDelGrupo(el);
+        for (var i = 0; i < grupo.length; i++) {
+            EIS.quitarErrorCampo(grupo[i]);
+        }
     }
 
     // Evaluación diferida: decide qué toast corresponde (si es que algo
-    // cambió) una vez que el usuario dejó de escribir.
+    // cambió) una vez que el usuario dejó de escribir o salió del campo.
     function evaluarErrorTiempoReal(el) {
         var clave = claveCampo(el);
         if (!camposTocados[clave]) return;
@@ -1195,74 +1514,131 @@
         var msg = pintarEnVivo(el);
 
         if (!msg) {
-            // Campo corregido: solo se confirma si antes hubo un aviso.
+            // Campo corregido: solo se confirma si antes hubo un error.
             if (ultimoAviso[clave]) {
-                ultimoAviso[clave] = '';
-                avisarCampo(el, 'Formato correcto.', 'green', 'success');
+                delete ultimoAviso[clave];
+                if (valorDe($(el)).trim() !== '') {
+                    avisarCampo(el, 'Campo completado correctamente.', 'success', {
+                        heading: 'Listo'
+                    });
+                }
             }
             return;
         }
 
         if (ultimoAviso[clave] === msg) return;   // mismo error: no repetir
 
-        // El error coincide con la pista ya entregada al empezar a tipear:
-        // se registra (para poder confirmar la corrección más adelante) pero
-        // no se vuelve a avisar con el mismo texto.
+        // Si el error coincide con la pista ya entregada, se registra para
+        // poder confirmar la corrección, pero no se vuelve a avisar.
         if (pistasTexto[clave] && pistasTexto[clave] === msg) {
             ultimoAviso[clave] = msg;
             return;
         }
 
         ultimoAviso[clave] = msg;
-        avisarCampo(el, msg, 'orange', 'warning');
+        avisarCampo(el, msg, 'warning', {
+            heading: 'Revisa este campo',
+            incluirEtiqueta: true,
+            hideAfter: 4600
+        });
     }
 
     $(document)
+        // Al entrar al campo: pista inline + un único toast con el formato.
+        .on('focusin', SEL_TIEMPO_REAL, function () {
+            var el = this;
+            var $el = $(el);
+            var clave = claveCampo(el);
+
+            mostrarPistaInline($el);
+            actualizarFeedback($el, '', '', true);
+
+            if (!pistasDadas[clave]) {
+                pistasDadas[clave] = true;
+                var pista = pistaFormato(el);
+                if (pista && pistaEsFuerte(el)) {
+                    pistasTexto[clave] = pista;
+                    avisarCampo(el, pista, 'info', {
+                        heading: 'Formato esperado',
+                        incluirEtiqueta: true,
+                        hideAfter: 5200
+                    });
+                } else if (pista) {
+                    // La pista genérica queda solo inline.
+                    pistasTexto[clave] = pista;
+                }
+            }
+        })
+        // Al salir del campo: se valida y se avisa sin esperar más tecleo.
+        .on('focusout', SEL_TIEMPO_REAL, function () {
+            var el = this;
+            var clave = claveCampo(el);
+
+            camposTocados[clave] = true;
+            clearTimeout(relojesToast[clave]);
+            evaluarErrorTiempoReal(el);
+        })
+        // Mientras se escribe: feedback inmediato y toast solo tras una pausa.
         .on('input change', SEL_TIEMPO_REAL, function (e) {
             var el = this;
             var clave = claveCampo(el);
 
-            // El evento `input` solo lo genera la interacción real del
-            // usuario (teclado, pegar o cortar), así que con él basta para
-            // marcar el campo como tocado. Sin esa marca no se emiten toasts,
-            // lo que mantiene fuera a los `change` programáticos que dispara
-            // Materialize al inicializar los selects.
             if (e.type === 'input') {
                 camposTocados[clave] = true;
+                filtrarValorCampo(el);
             } else if (!camposTocados[clave]) {
-                // Cambio sin tipeo previo (p. ej. un <select> elegido con el
-                // ratón): solo se refresca el estado visual, sin alertas.
-                if (el.value === '' || el.value === null) return;
-                pintarEnVivo(el);
-                return;
+                // Los `change` programáticos (Materialize al inicializar un
+                // select) no deben marcar el campo como tocado. Solo se
+                // considera interacción real si el control está enfocado o
+                // ya hay un valor elegido.
+                var enfocado = (document.activeElement === el);
+                if (!enfocado && (el.value === '' || el.value === null)) return;
+                camposTocados[clave] = true;
             }
 
-            // Feedback visual inmediato: sin esperar a la pausa.
+            quitarResumenFormulario(el);
             pintarEnVivo(el);
 
-            // Pista de formato: solo una vez y al primer tecleo, para que
-            // el aviso aparezca de verdad en cuanto empieza a escribir.
-            if (!pistasDadas[clave]) {
-                pistasDadas[clave] = true;
-                var pista = pistaFormato(el);
-                if (pista) {
-                    pistasTexto[clave] = pista;
-                    ultimoAviso[clave] = EIS.validarCampo(el) || '';
-                    avisarCampo(el, pista, 'indigo', 'info');
-                    return;
-                }
-            }
-
             clearTimeout(relojesToast[clave]);
+            if (e.type === 'change') {
+                evaluarErrorTiempoReal(el);
+                return;
+            }
             relojesToast[clave] = setTimeout(function () {
                 evaluarErrorTiempoReal(el);
             }, RETRASO_TOAST);
+        })
+        // Checkboxes y radios: no se tipean, pero sí deben confirmar su
+        // estado al marcarse y limpiar el error del grupo completo.
+        .on('change', SEL_CHECK, function () {
+            var el = this;
+            var clave = claveCampo(el);
+
+            camposTocados[clave] = true;
+            quitarResumenFormulario(el);
+            limpiarGrupoCheckable(el);
+
+            var msg = EIS.validarCampo(el) || '';
+            if (msg) {
+                EIS.marcarErrorCampo(el, msg);
+                avisarCampo(el, msg, 'warning', {
+                    heading: 'Revisa este campo',
+                    incluirEtiqueta: true,
+                    hideAfter: 4600
+                });
+            } else {
+                EIS.marcarCampoValido(el);
+            }
         });
 
     // -----------------------------------------------------------------
-    // API pública para extender reglas desde otros módulos.
+    // API pública para extender reglas desde otros módulos y para que el
+    // núcleo (app.core.js) pueda reutilizar la etiqueta legible del campo
+    // en el resumen de errores del servidor.
     //   EIS.reglasValidacion.mi_regla = { regex: /.../, mensaje: '...' }
     // -----------------------------------------------------------------
     EIS.resolverReglaValidacion = resolverRegla;
+    EIS.etiquetaCampo = etiquetaCampo;
+    EIS.actualizarEstadoCampo = pintarEnVivo;
 
 })(jQuery);

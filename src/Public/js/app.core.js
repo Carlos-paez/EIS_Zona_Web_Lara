@@ -58,21 +58,78 @@ function filtrarTabla(inputSelector, tableSelector, colIndex) {
 }
 
 // =====================================================================
-// MÉTODO: EIS.toast(msg, color, icon)
-// PROPÓSITO: Muestra una notificación tipo "toast" usando Materialize.
+// MÉTODO: EIS.toast(msg, color, icon, options)
+// PROPÓSITO: Muestra una notificación tipo "toast" usando jQuery Toast.
 //            Es el método estándar para mostrar mensajes al usuario.
 // PARÁMETROS:
-//   msg   - Texto del mensaje a mostrar
-//   color - Clase CSS de color (ej: 'red', 'green', 'indigo')
-//   icon  - Nombre del ícono Material Icons (ej: 'check_circle', 'error')
+//   msg     - Texto del mensaje a mostrar
+//   color   - Clase CSS de color (ej: 'red', 'green', 'indigo')
+//   icon    - Nombre del ícono Material Icons (ej: 'check_circle', 'error')
+//   options - (Opcional) Ajustes finos del toast:
+//             heading  : título corto que aparece encima del mensaje
+//             hideAfter: milisegundos antes de ocultarse (false = fijo)
+//             position : 'top-right' | 'top-left' | 'bottom-right' | ...
+//             stack    : máximo de toasts visibles apilados
+//             className: clase CSS extra para el toast
+//             loader   : muestra la barra de progreso inferior
 // =====================================================================
-EIS.toast = function (msg, color, icon) {
+EIS.toast = function (msg, color, icon, options) {
     color = color || 'indigo'; // Color por defecto: índigo
     icon = icon || 'check_circle'; // Ícono por defecto: check_circle
-    // Construyo el HTML interno del toast con ícono + mensaje
-    var html = '<i class="material-icons left" style="font-size:1.2rem;">' + icon + '</i>' + msg;
-    // Invoco el toast de Materialize con clases redondeadas y duración de 3 segundos
-    M.toast({ html: html, classes: color + ' rounded', displayLength: 3000 });
+    options = options || {};
+
+    // jQuery Toast Plugin (local): estándar visual en todo el sistema.
+    if (window.jQuery && typeof $.toast === 'function') {
+        var tipo = 'info';
+        var fondo = '#1a237e';
+        var c = String(color).toLowerCase();
+
+        if (c.indexOf('green') !== -1 || c.indexOf('success') !== -1) {
+            tipo = 'success';
+            fondo = '#1b5e20';
+        } else if (c.indexOf('red') !== -1 || c.indexOf('danger') !== -1) {
+            tipo = 'error';
+            fondo = '#b71c1c';
+        } else if (c.indexOf('orange') !== -1 || c.indexOf('amber') !== -1 ||
+                   c.indexOf('yellow') !== -1 || c.indexOf('warning') !== -1) {
+            tipo = 'warning';
+            fondo = '#e65100';
+        } else if (c.indexOf('indigo') !== -1 || c.indexOf('blue') !== -1 ||
+                   c.indexOf('info') !== -1) {
+            tipo = 'info';
+            fondo = '#1a237e';
+        }
+
+        $.toast({
+            text: msg,
+            heading: options.heading || '',
+            icon: tipo,
+            position: options.position || 'top-right',
+            hideAfter: (options.hideAfter !== undefined) ? options.hideAfter : 3500,
+            stack: (options.stack !== undefined) ? options.stack : 5,
+            loader: options.loader === true,
+            loaderBg: '#ffffff',
+            allowToastClose: true,
+            showHideTransition: 'slide',
+            bgColor: fondo,
+            textColor: '#ffffff',
+            textAlign: 'left',
+            'class': options.className || ''
+        });
+        return;
+    }
+
+    // Respaldo: toast de Materialize si el plugin no está disponible.
+    var titulo = options.heading
+        ? '<strong style="display:block;margin-bottom:0.15rem;">' + options.heading + '</strong>'
+        : '';
+    var html = '<i class="material-icons left" style="font-size:1.2rem;">' + icon + '</i>' +
+        titulo + msg;
+    M.toast({
+        html: html,
+        classes: color + ' rounded',
+        displayLength: (options.hideAfter !== undefined) ? options.hideAfter : 3000
+    });
 };
 
 // =====================================================================
@@ -115,19 +172,23 @@ EIS.formSelect = function (sel) {
 EIS.limpiarErroresFormulario = function (form) {
     var $form = $(form);
     if (!$form.length) return;
-    // Quito mensajes por campo e identifico los elementos adornados
-    $form.find('.eis-field-error').remove();
-    // Quito la clase "invalid" que añadimos a inputs y select-wrapers
-    $form.find('.eis-invalid').each(function () {
-        var $el = $(this).removeClass('eis-invalid');
-        if ($el.is('input, textarea')) {
-            $el.removeClass('invalid');
-            // Si no hay otro contexto, elimino el helper rojo de Materialize
-            $el.removeAttr('aria-invalid');
-        }
+
+    // Quito los mensajes por campo (validación propia, del plugin o del servidor)
+    $form.find('.eis-field-feedback, .eis-field-error, .eis-field-hint').remove();
+
+    // Quito todos los estados visuales que añade la validación
+    $form.find('.eis-field-status').remove();
+    $form.find('.eis-has-status').removeClass('eis-has-status');
+    $form.find('.eis-invalid, .eis-valid, .invalid').each(function () {
+        $(this)
+            .removeClass('eis-invalid eis-valid invalid')
+            .removeAttr('aria-invalid')
+            .removeAttr('aria-describedby');
     });
-    // Elimino el panel de error global del formulario
+
+    // Elimino el panel de errores global del formulario
     $form.find('.eis-form-error').remove();
+    $form.removeData('eisToastTs eisToastMsg');
 };
 
 // =====================================================================
@@ -145,6 +206,11 @@ EIS.mostrarErroresFormulario = function (form, data) {
     var $form = $(form);
     if (!$form.length) return;
 
+    // Guardo el último aviso antes de limpiar: limpiarErroresFormulario
+    // reinicia la memoria de toasts y aquí se decide si repetirlo.
+    var previoToast = $form.data('eisToastTs') || 0;
+    var previoMsg = $form.data('eisToastMsg') || '';
+
     EIS.limpiarErroresFormulario($form);
 
     // --- Errores por campo --------------------------------------------
@@ -153,42 +219,114 @@ EIS.mostrarErroresFormulario = function (form, data) {
     var fieldErrors = (data && data.fieldErrors)
         ? data.fieldErrors
         : (data && data.data && data.data.fieldErrors) ? data.data.fieldErrors : {};
+
+    var nombres = Object.keys(fieldErrors);
+
     $.each(fieldErrors, function (name, msg) {
         var $field = $form.find('[name="' + name + '"]').first();
         if (!$field.length) return;
 
-        // Determino el contenedor visible (input-field o select-wrapper)
-        var $wrap = $field.closest('.select-wrapper').length
-            ? $field.closest('.select-wrapper')
-            : $field.closest('.input-field, .select-wrapper').length
-                ? $field.closest('.input-field, .select-wrapper')
+        // Uso el mismo pintado que la validación en tiempo real para que el
+        // error del servidor se vea exactamente igual que el del navegador.
+        if (typeof EIS.marcarErrorCampo === 'function') {
+            EIS.marcarErrorCampo($field, msg);
+            return;
+        }
+
+        // Respaldo si app.validate.js no estuviera cargado.
+        var $wrap = $field.closest('.input-field').length
+            ? $field.closest('.input-field')
+            : $field.closest('.select-wrapper').length
+                ? $field.closest('.select-wrapper')
                 : $field.parent();
 
-        // Marca visual en rojo
-        if ($field.is('select')) {
+        if ($field.is('select, input[type="checkbox"], input[type="radio"]')) {
             $wrap.addClass('invalid eis-invalid');
         } else {
             $field.addClass('invalid eis-invalid');
         }
 
-        // Inserto el mensaje debajo del campo
-        $('<div class="eis-field-error helper-text" style="color:#c62828;font-weight:500;">' + msg + '</div>').appendTo($wrap);
+        $('<div class="eis-field-error helper-text"></div>')
+            .text(msg)
+            .appendTo($wrap);
     });
 
     // --- Panel de error global ----------------------------------------
     var msg = (data && data.error) ? data.error : 'Completa los campos obligatorios antes de continuar.';
-    var $panel = $(
-        '<div class="card-panel eis-form-error" style="background:#fce4ec;color:#b71c1c;' +
-        'border-radius:8px;padding:0.75rem 1rem;margin:0 0 1rem;display:flex;align-items:center;gap:0.5rem;">' +
-        '<i class="material-icons" style="font-size:1.2rem;">error</i><span></span></div>'
+    var $panel = $('<div class="card-panel eis-form-error" role="alert" aria-live="assertive"></div>');
+    var $icono = $(
+        '<div class="eis-form-error-icon" aria-hidden="true">' +
+        '<i class="material-icons">error_outline</i></div>'
     );
-    $panel.find('span').text(msg);
+    var $cuerpo = $('<div class="eis-form-error-body"></div>');
+    $('<strong class="eis-form-error-title"></strong>').text(msg).appendTo($cuerpo);
+
+    if (nombres.length) {
+        var $lista = $('<ul class="eis-form-error-list"></ul>');
+        $.each(nombres.slice(0, 6), function (_, name) {
+            var $field = $form.find('[name="' + name + '"]').first();
+            var etiqueta = '';
+
+            if (typeof EIS.etiquetaCampo === 'function' && $field.length) {
+                etiqueta = EIS.etiquetaCampo($field[0]);
+            }
+            if (!etiqueta) etiqueta = String(name).replace(/[_\-]+/g, ' ');
+
+            var $item = $('<li></li>');
+            $('<button type="button" class="eis-form-error-link"></button>')
+                .attr('data-field', name)
+                .text(etiqueta + ': ' + fieldErrors[name])
+                .appendTo($item);
+            $lista.append($item);
+        });
+        if (nombres.length > 6) {
+            $('<li class="eis-form-error-more"></li>')
+                .text('y ' + (nombres.length - 6) + ' campo(s) más con errores.')
+                .appendTo($lista);
+        }
+        $cuerpo.append($lista);
+    }
+
+    $panel.append($icono, $cuerpo);
     $form.prepend($panel);
+
+    // Al pulsar un error del resumen, llevo el foco al campo correspondiente.
+    $panel.on('click', '.eis-form-error-link', function (e) {
+        e.preventDefault();
+        var $field = $form.find('[name="' + $(this).attr('data-field') + '"]').first();
+        if (!$field.length) return;
+        $field.trigger('focus');
+        if ($field.is('select')) {
+            var dropdown = $field.closest('.select-wrapper').find('input.select-dropdown').first();
+            if (dropdown.length) dropdown.trigger('focus');
+        }
+    });
+
+    // Notificación no intrusiva con jQuery Toast Plugin. Se evita repetir el
+    // mismo aviso si el usuario vuelve a enviar en pocos segundos.
+    var ahoraToast = Date.now();
+    if (EIS.toast) {
+        if (msg !== previoMsg || (ahoraToast - previoToast) > 3000) {
+            EIS.toast(msg, 'red', 'error', {
+                heading: 'Revisa el formulario',
+                hideAfter: 4500,
+                className: 'eis-toast-form',
+                stack: 3
+            });
+        }
+        $form.data('eisToastTs', ahoraToast);
+        $form.data('eisToastMsg', msg);
+    }
 
     // Enfoque el primer campo con error para que el usuario lo corrija rápido
     var $firstError = $form.find('.eis-invalid').first();
     if ($firstError.length) {
-        setTimeout(function () { $firstError.trigger('focus'); }, 150);
+        var $target = $firstError.is('input, select, textarea')
+            ? $firstError
+            : $firstError.find('input, select, textarea').first();
+        if ($target.length) {
+            setTimeout(function () { $target.trigger('focus'); }, 150);
+        }
     }
 };
 

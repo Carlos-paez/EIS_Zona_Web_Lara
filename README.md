@@ -126,6 +126,8 @@ eis_zona_web_lara/
 - **Materialize CSS 1.0.0** — Framework Material Design (local)
 - **jQuery 3.7.1** — Manipulación DOM y AJAX (local)
 - **jQuery DataTables 1.13.8** — Ordenamiento, paginación y búsqueda de tablas (local)
+- **jQuery Validation 1.21.0** — Validación de formularios en el navegador (local)
+- **jQuery Toast 1.3.2** — Notificaciones no intrusivas (local)
 - **Material Icons** — Iconografía (local)
 - **HTML5 / CSS3** — Variables CSS, Flexbox, Grid, tema oscuro/claro
 - **Service Worker + PWA** — Caché offline, `manifest.json`, `offline.php`
@@ -256,7 +258,9 @@ Navegador → src/.htaccess → src/index.php → App\Core\Router->handle()
 - `ReporteController::exportar` valida CSRF, rango de fechas y formato permitido
 
 ### JavaScript Modular
-- **`app.core.js`** — namespace `EIS`, `debounce`, `EIS.toast`, `escHtml` (XSS), `EIS.formSelect` (re-inicialización de selects evitando el bug de doble `formSelect`) y la familia de helpers de **DataTables**: `EIS.datatable`, `EIS.datatableRefresh`, `EIS.datatableWireSearch`, `EIS.datatableWireColumnFilter`, `EIS.datatableDestroy`
+- **`app.core.js`** — namespace `EIS`, `debounce`, `EIS.toast` (jQuery Toast con respaldo Materialize), `escHtml` (XSS), `EIS.formSelect` (re-inicialización de selects evitando el bug de doble `formSelect`) y la familia de helpers de **DataTables**: `EIS.datatable`, `EIS.datatableRefresh`, `EIS.datatableWireSearch`, `EIS.datatableWireColumnFilter`, `EIS.datatableDestroy`
+- **`app.validate.js`** — validación de formularios con **jQuery Validation** como motor principal y respaldo propio; las reglas se generan desde los atributos HTML5 (`required`, `minlength`, `maxlength`, `min`, `max`, `type`, `pattern`) y desde `data-validate`, reutilizando `regex_validations.json` como fuente única mediante la regla puente `eisRegla`. Incluye mensajes en español, resaltado Materialize, bloqueo de envíos inválidos y protección contra doble clic
+- **`jquery.validate.min.js`** + **`jquery.toast.min.js`** + **`jquery.toast.min.css`** + **`forms.eis.css`** — plugins locales de validación y notificaciones, con estilos de error y toast adaptados a los temas claro/oscuro
 - **`app.init.js`** — inicia Materialize, reloj, tema oscuro/claro
 - **`app.selects.js`** — barra de búsqueda en los menús desplegables (selects) de Materialize con filtro en tiempo real; expone `EIS.habilitarBusquedaEnSelects()` y `EIS.activarBusquedaEnSelect(selector, placeholder)` para selects regenerados dinámicamente (p. ej. el de clientes del POS). Incluye las correcciones v4.3: un bloqueador en **fase de captura** sobre `document` (Materialize 1.0.0 cierra el menú con un handler de `click` en `document.body` en captura, por lo que `stopPropagation` en burbuja no bastaba) y el bloqueo del typeahead (`keydown`/`keyup` con `stopPropagation` en el input), además de `restablecerBusqueda()` al abrir cada menú
 - **`app.tables.js`** — punto de extensión genérico; la búsqueda, filtro y paginación ya las gestiona **DataTables** en cada módulo (se mantiene sin handlers manuales para evitar conflictos)
@@ -268,9 +272,9 @@ Navegador → src/.htaccess → src/index.php → App\Core\Router->handle()
 
 ### Offline / PWA
 - Assets locales (sin CDNs)
-- Service Worker (`sw.js`) con estrategia **Stale-While-Revalidate** y caché versionada (`CACHE_NAME = 'eis-cache-v5'`)
+- Service Worker (`sw.js`) con estrategia **Stale-While-Revalidate** y caché versionada (`CACHE_NAME = 'eis-cache-v9'`)
 - Página offline (`offline.php`) y manifiesto (`manifest.json`)
-- Al corregir un JS servido por el SW hay que subir `CACHE_NAME` (v4→v5 ya hecho tras arreglar `app.selects.js`; futuro v6/v7...) para que el navegador reemplace el SW y no sirva el script obsoleto
+- Al corregir un JS servido por el SW hay que subir `CACHE_NAME` (v8→v9 ya hecho al integrar jQuery Validation/jQuery Toast; futuro v10...) para que el navegador reemplace el SW y no sirva el script obsoleto
 
 ---
 
@@ -364,6 +368,7 @@ Email: carlospaezguerra@gmail.com
 
 | Versión | Fecha | Descripción |
 |---------|-------|-------------|
+| 4.4 | Nov 2026 | Integración de **jQuery Validation 1.21.0** y **jQuery Toast 1.3.2** (locales) en todos los formularios del sistema: reglas generadas desde HTML5 y `data-validate`, reutilizando `regex_validations.json` como fuente única mediante la regla puente `eisRegla`; mensajes en español, resaltado Materialize, panel de errores y notificaciones toast con soporte de tema claro/oscuro. Se añadieron los assets `jquery.validate.min.js`, `jquery.toast.min.js`, `jquery.toast.min.css` y `forms.eis.css`, y se actualizó el Service Worker a `eis-cache-v9` |
 | 4.3 | Sep 2026 | Corrección de dos bugs en la **barra de búsqueda de selects** de Materialize (`app.selects.js`): Materialize 1.0.0 cerraba el menú al hacer clic en la barra porque su handler de cierre está en `document.body` en **fase de captura** (fix: bloqueador en captura sobre `document` con `stopPropagation` para `click`/`touchend` dentro de `.eis-select-search`) y el typeahead (`_handleDropdownKeydown`) robaba el foco al escribir (fix: `keydown`/`keyup` con `stopPropagation` en el input, con `restablecerBusqueda()` al abrir el menú). **Versionado de caché del Service Worker**: `sw.js` pasó a `eis-cache-v5` (Stale-While-Revalidate); subir `CACHE_NAME` obliga a reemplazar el SW y deja de servirse el script obsoleto. Verificado el selector de clientes del POS (`EIS.activarBusquedaEnSelect('#posClienteSelect', ...)`) |
 | 4.2 | Sep 2026 | Módulo **Usuarios** con controlador propio (`UsuarioController` + `app.usuarios.js`), **manejo global de errores** en `index.php` con `App\Core\Logger` (registro en `src/logs/errores.md`, respuesta genérica al usuario), **`Validator`** de coerción estricta de tipos, barras de búsqueda en selects de Materialize (`EIS.habilitarBusquedaEnSelects`, `EIS.activarBusquedaEnSelect`), pulido visual general y corrección del render de reportes/clientes del POS |
 | 4.1 | Sep 2026 | Integración de **jQuery DataTables** (local) en todas las tablas principales (ordenamiento, paginación y búsqueda): Inventario, Clientes, Activos, Roles, Usuarios, Proveedores, Asesorías, Reportes, Cyber historial y Dashboard; helpers `EIS.datatable*` en `app.core.js` y tema Materialize oscuro/claro; corrección de 7 bugs de funcionalidad: eliminación de handlers demo en `app.ui.js` (reportes y `.btn-nuevo`), campos `direccion`/`telefono` opcionales en clientes, checkbox `activa` corregido con `isset()` en activos, `asignarRolAUsuario()` resuelve `rol_usuarios.id`, soporte completo de `descripcion`/`created_at` en roles, e INSERT corregido de `cliente_asesoria` |
@@ -377,5 +382,5 @@ Email: carlospaezguerra@gmail.com
 
 ---
 
-**Última actualización**: Septiembre 2026
-**Estado**: En desarrollo activo (rama `Carlos`). Todos los módulos funcionales con MVC + AJAX + BD + tablas con DataTables. Versión actual **4.3**: 13 controladores, 12 modelos POO, `Validator` + `Logger`, manejo global de errores, módulo de usuarios propio y barras de búsqueda en selects corregidas (bloqueo en captura + typeahead) con caché del SW versionada (`eis-cache-v5`).
+**Última actualización**: Noviembre 2026
+**Estado**: En desarrollo activo (rama `Carlos`). Todos los módulos funcionales con MVC + AJAX + BD + tablas con DataTables. Versión actual **4.4**: 13 controladores, 12 modelos POO, `Validator` + `Logger`, manejo global de errores, módulo de usuarios propio, barras de búsqueda en selects corregidas (bloqueo en captura + typeahead) y validación/notificaciones con jQuery Validation + jQuery Toast (caché del SW `eis-cache-v9`).

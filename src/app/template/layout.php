@@ -26,6 +26,10 @@
     <link rel="stylesheet" href="Public/css/styles.css">
     <!-- Estilos de jQuery DataTables adaptados a Materialize y al tema -->
     <link rel="stylesheet" href="Public/css/dataTables.materialize.css">
+    <!-- Estilos base de jQuery Toast Plugin (local) -->
+    <link rel="stylesheet" href="Public/css/jquery.toast.min.css">
+    <!-- Estilos EIS de validación (jQuery Validation) y notificaciones (jQuery Toast) -->
+    <link rel="stylesheet" href="Public/css/forms.eis.css">
     <!-- Estilos del submenú de Solicitudes -->
     <style>
         .has-submenu .submenu-list {
@@ -221,6 +225,11 @@
     <script src="Public/js/jquery.dataTables.min.js"></script>
     <!-- Integración ligera de DataTables con Materialize y config por defecto -->
     <script src="Public/js/dataTables.materialize.js"></script>
+
+    <!-- jQuery Validation Plugin (local): validación de formularios -->
+    <script src="Public/js/jquery.validate.min.js"></script>
+    <!-- jQuery Toast Plugin (local): notificaciones del sistema -->
+    <script src="Public/js/jquery.toast.min.js"></script>
 
     <!-- Core: funciones compartidas en todas las páginas (namespace EIS, utilidades) -->
     <script src="Public/js/app.core.js"></script>

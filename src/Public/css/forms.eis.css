@@ -1,21 +1,110 @@
 /* ============================================================
-   EIS System — Estilos de validación y notificaciones
+   EIS System — Validación en tiempo real y notificaciones
    ------------------------------------------------------------
    Integra jQuery Validation Plugin y jQuery Toast Plugin con la
-   estética Materialize del sistema (tema claro y oscuro).
+   estética Materialize del sistema. El objetivo es que el usuario
+   entienda qué falla, dónde y cómo corregirlo sin ruido visual.
+   Temas claro y oscuro.
    ============================================================ */
 
-/* ---------- Mensajes de error de jQuery Validation ---------- */
-.eis-field-error {
-    display: block;
-    margin-top: 0.25rem;
-    color: #c62828;
+/* ------------------------------------------------------------
+   1. Feedback inline debajo de cada campo
+   Estructura que genera app.validate.js:
+     <div class="eis-field-feedback eis-field-error|eis-field-hint">
+       <span class="eis-feedback-text">
+         <i class="material-icons eis-feedback-icon">…</i>
+         <span class="eis-feedback-message">…</span>
+       </span>
+       <span class="eis-field-counter">12 / 100</span>
+     </div>
+   ------------------------------------------------------------ */
+.eis-field-feedback {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    width: 100%;
+    margin-top: 0.3rem;
     font-size: 0.8rem;
     font-weight: 500;
     line-height: 1.35;
     text-align: left;
+    animation: eis-feedback-in 0.18s ease-out;
 }
 
+.eis-feedback-text {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.3rem;
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow-wrap: anywhere;
+}
+
+.eis-feedback-icon {
+    flex: 0 0 auto;
+    font-size: 1rem !important;
+    line-height: 1.2 !important;
+    margin-top: 0.05rem;
+}
+
+.eis-feedback-message {
+    min-width: 0;
+}
+
+.eis-field-error {
+    display: flex;
+    color: #c62828;
+}
+
+.eis-field-hint {
+    display: flex;
+    color: #3949ab;
+}
+
+.eis-field-hint .eis-feedback-icon {
+    color: #5c6bc0;
+}
+
+/* Compatibilidad con mensajes creados directamente por PHP/core. */
+.eis-field-error.helper-text {
+    margin-top: 0.3rem;
+    color: #c62828;
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+/* Contador de caracteres: discreto, a la derecha del mensaje. */
+.eis-field-counter {
+    flex: 0 0 auto;
+    margin-left: auto;
+    padding-left: 0.5rem;
+    color: var(--text-muted, #6b7280);
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.eis-field-counter.eis-counter-warn {
+    color: #ef6c00;
+    font-weight: 600;
+}
+
+.eis-field-counter.eis-counter-limit {
+    color: #c62828;
+    font-weight: 700;
+}
+
+@keyframes eis-feedback-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ------------------------------------------------------------
+   2. Estados del campo (borde, etiqueta, ícono de estado)
+   ------------------------------------------------------------ */
 .input-field.eis-invalid > label,
 .select-wrapper.eis-invalid > label,
 .eis-invalid > label,
@@ -43,6 +132,66 @@ select.eis-invalid,
     fill: #c62828 !important;
 }
 
+/* Campo válido: confirmación sutil en verde. */
+input.eis-valid,
+textarea.eis-valid,
+.select-wrapper.eis-valid select,
+.input-field.eis-valid input.select-dropdown {
+    border-bottom: 1px solid #2e7d32 !important;
+    box-shadow: 0 1px 0 0 #2e7d32 !important;
+}
+
+.input-field.eis-valid > label,
+.select-wrapper.eis-valid > label {
+    color: #2e7d32 !important;
+}
+
+/* Ícono de estado a la derecha del campo (solo tipos que lo admiten). */
+.input-field {
+    position: relative;
+}
+
+.eis-field-status {
+    position: absolute;
+    right: 0.15rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    pointer-events: none;
+    z-index: 2;
+    animation: eis-status-in 0.2s ease-out;
+}
+
+.eis-field-status .material-icons {
+    font-size: 1.15rem;
+}
+
+.eis-status-error { color: #c62828; }
+.eis-status-valid { color: #2e7d32; }
+
+.input-field.eis-has-status input:not([type="checkbox"]):not([type="radio"]) {
+    padding-right: 1.85rem !important;
+    box-sizing: border-box;
+}
+
+/* En contraseñas dejo espacio para el ojo nativo del navegador. */
+.input-field.eis-has-status input[type="password"] {
+    padding-right: 3.1rem !important;
+}
+
+.input-field.eis-has-status input[type="password"] ~ .eis-field-status {
+    right: 2.1rem;
+}
+
+@keyframes eis-status-in {
+    from { opacity: 0; transform: translateY(-50%) scale(0.6); }
+    to   { opacity: 1; transform: translateY(-50%) scale(1); }
+}
+
 /* Transición suave al marcar/desmarcar un campo */
 input,
 textarea,
@@ -52,8 +201,115 @@ select,
     transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 }
 
-/* ---------- Tema oscuro ---------- */
-[data-theme="dark"] .eis-field-error {
+/* ------------------------------------------------------------
+   3. Resumen de errores del formulario
+   ------------------------------------------------------------ */
+.card-panel.eis-form-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    margin: 0 0 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(198, 40, 40, 0.22);
+    border-left: 4px solid #c62828;
+    border-radius: 12px;
+    background: #fff5f5;
+    color: #8e1b1b;
+    box-shadow: 0 6px 18px rgba(198, 40, 40, 0.08);
+    animation: eis-feedback-in 0.2s ease-out;
+}
+
+.eis-form-error-icon {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: rgba(198, 40, 40, 0.12);
+    color: #c62828;
+}
+
+.eis-form-error-icon .material-icons {
+    font-size: 1.25rem;
+}
+
+.eis-form-error-body {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.eis-form-error-title {
+    display: block;
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.eis-form-error-list {
+    margin: 0.4rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.eis-form-error-link {
+    display: inline;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    text-align: left;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+}
+
+.eis-form-error-link:hover,
+.eis-form-error-link:focus-visible {
+    color: #b71c1c;
+    text-decoration-thickness: 2px;
+    outline: none;
+}
+
+.eis-form-error-more {
+    font-size: 0.78rem;
+    opacity: 0.8;
+}
+
+/* ------------------------------------------------------------
+   4. Tema oscuro
+   ------------------------------------------------------------ */
+[data-theme="dark"] .eis-field-error,
+[data-theme="dark"] .eis-field-error.helper-text {
+    color: #fca5a5;
+}
+
+[data-theme="dark"] .eis-field-hint {
+    color: #a5b4fc;
+}
+
+[data-theme="dark"] .eis-field-hint .eis-feedback-icon {
+    color: #a5b4fc;
+}
+
+[data-theme="dark"] .eis-field-counter {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .eis-field-counter.eis-counter-warn {
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .eis-field-counter.eis-counter-limit {
     color: #fca5a5;
 }
 
@@ -84,23 +340,6 @@ select,
     fill: #fca5a5 !important;
 }
 
-/* ---------- Campo válido (confirmación en tiempo real) ----------
-   jQuery Validation añade .eis-valid cuando validator.element()
-   confirma que la regla se cumple al tipear. Se usa una línea verde
-   sutil, coherente con el rojo de error de arriba. */
-input.eis-valid,
-textarea.eis-valid,
-.select-wrapper.eis-valid select,
-.input-field.eis-valid input.select-dropdown {
-    border-bottom: 1px solid #2e7d32 !important;
-    box-shadow: 0 1px 0 0 #2e7d32 !important;
-}
-
-.input-field.eis-valid > label,
-.select-wrapper.eis-valid > label {
-    color: #2e7d32 !important;
-}
-
 [data-theme="dark"] input.eis-valid,
 [data-theme="dark"] textarea.eis-valid,
 [data-theme="dark"] .select-wrapper.eis-valid select,
@@ -114,68 +353,121 @@ textarea.eis-valid,
     color: #4caf50 !important;
 }
 
-/* Los toasts de validación son más compactos que los del sistema para
-   que apilados no tapen el formulario donde se está escribiendo. */
-.jq-toast-single.eis-toast-campo {
-    font-size: 0.85rem;
-    padding-top: 0.7rem;
-    padding-bottom: 0.7rem;
+[data-theme="dark"] .eis-status-error { color: #fca5a5; }
+[data-theme="dark"] .eis-status-valid { color: #4caf50; }
+
+[data-theme="dark"] .card-panel.eis-form-error {
+    background: #3b1515;
+    border-color: rgba(252, 165, 165, 0.25);
+    border-left-color: #f87171;
+    color: #fecaca;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
 }
 
-/* ---------- jQuery Toast Plugin ---------- */
+[data-theme="dark"] .eis-form-error-icon {
+    background: rgba(248, 113, 113, 0.16);
+    color: #fca5a5;
+}
+
+[data-theme="dark"] .eis-form-error-link:hover,
+[data-theme="dark"] .eis-form-error-link:focus-visible {
+    color: #ffffff;
+}
+
+/* ------------------------------------------------------------
+   5. jQuery Toast Plugin
+   ------------------------------------------------------------ */
 .jq-toast-wrap {
     z-index: 10050 !important;
-    width: 340px;
+    width: 370px;
     max-width: calc(100vw - 2rem);
     font-family: inherit;
     letter-spacing: normal;
 }
 
+.jq-toast-wrap.top-right {
+    top: 76px;
+    right: 24px;
+}
+
+.jq-toast-wrap.bottom-right {
+    right: 24px;
+    bottom: 24px;
+}
+
 .jq-toast-single {
     border-radius: 12px;
-    padding: 1rem 2.25rem 1rem 1.25rem;
+    padding: 0.95rem 2.35rem 0.95rem 1.15rem;
     margin-bottom: 0.6rem;
     font-family: inherit;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     line-height: 1.45;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.28);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    opacity: 1 !important;
+    background-color: #1e293b !important;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.45), 0 4px 10px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.12);
     overflow-wrap: break-word;
     word-break: break-word;
 }
 
-/* Toast para errores de validación en tiempo real */
+/* Los toasts de validación son algo más compactos para no tapar el
+   formulario mientras se escribe. */
+.jq-toast-single.eis-toast-field {
+    font-size: 0.85rem;
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+}
+
+/* El sistema no usa la barra de progreso del plugin. */
+.jq-toast-single .jq-toast-loader {
+    display: none !important;
+}
+
+/* Colores 100% sólidos, opacos y de alto contraste por tipo de aviso */
 .jq-toast-single.error,
 .jq-toast-single.jq-icon-error {
-    background: linear-gradient(135deg, #c62828 0%, #d32f2f 100%) !important;
+    background: #b71c1c !important;
+    background-color: #b71c1c !important;
     color: #ffffff !important;
+    border: 1px solid #7f0000 !important;
 }
 
 .jq-toast-single.warning,
 .jq-toast-single.jq-icon-warning {
-    background: linear-gradient(135deg, #ef6c00 0%, #f57c00 100%) !important;
+    background: #e65100 !important;
+    background-color: #e65100 !important;
     color: #ffffff !important;
+    border: 1px solid #bf360c !important;
 }
 
 .jq-toast-single.success,
 .jq-toast-single.jq-icon-success {
-    background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%) !important;
+    background: #1b5e20 !important;
+    background-color: #1b5e20 !important;
     color: #ffffff !important;
+    border: 1px solid #0d3810 !important;
 }
 
 .jq-toast-single.info,
 .jq-toast-single.jq-icon-info {
-    background: linear-gradient(135deg, #283593 0%, #3949ab 100%) !important;
+    background: #1a237e !important;
+    background-color: #1a237e !important;
     color: #ffffff !important;
+    border: 1px solid #0d1257 !important;
 }
 
 .jq-toast-single h2.jq-toast-heading {
     font-family: inherit;
-    font-size: 0.95rem;
+    font-size: 0.86rem;
     font-weight: 700;
-    margin: 0 0 0.2rem;
+    letter-spacing: 0.01em;
+    margin: 0 0 0.18rem;
     color: inherit;
     line-height: 1.35;
+}
+
+.jq-toast-single .eis-toast-body {
+    opacity: 0.95;
 }
 
 .jq-toast-single a {
@@ -184,11 +476,11 @@ textarea.eis-valid,
 }
 
 .jq-toast-single .close-jq-toast-single {
-    top: 6px;
-    right: 10px;
-    font-size: 20px;
+    top: 8px;
+    right: 11px;
+    font-size: 19px;
     line-height: 1;
-    opacity: 0.85;
+    opacity: 0.8;
 }
 
 .jq-toast-single .close-jq-toast-single:hover {
@@ -197,7 +489,7 @@ textarea.eis-valid,
 
 /* Reemplaza los íconos PNG del plugin por Material Icons (assets locales) */
 .jq-toast-single.jq-has-icon {
-    padding-left: 3.4rem;
+    padding-left: 3.5rem;
     background-image: none !important;
     background-position: left center;
 }
@@ -206,13 +498,13 @@ textarea.eis-valid,
     font-family: 'Material Icons';
     font-weight: normal;
     font-style: normal;
-    font-size: 1.5rem;
+    font-size: 1.45rem;
     line-height: 1;
     position: absolute;
-    left: 1.1rem;
+    left: 1.15rem;
     top: 50%;
     transform: translateY(-50%);
-    opacity: 0.95;
+    opacity: 0.96;
     letter-spacing: normal;
     text-transform: none;
     display: inline-block;
@@ -224,10 +516,13 @@ textarea.eis-valid,
 }
 
 .jq-toast-single.jq-icon-success::before { content: 'check_circle'; }
-.jq-toast-single.jq-icon-error::before   { content: 'error'; }
-.jq-toast-single.jq-icon-warning::before { content: 'warning'; }
-.jq-toast-single.jq-icon-info::before    { content: 'info'; }
+.jq-toast-single.jq-icon-error::before   { content: 'error_outline'; }
+.jq-toast-single.jq-icon-warning::before { content: 'warning_amber'; }
+.jq-toast-single.jq-icon-info::before    { content: 'lightbulb_outline'; }
 
+/* ------------------------------------------------------------
+   6. Responsive y accesibilidad
+   ------------------------------------------------------------ */
 @media only screen and (max-width: 600px) {
     .jq-toast-wrap.top-right,
     .jq-toast-wrap.top-left {
@@ -246,11 +541,39 @@ textarea.eis-valid,
     }
 
     .jq-toast-single {
-        font-size: 0.85rem;
-        padding: 0.85rem 2rem 0.85rem 1rem;
+        font-size: 0.84rem;
+        padding: 0.8rem 2rem 0.8rem 1rem;
     }
 
     .jq-toast-single.jq-has-icon {
-        padding-left: 3rem;
+        padding-left: 3.1rem;
+    }
+
+    .jq-toast-single.jq-has-icon::before {
+        left: 1rem;
+    }
+
+    .card-panel.eis-form-error {
+        padding: 0.75rem 0.85rem;
+    }
+
+    .eis-field-feedback {
+        font-size: 0.78rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .eis-field-feedback,
+    .eis-field-status,
+    .card-panel.eis-form-error {
+        animation: none !important;
+    }
+
+    input,
+    textarea,
+    select,
+    .select-wrapper,
+    .input-field > label {
+        transition: none !important;
     }
 }

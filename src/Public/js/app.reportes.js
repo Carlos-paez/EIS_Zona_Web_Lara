@@ -167,11 +167,11 @@
             var desde = $form.find('[name="desde"]').val();
             var hasta = $form.find('[name="hasta"]').val();
             if (!desde || !hasta) {
-                M.toast({ html: 'Debe seleccionar el rango de fechas', classes: 'red darken-2' });
+                EIS.toast('Debe seleccionar el rango de fechas', 'red', 'error');
                 return false;
             }
             if (hasta < desde) {
-                M.toast({ html: 'La fecha inicial no puede ser posterior a la final', classes: 'red darken-2' });
+                EIS.toast('La fecha inicial no puede ser posterior a la final', 'red', 'error');
                 return false;
             }
             return true;

@@ -29,6 +29,10 @@
     <link rel="stylesheet" href="Public/css/materialize.min.css">
     <!-- Hoja de estilos personalizada específicamente para la página de login -->
     <link rel="stylesheet" href="Public/css/login.css">
+    <!-- Estilos base de jQuery Toast Plugin (local) -->
+    <link rel="stylesheet" href="Public/css/jquery.toast.min.css">
+    <!-- Estilos EIS de validación (jQuery Validation) y notificaciones (jQuery Toast) -->
+    <link rel="stylesheet" href="Public/css/forms.eis.css">
 </head>
 <body>
 
@@ -208,6 +212,10 @@
     <script src="Public/js/jquery-3.7.1.min.js"></script>
     <!-- Materialize JS v1.0.0 (minificado) para componentes como modales, tooltips, etc. -->
     <script src="Public/js/materialize.min.js"></script>
+    <!-- jQuery Validation Plugin (local): validación de formularios -->
+    <script src="Public/js/jquery.validate.min.js"></script>
+    <!-- jQuery Toast Plugin (local): notificaciones del sistema -->
+    <script src="Public/js/jquery.toast.min.js"></script>
     <!-- Archivo JS principal de la aplicación (funciones globales) -->
     <script src="Public/js/app.core.js"></script>
     <script src="Public/js/regex_validations.js"></script>

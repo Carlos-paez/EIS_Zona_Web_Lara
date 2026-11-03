@@ -149,7 +149,7 @@ abstract class BaseController
     /**
      * Respuesta JSON con errores de validación
      */
-    public function jsonValidationErrors(array $errors = null): void
+    public function jsonValidationErrors(?array $errors = null): void
     {
         http_response_code(422);
         header('Content-Type: application/json');

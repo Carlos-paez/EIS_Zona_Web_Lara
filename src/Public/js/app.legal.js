@@ -147,7 +147,7 @@ $(function () {
         $div.slideDown(300);
 
         if (!esPermitido) {
-            M.toast({ html: '<i class="material-icons left" style="font-size:1.2rem;">gavel</i> Caso derivado a oficina oficial', classes: 'red rounded', displayLength: 4000 });
+            EIS.toast('Caso derivado a oficina oficial', 'red', 'gavel');
         }
     }
 
