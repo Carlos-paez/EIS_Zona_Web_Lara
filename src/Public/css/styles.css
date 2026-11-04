@@ -445,24 +445,63 @@ input, select, textarea {
 .pos-product {
     cursor: pointer;
     text-align: center;
-    padding: 1rem;
+    padding: 1rem 0.9rem;
     margin: 0;
-    border: 2px solid transparent;
-    transition: all 0.25s cubic-bezier(.4,0,.2,1);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, #ffffff 0%, var(--surface-hover) 100%);
+    box-shadow:
+        var(--shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    transition:
+        border-color 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.25s ease,
+        background 0.25s ease;
     position: relative;
     overflow: hidden;
 }
 
+/* Acento superior que aparece al pasar el cursor o seleccionar la tarjeta. */
+.pos-product::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-light), var(--accent));
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
 .pos-product:hover {
-    border-color: var(--primary) !important;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    border-color: var(--primary-light) !important;
+    background: linear-gradient(180deg, #ffffff 0%, rgba(92, 107, 192, 0.09) 100%);
+    transform: translateY(-4px);
+    box-shadow:
+        0 12px 24px -10px rgba(57, 73, 171, 0.35),
+        0 0 0 3px rgba(57, 73, 171, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.pos-product:hover::before {
+    opacity: 1;
 }
 
 .pos-product.selected {
     border-color: var(--success) !important;
-    background: rgba(67, 160, 71, 0.05);
+    background: linear-gradient(180deg, rgba(67, 160, 71, 0.12) 0%, rgba(67, 160, 71, 0.04) 100%);
+    box-shadow:
+        0 0 0 3px rgba(67, 160, 71, 0.16),
+        0 10px 22px -12px rgba(67, 160, 71, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
     animation: pulse 0.4s ease;
+}
+
+.pos-product.selected::before {
+    background: var(--success);
+    opacity: 1;
 }
 
 .pos-product.selected::after {
@@ -473,6 +512,22 @@ input, select, textarea {
     right: 0.5rem;
     font-size: 1.2rem;
     color: var(--success);
+}
+
+/* Ajustes de las tarjetas de producto en tema oscuro. */
+[data-theme="dark"] .pos-product {
+    background: linear-gradient(180deg, var(--surface) 0%, var(--surface-hover) 100%);
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .pos-product:hover {
+    background: linear-gradient(180deg, var(--surface-hover) 0%, rgba(139, 149, 230, 0.16) 100%);
+    box-shadow:
+        0 12px 24px -10px rgba(0, 0, 0, 0.75),
+        0 0 0 3px rgba(139, 149, 230, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 @keyframes pulse {
@@ -561,7 +616,11 @@ input, select, textarea {
 [data-theme="dark"] .activity-icon { opacity: 0.9; }
 [data-theme="dark"] #clock { opacity: 0.7 !important; }
 [data-theme="dark"] .pos-product.selected {
-    background: rgba(102, 187, 106, 0.1);
+    background: linear-gradient(180deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.07) 100%);
+    box-shadow:
+        0 0 0 3px rgba(34, 197, 94, 0.22),
+        0 10px 22px -12px rgba(0, 0, 0, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /* ===== Cyber Station Grid Layout ===== */
@@ -1103,8 +1162,19 @@ input, select, textarea {
 
 /* --- Fix hover-only interactions for touch devices --- */
 @media (hover: none) and (pointer: coarse) {
-    .pos-product:hover { transform: none !important; border-color: transparent !important; }
-    .pos-product.selected:hover { border-color: var(--success) !important; }
+    .pos-product:hover {
+        transform: none !important;
+        border-color: var(--border-light) !important;
+        box-shadow: var(--shadow-xs) !important;
+    }
+    .pos-product:hover::before { opacity: 0; }
+    .pos-product.selected:hover {
+        border-color: var(--success) !important;
+        box-shadow:
+            0 0 0 3px rgba(67, 160, 71, 0.16),
+            0 10px 22px -12px rgba(67, 160, 71, 0.55) !important;
+    }
+    .pos-product.selected:hover::before { opacity: 1; }
     .pos-add-btn { opacity: 1 !important; transform: scale(1) !important; }
     .station-card:hover { transform: none !important; box-shadow: var(--shadow) !important; }
     .card:hover { box-shadow: var(--shadow) !important; }

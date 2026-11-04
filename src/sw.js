@@ -1,4 +1,4 @@
-var CACHE_NAME = 'eis-cache-v10';
+var CACHE_NAME = 'eis-cache-v11';
 
 var STATIC_ASSETS = [
   'Public/css/material-icons.css',
