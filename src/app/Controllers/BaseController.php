@@ -155,7 +155,7 @@ abstract class BaseController
         header('Content-Type: application/json');
         echo json_encode([
             'success' => false,
-            'error'   => 'Errores de validación',
+            'error'   => 'Revisa los datos del formulario.',
             'errors'  => $errors ?? $this->getErrors()
         ]);
         exit;

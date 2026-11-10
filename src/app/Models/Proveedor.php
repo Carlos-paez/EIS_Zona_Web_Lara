@@ -235,19 +235,19 @@ class Proveedor extends Model
         $this->setFkStatus($fk_status);
 
         if ($this->fecha === '') {
-            throw new \InvalidArgumentException('La fecha es obligatoria');
+            throw new \InvalidArgumentException('La fecha es obligatoria.');
         }
         if (!$this->fkProveedor) {
-            throw new \InvalidArgumentException('El proveedor es obligatorio');
+            throw new \InvalidArgumentException('El proveedor es obligatorio.');
         }
         if (!$this->fkStatus) {
-            throw new \InvalidArgumentException('El estado es obligatorio');
+            throw new \InvalidArgumentException('El estado es obligatorio.');
         }
         if (!$this->existeProveedor($this->fkProveedor)) {
-            throw new \InvalidArgumentException('El proveedor seleccionado no existe');
+            throw new \InvalidArgumentException('El proveedor seleccionado no existe.');
         }
         if (!$this->existeStatus($this->fkStatus)) {
-            throw new \InvalidArgumentException('El estado seleccionado no existe');
+            throw new \InvalidArgumentException('El estado seleccionado no existe.');
         }
 
         $sql = "INSERT INTO orden_abastecimiento (numero_de_orden, fecha, fk_proveedor, fk_status) VALUES (?, ?, ?, ?)";
@@ -298,19 +298,19 @@ class Proveedor extends Model
         $this->setFkStatus($fk_status);
 
         if ($this->fecha === '') {
-            throw new \InvalidArgumentException('La fecha es obligatoria');
+            throw new \InvalidArgumentException('La fecha es obligatoria.');
         }
         if (!$this->fkProveedor) {
-            throw new \InvalidArgumentException('El proveedor es obligatorio');
+            throw new \InvalidArgumentException('El proveedor es obligatorio.');
         }
         if (!$this->fkStatus) {
-            throw new \InvalidArgumentException('El estado es obligatorio');
+            throw new \InvalidArgumentException('El estado es obligatorio.');
         }
         if (!$this->existeProveedor($this->fkProveedor)) {
-            throw new \InvalidArgumentException('El proveedor seleccionado no existe');
+            throw new \InvalidArgumentException('El proveedor seleccionado no existe.');
         }
         if (!$this->existeStatus($this->fkStatus)) {
-            throw new \InvalidArgumentException('El estado seleccionado no existe');
+            throw new \InvalidArgumentException('El estado seleccionado no existe.');
         }
 
         $sql = "UPDATE orden_abastecimiento SET numero_de_orden = ?, fecha = ?, fk_proveedor = ?, fk_status = ? WHERE id = ?";
@@ -420,10 +420,10 @@ class Proveedor extends Model
         $this->setPrecio($precio);
 
         if (!$this->existeOrden($this->ordenId)) {
-            throw new \InvalidArgumentException('La orden de abastecimiento no existe');
+            throw new \InvalidArgumentException('La orden de abastecimiento no existe.');
         }
         if (!$this->existeProducto($this->productoId)) {
-            throw new \InvalidArgumentException('El producto seleccionado no existe');
+            throw new \InvalidArgumentException('El producto seleccionado no existe.');
         }
 
         $sql = "INSERT INTO lineas_abastecimiento (cantidad, precio, fk_orden_abastecimiento, fk_producto) VALUES (?, ?, ?, ?)";

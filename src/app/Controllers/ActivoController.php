@@ -43,7 +43,7 @@ class ActivoController
                 'eliminar'   => $this->eliminar(),
                 'kpis'       => $this->kpis(),
                 'tipos'      => $this->tipos(),
-                default      => $this->json(false, null, 'Acción no válida'),
+                default      => $this->json(false, null, 'La acción solicitada no es válida.'),
             };
         } catch (ValidationException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage(), 'fieldErrors' => $e->errores()]);
@@ -51,15 +51,15 @@ class ActivoController
             Logger::error($e, 'Activos - consulta SQL');
             $msg = $e->getMessage();
             if (str_contains($msg, 'foreign key constraint') || str_contains($msg, 'a foreign key constraint fails')) {
-                echo json_encode(['success' => false, 'error' => 'No se puede eliminar: el activo tiene registros asociados.']);
+                echo json_encode(['success' => false, 'error' => 'No se puede eliminar el activo porque tiene registros asociados.']);
             } else {
-                echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
+                echo json_encode(['success' => false, 'error' => 'No se pudo conectar con la base de datos. Intenta de nuevo.']);
             }
         } catch (\InvalidArgumentException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         } catch (\Exception $e) {
             Logger::error($e, 'Activos');
-            echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
+            echo json_encode(['success' => false, 'error' => 'Ocurrió un error interno. Intenta de nuevo.']);
         }
     }
 
@@ -94,14 +94,14 @@ class ActivoController
         if ($activo) {
             echo json_encode(['success' => true, 'data' => $activo]);
         } else {
-            echo json_encode(['success' => false, 'error' => 'Activo no encontrado']);
+            echo json_encode(['success' => false, 'error' => 'No se encontró el activo.']);
         }
     }
 
     private function crear(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -123,14 +123,14 @@ class ActivoController
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Activo creado exitosamente']
-                : ['success' => false, 'error' => 'Error al crear el activo']
+                : ['success' => false, 'error' => 'No se pudo crear el activo. Intenta de nuevo.']
         );
     }
 
     private function actualizar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -154,14 +154,14 @@ class ActivoController
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Activo actualizado exitosamente']
-                : ['success' => false, 'error' => 'Error al actualizar el activo']
+                : ['success' => false, 'error' => 'No se pudo actualizar el activo. Intenta de nuevo.']
         );
     }
 
     private function estado(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -172,14 +172,14 @@ class ActivoController
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => $activa ? 'Activo activado' : 'Activo desactivado']
-                : ['success' => false, 'error' => 'Error al cambiar el estado']
+                : ['success' => false, 'error' => 'No se pudo cambiar el estado. Intenta de nuevo.']
         );
     }
 
     private function eliminar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -188,7 +188,7 @@ class ActivoController
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Activo eliminado exitosamente']
-                : ['success' => false, 'error' => 'Error al eliminar el activo']
+                : ['success' => false, 'error' => 'No se pudo eliminar el activo. Intenta de nuevo.']
         );
     }
 

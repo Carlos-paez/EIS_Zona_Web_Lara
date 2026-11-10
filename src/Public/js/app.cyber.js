@@ -195,7 +195,7 @@ $(function () {
             if (r1[0] && r1[0].success) {
                 estaciones = r1[0].data || [];
             } else {
-                EIS.toast((r1[0] && r1[0].error) || 'Error al cargar estaciones', 'red', 'error');
+                EIS.toast((r1[0] && r1[0].error) || 'No se pudieron cargar las estaciones. Intenta de nuevo.', 'red', 'error');
             }
             if (r2[0] && r2[0].success) {
                 tarifas = r2[0].data || [];
@@ -203,8 +203,8 @@ $(function () {
             renderGrid();
             actualizarContadores();
         }).fail(function () {
-            $('#cyberGrid').html('<div class="row"><div class="col s12 center-align" style="color:var(--text-muted);padding:2rem 0;"><i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">cloud_off</i> Error al conectar con el servidor</div></div>');
-            EIS.toast('Error de conexión', 'red', 'error');
+            $('#cyberGrid').html('<div class="row"><div class="col s12 center-align" style="color:var(--text-muted);padding:2rem 0;"><i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">cloud_off</i> No se pudo conectar con el servidor. Intenta de nuevo.</div></div>');
+            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -239,7 +239,7 @@ $(function () {
             M.updateTextFields();
             EIS.toast('Cliente encontrado: se precargaron sus datos', 'indigo', 'person');
         }).fail(function () {
-            EIS.toast('Error al buscar el cliente', 'red', 'error');
+            EIS.toast('No se pudo buscar el cliente. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -268,11 +268,11 @@ $(function () {
                             EIS.toast(r.message, 'green', 'stop_circle');
                             cargarEstado();
                         } else {
-                            EIS.toast(r.error || 'Error al finalizar la sesión', 'red', 'error');
+                            EIS.toast(r.error || 'No se pudo finalizar la sesión. Intenta de nuevo.', 'red', 'error');
                         }
                     },
                     error: function () {
-                        EIS.toast('Error de conexión', 'red', 'error');
+                        EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
                     }
                 });
             }
@@ -285,7 +285,7 @@ $(function () {
     $(document).on('click', '#btnNuevaSesion', function () {
         var disponibles = estaciones.filter(function (e) { return e.estado === 'disponible'; });
         if (disponibles.length === 0) {
-            EIS.toast('No hay estaciones disponibles', 'red', 'error');
+            EIS.toast('No hay estaciones disponibles en este momento.', 'red', 'error');
             return;
         }
         abrirModalIniciar(null);
@@ -327,7 +327,7 @@ $(function () {
             },
             error: function () {
                 $btn.prop('disabled', false);
-                EIS.toast('Error de conexión', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             }
         });
     });
@@ -384,7 +384,7 @@ $(function () {
             dataType: 'json',
             success: function (r) {
                 if (!r.success || !r.data) {
-                    EIS.toast((r.error) || 'Error al cargar la PC', 'red', 'error');
+                    EIS.toast((r.error) || 'No se pudo cargar la PC. Intenta de nuevo.', 'red', 'error');
                     return;
                 }
                 var pc = r.data;
@@ -398,7 +398,7 @@ $(function () {
                 $('#modalPCForm').modal('open');
             },
             error: function () {
-                EIS.toast('Error de conexión al cargar la PC', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor al cargar la PC. Intenta de nuevo.', 'red', 'error');
             }
         });
     });
@@ -431,12 +431,12 @@ $(function () {
                     $('#modalConfirmarEliminar').modal('close');
                     cargarEstado();
                 } else {
-                    EIS.toast(r.error || 'Error al eliminar la PC', 'red', 'error');
+                    EIS.toast(r.error || 'No se pudo eliminar la PC. Intenta de nuevo.', 'red', 'error');
                 }
             },
             error: function () {
                 $btn.prop('disabled', false).html('<i class="material-icons left">delete_forever</i> Eliminar');
-                EIS.toast('Error de conexión', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             }
         });
     });
@@ -487,7 +487,7 @@ $(function () {
                 $btn.prop('disabled', false);
                 $('#btnGuardarPC').removeClass('orange').addClass('indigo');
                 $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
-                $('#pcFormErrorMessage').text('Error de conexión al servidor');
+                $('#pcFormErrorMessage').text('No se pudo conectar con el servidor. Intenta de nuevo.');
                 $('#pcFormError').slideDown(300);
             }
         });
@@ -542,7 +542,7 @@ $(function () {
             dataType: 'json',
             success: function (r) {
                 if (!r.success) {
-                    $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>' + escHtml(r.error || 'Error al cargar el historial') + '</div>');
+                    $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>' + escHtml(r.error || 'No se pudo cargar el historial. Intenta de nuevo.') + '</div>');
                     return;
                 }
                 var datos = r.data || [];
@@ -567,7 +567,7 @@ $(function () {
                 }
             },
             error: function () {
-                $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>Error de conexión al servidor</div>');
+                $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>No se pudo conectar con el servidor. Intenta de nuevo.</div>');
             }
         });
     }

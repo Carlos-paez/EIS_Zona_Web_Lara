@@ -42,7 +42,7 @@ class ClienteController extends BaseController
                 'actualizar' => $this->actualizar(),
                 'eliminar'   => $this->eliminar(),
                 'kpis'       => $this->kpis(),
-                default      => $this->jsonError('Acción no válida', null, 400),
+                default      => $this->jsonError('La acción solicitada no es válida.', null, 400),
             };
         } catch (ValidationException $e) {
             $this->jsonValidationException($e);
@@ -50,15 +50,15 @@ class ClienteController extends BaseController
             Logger::error($e, 'Clientes - consulta SQL');
             $msg = $e->getMessage();
             if (str_contains($msg, 'foreign key constraint') || str_contains($msg, 'a foreign key constraint fails')) {
-                $this->jsonError('No se puede eliminar: el cliente tiene registros asociados.', null, 400);
+                $this->jsonError('No se puede eliminar el cliente porque tiene registros asociados.', null, 400);
             } else {
-                $this->jsonError('Error de base de datos', null, 500);
+                $this->jsonError('No se pudo conectar con la base de datos. Intenta de nuevo.', null, 500);
             }
         } catch (\InvalidArgumentException $e) {
             $this->jsonError($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             Logger::error($e, 'Clientes');
-            $this->jsonError('Error interno del servidor', null, 500);
+            $this->jsonError('Ocurrió un error interno. Intenta de nuevo.', null, 500);
         }
     }
 
@@ -84,14 +84,14 @@ class ClienteController extends BaseController
         if ($cliente) {
             $this->jsonSuccess($cliente);
         } else {
-            $this->jsonError('Cliente no encontrado', null, 404);
+            $this->jsonError('No se encontró el cliente.', null, 404);
         }
     }
 
     private function crear(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -116,7 +116,7 @@ class ClienteController extends BaseController
             ->set('telefono', $telefono);
 
         if ($this->model->existeCedula($cedula)) {
-            $this->jsonError('Ya existe un cliente con esa cédula', null, 400);
+            $this->jsonError('Ya existe un cliente registrado con esa cédula.', null, 400);
             return;
         }
 
@@ -124,14 +124,14 @@ class ClienteController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Cliente creado exitosamente');
         } else {
-            $this->jsonError('Error al crear el cliente', null, 400);
+            $this->jsonError('No se pudo crear el cliente. Intenta de nuevo.', null, 400);
         }
     }
 
     private function actualizar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -159,7 +159,7 @@ class ClienteController extends BaseController
             ->set('telefono', $telefono);
 
         if ($this->model->existeCedula($cedula, $id)) {
-            $this->jsonError('Ya existe otro cliente con esa cédula', null, 400);
+            $this->jsonError('Ya existe otro cliente registrado con esa cédula.', null, 400);
             return;
         }
 
@@ -167,14 +167,14 @@ class ClienteController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Cliente actualizado exitosamente');
         } else {
-            $this->jsonError('Error al actualizar el cliente', null, 400);
+            $this->jsonError('No se pudo actualizar el cliente. Intenta de nuevo.', null, 400);
         }
     }
 
     private function eliminar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -184,7 +184,7 @@ class ClienteController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Cliente eliminado exitosamente');
         } else {
-            $this->jsonError('Error al eliminar el cliente', null, 400);
+            $this->jsonError('No se pudo eliminar el cliente. Intenta de nuevo.', null, 400);
         }
     }
 

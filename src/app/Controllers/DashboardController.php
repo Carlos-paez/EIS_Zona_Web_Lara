@@ -40,11 +40,11 @@ class DashboardController extends BaseController
         try {
             match ($action) {
                 'kpis'   => $this->kpis(),
-                default  => $this->jsonError('Acción no válida', null, 400),
+                default  => $this->jsonError('La acción solicitada no es válida.', null, 400),
             };
         } catch (\Exception $e) {
             Logger::error($e, 'Dashboard');
-            $this->jsonError('Error interno del servidor', null, 500);
+            $this->jsonError('Ocurrió un error interno. Intenta de nuevo.', null, 500);
         }
     }
 

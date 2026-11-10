@@ -19,7 +19,7 @@
       "flags": "u",
       "minlength": 2,
       "maxlength": 80,
-      "mensaje": "Ingresa un nombre válido (solo letras, apóstrofes o guiones).",
+      "mensaje": "Ingresa un nombre válido (solo letras, apóstrofos o guiones).",
       "ejemplo_valido": "Carlos Leomar",
       "ejemplo_invalido": "carlos123"
     },
@@ -280,7 +280,7 @@
       "ejemplo_valido": "ClaveSegura2026"
     },
     "password_fuerte": {
-      "label": "Contraseña fuerte: 8+ caracteres, mayúscula, minúscula, número y símbolo",
+      "label": "Contraseña fuerte: 8 a 72 caracteres, con mayúscula, minúscula, número y símbolo",
       "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9\\s])[^\\s]{8,72}$",
       "minlength": 8,
       "maxlength": 72,
@@ -288,11 +288,11 @@
       "ejemplo_valido": "Clave_Segura-2026"
     },
     "password_muy_fuerte": {
-      "label": "Contraseña muy fuerte: 12+ caracteres, mayúscula, minúscula, número y símbolo",
+      "label": "Contraseña muy fuerte: 12 a 72 caracteres, con mayúscula, minúscula, número y símbolo",
       "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9\\s])(?!.*(.)\\1{2,})[^\\s]{12,72}$",
       "minlength": 12,
       "maxlength": 72,
-      "mensaje": "La contraseña debe tener entre 12 y 72 caracteres, mayúscula, minúscula, número y símbolo, sin caracteres repetidos tres veces."
+      "mensaje": "La contraseña debe tener entre 12 y 72 caracteres e incluir mayúscula, minúscula, número y símbolo, sin repetir un carácter tres veces seguidas."
     },
     "password_pin": {
       "label": "PIN numérico de 4 a 8 dígitos",

@@ -434,7 +434,7 @@ $totalProductos = count($productos);
                 </div>
                 <!-- Campo: Nombre del producto (obligatorio) -->
                 <div class="input-field col s12 m6">
-                    <input type="text" name="nombre" id="producto-nombre" maxlength="100" title="Entre 2 y 100 caracteres" required minlength="2" data-validate="texto">
+                    <input type="text" name="nombre" id="producto-nombre" maxlength="100" title="Entre 2 y 100 caracteres." required minlength="2" data-validate="texto">
                     <label for="producto-nombre">Nombre del Producto</label>
                 </div>
             </div>
@@ -503,7 +503,7 @@ $totalProductos = count($productos);
             <form id="form-categoria" data-validate style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:flex-end;">
                 <input type="hidden" name="id" id="categoria-id" value="">
                 <div class="input-field" style="flex:2;min-width:150px;margin:0;">
-                    <input type="text" name="nombre" id="categoria-nombre" maxlength="100" title="Entre 2 y 100 caracteres" required minlength="2" data-validate="texto">
+                    <input type="text" name="nombre" id="categoria-nombre" maxlength="100" title="Entre 2 y 100 caracteres." required minlength="2" data-validate="texto">
                     <label for="categoria-nombre">Nombre de la categoría</label>
                 </div>
                 <button type="submit" class="btn waves-effect waves-light green" style="height:44px;border-radius:24px;padding:0 1rem;">

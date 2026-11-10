@@ -181,13 +181,13 @@ class Activo extends Model
         $this->setIsCiber($isCiber);
 
         if ($this->fkTipoActivo <= 0) {
-            throw new \InvalidArgumentException('Debes seleccionar un tipo de activo');
+            throw new \InvalidArgumentException('Debes seleccionar un tipo de activo.');
         }
         if (!$this->existeTipoActivo($this->fkTipoActivo)) {
-            throw new \InvalidArgumentException('El tipo de activo seleccionado no existe');
+            throw new \InvalidArgumentException('El tipo de activo seleccionado no existe.');
         }
         if ($this->existeActivo($this->marca, $this->descripcion)) {
-            throw new \InvalidArgumentException('Ya existe un activo con esa marca y descripción');
+            throw new \InvalidArgumentException('Ya existe un activo registrado con esa marca y descripción.');
         }
 
         $stmt = $this->db->prepare("
@@ -224,16 +224,16 @@ class Activo extends Model
         $this->setIsCiber($isCiber);
 
         if ($this->id <= 0) {
-            throw new \InvalidArgumentException('ID no válido');
+            throw new \InvalidArgumentException('El identificador no es válido.');
         }
         if ($this->fkTipoActivo <= 0) {
-            throw new \InvalidArgumentException('Debes seleccionar un tipo de activo');
+            throw new \InvalidArgumentException('Debes seleccionar un tipo de activo.');
         }
         if (!$this->existeTipoActivo($this->fkTipoActivo)) {
-            throw new \InvalidArgumentException('El tipo de activo seleccionado no existe');
+            throw new \InvalidArgumentException('El tipo de activo seleccionado no existe.');
         }
         if ($this->existeActivo($this->marca, $this->descripcion, $this->id)) {
-            throw new \InvalidArgumentException('Ya existe otro activo con esa marca y descripción');
+            throw new \InvalidArgumentException('Ya existe otro activo registrado con esa marca y descripción.');
         }
 
         $stmt = $this->db->prepare("
@@ -261,7 +261,7 @@ class Activo extends Model
         $id     = $this->sanitizeInt($id);
         $activa = $activa ? 1 : 0;
         if ($id <= 0) {
-            throw new \InvalidArgumentException('ID no válido');
+            throw new \InvalidArgumentException('El identificador no es válido.');
         }
         $stmt = $this->db->prepare("UPDATE activos SET activa = ? WHERE id = ?");
         $stmt->bindParam(1, $activa, PDO::PARAM_INT);
@@ -279,10 +279,10 @@ class Activo extends Model
     {
         $id = $this->sanitizeInt($id);
         if ($id <= 0) {
-            throw new \InvalidArgumentException('ID no válido');
+            throw new \InvalidArgumentException('El identificador no es válido.');
         }
         if ($this->tieneSesiones($id)) {
-            throw new \InvalidArgumentException('No se puede eliminar un activo con sesiones de cybercafé registradas. Desactívalo en su lugar');
+            throw new \InvalidArgumentException('No se puede eliminar un activo con sesiones de cybercafé registradas. Desactívalo en su lugar.');
         }
         $stmt = $this->db->prepare("UPDATE activos SET activo = 0 WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);

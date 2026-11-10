@@ -47,7 +47,7 @@ $(function () {
             $('#kpi-admins').text(r.data.administradores);
             $('#countUsuarios').text(r.data.total);
         }).fail(function () {
-            EIS.toast('Error al cargar indicadores', 'red', 'error');
+            EIS.toast('No se pudieron cargar los indicadores. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -71,7 +71,7 @@ $(function () {
             $('.tooltipped').tooltip();
             EIS.datatableRefresh('#tabla-usuarios');
         }).fail(function () {
-            EIS.toast('Error al cargar usuarios', 'red', 'error');
+            EIS.toast('No se pudieron cargar los usuarios. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -89,7 +89,7 @@ $(function () {
             M.FormSelect.init($filter);
             M.FormSelect.init($modal);
         }).fail(function () {
-            EIS.toast('Error al cargar roles', 'red', 'error');
+            EIS.toast('No se pudieron cargar los roles. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -125,7 +125,7 @@ $(function () {
 
     function abrirEditar(id) {
         $.ajax({url: API + 'detalle&id=' + id, method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
+            if (!r.success) { EIS.toast(r.error || 'No se pudieron cargar los datos. Intenta de nuevo.', 'red', 'error'); return; }
             var u = r.data;
             EIS.limpiarErroresFormulario('#form-usuario');
             $('#form-usuario')[0].reset();
@@ -146,7 +146,7 @@ $(function () {
             M.FormSelect.init($('#usuario-estatus'));
             $('#modal-usuario').modal('open');
         }).fail(function () {
-            EIS.toast('Error de conexión', 'red', 'error');
+            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -167,10 +167,10 @@ $(function () {
                     refrescarKPI();
                     refrescarTabla();
                 } else {
-                    EIS.toast(r.error || 'Error al cambiar el estado', 'red', 'error');
+                    EIS.toast(r.error || 'No se pudo cambiar el estado. Intenta de nuevo.', 'red', 'error');
                 }
             }, 'json').fail(function () {
-                EIS.toast('Error de conexión', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             });
         }
     });
@@ -185,10 +185,10 @@ $(function () {
                     refrescarKPI();
                     refrescarTabla();
                 } else {
-                    EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                    EIS.toast(r.error || 'No se pudo eliminar. Intenta de nuevo.', 'red', 'error');
                 }
             }, 'json').fail(function () {
-                EIS.toast('Error de conexión', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             });
         }
     });
@@ -212,7 +212,7 @@ $(function () {
                 EIS.mostrarErroresFormulario($form, r);
             }
         }, 'json').fail(function () {
-            EIS.toast('Error de conexión', 'red', 'error');
+            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
         });
     });
 

@@ -48,18 +48,18 @@ class ProveedorController extends BaseController
                 'agregarLinea'   => $this->agregarLinea(),
                 'eliminarLinea'  => $this->eliminarLinea(),
                 'siguienteNumero'=> $this->siguienteNumero(),
-                default          => $this->jsonError('Acción no válida', null, 400),
+                default          => $this->jsonError('La acción solicitada no es válida.', null, 400),
             };
         } catch (ValidationException $e) {
             $this->jsonValidationException($e);
         } catch (\PDOException $e) {
             Logger::error($e, 'Proveedores (solicitudes) - consulta SQL');
-            $this->jsonError('Error de base de datos', null, 500);
+            $this->jsonError('No se pudo conectar con la base de datos. Intenta de nuevo.', null, 500);
         } catch (\InvalidArgumentException $e) {
             $this->jsonError($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             Logger::error($e, 'Proveedores (solicitudes)');
-            $this->jsonError('Error interno del servidor', null, 500);
+            $this->jsonError('Ocurrió un error interno. Intenta de nuevo.', null, 500);
         }
     }
 
@@ -95,7 +95,7 @@ class ProveedorController extends BaseController
         if ($orden) {
             $this->jsonSuccess($orden);
         } else {
-            $this->jsonError('Solicitud no encontrada', null, 404);
+            $this->jsonError('No se encontró la solicitud.', null, 404);
         }
     }
 
@@ -114,7 +114,7 @@ class ProveedorController extends BaseController
     private function crear(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -136,11 +136,11 @@ class ProveedorController extends BaseController
             ->set('fk_status', $fk_status);
 
         if (!$this->model->existeProveedor($fk_proveedor)) {
-            $this->jsonError('El proveedor seleccionado no existe', null, 400);
+            $this->jsonError('El proveedor seleccionado no existe.', null, 400);
             return;
         }
         if (!$this->model->existeStatus($fk_status)) {
-            $this->jsonError('El estado seleccionado no existe', null, 400);
+            $this->jsonError('El estado seleccionado no existe.', null, 400);
             return;
         }
 
@@ -148,14 +148,14 @@ class ProveedorController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(['id' => $resultado], 'Solicitud creada exitosamente');
         } else {
-            $this->jsonError('Error al crear la solicitud', null, 400);
+            $this->jsonError('No se pudo crear la solicitud. Intenta de nuevo.', null, 400);
         }
     }
 
     private function actualizar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -180,11 +180,11 @@ class ProveedorController extends BaseController
             ->set('fk_status', $fk_status);
 
         if (!$this->model->existeProveedor($fk_proveedor)) {
-            $this->jsonError('El proveedor seleccionado no existe', null, 400);
+            $this->jsonError('El proveedor seleccionado no existe.', null, 400);
             return;
         }
         if (!$this->model->existeStatus($fk_status)) {
-            $this->jsonError('El estado seleccionado no existe', null, 400);
+            $this->jsonError('El estado seleccionado no existe.', null, 400);
             return;
         }
 
@@ -192,14 +192,14 @@ class ProveedorController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Solicitud actualizada exitosamente');
         } else {
-            $this->jsonError('Error al actualizar la solicitud', null, 400);
+            $this->jsonError('No se pudo actualizar la solicitud. Intenta de nuevo.', null, 400);
         }
     }
 
     private function eliminar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -208,7 +208,7 @@ class ProveedorController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Solicitud eliminada exitosamente');
         } else {
-            $this->jsonError('Error al eliminar la solicitud', null, 400);
+            $this->jsonError('No se pudo eliminar la solicitud. Intenta de nuevo.', null, 400);
         }
     }
 
@@ -223,7 +223,7 @@ class ProveedorController extends BaseController
     private function agregarLinea(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -248,14 +248,14 @@ class ProveedorController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Producto agregado a la solicitud');
         } else {
-            $this->jsonError('Error al agregar producto', null, 400);
+            $this->jsonError('No se pudo agregar el producto. Intenta de nuevo.', null, 400);
         }
     }
 
     private function eliminarLinea(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -265,7 +265,7 @@ class ProveedorController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Línea eliminada');
         } else {
-            $this->jsonError('Error al eliminar línea', null, 400);
+            $this->jsonError('No se pudo eliminar la línea. Intenta de nuevo.', null, 400);
         }
     }
 

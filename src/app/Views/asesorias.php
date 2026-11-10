@@ -49,13 +49,13 @@
                         <!-- Campo: Nombre del ciudadano -->
                         <div class="input-field col s12">
                             <i class="material-icons prefix">person</i>
-                            <input type="text" id="ciudadano" name="ciudadano" maxlength="200" title="Entre 2 y 200 caracteres" required minlength="2" data-validate="texto">
+                            <input type="text" id="ciudadano" name="ciudadano" maxlength="200" title="Entre 2 y 200 caracteres." required minlength="2" data-validate="texto">
                             <label for="ciudadano">Nombre del Ciudadano</label>
                         </div>
                         <!-- Campo: Cédula de identidad -->
                         <div class="input-field col s12">
                             <i class="material-icons prefix">badge</i>
-                            <input type="text" id="cedula" name="cedula" maxlength="20" title="Entre 5 y 20 caracteres" required minlength="5" data-validate="cedula">
+                            <input type="text" id="cedula" name="cedula" maxlength="20" title="Entre 5 y 20 caracteres." required minlength="5" data-validate="cedula">
                             <label for="cedula">Cédula de Identidad</label>
                         </div>
                         <!-- Campo: Teléfono de contacto del cliente -->

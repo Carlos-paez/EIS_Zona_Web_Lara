@@ -71,7 +71,7 @@ class ProveedorGestion extends Model
         $email = $this->sanitizeString($email);
         if ($email !== '') {
             if (!$this->validateEmail($email)) {
-                throw new \InvalidArgumentException('El formato del email no es válido');
+                throw new \InvalidArgumentException('El formato del correo electrónico no es válido.');
             }
             $this->validateLength($email, 'email', self::MAX_EMAIL);
         }

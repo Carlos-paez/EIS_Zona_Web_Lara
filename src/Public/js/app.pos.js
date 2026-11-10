@@ -39,12 +39,12 @@ $(function () {
     // ================================================================
     function cargarProductos() {
         $.ajax({url: API + 'productos', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) { EIS.toast(r.error || 'Error al cargar productos', 'red', 'error'); return; }
+            if (!r.success) { EIS.toast(r.error || 'No se pudieron cargar los productos. Intenta de nuevo.', 'red', 'error'); return; }
             productos = r.data || [];
             renderProductos();
         }).fail(function () {
-            $('#posLoading').html('<i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">cloud_off</i> Error al conectar con el servidor');
-            EIS.toast('Error de conexión', 'red', 'error');
+            $('#posLoading').html('<i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">cloud_off</i> No se pudo conectar con el servidor. Intenta de nuevo.');
+            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -108,7 +108,7 @@ $(function () {
         var cantidadActual = item ? item.cantidad : 0;
 
         if (cantidadActual >= parseInt(p.stock, 10)) {
-            EIS.toast('Stock máximo alcanzado para ' + p.nombre, 'red', 'error');
+            EIS.toast('Se alcanzó el stock máximo para ' + p.nombre + '.', 'red', 'error');
             return;
         }
 
@@ -147,7 +147,7 @@ $(function () {
             return;
         }
         if (nueva > item.stock) {
-            EIS.toast('Stock máximo: ' + item.stock, 'red', 'error');
+            EIS.toast('Stock máximo disponible: ' + item.stock + '.', 'red', 'error');
             return;
         }
 
@@ -269,11 +269,11 @@ $(function () {
     // ================================================================
     function cargarClientes() {
         $.ajax({url: API + 'clientes', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) { EIS.toast(r.error || 'Error al cargar clientes', 'red', 'error'); return; }
+            if (!r.success) { EIS.toast(r.error || 'No se pudieron cargar los clientes. Intenta de nuevo.', 'red', 'error'); return; }
             clientes = r.data || [];
             poblarSelectClientes();
         }).fail(function () {
-            EIS.toast('Error al cargar los clientes', 'red', 'error');
+            EIS.toast('No se pudieron cargar los clientes. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -335,7 +335,7 @@ $(function () {
             aplicarCliente(r.data);
             EIS.toast('Cliente encontrado: se precargaron sus datos', 'indigo', 'person');
         }).fail(function () {
-            EIS.toast('Error al buscar el cliente', 'red', 'error');
+            EIS.toast('No se pudo buscar el cliente. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -439,7 +439,7 @@ $(function () {
     // ================================================================
     $(document).on('click', '#procesarVenta', function () {
         if (posCart.length === 0) {
-            EIS.toast('El carrito está vacío', 'red', 'error');
+            EIS.toast('El carrito está vacío. Agrega al menos un producto.', 'red', 'error');
             return;
         }
 
@@ -490,7 +490,7 @@ $(function () {
             },
             error: function () {
                 $btn.prop('disabled', false);
-                EIS.toast('Error de conexión', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             }
         });
     });

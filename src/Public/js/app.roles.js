@@ -39,7 +39,7 @@ $(function () {
             $('#kpi-usuarios').text(totalUsuarios); // Total de usuarios con rol
             $('#kpi-con-rol').text(conRol);         // Roles con al menos 1 usuario
         }).fail(function () {
-            EIS.toast('Error al cargar indicadores', 'red', 'error');
+            EIS.toast('No se pudieron cargar los indicadores. Intenta de nuevo.', 'red', 'error');
         });
 
         // Segunda llamada: obtengo la lista de permisos para el KPI de permisos
@@ -48,7 +48,7 @@ $(function () {
                 $('#kpi-permisos').text(r.data.length); // Total de permisos registrados
             }
         }).fail(function () {
-            EIS.toast('Error al cargar permisos', 'red', 'error');
+            EIS.toast('No se pudieron cargar los permisos. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -116,7 +116,7 @@ $(function () {
             $('.tooltipped').tooltip();
             EIS.datatableRefresh('.rol-table');
         }).fail(function () {
-            EIS.toast('Error al cargar la tabla', 'red', 'error');
+            EIS.toast('No se pudo cargar la tabla. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -191,7 +191,7 @@ $(function () {
         // Primera llamada: obtengo todos los permisos disponibles (enriquecidos con catálogo)
         $.ajax({url: API + 'permisos', method: "GET", dataType: "json"}).done(function(rPermisos) {
             if (!rPermisos.success || !rPermisos.data) {
-                $('#permisos-container').html('<p style="color:var(--danger);text-align:center;">Error al cargar permisos</p>');
+                $('#permisos-container').html('<p style="color:var(--danger);text-align:center;">No se pudieron cargar los permisos. Intenta de nuevo.</p>');
                 return;
             }
 
@@ -246,10 +246,10 @@ $(function () {
                 // Inserto los grupos de permisos en el contenedor
                 $('#permisos-container').html(html || '<p style="color:var(--text-muted);text-align:center;">No hay permisos disponibles</p>');
             }).fail(function () {
-                $('#permisos-container').html('<p style="color:var(--danger);text-align:center;">Error al cargar permisos del rol</p>');
+                $('#permisos-container').html('<p style="color:var(--danger);text-align:center;">No se pudieron cargar los permisos del rol. Intenta de nuevo.</p>');
             });
         }).fail(function () {
-            $('#permisos-container').html('<p style="color:var(--danger);text-align:center;">Error al cargar permisos</p>');
+            $('#permisos-container').html('<p style="color:var(--danger);text-align:center;">No se pudieron cargar los permisos. Intenta de nuevo.</p>');
         });
     }
 
@@ -284,7 +284,7 @@ $(function () {
             EIS.formSelect('#asignar-rol');
             $('#modalAsignar').modal('open');
         }).fail(function () {
-            EIS.toast('Error al cargar usuarios', 'red', 'error');
+            EIS.toast('No se pudieron cargar los usuarios. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -309,11 +309,11 @@ $(function () {
                 if (r.success) {
                     abrirModalRol('Editar Rol', r.data); // Abro modal con datos
                 } else {
-                    EIS.toast(r.error || 'Error al cargar rol', 'red', 'error');
+                    EIS.toast(r.error || 'No se pudo cargar el rol. Intenta de nuevo.', 'red', 'error');
                 }
             },
             error: function () {
-                EIS.toast('Error de conexi&oacute;n', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             }
         });
     });
@@ -336,11 +336,11 @@ $(function () {
                     refrescarTabla(); // Recargo tabla
                     refrescarKPI();   // Actualizo KPIs
                 } else {
-                    EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                    EIS.toast(r.error || 'No se pudo eliminar. Intenta de nuevo.', 'red', 'error');
                 }
             },
             error: function () {
-                EIS.toast('Error de conexi&oacute;n', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             }
         });
         }
@@ -397,7 +397,7 @@ $(function () {
                 }
             },
             error: function () {
-                EIS.toast('Error de conexi&oacute;n', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             }
         });
     });
@@ -422,11 +422,11 @@ $(function () {
                     EIS.toast(r.message, 'green', 'check_circle');
                     $('#modalPermisos').modal('close'); // Cierro modal
                 } else {
-                    EIS.toast(r.error || 'Error al guardar permisos', 'red', 'error');
+                    EIS.toast(r.error || 'No se pudieron guardar los permisos. Intenta de nuevo.', 'red', 'error');
                 }
             },
             error: function () {
-                EIS.toast('Error de conexi&oacute;n', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             }
         });
     });
@@ -438,7 +438,7 @@ $(function () {
 
         // Validación: ambos campos deben estar seleccionados
         if (!usuario_id || !rol_id) {
-            EIS.toast('Seleccione un usuario y un rol', 'red', 'error');
+            EIS.toast('Selecciona un usuario y un rol.', 'red', 'error');
             return;
         }
 
@@ -455,11 +455,11 @@ $(function () {
                     refrescarTabla(); // Recargo tabla
                     refrescarKPI();   // Actualizo KPIs
                 } else {
-                    EIS.toast(r.error || 'Error al asignar rol', 'red', 'error');
+                    EIS.toast(r.error || 'No se pudo asignar el rol. Intenta de nuevo.', 'red', 'error');
                 }
             },
             error: function () {
-                EIS.toast('Error de conexi&oacute;n', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             }
         });
     });

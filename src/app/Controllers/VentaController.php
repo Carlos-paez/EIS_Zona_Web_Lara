@@ -41,18 +41,18 @@ class VentaController extends BaseController
                 'clientes'      => $this->clientes(),
                 'buscarCliente' => $this->buscarCliente(),
                 'registrar'     => $this->registrar(),
-                default         => $this->jsonError('Acción no válida', null, 400),
+                default         => $this->jsonError('La acción solicitada no es válida.', null, 400),
             };
         } catch (ValidationException $e) {
             $this->jsonValidationException($e);
         } catch (\PDOException $e) {
             Logger::error($e, 'Ventas - consulta SQL');
-            $this->jsonError('Error de base de datos', null, 500);
+            $this->jsonError('No se pudo conectar con la base de datos. Intenta de nuevo.', null, 500);
         } catch (\InvalidArgumentException $e) {
             $this->jsonError($e->getMessage(), null, 400);
         } catch (\Throwable $e) {
             Logger::error($e, 'Ventas');
-            $this->jsonError('Error interno del servidor', null, 500);
+            $this->jsonError('Ocurrió un error interno. Intenta de nuevo.', null, 500);
         }
     }
 
@@ -83,7 +83,7 @@ class VentaController extends BaseController
     private function registrar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -116,7 +116,7 @@ class VentaController extends BaseController
         if ($orden_id) {
             $this->jsonSuccess(['orden_id' => $orden_id], 'Venta registrada exitosamente');
         } else {
-            $this->jsonError('Error al registrar la venta', null, 400);
+            $this->jsonError('No se pudo registrar la venta. Intenta de nuevo.', null, 400);
         }
     }
 

@@ -69,7 +69,7 @@ $(function () {
             var msg = k.total + ' registradas' + (k.derivadas > 0 ? ' (' + k.derivadas + ' derivadas)' : '');
             $('#asesoriasCountChip span').text(msg);
         }).fail(function () {
-            EIS.toast('Error al cargar indicadores', 'red', 'error');
+            EIS.toast('No se pudieron cargar los indicadores. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -120,11 +120,11 @@ $(function () {
     // ================================================================
     function cargarAsesorias() {
         $.ajax({url: API + 'listar', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
+            if (!r.success) { EIS.toast(r.error || 'No se pudieron cargar los datos. Intenta de nuevo.', 'red', 'error'); return; }
             asesoriasRegistradas = r.data || [];
             actualizarHistorial();
         }).fail(function () {
-            EIS.toast('Error de conexión', 'red', 'error');
+            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -218,7 +218,7 @@ $(function () {
             }
         },
         error: function () {
-            EIS.toast('Error de conexión', 'red', 'error');
+            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
         }
         });
     });

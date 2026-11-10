@@ -16,7 +16,7 @@ $(function () {
             if (!r.success) return;
             $('#kpi-total').text(r.data.total);
         }).fail(function () {
-            EIS.toast('Error al cargar indicadores', 'red', 'error');
+            EIS.toast('No se pudieron cargar los indicadores. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -65,7 +65,7 @@ $(function () {
             $('.tooltipped').tooltip();
             EIS.datatableRefresh('#tabla-proveedores');
         }).fail(function () {
-            EIS.toast('Error al cargar proveedores', 'red', 'error');
+            EIS.toast('No se pudieron cargar los proveedores. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -100,7 +100,7 @@ $(function () {
     $(document).on('click', '.btn-editar-proveedor', function () {
         var id = $(this).data('id');
         $.ajax({url: API + 'detalle&id=' + id, method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
+            if (!r.success) { EIS.toast(r.error || 'No se pudieron cargar los datos. Intenta de nuevo.', 'red', 'error'); return; }
             EIS.limpiarErroresFormulario('#form-proveedor');
             var p = r.data;
             $('#proveedor-id').val(p.id);
@@ -112,7 +112,7 @@ $(function () {
             M.updateTextFields();
             $('#modal-proveedor').modal('open');
         }).fail(function () {
-            EIS.toast('Error de conexión', 'red', 'error');
+            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
         });
     });
 
@@ -143,7 +143,7 @@ $(function () {
             }
         },
         error: function () {
-            EIS.toast('Error de conexión', 'red', 'error');
+            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
         }
         });
     });
@@ -164,11 +164,11 @@ $(function () {
                         refrescarKPI();
                         refrescarTabla();
                     } else {
-                        EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                        EIS.toast(r.error || 'No se pudo eliminar. Intenta de nuevo.', 'red', 'error');
                     }
                 },
                 error: function () {
-                    EIS.toast('Error de conexión', 'red', 'error');
+                    EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
                 }
             });
         }

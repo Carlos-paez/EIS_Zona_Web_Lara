@@ -115,14 +115,14 @@ class CiberControl extends Model
         $this->validateLength($tiempoUso, 'tiempo de uso', self::MAX_TIEMPO_USO);
 
         if ($activoId <= 0 || $tarifaId <= 0) {
-            throw new \InvalidArgumentException('Estación y tarifa son obligatorias');
+            throw new \InvalidArgumentException('La estación y la tarifa son obligatorias.');
         }
         if ($tiempoUso === '' || !preg_match(Validator::patron('aplicacion.tiempo_uso_hms'), $tiempoUso)) {
-            throw new \InvalidArgumentException('El tiempo de uso debe tener formato HH:MM:SS');
+            throw new \InvalidArgumentException('El tiempo de uso debe tener el formato HH:MM:SS.');
         }
         [$h, $m, $s] = array_map('intval', explode(':', $tiempoUso));
         if ($m > 59 || $s > 59) {
-            throw new \InvalidArgumentException('El tiempo de uso debe tener minutos y segundos entre 00 y 59');
+            throw new \InvalidArgumentException('El tiempo de uso debe tener minutos y segundos entre 00 y 59.');
         }
 
         $nombre_partes = explode(' ', $ciudadano, 2);
@@ -130,10 +130,10 @@ class CiberControl extends Model
         $apellido      = $nombre_partes[1] ?? '';
 
         if (mb_strlen($nombre) < 2 || mb_strlen($nombre) > self::MAX_NOMBRE) {
-            throw new \InvalidArgumentException('El nombre del cliente debe tener entre 2 y ' . self::MAX_NOMBRE . ' caracteres');
+            throw new \InvalidArgumentException('El nombre del cliente debe tener entre 2 y ' . self::MAX_NOMBRE . ' caracteres.');
         }
         if ($apellido !== '' && mb_strlen($apellido) > self::MAX_APELLIDO) {
-            throw new \InvalidArgumentException('El apellido no puede exceder ' . self::MAX_APELLIDO . ' caracteres');
+            throw new \InvalidArgumentException('El apellido no puede superar los ' . self::MAX_APELLIDO . ' caracteres.');
         }
 
         try {
@@ -144,7 +144,7 @@ class CiberControl extends Model
             $stmt->bindParam(1, $activoId, PDO::PARAM_INT);
             $stmt->execute();
             if (!$stmt->fetch()) {
-                throw new \InvalidArgumentException('La estación no existe o no está disponible');
+                throw new \InvalidArgumentException('La estación no existe o no está disponible.');
             }
 
             // 2. Verifica que la estación no tenga una sesión sin finalizar
@@ -152,7 +152,7 @@ class CiberControl extends Model
             $stmt->bindParam(1, $activoId, PDO::PARAM_INT);
             $stmt->execute();
             if ($stmt->fetch()) {
-                throw new \InvalidArgumentException('La estación ya está ocupada');
+                throw new \InvalidArgumentException('La estación ya está ocupada.');
             }
 
             // 3. Verifica que la tarifa exista
@@ -160,7 +160,7 @@ class CiberControl extends Model
             $stmt->bindParam(1, $tarifaId, PDO::PARAM_INT);
             $stmt->execute();
             if (!$stmt->fetch()) {
-                throw new \InvalidArgumentException('La tarifa seleccionada no existe');
+                throw new \InvalidArgumentException('La tarifa seleccionada no existe.');
             }
 
             // 4. Obtener o crear el cliente (reutiliza el modelo centralizado)
@@ -249,7 +249,7 @@ class CiberControl extends Model
         }
 
         if ($tipoActivoId <= 0 || !$this->existeTipoActivo($tipoActivoId)) {
-            throw new \InvalidArgumentException('Debes seleccionar un tipo de PC válido');
+            throw new \InvalidArgumentException('Debes seleccionar un tipo de PC válido.');
         }
 
         $stmt = $this->db->prepare("
@@ -260,7 +260,7 @@ class CiberControl extends Model
         $stmt->bindParam(2, $descripcion, PDO::PARAM_STR);
         $stmt->execute();
         if ((int)$stmt->fetchColumn() > 0) {
-            throw new \InvalidArgumentException('Ya existe una PC con esa marca y descripción');
+            throw new \InvalidArgumentException('Ya existe una PC registrada con esa marca y descripción.');
         }
 
         $stmt = $this->db->prepare("
@@ -302,10 +302,10 @@ class CiberControl extends Model
         }
 
         if ($id <= 0) {
-            throw new \InvalidArgumentException('ID no válido');
+            throw new \InvalidArgumentException('El identificador no es válido.');
         }
         if ($tipoActivoId <= 0 || !$this->existeTipoActivo($tipoActivoId)) {
-            throw new \InvalidArgumentException('Debes seleccionar un tipo de PC válido');
+            throw new \InvalidArgumentException('Debes seleccionar un tipo de PC válido.');
         }
 
         $stmt = $this->db->prepare("
@@ -317,7 +317,7 @@ class CiberControl extends Model
         $stmt->bindParam(3, $id, PDO::PARAM_INT);
         $stmt->execute();
         if ((int)$stmt->fetchColumn() > 0) {
-            throw new \InvalidArgumentException('Ya existe otra PC con esa marca y descripción');
+            throw new \InvalidArgumentException('Ya existe otra PC registrada con esa marca y descripción.');
         }
 
         $stmt = $this->db->prepare("
@@ -374,7 +374,7 @@ class CiberControl extends Model
     {
         $id = $this->sanitizeInt($id);
         if ($this->tieneSesiones($id)) {
-            throw new \InvalidArgumentException('No se puede eliminar una PC con sesiones registradas. Desactívala en su lugar');
+            throw new \InvalidArgumentException('No se puede eliminar una PC con sesiones registradas. Desactívala en su lugar.');
         }
         $stmt = $this->db->prepare("UPDATE activos SET activo = 0 WHERE id = ? AND is_ciber = 1");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
@@ -424,7 +424,7 @@ class CiberControl extends Model
     {
         $sesionId = $this->sanitizeInt($sesionId);
         if ($sesionId <= 0) {
-            throw new \InvalidArgumentException('ID de sesión no válido');
+            throw new \InvalidArgumentException('El identificador de la sesión no es válido.');
         }
 
         $stmt = $this->db->prepare("UPDATE sesion_ciber SET finalizada = 1 WHERE id = ? AND finalizada = 0");

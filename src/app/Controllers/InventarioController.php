@@ -47,18 +47,18 @@ class InventarioController extends BaseController
                 'crearCategoria'      => $this->crearCategoria(),
                 'actualizarCategoria' => $this->actualizarCategoria(),
                 'eliminarCategoria'   => $this->eliminarCategoria(),
-                default               => $this->jsonError('Acción no válida', null, 400),
+                default               => $this->jsonError('La acción solicitada no es válida.', null, 400),
             };
         } catch (ValidationException $e) {
             $this->jsonValidationException($e);
         } catch (\PDOException $e) {
             Logger::error($e, 'Inventario - consulta SQL');
-            $this->jsonError('Error de base de datos', null, 500);
+            $this->jsonError('No se pudo conectar con la base de datos. Intenta de nuevo.', null, 500);
         } catch (\InvalidArgumentException $e) {
             $this->jsonError($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             Logger::error($e, 'Inventario');
-            $this->jsonError('Error interno del servidor', null, 500);
+            $this->jsonError('Ocurrió un error interno. Intenta de nuevo.', null, 500);
         }
     }
 
@@ -93,14 +93,14 @@ class InventarioController extends BaseController
             $id = (int)($_GET['id'] ?? 0);
         }
         if (!$id) {
-            $this->jsonError('ID no válido', null, 400);
+            $this->jsonError('El identificador no es válido.', null, 400);
             return;
         }
         $producto = $this->model->obtenerProductoPorId($id);
         if ($producto) {
             $this->jsonSuccess($producto);
         } else {
-            $this->jsonError('Producto no encontrado', null, 404);
+            $this->jsonError('No se encontró el producto.', null, 404);
         }
     }
 
@@ -119,7 +119,7 @@ class InventarioController extends BaseController
     private function crear(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -153,12 +153,12 @@ class InventarioController extends BaseController
             ->set('precio_venta', $precio_venta);
 
         if ($costo_compra > 0 && $precio_venta < $costo_compra) {
-            $this->jsonError('El precio de venta no puede ser menor al costo de compra', null, 400);
+            $this->jsonError('El precio de venta no puede ser menor al costo de compra.', null, 400);
             return;
         }
 
         if ($this->model->existeCodigo($codigo)) {
-            $this->jsonError('Ya existe un producto con ese código', null, 400);
+            $this->jsonError('Ya existe un producto registrado con ese código.', null, 400);
             return;
         }
 
@@ -166,14 +166,14 @@ class InventarioController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Producto creado exitosamente');
         } else {
-            $this->jsonError('Error al crear el producto', null, 400);
+            $this->jsonError('No se pudo crear el producto. Intenta de nuevo.', null, 400);
         }
     }
 
     private function actualizar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -210,12 +210,12 @@ class InventarioController extends BaseController
             ->set('precio_venta', $precio_venta);
 
         if ($costo_compra > 0 && $precio_venta < $costo_compra) {
-            $this->jsonError('El precio de venta no puede ser menor al costo de compra', null, 400);
+            $this->jsonError('El precio de venta no puede ser menor al costo de compra.', null, 400);
             return;
         }
 
         if ($this->model->existeCodigo($codigo, $id)) {
-            $this->jsonError('Ya existe otro producto con ese código', null, 400);
+            $this->jsonError('Ya existe otro producto registrado con ese código.', null, 400);
             return;
         }
 
@@ -223,14 +223,14 @@ class InventarioController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Producto actualizado exitosamente');
         } else {
-            $this->jsonError('Error al actualizar el producto', null, 400);
+            $this->jsonError('No se pudo actualizar el producto. Intenta de nuevo.', null, 400);
         }
     }
 
     private function eliminar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -240,14 +240,14 @@ class InventarioController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Producto eliminado exitosamente');
         } else {
-            $this->jsonError('Error al eliminar el producto', null, 400);
+            $this->jsonError('No se pudo eliminar el producto. Intenta de nuevo.', null, 400);
         }
     }
 
     private function crearCategoria(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -261,14 +261,14 @@ class InventarioController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Categoría creada exitosamente');
         } else {
-            $this->jsonError('Error al crear la categoría', null, 400);
+            $this->jsonError('No se pudo crear la categoría. Intenta de nuevo.', null, 400);
         }
     }
 
     private function actualizarCategoria(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -284,14 +284,14 @@ class InventarioController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Categoría actualizada exitosamente');
         } else {
-            $this->jsonError('Error al actualizar la categoría', null, 400);
+            $this->jsonError('No se pudo actualizar la categoría. Intenta de nuevo.', null, 400);
         }
     }
 
     private function eliminarCategoria(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -301,7 +301,7 @@ class InventarioController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Categoría eliminada exitosamente');
         } else {
-            $this->jsonError('Error al eliminar la categoría', null, 400);
+            $this->jsonError('No se pudo eliminar la categoría. Intenta de nuevo.', null, 400);
         }
     }
 }

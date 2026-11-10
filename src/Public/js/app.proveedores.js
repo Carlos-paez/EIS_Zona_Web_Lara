@@ -20,7 +20,7 @@ $(function () {
             $('#kpi-pendientes').text(r.data.pendientes);
             $('#kpi-recibidas').text(r.data.recibidas);
         }).fail(function () {
-            EIS.toast('Error al cargar indicadores', 'red', 'error');
+            EIS.toast('No se pudieron cargar los indicadores. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -69,7 +69,7 @@ $(function () {
             $('.tooltipped').tooltip();
             EIS.datatableRefresh('#tabla-ordenes');
         }).fail(function () {
-            EIS.toast('Error al cargar solicitudes', 'red', 'error');
+            EIS.toast('No se pudieron cargar las solicitudes. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -106,7 +106,7 @@ $(function () {
             tbody.empty();
 
             if (!r.success) {
-                tbody.html('<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Error al cargar detalles</td></tr>');
+                tbody.html('<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No se pudieron cargar los detalles. Intenta de nuevo.</td></tr>');
                 return;
             }
 
@@ -135,7 +135,7 @@ $(function () {
             $('#detalle-total').text('$' + total.toFixed(2));
             $('.tooltipped').tooltip();
         }).fail(function () {
-            $('#tabla-lineas tbody').html('<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Error de conexión</td></tr>');
+            $('#tabla-lineas tbody').html('<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No se pudo conectar con el servidor. Intenta de nuevo.</td></tr>');
         });
     }
 
@@ -172,7 +172,7 @@ $(function () {
     // ================================================================
     function abrirModalEditar(id) {
         $.ajax({url: API + 'detalle&id=' + id, method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
+            if (!r.success) { EIS.toast(r.error || 'No se pudieron cargar los datos. Intenta de nuevo.', 'red', 'error'); return; }
             EIS.limpiarErroresFormulario('#form-orden');
             var o = r.data;
 
@@ -192,7 +192,7 @@ $(function () {
 
             cargarLineas(id);
         }).fail(function () {
-            EIS.toast('Error de conexión', 'red', 'error');
+            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -227,11 +227,11 @@ $(function () {
                         refrescarTabla();
                         refrescarKPI();
                     } else {
-                        EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                        EIS.toast(r.error || 'No se pudo eliminar. Intenta de nuevo.', 'red', 'error');
                     }
                 },
                 error: function () {
-                    EIS.toast('Error de conexión', 'red', 'error');
+                    EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
                 }
             });
         }
@@ -278,7 +278,7 @@ $(function () {
                 }
             },
             error: function () {
-                EIS.toast('Error de conexión', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             }
         });
     });
@@ -304,7 +304,7 @@ $(function () {
         var $form = $(this);
         var orden_id = $('#linea-orden-id').val();
 
-        if (!orden_id) { EIS.toast('Seleccione una solicitud primero', 'red', 'error'); return; }
+        if (!orden_id) { EIS.toast('Selecciona una solicitud primero.', 'red', 'error'); return; }
 
         // El envío ya fue validado en el cliente por app.validate.js; el
         // servidor vuelve a validar (fieldErrors) por seguridad.
@@ -328,7 +328,7 @@ $(function () {
                 }
             },
             error: function () {
-                EIS.toast('Error de conexión', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             }
         });
     });
@@ -347,11 +347,11 @@ $(function () {
                     var orden_id = $('#linea-orden-id').val();
                     if (orden_id) cargarLineas(parseInt(orden_id));
                 } else {
-                    EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                    EIS.toast(r.error || 'No se pudo eliminar. Intenta de nuevo.', 'red', 'error');
                 }
             },
             error: function () {
-                EIS.toast('Error de conexión', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             }
         });
         }

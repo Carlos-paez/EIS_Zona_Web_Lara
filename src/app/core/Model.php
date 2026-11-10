@@ -43,21 +43,21 @@ abstract class Model
     protected function validateNotEmpty(string $value, string $field): void
     {
         if (trim($value) === '') {
-            throw new \InvalidArgumentException("El campo '$field' es obligatorio");
+            throw new \InvalidArgumentException("El campo '$field' es obligatorio.");
         }
     }
 
     protected function validateMinLength(string $value, string $field, int $min): void
     {
         if (mb_strlen(trim($value)) < $min) {
-            throw new \InvalidArgumentException("El campo '$field' debe tener al menos $min caracteres");
+            throw new \InvalidArgumentException("El campo '$field' debe tener al menos $min caracteres.");
         }
     }
 
     protected function validateLength(string $value, string $field, int $max): void
     {
         if (mb_strlen($value) > $max) {
-            throw new \InvalidArgumentException("El campo '$field' no puede exceder $max caracteres");
+            throw new \InvalidArgumentException("El campo '$field' no puede superar los $max caracteres.");
         }
     }
 
@@ -71,14 +71,14 @@ abstract class Model
     protected function validatePositive(float $value, string $field): void
     {
         if ($value <= 0) {
-            throw new \InvalidArgumentException("El campo '$field' debe ser mayor a 0");
+            throw new \InvalidArgumentException("El campo '$field' debe ser mayor que 0.");
         }
     }
 
     protected function validateGreaterOrEqual(float $value, string $field, float $min): void
     {
         if ($value < $min) {
-            throw new \InvalidArgumentException("El campo '$field' debe ser mayor o igual a $min");
+            throw new \InvalidArgumentException("El campo '$field' debe ser mayor o igual a $min.");
         }
     }
 
@@ -90,21 +90,21 @@ abstract class Model
     protected function validateMax(float $value, string $field, float $max): void
     {
         if ($value > $max) {
-            throw new \InvalidArgumentException("El campo '$field' no puede exceder $max");
+            throw new \InvalidArgumentException("El campo '$field' no puede superar $max.");
         }
     }
 
     protected function validateRango(float $value, string $field, float $min, float $max): void
     {
         if ($value < $min || $value > $max) {
-            throw new \InvalidArgumentException("El campo '$field' debe estar entre $min y $max");
+            throw new \InvalidArgumentException("El campo '$field' debe estar entre $min y $max.");
         }
     }
 
     protected function validateEnLista(string $value, string $field, array $allowed): void
     {
         if (!in_array($value, $allowed, true)) {
-            throw new \InvalidArgumentException("El valor del campo '$field' no es válido");
+            throw new \InvalidArgumentException("El valor del campo '$field' no es válido.");
         }
     }
 
@@ -112,17 +112,17 @@ abstract class Model
     {
         $fecha = trim($fecha);
         if ($fecha === '' || !RegexRules::test('fechas_y_horas.fecha_iso', $fecha)) {
-            throw new \InvalidArgumentException("El campo '$field' no es una fecha válida (use YYYY-MM-DD)");
+            throw new \InvalidArgumentException("El campo '$field' debe ser una fecha válida en formato AAAA-MM-DD.");
         }
         if (!checkdate((int)substr($fecha, 5, 2), (int)substr($fecha, 8, 2), (int)substr($fecha, 0, 4))) {
-            throw new \InvalidArgumentException("El campo '$field' no es una fecha válida (use YYYY-MM-DD)");
+            throw new \InvalidArgumentException("El campo '$field' debe ser una fecha válida en formato AAAA-MM-DD.");
         }
     }
 
     protected function validateTelefono(string $telefono, string $field): void
     {
         if ($telefono !== '' && !RegexRules::test('contacto.telefono_flexible', $telefono)) {
-            throw new \InvalidArgumentException("El campo '$field' no tiene un formato válido");
+            throw new \InvalidArgumentException("El campo '$field' no tiene un formato válido.");
         }
     }
 
@@ -132,24 +132,24 @@ abstract class Model
             return;
         }
         if (mb_strlen($texto) < $min || mb_strlen($texto) > $max) {
-            throw new \InvalidArgumentException("El campo '$campo' debe tener entre $min y $max caracteres");
+            throw new \InvalidArgumentException("El campo '$campo' debe tener entre $min y $max caracteres.");
         }
         if (!RegexRules::test('aplicacion.texto_libre', $texto)) {
-            throw new \InvalidArgumentException("El campo '$campo' contiene caracteres no permitidos");
+            throw new \InvalidArgumentException("El campo '$campo' contiene caracteres no permitidos.");
         }
     }
 
     protected function validarSinControl(string $texto, string $campo): void
     {
         if (RegexRules::test('aplicacion.caracteres_control', $texto)) {
-            throw new \InvalidArgumentException("El campo '$campo' contiene caracteres de control no permitidos");
+            throw new \InvalidArgumentException("El campo '$campo' contiene caracteres de control no permitidos.");
         }
     }
 
     protected function existeEnTabla(string $tabla, int $id): bool
     {
         if (!RegexRules::test('aplicacion.tabla_sql', $tabla)) {
-            throw new \InvalidArgumentException('Nombre de tabla no válido');
+            throw new \InvalidArgumentException('El nombre de la tabla no es válido.');
         }
         $id = $this->sanitizeInt($id);
         $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM `$tabla` WHERE id = ?");

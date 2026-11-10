@@ -177,7 +177,7 @@ class CiberModel
     public function iniciarSesion(int $activoId, int $clienteId, int $tarifaId, string $tiempo): array
     {
         if (!$this->pdo) {
-            return ['success' => false, 'message' => 'Error de conexión a la base de datos'];
+            return ['success' => false, 'message' => 'No se pudo conectar con la base de datos. Intenta de nuevo.'];
         }
 
         try {
@@ -199,11 +199,11 @@ class CiberModel
             $activo = $stmt->fetch();
 
             if (!$activo) {
-                return ['success' => false, 'message' => 'La PC no existe o está desactivada'];
+                return ['success' => false, 'message' => 'La PC no existe o está desactivada.'];
             }
 
             if ($activo['esta_ocupada']) {
-                return ['success' => false, 'message' => 'La PC ya está ocupada'];
+                return ['success' => false, 'message' => 'La PC ya está ocupada.'];
             }
 
             // Insertar la sesión
@@ -230,7 +230,7 @@ class CiberModel
 
         } catch (PDOException $e) {
             error_log('Error en iniciarSesion: ' . $e->getMessage());
-            return ['success' => false, 'message' => 'Error al iniciar la sesión: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'No se pudo iniciar la sesión. Intenta de nuevo.'];
         }
     }
 
@@ -240,7 +240,7 @@ class CiberModel
     public function finalizarSesion(int $sesionId): array
     {
         if (!$this->pdo) {
-            return ['success' => false, 'message' => 'Error de conexión a la base de datos'];
+            return ['success' => false, 'message' => 'No se pudo conectar con la base de datos. Intenta de nuevo.'];
         }
 
         try {
@@ -261,7 +261,7 @@ class CiberModel
             $sesion = $stmt->fetch();
 
             if (!$sesion) {
-                return ['success' => false, 'message' => 'Sesión no encontrada'];
+                return ['success' => false, 'message' => 'No se encontró la sesión.'];
             }
 
             // Calcular tiempo real usado (desde inicio hasta ahora)
@@ -302,7 +302,7 @@ class CiberModel
 
         } catch (PDOException $e) {
             error_log('Error en finalizarSesion: ' . $e->getMessage());
-            return ['success' => false, 'message' => 'Error al finalizar la sesión: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'No se pudo finalizar la sesión. Intenta de nuevo.'];
         }
     }
 
@@ -618,7 +618,7 @@ class CiberModel
             $stmt->execute([$datos['marca'], $datos['descripcion']]);
             
             if ($stmt->fetchColumn() > 0) {
-                return ['success' => false, 'message' => 'Ya existe una PC con esa marca y descripción'];
+                return ['success' => false, 'message' => 'Ya existe una PC registrada con esa marca y descripción.'];
             }
             
             $sql = "INSERT INTO activos (marca, descripcion, is_ciber, activa, fk_tipo_activo) 
@@ -640,7 +640,7 @@ class CiberModel
             
         } catch (PDOException $e) {
             error_log('Error en crearPC: ' . $e->getMessage());
-            return ['success' => false, 'message' => 'Error al crear la PC: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'No se pudo crear la PC. Intenta de nuevo.'];
         }
     }
 
@@ -656,7 +656,7 @@ class CiberModel
             $stmt->execute([$id]);
             
             if (!$stmt->fetch()) {
-                return ['success' => false, 'message' => 'PC no encontrada'];
+                return ['success' => false, 'message' => 'No se encontró la PC.'];
             }
             
             // Verificar duplicados (excepto la misma PC)
@@ -666,7 +666,7 @@ class CiberModel
             $stmt->execute([$datos['marca'], $datos['descripcion'], $id]);
             
             if ($stmt->fetchColumn() > 0) {
-                return ['success' => false, 'message' => 'Ya existe otra PC con esa marca y descripción'];
+                return ['success' => false, 'message' => 'Ya existe otra PC registrada con esa marca y descripción.'];
             }
             
             $sql = "UPDATE activos 
@@ -686,7 +686,7 @@ class CiberModel
             
         } catch (PDOException $e) {
             error_log('Error en actualizarPC: ' . $e->getMessage());
-            return ['success' => false, 'message' => 'Error al actualizar la PC: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'No se pudo actualizar la PC. Intenta de nuevo.'];
         }
     }
 
@@ -704,7 +704,7 @@ class CiberModel
             
         } catch (PDOException $e) {
             error_log('Error en cambiarEstadoPC: ' . $e->getMessage());
-            return ['success' => false, 'message' => 'Error al cambiar el estado: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'No se pudo cambiar el estado. Intenta de nuevo.'];
         }
     }
 
@@ -760,12 +760,12 @@ class CiberModel
             if ($stmt->rowCount() > 0) {
                 return ['success' => true];
             } else {
-                return ['success' => false, 'message' => 'No se pudo eliminar la PC'];
+                return ['success' => false, 'message' => 'No se pudo eliminar la PC. Intenta de nuevo.'];
             }
             
         } catch (PDOException $e) {
             error_log('Error en eliminarPC: ' . $e->getMessage());
-            return ['success' => false, 'message' => 'Error al eliminar la PC: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'No se pudo eliminar la PC. Intenta de nuevo.'];
         }
     }
 }

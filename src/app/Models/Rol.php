@@ -176,13 +176,13 @@ class Rol extends Model
     {
         $rol_id = $this->sanitizeInt($rol_id);
         if ($rol_id <= 0) {
-            throw new \InvalidArgumentException('ID de rol no válido');
+            throw new \InvalidArgumentException('El identificador del rol no es válido.');
         }
         if (!$this->existeEnTabla('roles', $rol_id)) {
-            throw new \InvalidArgumentException('El rol seleccionado no existe');
+            throw new \InvalidArgumentException('El rol seleccionado no existe.');
         }
         if (count($permiso_ids) > 200) {
-            throw new \InvalidArgumentException('Se excedió el máximo de permisos permitidos');
+            throw new \InvalidArgumentException('Se superó el máximo de permisos permitidos.');
         }
 
         // Lista blanca de permisos existentes: los IDs se filtran contra la BD.
@@ -246,13 +246,13 @@ class Rol extends Model
         $rol_id = $this->sanitizeInt($rol_id);
 
         if ($usuario_id <= 0 || $rol_id <= 0) {
-            throw new \InvalidArgumentException('Datos no válidos');
+            throw new \InvalidArgumentException('Los datos no son válidos.');
         }
         if (!$this->existeEnTabla('usuarios', $usuario_id)) {
-            throw new \InvalidArgumentException('El usuario seleccionado no existe');
+            throw new \InvalidArgumentException('El usuario seleccionado no existe.');
         }
         if (!$this->existeEnTabla('roles', $rol_id)) {
-            throw new \InvalidArgumentException('El rol seleccionado no existe');
+            throw new \InvalidArgumentException('El rol seleccionado no existe.');
         }
 
         // usuarios.fk_rol_usuario referencia rol_usuarios.id (no roles.id).
@@ -263,7 +263,7 @@ class Rol extends Model
         $rolUsuarios = $stmt->fetch();
 
         if (!$rolUsuarios) {
-            throw new \InvalidArgumentException('El rol seleccionado no tiene un registro de asignación válido');
+            throw new \InvalidArgumentException('El rol seleccionado no tiene una asignación válida.');
         }
 
         $rolUsuariosId = (int)$rolUsuarios['id'];

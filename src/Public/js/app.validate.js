@@ -120,7 +120,7 @@
         pattern:   'El formato de este campo no es válido.',
         match:     'Los valores no coinciden.',
         minlength: function (n) { return 'Debe tener al menos ' + n + ' caracteres.'; },
-        maxlength: function (n) { return 'No puede exceder ' + n + ' caracteres.'; },
+        maxlength: function (n) { return 'No puede superar los ' + n + ' caracteres.'; },
         min:       function (n) { return 'El valor mínimo permitido es ' + n + '.'; },
         max:       function (n) { return 'El valor máximo permitido es ' + n + '.'; }
     };
@@ -518,7 +518,7 @@
         if (contador) {
             $('<span class="eis-field-counter"></span>')
                 .addClass(contador.clase)
-                .attr('title', contador.restantes + ' carácter(es) disponible(s)')
+                .attr('title', contador.restantes + ' caracteres disponibles')
                 .text(contador.texto)
                 .appendTo($fb);
         }
@@ -1018,7 +1018,7 @@
             number: 'Ingresa un número válido.',
             digits: 'Solo se permiten dígitos.',
             minlength: $.validator.format('Debe tener al menos {0} caracteres.'),
-            maxlength: $.validator.format('No puede exceder {0} caracteres.'),
+            maxlength: $.validator.format('No puede superar los {0} caracteres.'),
             rangelength: $.validator.format('Debe tener entre {0} y {1} caracteres.'),
             min: $.validator.format('El valor mínimo permitido es {0}.'),
             max: $.validator.format('El valor máximo permitido es {0}.'),

@@ -46,7 +46,7 @@ $(function () {
             $('#kpi-valor').text('$' + parseFloat(r.data.valor).toFixed(2)); // Valor total del inventario en $
         }).fail(function () {
             // Si hay un error de conexión, muestro un toast de error
-            EIS.toast('Error al cargar indicadores', 'red', 'error');
+            EIS.toast('No se pudieron cargar los indicadores. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -142,7 +142,7 @@ $(function () {
             EIS.datatableRefresh('#tabla-productos');
         }).fail(function () {
             // Si hay error de conexión, muestro toast de error
-            EIS.toast('Error al cargar la tabla', 'red', 'error');
+            EIS.toast('No se pudo cargar la tabla. Intenta de nuevo.', 'red', 'error');
         });
     }
 
@@ -294,7 +294,7 @@ $(function () {
             }
         },
         error: function () {
-            EIS.toast('Error de conexión', 'red', 'error');
+            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
         }
         });
     });
@@ -329,11 +329,11 @@ $(function () {
                         EIS.toast(r.message, 'green', 'check_circle');
                         cargarCategorias();
                     } else {
-                        EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                        EIS.toast(r.error || 'No se pudo eliminar. Intenta de nuevo.', 'red', 'error');
                     }
                 },
                 error: function () {
-                    EIS.toast('Error de conexión', 'red', 'error');
+                    EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
                 }
             });
         }
@@ -379,11 +379,11 @@ $(function () {
                     cargarSelectCategorias(r.data.categoria_id);
                     abrirModalProducto('Editar Producto', r.data);
                 } else {
-                    EIS.toast(r.error || 'Error al cargar producto', 'red', 'error');
+                    EIS.toast(r.error || 'No se pudo cargar el producto. Intenta de nuevo.', 'red', 'error');
                 }
             },
             error: function () {
-                EIS.toast('Error de conexión al cargar producto', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor al cargar el producto. Intenta de nuevo.', 'red', 'error');
             }
         });
     });
@@ -411,12 +411,12 @@ $(function () {
                         refrescarKPI();   // Actualizo los indicadores
                     } else {
                         // Si hay error, muestro el mensaje del servidor
-                        EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                        EIS.toast(r.error || 'No se pudo eliminar. Intenta de nuevo.', 'red', 'error');
                     }
                 },
                 error: function () {
                     // Si hay error de conexión, muestro toast de error
-                    EIS.toast('Error de conexión al eliminar', 'red', 'error');
+                    EIS.toast('No se pudo conectar con el servidor al eliminar. Intenta de nuevo.', 'red', 'error');
                 }
             });
         }
@@ -489,7 +489,7 @@ $(function () {
                 }
             },
             error: function () {
-                EIS.toast('Error de conexión al guardar', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor al guardar. Intenta de nuevo.', 'red', 'error');
             }
         });
     });

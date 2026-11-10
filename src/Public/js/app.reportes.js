@@ -167,11 +167,11 @@
             var desde = $form.find('[name="desde"]').val();
             var hasta = $form.find('[name="hasta"]').val();
             if (!desde || !hasta) {
-                EIS.toast('Debe seleccionar el rango de fechas', 'red', 'error');
+                EIS.toast('Selecciona el rango de fechas.', 'red', 'error');
                 return false;
             }
             if (hasta < desde) {
-                EIS.toast('La fecha inicial no puede ser posterior a la final', 'red', 'error');
+                EIS.toast('La fecha inicial no puede ser posterior a la fecha final.', 'red', 'error');
                 return false;
             }
             return true;
@@ -366,12 +366,12 @@
                     if (resp && resp.success) {
                         renderResultado(resp.data);
                     } else {
-                        $error.show().text((resp && resp.error) || 'Error al consultar el reporte.');
+                        $error.show().text((resp && resp.error) || 'No se pudo consultar el reporte. Intenta de nuevo.');
                     }
                 },
                 error: function (xhr) {
                     $loading.hide();
-                    var errMsg = 'Error de conexión al consultar el reporte.';
+                    var errMsg = 'No se pudo conectar con el servidor al consultar el reporte. Intenta de nuevo.';
                     if (xhr.responseJSON && xhr.responseJSON.error) {
                         errMsg = xhr.responseJSON.error;
                     }

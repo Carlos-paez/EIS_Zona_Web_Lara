@@ -126,17 +126,17 @@ foreach ($usuarios as $u) {
             <div class="row" style="margin-bottom:0;">
                 <div class="col s12 m6 input-field">
                     <i class="material-icons prefix">person</i>
-                    <input type="text" name="nombre" id="usuario-nombre" maxlength="100" title="Entre 2 y 100 caracteres" required minlength="2" data-validate="nombre">
+                    <input type="text" name="nombre" id="usuario-nombre" maxlength="100" title="Entre 2 y 100 caracteres." required minlength="2" data-validate="nombre">
                     <label for="usuario-nombre">Nombre</label>
                 </div>
                 <div class="col s12 m6 input-field">
                     <i class="material-icons prefix">person_outline</i>
-                    <input type="text" name="apellido" id="usuario-apellido" maxlength="100" title="Máximo 100 caracteres" data-validate="nombre">
+                    <input type="text" name="apellido" id="usuario-apellido" maxlength="100" title="Máximo 100 caracteres." data-validate="nombre">
                     <label for="usuario-apellido">Apellido</label>
                 </div>
                 <div class="col s12 m6 input-field">
                     <i class="material-icons prefix">badge</i>
-                    <input type="text" name="user_name" id="usuario-username" maxlength="50" title="Entre 3 y 50 caracteres: letras, números, puntos, guiones" required minlength="3" data-validate="username">
+                    <input type="text" name="user_name" id="usuario-username" maxlength="50" title="Entre 3 y 50 caracteres. Usa letras, números, puntos y guiones." required minlength="3" data-validate="username">
                     <label for="usuario-username">Nombre de usuario</label>
                 </div>
                 <div class="col s12 m6 input-field">

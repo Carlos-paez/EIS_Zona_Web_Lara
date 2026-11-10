@@ -183,7 +183,7 @@ final class RegexRules
     {
         $rule = self::get($key);
         if (!is_array($rule) || !isset($rule['pattern']) || !is_string($rule['pattern']) || $rule['pattern'] === '') {
-            throw new \InvalidArgumentException("No existe el patrón de validación '$key' en regex_validations.json");
+            throw new \InvalidArgumentException("No se encontró la regla de validación '$key' en regex_validations.json.");
         }
         return $rule['pattern'];
     }

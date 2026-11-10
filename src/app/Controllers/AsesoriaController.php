@@ -40,18 +40,18 @@ class AsesoriaController
                 'buscar'     => $this->buscar(),
                 'crear'      => $this->crear(),
                 'kpis'       => $this->kpis(),
-                default      => $this->json(false, null, 'Acción no válida'),
+                default      => $this->json(false, null, 'La acción solicitada no es válida.'),
             };
         } catch (ValidationException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage(), 'fieldErrors' => $e->errores()]);
         } catch (\PDOException $e) {
             Logger::error($e, 'Asesorías - consulta SQL');
-            echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
+            echo json_encode(['success' => false, 'error' => 'No se pudo conectar con la base de datos. Intenta de nuevo.']);
         } catch (\InvalidArgumentException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         } catch (\Exception $e) {
             Logger::error($e, 'Asesorías');
-            echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
+            echo json_encode(['success' => false, 'error' => 'Ocurrió un error interno. Intenta de nuevo.']);
         }
     }
 
@@ -93,7 +93,7 @@ class AsesoriaController
         if ($asesoria) {
             echo json_encode(['success' => true, 'data' => $asesoria]);
         } else {
-            echo json_encode(['success' => false, 'error' => 'Asesoría no encontrada']);
+            echo json_encode(['success' => false, 'error' => 'No se encontró la asesoría.']);
         }
     }
 
@@ -111,7 +111,7 @@ class AsesoriaController
     private function crear(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -135,7 +135,7 @@ class AsesoriaController
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Asesoría registrada exitosamente']
-                : ['success' => false, 'error' => 'Error al registrar la asesoría']
+                : ['success' => false, 'error' => 'No se pudo registrar la asesoría. Intenta de nuevo.']
         );
     }
 

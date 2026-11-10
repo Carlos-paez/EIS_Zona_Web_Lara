@@ -71,22 +71,22 @@ final class Validator
         $max      = (int)($opts['max'] ?? ($ruleKey !== null ? (RegexRules::maxlength($ruleKey) ?? PHP_INT_MAX) : PHP_INT_MAX));
         $pattern  = $opts['pattern'] ?? null;
         $patternMessage = (string)($opts['patternMessage'] ?? ($ruleKey !== null
-            ? RegexRules::mensaje($ruleKey, "El campo '$field' contiene caracteres no permitidos")
-            : "El campo '$field' contiene caracteres no permitidos"));
+            ? RegexRules::mensaje($ruleKey, "El campo '$field' contiene caracteres no permitidos.")
+            : "El campo '$field' contiene caracteres no permitidos."));
 
         if ($pattern === null && $ruleKey !== null) {
             $pattern = RegexRules::pcre($ruleKey);
         }
 
         if ($value === null || is_bool($value) || is_array($value) || is_object($value)) {
-            throw new \InvalidArgumentException("El campo '$field' no es válido");
+            throw new \InvalidArgumentException("El campo '$field' no es válido.");
         }
 
         $texto = trim((string)$value);
 
         if ($texto === '') {
             if ($required) {
-                throw new \InvalidArgumentException("El campo '$field' es obligatorio");
+                throw new \InvalidArgumentException("El campo '$field' es obligatorio.");
             }
             return '';
         }
@@ -95,10 +95,10 @@ final class Validator
 
         $len = mb_strlen($texto);
         if ($len < $min) {
-            throw new \InvalidArgumentException("El campo '$field' debe tener al menos $min caracteres");
+            throw new \InvalidArgumentException("El campo '$field' debe tener al menos $min caracteres.");
         }
         if ($len > $max) {
-            throw new \InvalidArgumentException("El campo '$field' no puede exceder $max caracteres");
+            throw new \InvalidArgumentException("El campo '$field' no puede superar los $max caracteres.");
         }
         if ($pattern !== null && !preg_match($pattern, $texto)) {
             throw new \InvalidArgumentException($patternMessage);
@@ -120,36 +120,36 @@ final class Validator
             if (($value === null || $value === '') && !$required) {
                 return 0;
             }
-            throw new \InvalidArgumentException("El campo '$field' no es un número entero válido");
+            throw new \InvalidArgumentException("El campo '$field' debe ser un número entero.");
         }
 
         if (is_float($value) && $value != floor($value)) {
-            throw new \InvalidArgumentException("El campo '$field' no es un número entero válido");
+            throw new \InvalidArgumentException("El campo '$field' debe ser un número entero.");
         }
 
         if (is_string($value)) {
             $value = trim($value);
             if ($value === '') {
                 if ($required) {
-                    throw new \InvalidArgumentException("El campo '$field' es obligatorio");
+                    throw new \InvalidArgumentException("El campo '$field' es obligatorio.");
                 }
                 return 0;
             }
             if (!RegexRules::test('aplicacion.entero', $value)) {
-                throw new \InvalidArgumentException("El campo '$field' no es un número entero válido");
+                throw new \InvalidArgumentException("El campo '$field' debe ser un número entero.");
             }
             // Evita desbordamientos absurdos (ej. 999999999999999999999)
             if (strlen(ltrim($value, '-')) > 10) {
-                throw new \InvalidArgumentException("El campo '$field' excede el rango permitido");
+                throw new \InvalidArgumentException("El campo '$field' supera el rango permitido.");
             }
         }
 
         $n = (int)$value;
         if ($n < $min) {
-            throw new \InvalidArgumentException("El campo '$field' debe ser mayor o igual a $min");
+            throw new \InvalidArgumentException("El campo '$field' debe ser mayor o igual a $min.");
         }
         if ($n > $max) {
-            throw new \InvalidArgumentException("El campo '$field' no puede exceder $max");
+            throw new \InvalidArgumentException("El campo '$field' no puede superar $max.");
         }
         return $n;
     }
@@ -167,19 +167,19 @@ final class Validator
             if (($value === null || $value === '') && !$required) {
                 return 0.0;
             }
-            throw new \InvalidArgumentException("El campo '$field' no es un número válido");
+            throw new \InvalidArgumentException("El campo '$field' debe ser un número válido.");
         }
 
         if (is_string($value)) {
             $value = trim($value);
             if ($value === '') {
                 if ($required) {
-                    throw new \InvalidArgumentException("El campo '$field' es obligatorio");
+                    throw new \InvalidArgumentException("El campo '$field' es obligatorio.");
                 }
                 return 0.0;
             }
             if (!RegexRules::test('aplicacion.monto', $value)) {
-                throw new \InvalidArgumentException(RegexRules::mensaje('aplicacion.monto', "El campo '$field' debe ser un número con hasta 2 decimales"));
+                throw new \InvalidArgumentException(RegexRules::mensaje('aplicacion.monto', "El campo '$field' debe ser un número con hasta 2 decimales."));
             }
         } elseif (is_int($value)) {
             $value = sprintf('%d', $value);
@@ -189,10 +189,10 @@ final class Validator
 
         $f = round((float)$value, 2);
         if ($f < $min) {
-            throw new \InvalidArgumentException("El campo '$field' debe ser mayor o igual a $min");
+            throw new \InvalidArgumentException("El campo '$field' debe ser mayor o igual a $min.");
         }
         if ($f > $max) {
-            throw new \InvalidArgumentException("El campo '$field' no puede exceder $max");
+            throw new \InvalidArgumentException("El campo '$field' no puede superar $max.");
         }
         return $f;
     }
@@ -209,13 +209,13 @@ final class Validator
             if (($value === null || $value === '') && !$required) {
                 return '';
             }
-            throw new \InvalidArgumentException("El campo '$field' no es una fecha válida");
+            throw new \InvalidArgumentException("El campo '$field' debe ser una fecha válida.");
         }
 
         $fecha = trim((string)$value);
         if ($fecha === '') {
             if ($required) {
-                throw new \InvalidArgumentException("El campo '$field' es obligatorio");
+                throw new \InvalidArgumentException("El campo '$field' es obligatorio.");
             }
             return '';
         }
@@ -224,11 +224,11 @@ final class Validator
             !RegexRules::test('fechas_y_horas.fecha_iso', $fecha)
             || !checkdate((int)substr($fecha, 5, 2), (int)substr($fecha, 8, 2), (int)substr($fecha, 0, 4))
         ) {
-            throw new \InvalidArgumentException("El campo '$field' no es una fecha válida (use YYYY-MM-DD)");
+            throw new \InvalidArgumentException("El campo '$field' debe ser una fecha válida en formato AAAA-MM-DD.");
         }
 
         if ($noFutura && $fecha > date('Y-m-d')) {
-            throw new \InvalidArgumentException("El campo '$field' no puede ser una fecha futura");
+            throw new \InvalidArgumentException("El campo '$field' no puede ser una fecha futura.");
         }
 
         return $fecha;
@@ -242,12 +242,12 @@ final class Validator
         $value = is_scalar($value) ? trim((string)$value) : '';
         if ($value === '') {
             if ($required) {
-                throw new \InvalidArgumentException("El campo '$field' es obligatorio");
+                throw new \InvalidArgumentException("El campo '$field' es obligatorio.");
             }
             return '';
         }
         if (!in_array($value, $allowed, true)) {
-            throw new \InvalidArgumentException("El valor del campo '$field' no es válido");
+            throw new \InvalidArgumentException("El valor del campo '$field' no es válido.");
         }
         return $value;
     }
@@ -260,15 +260,15 @@ final class Validator
         $value = is_scalar($value) ? trim((string)$value) : '';
         if ($value === '') {
             if ($required) {
-                throw new \InvalidArgumentException("El campo '$field' es obligatorio");
+                throw new \InvalidArgumentException("El campo '$field' es obligatorio.");
             }
             return '';
         }
         if (mb_strlen($value) > self::MAX_EMAIL) {
-            throw new \InvalidArgumentException("El campo '$field' no puede exceder " . self::MAX_EMAIL . ' caracteres');
+            throw new \InvalidArgumentException("El campo '$field' no puede superar los " . self::MAX_EMAIL . ' caracteres.');
         }
         if (!RegexRules::test('contacto.email', $value)) {
-            throw new \InvalidArgumentException("El formato del campo '$field' no es válido");
+            throw new \InvalidArgumentException("El formato del campo '$field' no es válido.");
         }
         return $value;
     }
@@ -280,7 +280,7 @@ final class Validator
     {
         if ($value === null || $value === '') {
             if ($required) {
-                throw new \InvalidArgumentException("El campo '$field' es obligatorio");
+                throw new \InvalidArgumentException("El campo '$field' es obligatorio.");
             }
             return 0;
         }
@@ -303,7 +303,7 @@ final class Validator
 
     private static function boolInvalido(string $field): int
     {
-        throw new \InvalidArgumentException("El valor del campo '$field' no es válido");
+        throw new \InvalidArgumentException("El valor del campo '$field' no es válido.");
     }
 
     /**
@@ -322,7 +322,7 @@ final class Validator
         return self::texto($value, $field, [
             'required'       => false,
             'rule'           => 'aplicacion.termino_busqueda',
-            'patternMessage' => "El campo '$field' contiene caracteres no permitidos",
+            'patternMessage' => "El campo '$field' contiene caracteres no permitidos.",
         ]);
     }
 
@@ -344,7 +344,7 @@ final class Validator
                 $valor = trim($valor);
             }
             if ($valor === '' || $valor === null || $valor === []) {
-                $errores[$campo] = "El campo $etiqueta es obligatorio";
+                $errores[$campo] = "El campo $etiqueta es obligatorio.";
             }
         }
         return $errores;
@@ -358,31 +358,31 @@ final class Validator
     public static function itemsVenta(mixed $json): array
     {
         if (!is_string($json) || trim($json) === '') {
-            throw new \InvalidArgumentException('El carrito de la venta es obligatorio');
+            throw new \InvalidArgumentException('El carrito de la venta es obligatorio.');
         }
 
         $items = json_decode($json, true);
         if (!is_array($items)) {
-            throw new \InvalidArgumentException('El formato del carrito no es válido');
+            throw new \InvalidArgumentException('El formato del carrito no es válido.');
         }
         if (count($items) === 0) {
-            throw new \InvalidArgumentException('El carrito está vacío');
+            throw new \InvalidArgumentException('El carrito está vacío.');
         }
         if (count($items) > self::MAX_ITEMS_VENTA) {
-            throw new \InvalidArgumentException('El carrito excede el máximo de ' . self::MAX_ITEMS_VENTA . ' ítems permitidos');
+            throw new \InvalidArgumentException('El carrito supera el máximo de ' . self::MAX_ITEMS_VENTA . ' ítems permitidos.');
         }
 
         $validados = [];
         $vistos = [];
         foreach ($items as $i => $item) {
             if (!is_array($item)) {
-                throw new \InvalidArgumentException("El ítem #" . ($i + 1) . ' del carrito no es válido');
+                throw new \InvalidArgumentException("El ítem #" . ($i + 1) . ' del carrito no es válido.');
             }
             $producto = self::entero($item['id'] ?? null, 'producto del ítem #' . ($i + 1), ['required' => true, 'min' => 1]);
             $cantidad = self::entero($item['cantidad'] ?? null, 'cantidad del ítem #' . ($i + 1), ['required' => true, 'min' => 1, 'max' => self::MAX_CANTIDAD]);
 
             if (isset($vistos[$producto])) {
-                throw new \InvalidArgumentException('El producto se repite en el carrito');
+                throw new \InvalidArgumentException('El producto se repite en el carrito.');
             }
             $vistos[$producto] = true;
 
@@ -400,7 +400,7 @@ final class Validator
         return self::texto($value, $field, [
             'required'       => $required,
             'rule'           => 'identificacion_venezuela.cedula_venezolana',
-            'patternMessage' => "El campo '$field' no tiene un formato válido (ej.: V-12345678)",
+            'patternMessage' => "El campo '$field' no tiene un formato válido. Ejemplo: V-12345678.",
         ]);
     }
 
@@ -412,7 +412,7 @@ final class Validator
         return self::texto($value, $field, [
             'required'       => $required,
             'rule'           => 'identificacion_venezuela.rif_venezolano',
-            'patternMessage' => "El campo '$field' no tiene un formato válido (ej.: J-12345678-9)",
+            'patternMessage' => "El campo '$field' no tiene un formato válido. Ejemplo: J-12345678-9.",
         ]);
     }
 
@@ -424,7 +424,7 @@ final class Validator
         return self::texto($value, $field, [
             'required'       => $required,
             'rule'           => 'contacto.telefono_flexible',
-            'patternMessage' => "El campo '$field' no tiene un formato válido (ej.: 0412-1234567)",
+            'patternMessage' => "El campo '$field' no tiene un formato válido. Ejemplo: 0412-1234567.",
         ]);
     }
 
@@ -452,7 +452,7 @@ final class Validator
         ]);
         [$h, $m, $s] = array_map('intval', explode(':', $t));
         if ($m > 59 || $s > 59) {
-            throw new \InvalidArgumentException("El campo '$field' debe tener minutos y segundos entre 00 y 59");
+            throw new \InvalidArgumentException("El campo '$field' debe tener minutos y segundos entre 00 y 59.");
         }
         return $t;
     }
@@ -465,7 +465,7 @@ final class Validator
         return self::texto($value, $field, [
             'required'       => $required,
             'rule'           => 'aplicacion.numero_orden',
-            'patternMessage' => "El campo '$field' contiene caracteres no permitidos",
+            'patternMessage' => "El campo '$field' contiene caracteres no permitidos.",
         ]);
     }
 
@@ -490,14 +490,14 @@ final class Validator
             if (($value === null || $value === '') && !$required) {
                 return '';
             }
-            throw new \InvalidArgumentException("El campo '$field' es obligatorio");
+            throw new \InvalidArgumentException("El campo '$field' es obligatorio.");
         }
 
         $pass = (string)$value;
 
         if ($pass === '') {
             if ($required) {
-                throw new \InvalidArgumentException("El campo '$field' es obligatorio");
+                throw new \InvalidArgumentException("El campo '$field' es obligatorio.");
             }
             return '';
         }
@@ -505,14 +505,14 @@ final class Validator
         self::rechazarControl($pass, $field);
 
         if (mb_strlen($pass) < $min) {
-            throw new \InvalidArgumentException("El campo '$field' debe tener al menos $min caracteres");
+            throw new \InvalidArgumentException("El campo '$field' debe tener al menos $min caracteres.");
         }
         if (mb_strlen($pass) > $max) {
-            throw new \InvalidArgumentException("El campo '$field' no puede exceder $max caracteres");
+            throw new \InvalidArgumentException("El campo '$field' no puede superar los $max caracteres.");
         }
 
         if (!RegexRules::test($reglaPass, $pass)) {
-            throw new \InvalidArgumentException(RegexRules::mensaje($reglaPass, "El campo '$field' no tiene un formato válido"));
+            throw new \InvalidArgumentException(RegexRules::mensaje($reglaPass, "El campo '$field' no tiene un formato válido."));
         }
 
         return $pass;
@@ -675,7 +675,7 @@ final class Validator
     private static function rechazarControl(string $texto, string $field): void
     {
         if (RegexRules::test('aplicacion.caracteres_control', $texto)) {
-            throw new \InvalidArgumentException("El campo '$field' contiene caracteres de control no permitidos");
+            throw new \InvalidArgumentException("El campo '$field' contiene caracteres de control no permitidos.");
         }
     }
 }

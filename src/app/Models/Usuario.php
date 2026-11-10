@@ -94,7 +94,7 @@ class Usuario extends Model
     {
         $email = $this->sanitizeString($email);
         if ($email !== '' && !$this->validateEmail($email)) {
-            throw new \InvalidArgumentException('El formato del email no es válido');
+            throw new \InvalidArgumentException('El formato del correo electrónico no es válido.');
         }
         $this->validateLength($email, 'email', self::MAX_EMAIL);
         $this->email = $email;
@@ -151,10 +151,10 @@ class Usuario extends Model
     private function hashPassword(string $password): string
     {
         if (mb_strlen($password) < self::MIN_PASSWORD) {
-            throw new \InvalidArgumentException("La contraseña debe tener al menos " . self::MIN_PASSWORD . " caracteres");
+            throw new \InvalidArgumentException("La contraseña debe tener al menos " . self::MIN_PASSWORD . " caracteres.");
         }
         if (strlen($password) > 72) {
-            throw new \InvalidArgumentException("La contraseña no puede exceder 72 caracteres");
+            throw new \InvalidArgumentException("La contraseña no puede superar los 72 caracteres.");
         }
         return password_hash($password, PASSWORD_BCRYPT);
     }
@@ -167,7 +167,7 @@ class Usuario extends Model
         $this->setEmail($email);
         $this->setFkRolUsuario($fk_rol_usuario);
         if ($fk_rol_usuario !== null && !$this->existeRolUsuario($fk_rol_usuario)) {
-            throw new \InvalidArgumentException('El rol seleccionado no existe');
+            throw new \InvalidArgumentException('El rol seleccionado no existe.');
         }
         $hash = $this->hashPassword($password);
 
@@ -249,7 +249,7 @@ class Usuario extends Model
     {
         $id = $this->sanitizeInt($id);
         if ($id <= 0) {
-            throw new \InvalidArgumentException('ID de usuario no válido');
+            throw new \InvalidArgumentException('El identificador del usuario no es válido.');
         }
         $estatus = $activo ? '1' : '0';
         $stmt = $this->db->prepare("UPDATE usuarios SET estatus = ? WHERE id = ?");

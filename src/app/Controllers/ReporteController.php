@@ -44,7 +44,7 @@ class ReporteController
                 'filtros'   => $this->filtros(),
                 'consultar' => $this->consultar(),
                 'exportar'  => $this->exportar(),
-                default     => $this->json(false, null, 'Acción no válida'),
+                default     => $this->json(false, null, 'La acción solicitada no es válida.'),
             };
         } catch (ValidationException $e) {
             http_response_code(422);
@@ -53,7 +53,7 @@ class ReporteController
             $this->json(false, null, $e->getMessage());
         } catch (\Exception $e) {
             Logger::error($e, 'Reportes');
-            $this->json(false, null, 'Error interno del servidor');
+            $this->json(false, null, 'Ocurrió un error interno. Intenta de nuevo.');
         }
     }
 
@@ -95,7 +95,7 @@ class ReporteController
     {
         if (!Router::verifyCsrfToken($_GET['csrf_token'] ?? null)) {
             header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 

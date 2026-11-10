@@ -280,8 +280,9 @@ EIS.mostrarErroresFormulario = function (form, data) {
             $lista.append($item);
         });
         if (nombres.length > 6) {
+            var restantes = nombres.length - 6;
             $('<li class="eis-form-error-more"></li>')
-                .text('y ' + (nombres.length - 6) + ' campo(s) más con errores.')
+                .text('y ' + restantes + (restantes === 1 ? ' campo más con errores.' : ' campos más con errores.'))
                 .appendTo($lista);
         }
         $cuerpo.append($lista);
@@ -346,7 +347,7 @@ EIS.mostrarErrorAnexo = function (form, errorSelector, data) {
     if (!$form.length) return;
     var $panel = $form.find(errorSelector);
     if (!$panel.length) return;
-    var msg = (data && data.error) ? data.error : 'Ha ocurrido un error. Verifica los datos e intenta de nuevo.';
+    var msg = (data && data.error) ? data.error : 'Ocurrió un error. Verifica los datos e intenta de nuevo.';
     $panel.find('.pc-form-error-message').text(msg);
     $panel.find('.pc-form-error-message').html(msg.replace(/\n/g, '<br>'));
     $panel.slideDown(250);

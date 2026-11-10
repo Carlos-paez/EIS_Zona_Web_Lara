@@ -57,18 +57,18 @@ class CiberController
                 'actualizarPC'  => $this->actualizarPC(),
                 'eliminarPC'    => $this->eliminarPC(),
                 'cambiarEstadoPC' => $this->cambiarEstadoPC(),
-                default         => $this->json(false, null, 'Acción no válida'),
+                default         => $this->json(false, null, 'La acción solicitada no es válida.'),
             };
         } catch (ValidationException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage(), 'fieldErrors' => $e->errores()]);
         } catch (\PDOException $e) {
             Logger::error($e, 'Cyber (CiberController) - consulta SQL');
-            echo json_encode(['success' => false, 'error' => 'Error de base de datos']);
+            echo json_encode(['success' => false, 'error' => 'No se pudo conectar con la base de datos. Intenta de nuevo.']);
         } catch (\InvalidArgumentException $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         } catch (\Exception $e) {
             Logger::error($e, 'Cyber (CiberController)');
-            echo json_encode(['success' => false, 'error' => 'Error interno del servidor']);
+            echo json_encode(['success' => false, 'error' => 'Ocurrió un error interno. Intenta de nuevo.']);
         }
     }
 
@@ -170,11 +170,11 @@ class CiberController
     private function iniciar(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            echo json_encode(['success' => false, 'error' => 'El método de la solicitud no está permitido.']);
             return;
         }
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -199,7 +199,7 @@ class CiberController
         echo json_encode(
             $sesionId
                 ? ['success' => true, 'message' => 'Sesión iniciada correctamente', 'data' => ['sesion_id' => $sesionId]]
-                : ['success' => false, 'error' => 'No se pudo iniciar la sesión']
+                : ['success' => false, 'error' => 'No se pudo iniciar la sesión.']
         );
     }
 
@@ -209,11 +209,11 @@ class CiberController
     private function finalizar(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            echo json_encode(['success' => false, 'error' => 'El método de la solicitud no está permitido.']);
             return;
         }
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -223,7 +223,7 @@ class CiberController
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Sesión finalizada correctamente']
-                : ['success' => false, 'error' => 'No se pudo finalizar la sesión']
+                : ['success' => false, 'error' => 'No se pudo finalizar la sesión.']
         );
     }
 
@@ -276,7 +276,7 @@ class CiberController
         echo json_encode(
             $pc
                 ? ['success' => true, 'data' => $pc]
-                : ['success' => false, 'error' => 'PC no encontrada']
+                : ['success' => false, 'error' => 'No se encontró la PC.']
         );
     }
 
@@ -286,11 +286,11 @@ class CiberController
     private function crearPC(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            echo json_encode(['success' => false, 'error' => 'El método de la solicitud no está permitido.']);
             return;
         }
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -310,7 +310,7 @@ class CiberController
         echo json_encode(
             $id
                 ? ['success' => true, 'message' => 'PC creada exitosamente', 'data' => ['id' => $id]]
-                : ['success' => false, 'error' => 'Error al crear la PC']
+                : ['success' => false, 'error' => 'No se pudo crear la PC. Intenta de nuevo.']
         );
     }
 
@@ -320,11 +320,11 @@ class CiberController
     private function actualizarPC(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            echo json_encode(['success' => false, 'error' => 'El método de la solicitud no está permitido.']);
             return;
         }
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -346,7 +346,7 @@ class CiberController
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'PC actualizada exitosamente']
-                : ['success' => false, 'error' => 'Error al actualizar la PC']
+                : ['success' => false, 'error' => 'No se pudo actualizar la PC. Intenta de nuevo.']
         );
     }
 
@@ -356,11 +356,11 @@ class CiberController
     private function cambiarEstadoPC(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            echo json_encode(['success' => false, 'error' => 'El método de la solicitud no está permitido.']);
             return;
         }
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -371,7 +371,7 @@ class CiberController
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => $activa ? 'PC activada' : 'PC desactivada']
-                : ['success' => false, 'error' => 'Error al cambiar el estado']
+                : ['success' => false, 'error' => 'No se pudo cambiar el estado. Intenta de nuevo.']
         );
     }
 
@@ -381,11 +381,11 @@ class CiberController
     private function eliminarPC(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            echo json_encode(['success' => false, 'error' => 'El método de la solicitud no está permitido.']);
             return;
         }
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -395,7 +395,7 @@ class CiberController
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'PC eliminada exitosamente']
-                : ['success' => false, 'error' => 'Error al eliminar la PC']
+                : ['success' => false, 'error' => 'No se pudo eliminar la PC. Intenta de nuevo.']
         );
     }
 

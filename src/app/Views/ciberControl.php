@@ -115,7 +115,7 @@ try {
                 <i class="material-icons prefix">badge</i>
                 <input type="text" id="cyberCedula" name="cedula" class="form-control" placeholder="Ej: V-12345678" maxlength="20" required minlength="5" data-validate="cedula">
                 <label for="cyberCedula" class="active">Cédula</label>
-                <span class="helper-text" style="font-size:0.8rem;color:var(--text-muted);">Al salir de este campo se precargan los datos del cliente</span>
+                <span class="helper-text" style="font-size:0.8rem;color:var(--text-muted);">Al salir de este campo se precargan los datos del cliente.</span>
             </div>
             <div class="input-field">
                 <i class="material-icons prefix">phone</i>
@@ -145,7 +145,7 @@ try {
                 <i class="material-icons prefix">timer</i>
                 <input type="text" id="cyberTiempo" name="tiempo_uso" value="01:00:00" class="form-control" maxlength="50" data-validate="tiempo">
                 <label for="cyberTiempo" class="active">Tiempo (HH:MM:SS)</label>
-                <span class="helper-text" style="font-size:0.8rem;color:var(--text-muted);">Ej: 01:30:00 = 1 hora 30 minutos</span>
+                <span class="helper-text" style="font-size:0.8rem;color:var(--text-muted);">Ej: 01:30:00 = 1 hora 30 minutos.</span>
             </div>
         </form>
     </div>
@@ -201,7 +201,7 @@ try {
             </div>
             <div id="pcFormError" class="card-panel red lighten-4 red-text text-darken-4" style="display:none;border-radius:8px;padding:0.75rem;margin-top:1rem;">
                 <i class="material-icons left" style="font-size:1.2rem;">error</i>
-                <span id="pcFormErrorMessage">Error al guardar</span>
+                <span id="pcFormErrorMessage">No se pudo guardar. Intenta de nuevo.</span>
             </div>
         </form>
     </div>

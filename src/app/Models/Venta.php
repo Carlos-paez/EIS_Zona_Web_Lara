@@ -65,10 +65,10 @@ class Venta extends Model
         $this->validateTelefono($telefono, 'teléfono');
 
         if (empty($items)) {
-            throw new \InvalidArgumentException('El carrito está vacío');
+            throw new \InvalidArgumentException('El carrito está vacío.');
         }
         if (count($items) > self::MAX_ITEMS) {
-            throw new \InvalidArgumentException('El carrito excede el máximo de ' . self::MAX_ITEMS . ' ítems permitidos');
+            throw new \InvalidArgumentException('El carrito supera el máximo de ' . self::MAX_ITEMS . ' ítems permitidos.');
         }
 
         // Separa el nombre completo en nombre y apellido (máximo 2 partes)
@@ -78,10 +78,10 @@ class Venta extends Model
 
         // Valida la longitud del nombre (min 2, max 100)
         if (mb_strlen($nombre) < 2 || mb_strlen($nombre) > self::MAX_NOMBRE) {
-            throw new \InvalidArgumentException('El nombre del cliente debe tener entre 2 y ' . self::MAX_NOMBRE . ' caracteres');
+            throw new \InvalidArgumentException('El nombre del cliente debe tener entre 2 y ' . self::MAX_NOMBRE . ' caracteres.');
         }
         if ($apellido !== '' && mb_strlen($apellido) > self::MAX_APELLIDO) {
-            throw new \InvalidArgumentException('El apellido no puede exceder ' . self::MAX_APELLIDO . ' caracteres');
+            throw new \InvalidArgumentException('El apellido no puede superar los ' . self::MAX_APELLIDO . ' caracteres.');
         }
 
         try {
@@ -116,12 +116,12 @@ class Venta extends Model
                 $cantidad   = (int)($item['cantidad'] ?? 0);
 
                 if ($productoId <= 0 || $cantidad < 1 || $cantidad > self::MAX_CANTIDAD) {
-                    throw new \InvalidArgumentException('Ítem de venta no válido');
+                    throw new \InvalidArgumentException('El ítem de la venta no es válido.');
                 }
 
                 // Evita productos duplicados en la misma venta
                 if (isset($vistos[$productoId])) {
-                    throw new \InvalidArgumentException('Un producto se repite en el carrito');
+                    throw new \InvalidArgumentException('Un producto se repite en el carrito.');
                 }
                 $vistos[$productoId] = true;
 
@@ -131,10 +131,10 @@ class Venta extends Model
                 $producto = $stmtPrecio->fetch();
 
                 if (!$producto) {
-                    throw new \InvalidArgumentException('Producto no encontrado');
+                    throw new \InvalidArgumentException('No se encontró el producto.');
                 }
                 if ((int)$producto['stock'] < $cantidad) {
-                    throw new \InvalidArgumentException('Stock insuficiente para un producto');
+                    throw new \InvalidArgumentException('No hay stock suficiente para uno de los productos.');
                 }
 
                 $precio = (float)$producto['precio_venta'];

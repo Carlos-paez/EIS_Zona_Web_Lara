@@ -67,7 +67,7 @@
                     <!-- Error de validación: el usuario presionó enviar sin llenar campos -->
                     <div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:0.75rem 1rem;">
                         <i class="material-icons left" style="font-size:1.2rem;">error</i>
-                        Por favor, completa todos los campos para iniciar sesión.
+                        Completa todos los campos para iniciar sesión.
                     </div>
                 <?php elseif (($_GET['error'] ?? '') === 'bloqueado'): ?>
                     <!-- Error de seguridad: demasiados intentos fallidos seguidos -->
@@ -87,7 +87,7 @@
                         <!-- Ícono de advertencia (triángulo con exclamación) -->
                         <i class="material-icons left" style="font-size:1.2rem;">warning</i>
                         <!-- Mensaje de error informando al usuario que las credenciales son incorrectas -->
-                        Credenciales incorrectas. Por favor, intenta nuevamente.
+                        Credenciales incorrectas. Verifica tu usuario y contraseña e intenta de nuevo.
                     </div>
                 <?php endif; ?>
             <?php

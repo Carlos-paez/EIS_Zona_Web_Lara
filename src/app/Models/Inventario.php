@@ -88,7 +88,7 @@ class Inventario extends Model
     {
         $stock = $this->sanitizeInt($stock);
         if ($stock < 0) {
-            throw new \InvalidArgumentException('El stock no puede ser negativo');
+            throw new \InvalidArgumentException('El stock no puede ser negativo.');
         }
         $this->stock = $stock;
     }
@@ -102,7 +102,7 @@ class Inventario extends Model
     {
         $stockMinimo = $this->sanitizeInt($stockMinimo);
         if ($stockMinimo < 1) {
-            throw new \InvalidArgumentException('El stock mínimo debe ser al menos 1');
+            throw new \InvalidArgumentException('El stock mínimo debe ser al menos 1.');
         }
         $this->stockMinimo = $stockMinimo;
     }
@@ -116,7 +116,7 @@ class Inventario extends Model
     {
         $precioCompra = $this->sanitizeFloat($precioCompra);
         if ($precioCompra < 0.0) {
-            throw new \InvalidArgumentException('El costo de compra no puede ser negativo');
+            throw new \InvalidArgumentException('El costo de compra no puede ser negativo.');
         }
         $this->precioCompra = $precioCompra;
     }
@@ -184,7 +184,7 @@ class Inventario extends Model
         $this->setDescripcion($descripcion);
 
         if (!$this->existeCategoria($this->fkCategoria)) {
-            throw new \InvalidArgumentException('La categoría seleccionada no existe');
+            throw new \InvalidArgumentException('La categoría seleccionada no existe.');
         }
 
         $sql = "INSERT INTO productos (codigo, nombre, descripcion, stock, stock_minimo, precio_compra, precio_venta, fk_categoria, fecha_creacion, fecha_actualizacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), CURDATE())";
@@ -268,7 +268,7 @@ class Inventario extends Model
         $this->setDescripcion($descripcion);
 
         if (!$this->existeCategoria($this->fkCategoria)) {
-            throw new \InvalidArgumentException('La categoría seleccionada no existe');
+            throw new \InvalidArgumentException('La categoría seleccionada no existe.');
         }
 
         $sql = "UPDATE productos SET codigo = ?, nombre = ?, descripcion = ?, stock = ?, stock_minimo = ?, precio_compra = ?, precio_venta = ?, fk_categoria = ?, fecha_actualizacion = CURDATE() WHERE id = ?";

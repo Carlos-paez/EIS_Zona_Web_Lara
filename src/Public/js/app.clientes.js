@@ -11,7 +11,7 @@ $(function () {
                 $('#kpi-total').text(r.data.total);
             },
             error: function () {
-                EIS.toast('Error al cargar indicadores', 'red', 'error');
+                EIS.toast('No se pudieron cargar los indicadores. Intenta de nuevo.', 'red', 'error');
             }
         });
     }
@@ -57,7 +57,7 @@ $(function () {
             EIS.datatableRefresh('#tabla-clientes');
         },
         error: function () {
-            EIS.toast('Error al cargar clientes', 'red', 'error');
+            EIS.toast('No se pudieron cargar los clientes. Intenta de nuevo.', 'red', 'error');
         }
         });
     }
@@ -87,7 +87,7 @@ $(function () {
             type: 'GET',
             dataType: 'json',
             success: function (r) {
-                if (!r.success) { EIS.toast(r.error || 'Error al cargar', 'red', 'error'); return; }
+                if (!r.success) { EIS.toast(r.error || 'No se pudieron cargar los datos. Intenta de nuevo.', 'red', 'error'); return; }
                 EIS.limpiarErroresFormulario('#form-cliente');
                 var c = r.data;
                 $('#cliente-id').val(c.id);
@@ -101,7 +101,7 @@ $(function () {
                 $('#modal-cliente').modal('open');
             },
             error: function () {
-                EIS.toast('Error de conexión', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             }
         });
     });
@@ -132,7 +132,7 @@ $(function () {
                 }
             },
             error: function () {
-                EIS.toast('Error de conexión', 'red', 'error');
+                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
             }
         });
     });
@@ -152,11 +152,11 @@ $(function () {
                         refrescarKPI();
                         refrescarTabla();
                     } else {
-                        EIS.toast(r.error || 'Error al eliminar', 'red', 'error');
+                        EIS.toast(r.error || 'No se pudo eliminar. Intenta de nuevo.', 'red', 'error');
                     }
                 },
                 error: function () {
-                    EIS.toast('Error de conexión', 'red', 'error');
+                    EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
                 }
             });
         }

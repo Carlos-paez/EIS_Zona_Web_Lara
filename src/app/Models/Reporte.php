@@ -149,7 +149,7 @@ class Reporte extends Model
     public function consultar(string $tipo, string $desde, string $hasta, array $filtros = []): array
     {
         if (!array_key_exists($tipo, self::TIPOS)) {
-            throw new \InvalidArgumentException('Tipo de reporte no válido');
+            throw new \InvalidArgumentException('El tipo de reporte no es válido.');
         }
 
         return match ($tipo) {

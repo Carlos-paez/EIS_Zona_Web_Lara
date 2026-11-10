@@ -46,18 +46,18 @@ class RolController extends BaseController
                 'guardarPermisos' => $this->guardarPermisos(),
                 'usuarios'        => $this->usuarios(),
                 'asignarRol'      => $this->asignarRol(),
-                default           => $this->jsonError('Acción no válida', null, 400),
+                default           => $this->jsonError('La acción solicitada no es válida.', null, 400),
             };
         } catch (ValidationException $e) {
             $this->jsonValidationException($e);
         } catch (\PDOException $e) {
             Logger::error($e, 'Roles - consulta SQL');
-            $this->jsonError('Error de base de datos', null, 500);
+            $this->jsonError('No se pudo conectar con la base de datos. Intenta de nuevo.', null, 500);
         } catch (\InvalidArgumentException $e) {
             $this->jsonError($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             Logger::error($e, 'Roles');
-            $this->jsonError('Error interno del servidor', null, 500);
+            $this->jsonError('Ocurrió un error interno. Intenta de nuevo.', null, 500);
         }
     }
 
@@ -75,14 +75,14 @@ class RolController extends BaseController
         if ($rol) {
             $this->jsonSuccess($rol);
         } else {
-            $this->jsonError('Rol no encontrado', null, 404);
+            $this->jsonError('No se encontró el rol.', null, 404);
         }
     }
 
     private function crear(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -96,7 +96,7 @@ class RolController extends BaseController
         $this->set('nombre_rol', $nombre_rol)->set('descripcion', $descripcion);
 
         if ($this->model->existeNombreRol($nombre_rol)) {
-            $this->jsonError('Ya existe un rol con ese nombre', null, 400);
+            $this->jsonError('Ya existe un rol registrado con ese nombre.', null, 400);
             return;
         }
 
@@ -104,14 +104,14 @@ class RolController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Rol creado exitosamente');
         } else {
-            $this->jsonError('Error al crear el rol', null, 400);
+            $this->jsonError('No se pudo crear el rol. Intenta de nuevo.', null, 400);
         }
     }
 
     private function actualizar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -130,7 +130,7 @@ class RolController extends BaseController
             ->set('descripcion', $descripcion);
 
         if ($this->model->existeNombreRol($nombre_rol, $id)) {
-            $this->jsonError('Ya existe otro rol con ese nombre', null, 400);
+            $this->jsonError('Ya existe otro rol registrado con ese nombre.', null, 400);
             return;
         }
 
@@ -138,28 +138,28 @@ class RolController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Rol actualizado exitosamente');
         } else {
-            $this->jsonError('Error al actualizar el rol', null, 400);
+            $this->jsonError('No se pudo actualizar el rol. Intenta de nuevo.', null, 400);
         }
     }
 
     private function eliminar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
         $id = Validator::id($_POST['id'] ?? null, 'ID del rol');
         $this->set('id', $id);
         if ($id === 1) {
-            $this->jsonError('No se puede eliminar el rol de Administrador', null, 400);
+            $this->jsonError('No se puede eliminar el rol de Administrador.', null, 400);
             return;
         }
         $resultado = $this->model->eliminarRol($id);
         if ($resultado) {
             $this->jsonSuccess(null, 'Rol eliminado exitosamente');
         } else {
-            $this->jsonError('No se puede eliminar el rol porque tiene usuarios asignados', null, 400);
+            $this->jsonError('No se puede eliminar el rol porque tiene usuarios asignados.', null, 400);
         }
     }
 
@@ -180,7 +180,7 @@ class RolController extends BaseController
     private function guardarPermisos(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -197,7 +197,7 @@ class RolController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Permisos guardados exitosamente');
         } else {
-            $this->jsonError('Error al guardar permisos', null, 400);
+            $this->jsonError('No se pudieron guardar los permisos. Intenta de nuevo.', null, 400);
         }
     }
 
@@ -214,7 +214,7 @@ class RolController extends BaseController
     private function asignarRol(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->jsonError('Token de seguridad inválido', null, 400);
+            $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
@@ -222,14 +222,14 @@ class RolController extends BaseController
         $rol_id = Validator::id($_POST['rol_id'] ?? null, 'ID del rol');
         $this->set('usuario_id', $usuario_id)->set('rol_id', $rol_id);
         if ($rol_id === 1) {
-            $this->jsonError('No se puede asignar el rol de Administrador directamente', null, 400);
+            $this->jsonError('No se puede asignar el rol de Administrador directamente.', null, 400);
             return;
         }
         $resultado = $this->model->asignarRolAUsuario($usuario_id, $rol_id);
         if ($resultado) {
             $this->jsonSuccess(null, 'Rol asignado exitosamente');
         } else {
-            $this->jsonError('Error al asignar rol', null, 400);
+            $this->jsonError('No se pudo asignar el rol. Intenta de nuevo.', null, 400);
         }
     }
 }

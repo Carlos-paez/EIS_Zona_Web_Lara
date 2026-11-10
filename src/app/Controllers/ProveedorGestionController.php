@@ -42,18 +42,18 @@ class ProveedorGestionController extends BaseController
                 'actualizar' => $this->actualizar(),
                 'eliminar'   => $this->eliminar(),
                 'kpis'       => $this->kpis(),
-                default      => $this->jsonError('Acción no válida', null, 400),
+                default      => $this->jsonError('La acción solicitada no es válida.', null, 400),
             };
         } catch (ValidationException $e) {
             $this->jsonValidationException($e);
         } catch (\PDOException $e) {
             Logger::error($e, 'Proveedores (gestión) - consulta SQL');
-            $this->jsonError('Error de base de datos', null, 500);
+            $this->jsonError('No se pudo conectar con la base de datos. Intenta de nuevo.', null, 500);
         } catch (\InvalidArgumentException $e) {
             $this->jsonError($e->getMessage(), null, 400);
         } catch (\Exception $e) {
             Logger::error($e, 'Proveedores (gestión)');
-            $this->jsonError('Error interno del servidor', null, 500);
+            $this->jsonError('Ocurrió un error interno. Intenta de nuevo.', null, 500);
         }
     }
 
@@ -79,14 +79,14 @@ class ProveedorGestionController extends BaseController
         if ($proveedor) {
             $this->jsonSuccess($proveedor);
         } else {
-            $this->jsonError('Proveedor no encontrado', null, 404);
+            $this->jsonError('No se encontró el proveedor.', null, 404);
         }
     }
 
     private function crear(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -108,7 +108,7 @@ class ProveedorGestionController extends BaseController
             ->set('telefono', $telefono);
 
         if ($this->model->existeRif($rif)) {
-            $this->jsonError('Ya existe un proveedor con ese RIF', null, 400);
+            $this->jsonError('Ya existe un proveedor registrado con ese RIF.', null, 400);
             return;
         }
 
@@ -116,14 +116,14 @@ class ProveedorGestionController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Proveedor creado exitosamente');
         } else {
-            $this->jsonError('Error al crear el proveedor', null, 400);
+            $this->jsonError('No se pudo crear el proveedor. Intenta de nuevo.', null, 400);
         }
     }
 
     private function actualizar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -148,7 +148,7 @@ class ProveedorGestionController extends BaseController
             ->set('telefono', $telefono);
 
         if ($this->model->existeRif($rif, $id)) {
-            $this->jsonError('Ya existe otro proveedor con ese RIF', null, 400);
+            $this->jsonError('Ya existe otro proveedor registrado con ese RIF.', null, 400);
             return;
         }
 
@@ -156,14 +156,14 @@ class ProveedorGestionController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Proveedor actualizado exitosamente');
         } else {
-            $this->jsonError('Error al actualizar el proveedor', null, 400);
+            $this->jsonError('No se pudo actualizar el proveedor. Intenta de nuevo.', null, 400);
         }
     }
 
     private function eliminar(): void
     {
         if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
-            echo json_encode(['success' => false, 'error' => 'Token de seguridad inválido']);
+            echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
@@ -173,7 +173,7 @@ class ProveedorGestionController extends BaseController
         if ($resultado) {
             $this->jsonSuccess(null, 'Proveedor eliminado exitosamente');
         } else {
-            $this->jsonError('Error al eliminar el proveedor', null, 400);
+            $this->jsonError('No se pudo eliminar el proveedor. Intenta de nuevo.', null, 400);
         }
     }
 }
