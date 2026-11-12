@@ -521,13 +521,57 @@
         .manual-figure > a { transition: none; }
     }
 
-    /* ===== Exportación a PDF (impresión) =====
-       Reproduce el manual tal como se ve en pantalla: se oculta el armazón
-       del sistema, se fija la paleta clara y se evitan cortes dentro de
-       pasos, avisos, figuras y filas de tabla. */
+    /* Elementos que solo existen en el PDF */
+    .print-cover,
+    .print-toc-note,
+    .print-legend { display: none; }
+
+    /* ===== Exportación a PDF =====
+       Maqueta de documento: portada propia, índice legible y un módulo por
+       página, con figuras, tablas y avisos preparados para impresión. */
     @page {
         size: A4 portrait;
-        margin: 12mm 11mm 14mm;
+        margin: 14mm 13mm 18mm;
+
+        /* Encabezado y numeración en los márgenes: nunca tapan el contenido */
+        @top-left {
+            content: "EIS System · Zona Web Lara";
+            vertical-align: bottom;
+            padding-bottom: 2.5mm;
+            font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+            font-size: 7.5px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #9ca3af;
+        }
+        @top-right {
+            content: "Manual de Usuario · v1.2";
+            vertical-align: bottom;
+            padding-bottom: 2.5mm;
+            text-align: right;
+            font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+            font-size: 7.5px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #9ca3af;
+        }
+        @bottom-right {
+            content: "Página " counter(page) " de " counter(pages);
+            vertical-align: top;
+            padding-top: 2.5mm;
+            text-align: right;
+            font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+            font-size: 8px;
+            letter-spacing: 0.06em;
+            color: #6b7280;
+        }
+    }
+
+    /* La portada va limpia, sin encabezado ni numeración */
+    @page :first {
+        @top-left { content: none; }
+        @top-right { content: none; }
+        @bottom-right { content: none; }
     }
 
     @media print {
@@ -543,7 +587,7 @@
             --info: #1e88e5;
             --bg: #ffffff;
             --surface: #ffffff;
-            --surface-hover: #f5f7fa;
+            --surface-hover: #f8fafc;
             --text: #1f2937;
             --text-muted: #6b7280;
             --text-light: #9ca3af;
@@ -564,13 +608,13 @@
         }
         body { margin: 0 !important; orphans: 2; widows: 2; }
 
-        /* Fuera el menú lateral, la barra superior y los controles de pantalla */
+        /* Fuera el armazón del sistema y los controles de pantalla */
         #slide-out,
         header,
         #backToTop,
         .sidenav-overlay,
         .manual-search,
-        .manual-hero-cta,
+        .manual-hero,
         .manual-figure .fig-open,
         .manual-back,
         .manual-toc-empty { display: none !important; }
@@ -583,49 +627,394 @@
             max-width: none !important;
         }
 
-        .manual-hero { box-shadow: none !important; break-inside: avoid; }
-        .manual-quickstart,
-        .manual-toc { break-inside: avoid; }
+        /* ---------- Portada del PDF ---------- */
+        .print-cover {
+            display: flex !important;
+            flex-direction: column;
+            height: 256mm;
+            break-after: page;
+            page-break-after: always;
+        }
+        .print-cover-band {
+            position: relative;
+            overflow: hidden;
+            padding: 20mm 16mm 15mm;
+            border-radius: 14px;
+            color: #fff;
+            background: linear-gradient(135deg, #283593 0%, #3949ab 52%, #7c4dff 135%);
+        }
+        .print-cover-band::before,
+        .print-cover-band::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.09);
+        }
+        .print-cover-band::before { width: 250px; height: 250px; right: -85px; top: -115px; }
+        .print-cover-band::after { width: 170px; height: 170px; right: 55px; bottom: -120px; }
+        .print-cover-logo {
+            position: relative;
+            z-index: 1;
+            display: inline-grid;
+            place-items: center;
+            width: 46px;
+            height: 46px;
+            margin-bottom: 13mm;
+            border-radius: 13px;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .print-cover-logo i { font-size: 26px; }
+        .print-cover-tag {
+            position: relative;
+            z-index: 1;
+            display: block;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            opacity: 0.85;
+        }
+        .print-cover-band h1 {
+            position: relative;
+            z-index: 1;
+            margin: 6px 0 0;
+            font-size: 40px;
+            font-weight: 800;
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+        }
+        .print-cover-band p {
+            position: relative;
+            z-index: 1;
+            margin: 10px 0 0;
+            max-width: 108mm;
+            font-size: 12px;
+            line-height: 1.55;
+            opacity: 0.92;
+        }
+        .print-cover-body {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 9mm;
+            padding: 11mm 4mm 9mm;
+        }
+        .print-cover-meta {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin: 0;
+        }
+        .print-cover-meta div {
+            padding: 9px 10px;
+            border: 1px solid #e5e7eb;
+            border-top: 3px solid #3949ab;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        .print-cover-meta strong {
+            display: block;
+            font-size: 8px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #6b7280;
+        }
+        .print-cover-meta span { display: block; margin-top: 3px; font-size: 13px; font-weight: 700; color: #1f2937; }
+        .print-cover-section-title {
+            margin: 0 0 8px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: #3949ab;
+        }
+        .print-cover-list {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 7px 20px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .print-cover-list li {
+            position: relative;
+            padding-left: 16px;
+            font-size: 11.5px;
+            line-height: 1.5;
+            color: #374151;
+        }
+        .print-cover-list li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #7c4dff;
+        }
+        .print-cover-areas {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 7px 16px;
+        }
+        .print-cover-areas div {
+            padding: 7px 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fbfcff;
+        }
+        .print-cover-areas strong { display: block; font-size: 10.5px; color: #283593; }
+        .print-cover-areas span { display: block; margin-top: 2px; font-size: 9.5px; line-height: 1.4; color: #6b7280; }
+        .print-cover-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5mm 4mm 0;
+            border-top: 1px solid #e5e7eb;
+            font-size: 8.5px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #9ca3af;
+        }
 
-        /* El buscador no debe recortar el índice en el PDF */
-        .manual-toc-item { display: flex !important; }
+        /* ---------- Arranque rápido e índice ---------- */
+        .manual-quickstart-label {
+            margin: 0 0 7px;
+            font-size: 9px;
+            letter-spacing: 0.14em;
+            break-after: avoid;
+        }
+        .manual-quickstart {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin: 0 0 10mm;
+            break-inside: avoid;
+        }
+        .qs-card {
+            gap: 8px;
+            padding: 9px 11px;
+            border: 1px solid #e5e7eb;
+            border-radius: 9px;
+            background: #f8fafc;
+            box-shadow: none !important;
+            break-inside: avoid;
+        }
+        .qs-num { flex-basis: 22px; width: 22px; height: 22px; border-radius: 7px; font-size: 10px; }
+        .qs-card strong { font-size: 11.5px; }
+        .qs-card span { font-size: 10px; }
 
-        /* Las secciones fluyen entre páginas sin recortes */
+        .manual-toc {
+            padding: 12px 14px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: none !important;
+            break-inside: avoid;
+        }
+        .manual-toc .card-content { padding: 0 !important; }
+        .manual-toc-head { margin-bottom: 6px; }
+        .manual-toc-head .card-title { font-size: 14px; }
+        .manual-toc-grid {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 0 20px;
+        }
+        .manual-toc-item {
+            display: flex !important;
+            align-items: flex-start;
+            gap: 9px;
+            padding: 5px 0;
+            border: 0 !important;
+            border-bottom: 1px solid #f1f3f7 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            break-inside: avoid;
+        }
+        .manual-toc-item:hover,
+        .manual-toc-item:focus { transform: none; box-shadow: none; }
+        .toc-badge { flex-basis: 24px; width: 24px; height: 24px; border-radius: 7px; }
+        .toc-badge i { font-size: 14px; }
+        .toc-num { font-size: 7.5px; }
+        .manual-toc-item strong { font-size: 10.5px; }
+        .manual-toc-item small { font-size: 9px; }
+
+        /* Nota de uso bajo el índice */
+        .print-toc-note {
+            display: block !important;
+            margin-top: 8mm;
+            padding: 9px 12px;
+            border: 1px solid #e0e7ff;
+            border-left: 4px solid #3949ab;
+            border-radius: 8px;
+            background: #f7f9ff;
+            break-inside: avoid;
+        }
+        .print-toc-note strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 9px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #283593;
+        }
+        .print-toc-note ul { margin: 0; padding-left: 14px; }
+        .print-toc-note li { font-size: 10px; line-height: 1.55; color: #4b5563; }
+
+        /* Leyenda de estados bajo la nota de uso */
+        .print-legend {
+            display: block !important;
+            margin-top: 5mm;
+            padding: 9px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fcfcfe;
+            break-inside: avoid;
+        }
+        .print-legend strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 9px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #283593;
+        }
+        .print-legend ul {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 18px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .print-legend li { display: flex; align-items: center; gap: 5px; font-size: 9.5px; color: #4b5563; }
+        .print-legend .manual-chip { padding: 1px 6px; font-size: 7.5px; }
+
+        /* ---------- Módulos: uno por página ---------- */
         .manual-section {
             overflow: visible !important;
+            margin: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
             box-shadow: none !important;
-            border: 1px solid var(--border-light) !important;
-            break-inside: auto;
+            break-before: page;
+            page-break-before: always;
         }
-        .manual-section .card-content { padding: 0.85rem 0.95rem 1rem; }
+        .manual-section .card-content { padding: 0 !important; }
+        .manual-section-head {
+            gap: 10px;
+            padding: 9px 12px;
+            border: 1px solid #e0e7ff;
+            border-left: 4px solid #3949ab;
+            border-radius: 9px;
+            background: linear-gradient(135deg, #eef2ff 0%, #f7f5ff 100%);
+            break-after: avoid;
+        }
+        .manual-section-icon {
+            flex-basis: 34px;
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+        }
+        .manual-section-icon i { font-size: 19px; }
+        .manual-kicker { font-size: 7.5px; letter-spacing: 0.16em; }
+        .manual-section-head h3 { font-size: 15px; }
+        .manual-lead {
+            margin: 6px 0 9px;
+            max-width: none;
+            font-size: 10.5px;
+            line-height: 1.5;
+            break-after: avoid;
+        }
 
-        .manual-section-head,
-        .manual-subtitle { break-after: avoid; }
-        .manual-step,
-        .manual-tip,
-        .manual-warn,
-        .manual-box,
-        .manual-figure,
-        .manual-split,
-        .manual-grid,
-        .qs-card { break-inside: avoid; }
+        .manual-subtitle { margin: 10px 0 5px; font-size: 11.5px; break-after: avoid; }
+        .manual-subtitle i { flex-basis: 20px; width: 20px; height: 20px; border-radius: 5px; font-size: 12px; }
+
+        .manual-steps { gap: 4px; }
+        .manual-step {
+            gap: 7px;
+            padding: 5px 8px;
+            border: 1px solid #e8ecf3;
+            border-radius: 6px;
+            background: #f9fafc;
+            font-size: 10.5px;
+            line-height: 1.45;
+            break-inside: avoid;
+        }
+        .manual-step .step-num { flex-basis: 18px; width: 18px; height: 18px; font-size: 8px; }
 
         .manual-split {
-            grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) !important;
-            gap: 0.6rem;
+            grid-template-columns: minmax(0, 1.06fr) minmax(0, 1fr) !important;
+            gap: 10px;
+            margin: 5px 0 8px;
+            break-inside: avoid;
         }
 
-        .manual-figure { margin: 0.35rem 0 0.55rem; }
-        .manual-figure > a { box-shadow: none !important; }
-        .manual-figure figcaption { font-size: 0.66rem; }
+        /* Figuras con marco fino y pie discreto */
+        .manual-figure { margin: 4px 0 9px; break-inside: avoid; }
+        .manual-figure > a {
+            border: 1px solid #dbe1ea !important;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: none !important;
+        }
+        .manual-figure img { border-radius: 7px; }
+        .manual-figure figcaption { margin-top: 4px; font-size: 8.5px; line-height: 1.4; }
+        .manual-figure .fig-num { padding: 1px 5px; font-size: 7.5px; }
 
-        /* Tablas: encabezado repetido y filas sin cortes */
-        .manual-table { overflow: visible !important; break-inside: auto; }
-        .manual-table table { width: 100% !important; min-width: 0 !important; }
-        .manual-table thead { display: table-header-group; }
+        /* Avisos y cajas */
+        .manual-tip,
+        .manual-warn {
+            gap: 7px;
+            margin-top: 5px;
+            padding: 6px 9px;
+            border-radius: 6px;
+            font-size: 10px;
+            line-height: 1.45;
+            break-inside: avoid;
+        }
+        .manual-tip strong,
+        .manual-warn .callout-title { font-size: 8px; }
+
+        .manual-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px;
+            margin: 6px 0 8px;
+        }
+        .manual-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .manual-box { padding: 6px 9px; border-radius: 6px; break-inside: avoid; }
+        .manual-box strong { font-size: 10.5px; }
+        .manual-box span { font-size: 9.5px; }
+
+        /* Tablas: encabezado repetido, filas alternas y sin cortes */
+        .manual-table {
+            overflow: visible !important;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            break-inside: auto;
+        }
+        .manual-table table { width: 100% !important; min-width: 0 !important; border-collapse: collapse; }
+        .manual-table thead { display: table-header-group; background: #eef2ff !important; }
+        .manual-table th {
+            padding: 5px 7px !important;
+            border-bottom: 1px solid #c7d2fe !important;
+            color: #283593 !important;
+            font-size: 8px !important;
+            letter-spacing: 0.08em;
+            text-align: left;
+        }
+        .manual-table td {
+            padding: 5px 7px !important;
+            border-bottom: 1px solid #f1f3f7 !important;
+            color: #374151;
+            font-size: 9.5px !important;
+            line-height: 1.4;
+        }
+        .manual-table tbody tr:nth-child(even) td { background: #fafbff !important; }
         .manual-table tr { break-inside: avoid; }
-        .manual-table th,
-        .manual-table td { padding: 0.34rem 0.42rem; font-size: 0.68rem; }
 
         /* Refuerzo de color aunque el navegador imprima desde el modo oscuro */
         html[data-theme="dark"] .manual-tip { background: #e8f1fb !important; }
@@ -635,20 +1024,35 @@
         html[data-theme="dark"] .manual-chip.ok { background: #e8f5e9 !important; border-color: #c8e6c9 !important; color: #1b5e20 !important; }
         html[data-theme="dark"] .manual-chip.bad { background: #ffebee !important; border-color: #ffcdd2 !important; color: #b71c1c !important; }
         html[data-theme="dark"] .manual-chip.warn { background: #fff3e0 !important; border-color: #ffe0b2 !important; color: #e65100 !important; }
-        html[data-theme="dark"] .manual-box { background: var(--surface) !important; }
+        html[data-theme="dark"] .manual-box { background: #ffffff !important; }
         html[data-theme="dark"] .manual-step .step-num,
-        html[data-theme="dark"] .qs-num { background: var(--primary) !important; color: #fff !important; }
+        html[data-theme="dark"] .qs-num { background: #3949ab !important; color: #fff !important; }
         html[data-theme="dark"] .manual-kicker,
         html[data-theme="dark"] .manual-toc-head .card-title i,
         html[data-theme="dark"] .toc-badge,
         html[data-theme="dark"] .manual-subtitle i,
         html[data-theme="dark"] .manual-box strong i,
-        html[data-theme="dark"] .manual-table th,
-        html[data-theme="dark"] .manual-figure .fig-num,
-        html[data-theme="dark"] .manual-figure .fig-open { color: var(--primary) !important; }
+        html[data-theme="dark"] .manual-figure .fig-num { color: #3949ab !important; }
         html[data-theme="dark"] .manual-section-icon { color: #fff !important; }
+        html[data-theme="dark"] .manual-section-head { background: linear-gradient(135deg, #eef2ff 0%, #f7f5ff 100%) !important; }
+        html[data-theme="dark"] .manual-section-head h3,
+        html[data-theme="dark"] .manual-subtitle,
+        html[data-theme="dark"] .manual-box strong { color: #1f2937 !important; }
+        html[data-theme="dark"] .manual-lead,
+        html[data-theme="dark"] .manual-step,
+        html[data-theme="dark"] .manual-figure figcaption { color: #374151 !important; }
+        html[data-theme="dark"] .manual-step { background: #f9fafc !important; border-color: #e8ecf3 !important; }
+        html[data-theme="dark"] .manual-toc-item { background: transparent !important; color: #1f2937 !important; }
+        html[data-theme="dark"] .manual-toc-item small,
+        html[data-theme="dark"] .toc-num { color: #6b7280 !important; }
 
-        .manual-hero,
+        /* Colores exactos en portada, iconos, avisos, chips y tablas */
+        .print-cover-band,
+        .print-cover-meta div,
+        .print-cover-list li::before,
+        .print-cover-foot,
+        .print-toc-note,
+        .manual-section-head,
         .manual-section-icon,
         .manual-chip,
         .manual-tip,
@@ -658,12 +1062,54 @@
         .manual-toc-item,
         .toc-badge,
         .qs-card,
-        .qs-num {
+        .qs-num,
+        .manual-table thead,
+        .manual-table tbody tr:nth-child(even) td {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
     }
 </style>
+
+<!-- ===== PORTADA DEL PDF (solo impresión) ===== -->
+<section class="print-cover" aria-hidden="true">
+    <div class="print-cover-band">
+        <span class="print-cover-logo"><i class="material-icons">menu_book</i></span>
+        <span class="print-cover-tag">EIS System · Zona Web Lara</span>
+        <h1>Manual de<br>Usuario</h1>
+        <p>Guía visual paso a paso del Sistema de Gestión Integral: ventas, inventario, clientes, reportes y administración.</p>
+    </div>
+    <div class="print-cover-body">
+        <div class="print-cover-meta">
+            <div><strong>Versión</strong><span>1.2 · Nov 2026</span></div>
+            <div><strong>Módulos</strong><span>14</span></div>
+            <div><strong>Figuras</strong><span>29</span></div>
+            <div><strong>Lectura</strong><span>10 min</span></div>
+        </div>
+        <div>
+            <p class="print-cover-section-title">Qué encontrarás</p>
+            <ul class="print-cover-list">
+                <li>Un módulo por página, con su número e ilustración.</li>
+                <li>Pasos numerados para cada tarea habitual.</li>
+                <li>Consejos, advertencias y buenas prácticas de seguridad.</li>
+                <li>Tablas de referencia de estados, permisos y atajos.</li>
+            </ul>
+        </div>
+        <div>
+            <p class="print-cover-section-title">Áreas del sistema</p>
+            <div class="print-cover-areas">
+                <div><strong>Operación diaria</strong><span>Panel, ventas (POS) y control de ciber.</span></div>
+                <div><strong>Catálogo y stock</strong><span>Inventario, proveedores y órdenes de compra.</span></div>
+                <div><strong>Relación con clientes</strong><span>Clientes, asesoría legal y reportes.</span></div>
+                <div><strong>Administración</strong><span>Usuarios, roles, permisos y activos fijos.</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="print-cover-foot">
+        <span>Documento generado el <span class="print-date">—</span></span>
+        <span>Uso interno · EIS System</span>
+    </div>
+</section>
 
 <!-- ===== PORTADA ===== -->
 <div class="manual-hero">
@@ -681,7 +1127,7 @@
     <div class="manual-hero-actions">
         <a class="manual-hero-cta" href="#indice"><i class="material-icons">arrow_downward</i> Ver contenido</a>
         <button type="button" class="manual-hero-cta manual-hero-cta--ghost" id="manual-export-pdf"
-            title="Genera un PDF con el mismo diseño, contenido y distribución del manual"
+            title="Genera un PDF maquetado: portada, índice, un módulo por página y numeración"
             aria-label="Exportar el manual de usuario a PDF">
             <i class="material-icons">picture_as_pdf</i> Exportar PDF
         </button>
@@ -766,6 +1212,24 @@
         </div>
         <p class="manual-toc-empty" id="manual-toc-empty" hidden>No se encontró ningún módulo. Prueba con otra palabra.</p>
     </div>
+</div>
+
+<!-- ===== NOTA DE USO Y LEYENDA (solo impresión) ===== -->
+<div class="print-toc-note" aria-hidden="true">
+    <strong>Cómo usar este manual</strong>
+    <ul>
+        <li>Cada módulo empieza en una página nueva: localízalo por su número en el índice.</li>
+        <li>Las figuras numeradas muestran la pantalla real del sistema; los recuadros azules son consejos.</li>
+        <li>Los recuadros naranjas son advertencias que conviene leer antes de actuar.</li>
+    </ul>
+</div>
+<div class="print-legend" aria-hidden="true">
+    <strong>Convenciones de estado</strong>
+    <ul>
+        <li><span class="manual-chip ok">Disponible</span> estado correcto o acción completada.</li>
+        <li><span class="manual-chip warn">Atención</span> revisa antes de continuar.</li>
+        <li><span class="manual-chip bad">Crítico</span> riesgo de pérdida de datos o de bloquear una operación.</li>
+    </ul>
 </div>
 
 <!-- ===== 1. ACCESO Y NAVEGACIÓN ===== -->
@@ -1560,20 +2024,33 @@
     }
 
     /* ===== Exportar a PDF =====
-       Abre el diálogo de impresión con la hoja @media print del manual.
-       Así el PDF conserva el mismo diseño, contenido y distribución que
-       la pantalla, sin el menú lateral ni la barra del sistema. */
+       Abre el diálogo de impresión con la hoja @media print del manual:
+       portada propia, índice, un módulo por página y pie repetido. */
     var btn = document.getElementById('manual-export-pdf');
     if (!btn) return;
 
     var root = document.documentElement;
     var prevTheme = null;
 
+    /* Fecha del documento en la portada del PDF. */
+    function sellarFecha() {
+        var fecha;
+        try {
+            fecha = new Date().toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric' });
+        } catch (e) {
+            fecha = new Date().toLocaleDateString();
+        }
+        Array.prototype.forEach.call(document.querySelectorAll('.print-date'), function (el) {
+            el.textContent = fecha;
+        });
+    }
+
     function forceLightTheme() {
         if (prevTheme === null) {
             prevTheme = root.getAttribute('data-theme') || 'light';
         }
         root.setAttribute('data-theme', 'light');
+        sellarFecha();
     }
 
     function restoreTheme() {
