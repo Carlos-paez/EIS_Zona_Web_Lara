@@ -1,4 +1,4 @@
-var CACHE_NAME = 'eis-cache-v11';
+var CACHE_NAME = 'eis-cache-v12';
 
 var STATIC_ASSETS = [
   'Public/css/material-icons.css',
@@ -32,6 +32,8 @@ var STATIC_ASSETS = [
   'Public/js/app.reportes.js',
   'Public/js/app.activos.js',
   'Public/js/app.usuarios.js',
+  'Public/js/html2canvas.min.js',
+  'Public/js/jspdf.umd.min.js',
   'Public/fonts/MaterialIcons-Regular.ttf',
   'manifest.json',
   'Public/icons/icon-192.svg',

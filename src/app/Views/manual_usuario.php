@@ -2024,13 +2024,27 @@
     }
 
     /* ===== Exportar a PDF =====
-       Abre el diálogo de impresión con la hoja @media print del manual:
-       portada propia, índice, un módulo por página y pie repetido. */
+       Genera y descarga un PDF real, sin abrir el diálogo de impresión.
+       html2canvas dibuja cada bloque del manual y jsPDF lo compone en
+       páginas A4: portada, índice, un módulo por página, encabezado y
+       numeración. La maqueta reutiliza las reglas @media print. */
     var btn = document.getElementById('manual-export-pdf');
     if (!btn) return;
 
     var root = document.documentElement;
     var prevTheme = null;
+    var generando = false;
+
+    /* Medidas A4 (mm). El contenido de 184 mm equivale a 695 px a 96 dpi. */
+    var PDF_W = 210;
+    var PDF_H = 297;
+    var MARGEN = { top: 14, right: 13, bottom: 18, left: 13 };
+    var CONTENIDO_W_MM = PDF_W - MARGEN.left - MARGEN.right;
+    var CONTENIDO_H_MM = PDF_H - MARGEN.top - MARGEN.bottom;
+    var ANCHO_PX = Math.round(CONTENIDO_W_MM * 96 / 25.4);
+    var ALTO_PX = CONTENIDO_H_MM * 96 / 25.4;
+    var ESCALA = 2;
+    var CALIDAD_JPEG = 0.9;
 
     /* Fecha del documento en la portada del PDF. */
     function sellarFecha() {
@@ -2079,14 +2093,382 @@
         return Promise.all(pendientes);
     }
 
-    btn.addEventListener('click', function () {
-        forceLightTheme();
-        var limite = new Promise(function (resolve) { setTimeout(resolve, 2500); });
-        Promise.race([prepararImagenes(), limite]).then(function () {
-            window.print();
-            /* Si el navegador no dispara afterprint, el tema se restaura igual. */
-            setTimeout(restoreTheme, 800);
+    function conLimite(promesa, ms) {
+        return Promise.race([
+            promesa,
+            new Promise(function (resolve) { setTimeout(resolve, ms); })
+        ]);
+    }
+
+    function siguienteFrame() {
+        return new Promise(function (resolve) {
+            requestAnimationFrame(function () { requestAnimationFrame(resolve); });
         });
-    });
+    }
+
+    /* --- Aviso flotante con progreso --- */
+    function crearAviso() {
+        var aviso = document.createElement('div');
+        aviso.id = 'manual-pdf-aviso';
+        aviso.setAttribute('data-html2canvas-ignore', 'true');
+        aviso.style.cssText = 'position:fixed;top:0;right:0;bottom:0;left:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(15,23,42,.55);';
+        aviso.innerHTML =
+            '<div style="width:min(340px,92vw);padding:24px 26px;border-radius:16px;background:#fff;box-shadow:0 24px 60px rgba(15,23,42,.35);text-align:center;color:#1f2937;">' +
+                '<div class="preloader-wrapper small active" style="margin:0 auto 14px;">' +
+                    '<div class="spinner-layer spinner-blue-only">' +
+                        '<div class="circle-clipper left"><div class="circle"></div></div>' +
+                        '<div class="gap-patch"><div class="circle"></div></div>' +
+                        '<div class="circle-clipper right"><div class="circle"></div></div>' +
+                    '</div>' +
+                '</div>' +
+                '<strong style="display:block;font-size:1rem;">Generando PDF</strong>' +
+                '<p id="manual-pdf-estado" style="margin:6px 0 14px;font-size:.8rem;line-height:1.45;color:#6b7280;">Preparando el documento…</p>' +
+                '<div style="height:6px;border-radius:999px;background:#eef2ff;overflow:hidden;">' +
+                    '<div id="manual-pdf-barra" style="height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#3949ab,#7c4dff);transition:width .25s ease;"></div>' +
+                '</div>' +
+                '<p style="margin:10px 0 0;font-size:.7rem;color:#9ca3af;">No cierres esta pestaña</p>' +
+            '</div>';
+        document.body.appendChild(aviso);
+        return aviso;
+    }
+
+    function actualizarAviso(aviso, pct, texto) {
+        var barra = aviso.querySelector('#manual-pdf-barra');
+        var estado = aviso.querySelector('#manual-pdf-estado');
+        if (barra) barra.style.width = Math.max(0, Math.min(100, pct)) + '%';
+        if (estado && texto) estado.textContent = texto;
+    }
+
+    function quitarAviso(aviso) {
+        if (aviso && aviso.parentNode) aviso.parentNode.removeChild(aviso);
+    }
+
+    /* --- Convertir las reglas @media print en reglas de pantalla --- */
+    function inyectarEstilosImpresion() {
+        var css = '';
+        Array.prototype.forEach.call(document.styleSheets, function (hoja) {
+            var reglas;
+            try { reglas = hoja.cssRules; } catch (e) { return; }
+            if (!reglas) return;
+            Array.prototype.forEach.call(reglas, function (regla) {
+                if (regla.type !== 4 || !regla.media || !/print/i.test(regla.media.mediaText)) return;
+                Array.prototype.forEach.call(regla.cssRules, function (interna) {
+                    css += interna.cssText + '\n';
+                });
+            });
+        });
+
+        /* Ancho fijo de A4, sin el armazón del sistema y sin saltos de página. */
+        css += [
+            'html.manual-exporting body { overflow: visible !important; }',
+            'html.manual-exporting main,',
+            'html.manual-exporting main .container { width: ' + ANCHO_PX + 'px !important; max-width: ' + ANCHO_PX + 'px !important; margin: 0 !important; padding: 0 !important; }',
+            'html.manual-exporting .pdf-frontmatter { display: block !important; }',
+            'html.manual-exporting .print-cover,',
+            'html.manual-exporting .manual-section { break-before: auto !important; page-break-before: auto !important; break-after: auto !important; page-break-after: auto !important; }'
+        ].join('\n');
+
+        var estilo = document.createElement('style');
+        estilo.id = 'manual-pdf-estilos';
+        estilo.setAttribute('media', 'all');
+        estilo.textContent = css;
+        /* Al final del body: debe quedar después del <style> de la vista
+           para que la cascada sea la misma que en @media print. */
+        document.body.appendChild(estilo);
+        return estilo;
+    }
+
+    /* --- Agrupar arranque rápido + índice + nota + leyenda --- */
+    function agruparFrontmatter() {
+        var inicio = document.querySelector('.manual-quickstart-label');
+        var fin = document.querySelector('.print-legend');
+        if (!inicio || !fin || !inicio.parentNode) return null;
+        var caja = document.createElement('div');
+        caja.className = 'pdf-frontmatter';
+        inicio.parentNode.insertBefore(caja, inicio);
+        var nodo = inicio;
+        while (nodo) {
+            var siguiente = nodo.nextSibling;
+            caja.appendChild(nodo);
+            if (nodo === fin) break;
+            nodo = siguiente;
+        }
+        return caja;
+    }
+
+    function deshacerFrontmatter(caja) {
+        if (!caja || !caja.parentNode) return;
+        var padre = caja.parentNode;
+        while (caja.firstChild) padre.insertBefore(caja.firstChild, caja);
+        padre.removeChild(caja);
+    }
+
+    /* --- Paginación por límites seguros (sin partir pasos ni figuras) --- */
+    function puntosDeCorte(el, alto) {
+        var base = el.getBoundingClientRect().top;
+        var puntos = [alto];
+        var despuesEvitar = [];
+
+        Array.prototype.forEach.call(el.querySelectorAll('*'), function (nodo) {
+            var estilo = window.getComputedStyle(nodo);
+            var evitaDentro = estilo.breakInside === 'avoid' || estilo.pageBreakInside === 'avoid';
+            var evitaDespues = estilo.breakAfter === 'avoid' || estilo.pageBreakAfter === 'avoid';
+            var fondo = nodo.getBoundingClientRect().bottom - base;
+            if (fondo <= 8 || fondo >= alto - 2) return;
+            if (evitaDentro) {
+                /* Solo el bloque atómico exterior, no sus descendientes. */
+                var ancestro = nodo.parentNode;
+                var dentroDeAtomico = false;
+                while (ancestro && ancestro !== el) {
+                    var ea = window.getComputedStyle(ancestro);
+                    if (ea.breakInside === 'avoid' || ea.pageBreakInside === 'avoid') {
+                        dentroDeAtomico = true;
+                        break;
+                    }
+                    ancestro = ancestro.parentNode;
+                }
+                if (!dentroDeAtomico) puntos.push(fondo);
+            }
+            if (evitaDespues) despuesEvitar.push(fondo);
+        });
+
+        Array.prototype.forEach.call(el.children, function (hijo) {
+            var fondo = hijo.getBoundingClientRect().bottom - base;
+            if (fondo > 8 && fondo < alto - 2) puntos.push(fondo);
+        });
+
+        puntos = puntos.filter(function (p) {
+            return !despuesEvitar.some(function (d) { return Math.abs(d - p) <= 2; });
+        });
+        puntos.sort(function (a, b) { return a - b; });
+
+        var limpios = [];
+        puntos.forEach(function (p) {
+            if (!limpios.length || Math.abs(p - limpios[limpios.length - 1]) > 2) limpios.push(p);
+        });
+        return limpios;
+    }
+
+    function calcularPaginas(alto, cortes) {
+        var paginas = [];
+        var tope = 0;
+        var guarda = 0;
+        while (tope < alto - 1 && guarda++ < 80) {
+            var ideal = tope + ALTO_PX;
+            if (ideal >= alto - 1) {
+                paginas.push({ top: tope, alto: alto - tope });
+                break;
+            }
+            var elegido = -1;
+            for (var i = 0; i < cortes.length; i++) {
+                var p = cortes[i];
+                if (p <= tope + 1) continue;
+                if (p > ideal + 0.5) break;
+                elegido = p;
+            }
+            if (elegido <= tope + 1) elegido = ideal;
+            paginas.push({ top: tope, alto: elegido - tope });
+            tope = elegido;
+        }
+        if (!paginas.length) paginas.push({ top: 0, alto: alto });
+        return paginas;
+    }
+
+    /* --- Captura y composición --- */
+    function capturar(el) {
+        return html2canvas(el, {
+            scale: ESCALA,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            logging: false,
+            imageTimeout: 15000,
+            onclone: function (doc) {
+                Array.prototype.forEach.call(doc.querySelectorAll('.manual-figure img'), function (img) {
+                    img.loading = 'eager';
+                });
+            }
+        });
+    }
+
+    function recortar(canvas, pagina) {
+        var sy = Math.max(0, Math.round(pagina.top * ESCALA));
+        var sh = Math.round(pagina.alto * ESCALA);
+        if (sy + sh > canvas.height) sh = canvas.height - sy;
+        var salida = document.createElement('canvas');
+        salida.width = canvas.width;
+        salida.height = Math.max(1, sh);
+        var ctx = salida.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, salida.width, salida.height);
+        ctx.drawImage(canvas, 0, sy, canvas.width, sh, 0, 0, canvas.width, sh);
+        return salida;
+    }
+
+    function agregarPagina(pdf, canvas, pagina, esPortada) {
+        var recorte = recortar(canvas, pagina);
+        var altoMm = recorte.height / ESCALA * (CONTENIDO_W_MM / ANCHO_PX);
+        var anchoMm = CONTENIDO_W_MM;
+        var x = MARGEN.left;
+        var y = MARGEN.top;
+        if (esPortada && altoMm > CONTENIDO_H_MM) {
+            var factor = CONTENIDO_H_MM / altoMm;
+            altoMm = CONTENIDO_H_MM;
+            anchoMm = CONTENIDO_W_MM * factor;
+            x = (PDF_W - anchoMm) / 2;
+        }
+        pdf.addImage(recorte.toDataURL('image/jpeg', CALIDAD_JPEG), 'JPEG', x, y, anchoMm, altoMm, undefined, 'FAST');
+        recorte.width = 0;
+        recorte.height = 0;
+    }
+
+    function decorarPagina(pdf, numero, total) {
+        if (numero <= 1) return;
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(7);
+        pdf.setTextColor(156, 163, 175);
+        pdf.text('EIS SYSTEM · ZONA WEB LARA', MARGEN.left, 8.6, { charSpace: 0.5 });
+        pdf.text('MANUAL DE USUARIO · V1.2', PDF_W - MARGEN.right, 8.6, { align: 'right', charSpace: 0.5 });
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(107, 114, 128);
+        pdf.text('Página ' + numero + ' de ' + total, PDF_W - MARGEN.right, PDF_H - 8, { align: 'right' });
+    }
+
+    function libreriasListas() {
+        return typeof html2canvas === 'function' && window.jspdf && window.jspdf.jsPDF;
+    }
+
+    function esperarLibrerias(ms) {
+        if (libreriasListas()) return Promise.resolve();
+        return new Promise(function (resolve, reject) {
+            var inicio = Date.now();
+            var timer = setInterval(function () {
+                if (libreriasListas()) {
+                    clearInterval(timer);
+                    resolve();
+                } else if (Date.now() - inicio > ms) {
+                    clearInterval(timer);
+                    reject(new Error('No se pudieron cargar las librerías de PDF'));
+                }
+            }, 150);
+        });
+    }
+
+    /* --- Exportación completa --- */
+    function exportarManual() {
+        if (generando) return;
+
+        generando = true;
+        btn.disabled = true;
+        var aviso = crearAviso();
+        var estilo = null;
+        var frontmatter = null;
+        var scrollX = window.pageXOffset;
+        var scrollY = window.pageYOffset;
+        var restaurado = false;
+
+        function restaurar() {
+            if (restaurado) return;
+            restaurado = true;
+            if (estilo && estilo.parentNode) estilo.parentNode.removeChild(estilo);
+            deshacerFrontmatter(frontmatter);
+            root.classList.remove('manual-exporting');
+            restoreTheme();
+            quitarAviso(aviso);
+            btn.disabled = false;
+            generando = false;
+            window.scrollTo(scrollX, scrollY);
+        }
+
+        actualizarAviso(aviso, 2, 'Preparando el documento…');
+
+        esperarLibrerias(8000)
+            .then(function () {
+                forceLightTheme();
+                root.classList.add('manual-exporting');
+                window.scrollTo(0, 0);
+                actualizarAviso(aviso, 4, 'Preparando el documento…');
+                return conLimite(prepararImagenes(), 6000);
+            })
+            .then(function () {
+                return document.fonts && document.fonts.ready ? conLimite(document.fonts.ready, 4000) : null;
+            })
+            .then(function () {
+                estilo = inyectarEstilosImpresion();
+                frontmatter = agruparFrontmatter();
+                return siguienteFrame();
+            })
+            .then(function () {
+                var bloques = [];
+                var portada = document.querySelector('.print-cover');
+                if (portada) bloques.push({ el: portada, portada: true, etiqueta: 'la portada' });
+                if (frontmatter) bloques.push({ el: frontmatter, etiqueta: 'el índice' });
+                Array.prototype.forEach.call(document.querySelectorAll('.manual-section'), function (seccion, i) {
+                    var titulo = seccion.querySelector('.manual-section-head h3');
+                    bloques.push({ el: seccion, etiqueta: titulo ? titulo.textContent.trim() : ('el módulo ' + (i + 1)) });
+                });
+                if (!bloques.length) throw new Error('Sin contenido para exportar');
+
+                var total = 0;
+                bloques.forEach(function (bloque) {
+                    bloque.alto = bloque.el.getBoundingClientRect().height;
+                    if (bloque.portada) {
+                        bloque.paginas = [{ top: 0, alto: bloque.alto }];
+                    } else {
+                        bloque.paginas = calcularPaginas(bloque.alto, puntosDeCorte(bloque.el, bloque.alto));
+                    }
+                    total += bloque.paginas.length;
+                });
+
+                var jsPDF = window.jspdf.jsPDF;
+                var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+                pdf.setProperties({
+                    title: 'Manual de Usuario · EIS System',
+                    subject: 'Guía visual del Sistema de Gestión Integral',
+                    author: 'Zona Web Lara',
+                    creator: 'EIS System'
+                });
+
+                var dibujadas = 0;
+                var cadena = Promise.resolve();
+                bloques.forEach(function (bloque) {
+                    cadena = cadena.then(function () {
+                        actualizarAviso(aviso, 8 + Math.round(dibujadas / total * 86), 'Maquetando ' + bloque.etiqueta + '…');
+                        return capturar(bloque.el).then(function (canvas) {
+                            bloque.paginas.forEach(function (pagina) {
+                                agregarPagina(pdf, canvas, pagina, bloque.portada);
+                                dibujadas++;
+                                decorarPagina(pdf, dibujadas, total);
+                                if (dibujadas < total) pdf.addPage();
+                                actualizarAviso(aviso, 8 + Math.round(dibujadas / total * 86), 'Página ' + dibujadas + ' de ' + total + '…');
+                            });
+                            canvas.width = 0;
+                            canvas.height = 0;
+                            return siguienteFrame();
+                        });
+                    });
+                });
+
+                return cadena.then(function () {
+                    actualizarAviso(aviso, 98, 'Guardando el archivo…');
+                    pdf.save('Manual_Usuario_EIS_System.pdf');
+                });
+            })
+            .then(function () {
+                actualizarAviso(aviso, 100, 'PDF descargado');
+                if (window.EIS && EIS.toast) {
+                    EIS.toast('Manual exportado correctamente.', 'green', 'check_circle');
+                }
+                restaurar();
+            })
+            .catch(function (error) {
+                if (window.console && console.error) console.error('[Manual PDF]', error);
+                restaurar();
+                if (window.EIS && EIS.toast) {
+                    EIS.toast('No se pudo generar el PDF. Inténtalo de nuevo.', 'red', 'error');
+                }
+            });
+    }
+
+    btn.addEventListener('click', exportarManual);
 })();
 </script>

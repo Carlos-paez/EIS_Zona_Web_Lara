@@ -322,6 +322,12 @@
     <script src="Public/js/app.usuarios.js"></script>
     <?php endif; ?>
 
+    <!-- Manual de usuario: generación directa del PDF (librerías locales) -->
+    <?php if ($pagina === 'manual_usuario'): ?>
+    <script src="Public/js/html2canvas.min.js"></script>
+    <script src="Public/js/jspdf.umd.min.js"></script>
+    <?php endif; ?>
+
     <!-- Global 403 handler for AJAX requests -->
     <script>
     $(document).ajaxError(function(event, jqxhr) {
