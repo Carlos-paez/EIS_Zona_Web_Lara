@@ -77,6 +77,29 @@
     }
     .manual-hero-cta:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
     .manual-hero-cta i { font-size: 1rem; }
+    .manual-hero-actions {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .manual-hero-cta--ghost {
+        appearance: none;
+        -webkit-appearance: none;
+        border: 1px solid rgba(255, 255, 255, 0.55);
+        background: rgba(255, 255, 255, 0.16);
+        color: #fff;
+        font-family: inherit;
+        line-height: 1.2;
+        box-shadow: none;
+        cursor: pointer;
+    }
+    .manual-hero-cta--ghost:hover {
+        background: rgba(255, 255, 255, 0.28);
+        box-shadow: none;
+    }
 
     /* ===== Arranque rápido ===== */
     .manual-quickstart-label {
@@ -497,6 +520,149 @@
         .manual-hero-cta,
         .manual-figure > a { transition: none; }
     }
+
+    /* ===== Exportación a PDF (impresión) =====
+       Reproduce el manual tal como se ve en pantalla: se oculta el armazón
+       del sistema, se fija la paleta clara y se evitan cortes dentro de
+       pasos, avisos, figuras y filas de tabla. */
+    @page {
+        size: A4 portrait;
+        margin: 12mm 11mm 14mm;
+    }
+
+    @media print {
+        :root,
+        html[data-theme="dark"] {
+            --primary: #3949ab;
+            --primary-light: #5c6bc0;
+            --primary-dark: #283593;
+            --accent: #7c4dff;
+            --success: #43a047;
+            --warning: #fb8c00;
+            --danger: #e53935;
+            --info: #1e88e5;
+            --bg: #ffffff;
+            --surface: #ffffff;
+            --surface-hover: #f5f7fa;
+            --text: #1f2937;
+            --text-muted: #6b7280;
+            --text-light: #9ca3af;
+            --border: #d1d5db;
+            --border-light: #e5e7eb;
+            --shadow-xs: none;
+            --shadow-sm: none;
+            --shadow: none;
+            --shadow-lg: none;
+            --shadow-xl: none;
+        }
+
+        html,
+        body {
+            background: #fff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body { margin: 0 !important; orphans: 2; widows: 2; }
+
+        /* Fuera el menú lateral, la barra superior y los controles de pantalla */
+        #slide-out,
+        header,
+        #backToTop,
+        .sidenav-overlay,
+        .manual-search,
+        .manual-hero-cta,
+        .manual-figure .fig-open,
+        .manual-back,
+        .manual-toc-empty { display: none !important; }
+
+        main,
+        main .container {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: none !important;
+        }
+
+        .manual-hero { box-shadow: none !important; break-inside: avoid; }
+        .manual-quickstart,
+        .manual-toc { break-inside: avoid; }
+
+        /* El buscador no debe recortar el índice en el PDF */
+        .manual-toc-item { display: flex !important; }
+
+        /* Las secciones fluyen entre páginas sin recortes */
+        .manual-section {
+            overflow: visible !important;
+            box-shadow: none !important;
+            border: 1px solid var(--border-light) !important;
+            break-inside: auto;
+        }
+        .manual-section .card-content { padding: 0.85rem 0.95rem 1rem; }
+
+        .manual-section-head,
+        .manual-subtitle { break-after: avoid; }
+        .manual-step,
+        .manual-tip,
+        .manual-warn,
+        .manual-box,
+        .manual-figure,
+        .manual-split,
+        .manual-grid,
+        .qs-card { break-inside: avoid; }
+
+        .manual-split {
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) !important;
+            gap: 0.6rem;
+        }
+
+        .manual-figure { margin: 0.35rem 0 0.55rem; }
+        .manual-figure > a { box-shadow: none !important; }
+        .manual-figure figcaption { font-size: 0.66rem; }
+
+        /* Tablas: encabezado repetido y filas sin cortes */
+        .manual-table { overflow: visible !important; break-inside: auto; }
+        .manual-table table { width: 100% !important; min-width: 0 !important; }
+        .manual-table thead { display: table-header-group; }
+        .manual-table tr { break-inside: avoid; }
+        .manual-table th,
+        .manual-table td { padding: 0.34rem 0.42rem; font-size: 0.68rem; }
+
+        /* Refuerzo de color aunque el navegador imprima desde el modo oscuro */
+        html[data-theme="dark"] .manual-tip { background: #e8f1fb !important; }
+        html[data-theme="dark"] .manual-warn { background: #fff3e0 !important; }
+        html[data-theme="dark"] .manual-tip strong { color: #1565c0 !important; }
+        html[data-theme="dark"] .manual-warn .callout-title { color: #e65100 !important; }
+        html[data-theme="dark"] .manual-chip.ok { background: #e8f5e9 !important; border-color: #c8e6c9 !important; color: #1b5e20 !important; }
+        html[data-theme="dark"] .manual-chip.bad { background: #ffebee !important; border-color: #ffcdd2 !important; color: #b71c1c !important; }
+        html[data-theme="dark"] .manual-chip.warn { background: #fff3e0 !important; border-color: #ffe0b2 !important; color: #e65100 !important; }
+        html[data-theme="dark"] .manual-box { background: var(--surface) !important; }
+        html[data-theme="dark"] .manual-step .step-num,
+        html[data-theme="dark"] .qs-num { background: var(--primary) !important; color: #fff !important; }
+        html[data-theme="dark"] .manual-kicker,
+        html[data-theme="dark"] .manual-toc-head .card-title i,
+        html[data-theme="dark"] .toc-badge,
+        html[data-theme="dark"] .manual-subtitle i,
+        html[data-theme="dark"] .manual-box strong i,
+        html[data-theme="dark"] .manual-table th,
+        html[data-theme="dark"] .manual-figure .fig-num,
+        html[data-theme="dark"] .manual-figure .fig-open { color: var(--primary) !important; }
+        html[data-theme="dark"] .manual-section-icon { color: #fff !important; }
+
+        .manual-hero,
+        .manual-section-icon,
+        .manual-chip,
+        .manual-tip,
+        .manual-warn,
+        .manual-box,
+        .manual-step,
+        .manual-toc-item,
+        .toc-badge,
+        .qs-card,
+        .qs-num {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+    }
 </style>
 
 <!-- ===== PORTADA ===== -->
@@ -512,7 +678,14 @@
             <span class="manual-meta"><i class="material-icons">verified</i> Versión 1.2 · Nov 2026</span>
         </div>
     </div>
-    <a class="manual-hero-cta" href="#indice"><i class="material-icons">arrow_downward</i> Ver contenido</a>
+    <div class="manual-hero-actions">
+        <a class="manual-hero-cta" href="#indice"><i class="material-icons">arrow_downward</i> Ver contenido</a>
+        <button type="button" class="manual-hero-cta manual-hero-cta--ghost" id="manual-export-pdf"
+            title="Genera un PDF con el mismo diseño, contenido y distribución del manual"
+            aria-label="Exportar el manual de usuario a PDF">
+            <i class="material-icons">picture_as_pdf</i> Exportar PDF
+        </button>
+    </div>
 </div>
 
 <!-- ===== ARRANQUE RÁPIDO ===== -->
@@ -1369,19 +1542,74 @@
 
 <script>
 (function () {
+    /* ===== Buscador del índice ===== */
     var input = document.getElementById('manual-toc-search');
-    if (!input) return;
-    var items = Array.prototype.slice.call(document.querySelectorAll('.manual-toc-item'));
-    var empty = document.getElementById('manual-toc-empty');
-    input.addEventListener('input', function () {
-        var q = this.value.trim().toLowerCase();
-        var visible = 0;
-        items.forEach(function (item) {
-            var match = !q || item.textContent.toLowerCase().indexOf(q) !== -1;
-            item.style.display = match ? '' : 'none';
-            if (match) visible++;
+    if (input) {
+        var items = Array.prototype.slice.call(document.querySelectorAll('.manual-toc-item'));
+        var empty = document.getElementById('manual-toc-empty');
+        input.addEventListener('input', function () {
+            var q = this.value.trim().toLowerCase();
+            var visible = 0;
+            items.forEach(function (item) {
+                var match = !q || item.textContent.toLowerCase().indexOf(q) !== -1;
+                item.style.display = match ? '' : 'none';
+                if (match) visible++;
+            });
+            if (empty) empty.hidden = visible !== 0;
         });
-        if (empty) empty.hidden = visible !== 0;
+    }
+
+    /* ===== Exportar a PDF =====
+       Abre el diálogo de impresión con la hoja @media print del manual.
+       Así el PDF conserva el mismo diseño, contenido y distribución que
+       la pantalla, sin el menú lateral ni la barra del sistema. */
+    var btn = document.getElementById('manual-export-pdf');
+    if (!btn) return;
+
+    var root = document.documentElement;
+    var prevTheme = null;
+
+    function forceLightTheme() {
+        if (prevTheme === null) {
+            prevTheme = root.getAttribute('data-theme') || 'light';
+        }
+        root.setAttribute('data-theme', 'light');
+    }
+
+    function restoreTheme() {
+        if (prevTheme !== null) {
+            root.setAttribute('data-theme', prevTheme);
+            prevTheme = null;
+        }
+    }
+
+    /* Cubre también la impresión con Ctrl+P desde el modo oscuro. */
+    window.addEventListener('beforeprint', forceLightTheme);
+    window.addEventListener('afterprint', restoreTheme);
+
+    function prepararImagenes() {
+        var imagenes = Array.prototype.slice.call(document.querySelectorAll('.manual-figure img'));
+        var pendientes = [];
+        imagenes.forEach(function (img) {
+            img.loading = 'eager';
+            if (!img.complete) {
+                pendientes.push(new Promise(function (resolve) {
+                    img.addEventListener('load', resolve, { once: true });
+                    img.addEventListener('error', resolve, { once: true });
+                }));
+            }
+        });
+        return Promise.all(pendientes);
+    }
+
+    btn.addEventListener('click', function () {
+        forceLightTheme();
+        var limite = new Promise(function (resolve) { setTimeout(resolve, 2500); });
+        Promise.race([prepararImagenes(), limite]).then(function () {
+            window.print();
+            /* Si el navegador no dispara afterprint, el tema se restaura igual. */
+            setTimeout(restoreTheme, 800);
+        });
     });
 })();
 </script>
