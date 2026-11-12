@@ -237,7 +237,7 @@ $(function () {
             $('#cyberDireccion').val(c.direccion || '');
             $('#cyberTelefono').val(c.telefono || '');
             M.updateTextFields();
-            EIS.toast('Cliente encontrado: se precargaron sus datos', 'indigo', 'person');
+            EIS.toast('Cliente encontrado. Se precargaron sus datos.', 'indigo', 'person');
         }).fail(function () {
             EIS.toast('No se pudo buscar el cliente. Intenta de nuevo.', 'red', 'error');
         });

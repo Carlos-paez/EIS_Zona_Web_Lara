@@ -62,7 +62,7 @@ function mostrar_error_generico(int $codigo = 500): void
 
     if (es_peticion_ajax()) {
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'error' => 'Ocurrió un error inesperado. Por favor, intenta nuevamente.']);
+        echo json_encode(['success' => false, 'error' => 'Ocurrió un error inesperado. Intenta de nuevo.']);
         return;
     }
 
@@ -85,7 +85,7 @@ function mostrar_error_generico(int $codigo = 500): void
     <div class="card">
         <div class="icon">⚠️</div>
         <h1>Error interno</h1>
-        <p>Algo salió mal. Por favor, intenta nuevamente o contacta al administrador del sistema.</p>
+        <p>Algo salió mal. Intenta de nuevo o contacta al administrador del sistema.</p>
         <p><a href="?pagina=login">Volver al inicio</a></p>
     </div>
 </body>

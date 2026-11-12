@@ -199,7 +199,7 @@ class CiberController
         echo json_encode(
             $sesionId
                 ? ['success' => true, 'message' => 'Sesión iniciada correctamente', 'data' => ['sesion_id' => $sesionId]]
-                : ['success' => false, 'error' => 'No se pudo iniciar la sesión.']
+                : ['success' => false, 'error' => 'No se pudo iniciar la sesión. Intenta de nuevo.']
         );
     }
 
@@ -223,7 +223,7 @@ class CiberController
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Sesión finalizada correctamente']
-                : ['success' => false, 'error' => 'No se pudo finalizar la sesión.']
+                : ['success' => false, 'error' => 'No se pudo finalizar la sesión. Intenta de nuevo.']
         );
     }
 

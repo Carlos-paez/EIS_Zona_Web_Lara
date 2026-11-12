@@ -147,7 +147,7 @@ $(function () {
         $div.slideDown(300);
 
         if (!esPermitido) {
-            EIS.toast('Caso derivado a oficina oficial', 'red', 'gavel');
+            EIS.toast('Caso derivado a la Oficina de Atención Legal Oficial.', 'red', 'gavel');
         }
     }
 
@@ -201,8 +201,8 @@ $(function () {
             if (r.success) {
                 EIS.toast(
                     existeCliente
-                        ? 'Asesoría registrada. Información del cliente actualizada'
-                        : 'Asesoría registrada para ' + ciudadano,
+                        ? 'Asesoría registrada. Información del cliente actualizada.'
+                        : 'Asesoría registrada para ' + ciudadano + '.',
                     'green',
                     'how_to_reg'
                 );
@@ -261,7 +261,7 @@ $(function () {
         });
 
         if (previo.length > 0) {
-            EIS.toast('Cliente ya registrado: se actualizará su información de contacto', 'indigo', 'person');
+            EIS.toast('Cliente ya registrado. Se actualizará su información de contacto.', 'indigo', 'person');
         }
     });
 

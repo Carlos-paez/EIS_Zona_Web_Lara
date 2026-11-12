@@ -152,7 +152,7 @@ $(function () {
     $(document).on('click', '.btn-eliminar-proveedor', function () {
         var id = $(this).data('id');
         var nombre = $(this).data('nombre');
-        if (confirm('Eliminar el proveedor "' + nombre + '"?\nNota: No se puede eliminar si tiene solicitudes asociadas.')) {
+        if (confirm('¿Eliminar el proveedor "' + nombre + '"?\nNota: No se puede eliminar si tiene solicitudes asociadas.')) {
             $.ajax({
                 url: API + 'eliminar',
                 type: 'POST',

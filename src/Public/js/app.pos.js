@@ -143,7 +143,7 @@ $(function () {
 
         var nueva = item.cantidad + delta;
         if (nueva < 1) {
-            EIS.toast('Usa la X para eliminar el producto', 'orange', 'info');
+            EIS.toast('Usa la X para quitar el producto del carrito.', 'orange', 'info');
             return;
         }
         if (nueva > item.stock) {
@@ -333,7 +333,7 @@ $(function () {
         $.ajax({url: API + 'buscarCliente&cedula=' + encodeURIComponent(cedula), method: "GET", dataType: "json"}).done(function(r) {
             if (!r.success || !r.data) return;
             aplicarCliente(r.data);
-            EIS.toast('Cliente encontrado: se precargaron sus datos', 'indigo', 'person');
+            EIS.toast('Cliente encontrado. Se precargaron sus datos.', 'indigo', 'person');
         }).fail(function () {
             EIS.toast('No se pudo buscar el cliente. Intenta de nuevo.', 'red', 'error');
         });

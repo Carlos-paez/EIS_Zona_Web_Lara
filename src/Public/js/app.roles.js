@@ -93,7 +93,7 @@ $(function () {
                 row += '<td style="padding:0.75rem 1rem;"><div style="display:flex;align-items:center;gap:0.75rem;"><div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,' + color + ',' + color + 'cc);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:0.9rem;">' + inicial + '</div><div><div style="font-weight:600;font-size:0.9rem;">' + $('<span>').text(rol.nombre).html() + '</div></div></div></td>';
 
                 // Columna 2: Descripción del rol (oculto en móvil)
-                row += '<td class="hide-on-small-only" style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.85rem;">' + $('<span>').text(rol.descripcion || 'Sin descripci&oacute;n').html() + '</td>';
+                row += '<td class="hide-on-small-only" style="padding:0.75rem 1rem;color:var(--text-muted);font-size:0.85rem;">' + $('<span>').text(rol.descripcion || 'Sin descripción').html() + '</td>';
 
                 // Columna 3: Badge con cantidad de usuarios asignados
                 row += '<td style="padding:0.75rem 1rem;">' + usuariosBadge + '</td>';
@@ -323,7 +323,7 @@ $(function () {
         var id = $(this).data('id');       // ID del rol
         var nombre = $(this).data('nombre'); // Nombre del rol
         // Confirmación antes de eliminar
-        if (confirm('¿Est&aacute; seguro de eliminar el rol "' + nombre + '"?')) {
+        if (confirm('¿Eliminar el rol "' + nombre + '"?')) {
             // POST request para eliminar el rol
             $.ajax({
             url: API + 'eliminar',

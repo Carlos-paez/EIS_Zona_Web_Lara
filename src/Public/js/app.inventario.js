@@ -318,7 +318,7 @@ $(function () {
     $(document).on('click', '.btn-eliminar-cat', function () {
         var id = $(this).data('id');
         var nombre = $(this).data('nombre');
-        if (confirm('¿Está seguro de eliminar la categoría "' + nombre + '"?')) {
+        if (confirm('¿Eliminar la categoría "' + nombre + '"?')) {
             $.ajax({
                 url: API + 'eliminarCategoria',
                 type: 'POST',
@@ -396,7 +396,7 @@ $(function () {
         var id = $(this).data('id');           // ID del producto a eliminar
         var nombre = $(this).data('nombre');   // Nombre del producto (para confirmación)
         // Confirmación nativa del navegador antes de eliminar
-        if (confirm('¿Está seguro de eliminar el producto "' + nombre + '"?')) {
+        if (confirm('¿Eliminar el producto "' + nombre + '"?')) {
             // POST request para eliminar el producto
             $.ajax({
                 url: API + 'eliminar',

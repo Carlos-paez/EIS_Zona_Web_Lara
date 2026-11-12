@@ -215,7 +215,7 @@ $(function () {
     $(document).on('click', '.btn-eliminar-orden', function () {
         var id = $(this).data('id');
         var num = $(this).data('numero');
-        if (confirm('Eliminar la solicitud #' + num + '? También se eliminarán sus productos asociados.')) {
+        if (confirm('¿Eliminar la solicitud #' + num + '? También se eliminarán sus productos asociados.')) {
             $.ajax({
                 url: API + 'eliminar',
                 type: 'POST',
@@ -335,7 +335,7 @@ $(function () {
 
     $(document).on('click', '.btn-eliminar-linea', function () {
         var id = $(this).data('id');
-        if (confirm('Eliminar este producto de la solicitud?')) {
+        if (confirm('¿Eliminar este producto de la solicitud?')) {
             $.ajax({
             url: API + 'eliminarLinea',
             type: 'POST',
