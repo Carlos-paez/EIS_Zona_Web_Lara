@@ -36,10 +36,10 @@ class Reporte extends Model
      */
     public function catalogosFiltros(): array
     {
-        $categorias = $this->db->query("SELECT id, nombre_categoria FROM categoria WHERE activo = 1 ORDER BY nombre_categoria ASC")->fetchAll();
-        $proveedores = $this->db->query("SELECT id, nombre, rif FROM proveedores WHERE activo = 1 ORDER BY nombre ASC")->fetchAll();
-        $clientes = $this->db->query("SELECT id, CONCAT(nombre, ' ', apellido) AS cliente, cedula FROM clientes WHERE activo = 1 ORDER BY nombre ASC LIMIT 100")->fetchAll();
-        $estadosSolicitud = $this->db->query("SELECT id, status FROM status_seguimiento ORDER BY id ASC")->fetchAll();
+        $categorias = $this->getDb()->query("SELECT id, nombre_categoria FROM categoria WHERE activo = 1 ORDER BY nombre_categoria ASC")->fetchAll();
+        $proveedores = $this->getDb()->query("SELECT id, nombre, rif FROM proveedores WHERE activo = 1 ORDER BY nombre ASC")->fetchAll();
+        $clientes = $this->getDb()->query("SELECT id, CONCAT(nombre, ' ', apellido) AS cliente, cedula FROM clientes WHERE activo = 1 ORDER BY nombre ASC LIMIT 100")->fetchAll();
+        $estadosSolicitud = $this->getDb()->query("SELECT id, status FROM status_seguimiento ORDER BY id ASC")->fetchAll();
 
         return [
             'categorias'       => $categorias,
@@ -50,7 +50,7 @@ class Reporte extends Model
     }
     public function ventasMes(): float
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT COALESCE(SUM(lv.cantidad * lv.precio), 0) AS total
             FROM orden_de_venta ov
             JOIN lineas_venta lv ON lv.fk_orden = ov.id
@@ -66,7 +66,7 @@ class Reporte extends Model
      */
     public function productosActivos(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE activo = 1");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM productos WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -77,7 +77,7 @@ class Reporte extends Model
      */
     public function totalSesionesCyber(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM sesion_ciber");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM sesion_ciber");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -88,7 +88,7 @@ class Reporte extends Model
      */
     public function sesionesCyberActivas(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM sesion_ciber WHERE finalizada = 0");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM sesion_ciber WHERE finalizada = 0");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -99,7 +99,7 @@ class Reporte extends Model
      */
     public function totalSolicitudes(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM orden_abastecimiento WHERE activo = 1");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM orden_abastecimiento WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -110,7 +110,7 @@ class Reporte extends Model
      */
     public function solicitudesProcesadas(): int
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT COUNT(*) AS total
             FROM orden_abastecimiento oa
             JOIN status_seguimiento ss ON oa.fk_status = ss.id
@@ -193,7 +193,7 @@ class Reporte extends Model
             ORDER BY ov.fecha DESC, ov.id DESC
         ";
 
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v);
         }
@@ -247,7 +247,7 @@ class Reporte extends Model
             ORDER BY cantidad_vendida DESC
         ";
 
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v);
         }
@@ -299,7 +299,7 @@ class Reporte extends Model
             ORDER BY total_comprado DESC
         ";
 
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v);
         }
@@ -345,7 +345,7 @@ class Reporte extends Model
 
         $sql .= " ORDER BY p.nombre ASC";
 
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v);
         }
@@ -395,7 +395,7 @@ class Reporte extends Model
 
         $sql .= " ORDER BY (p.stock_minimo - p.stock) DESC, p.nombre ASC";
 
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v);
         }
@@ -445,7 +445,7 @@ class Reporte extends Model
             ORDER BY unidades DESC
         ";
 
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v);
         }
@@ -501,7 +501,7 @@ class Reporte extends Model
             ORDER BY oa.fecha DESC, oa.id DESC
         ";
 
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v);
         }
@@ -555,7 +555,7 @@ class Reporte extends Model
 
         $sql .= " ORDER BY oa.fecha DESC, oa.id DESC";
 
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v);
         }
@@ -582,7 +582,7 @@ class Reporte extends Model
 
     private function queryCajaDiaria(string $desde, string $hasta): array
     {
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT DATE(ov.fecha) AS fecha,
                    COUNT(DISTINCT ov.id) AS ordenes,
                    COALESCE(SUM(lv.cantidad), 0) AS articulos,
@@ -643,7 +643,7 @@ class Reporte extends Model
 
         $sql .= " ORDER BY sc.id DESC";
 
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v);
         }
@@ -702,7 +702,7 @@ class Reporte extends Model
             ORDER BY ganancia_total DESC, unidades_vendidas DESC
         ";
 
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v);
         }
@@ -750,7 +750,7 @@ class Reporte extends Model
 
         $sql .= " ORDER BY a.fecha DESC, a.id DESC";
 
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v);
         }

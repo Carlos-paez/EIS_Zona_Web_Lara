@@ -62,9 +62,9 @@ class Rol extends Model
     public function toArray(): array
     {
         return [
-            'id'          => $this->id,
-            'nombre_rol'  => $this->nombreRol,
-            'descripcion' => $this->descripcion,
+            'id'          => $this->getId(),
+            'nombre_rol'  => $this->getNombreRol(),
+            'descripcion' => $this->getDescripcion(),
         ];
     }
 
@@ -79,7 +79,7 @@ class Rol extends Model
 
     public function listarRoles(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT r.id, r.nombre_rol AS nombre, r.descripcion, r.created_at,
                    (SELECT COUNT(*) FROM rol_usuarios ru WHERE ru.fk_rol = r.id) AS total_usuarios
             FROM roles r WHERE r.activo = 1 ORDER BY r.nombre_rol
@@ -90,7 +90,7 @@ class Rol extends Model
     public function obtenerRolPorId(int $id): array|false
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT id, nombre_rol AS nombre, descripcion FROM roles WHERE id = ? AND activo = 1");
+        $stmt = $this->getDb()->prepare("SELECT id, nombre_rol AS nombre, descripcion FROM roles WHERE id = ? AND activo = 1");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch();
@@ -101,9 +101,9 @@ class Rol extends Model
         $this->setNombreRol($nombre_rol);
         $this->setDescripcion($descripcion);
         $sql = "INSERT INTO roles (nombre_rol, descripcion) VALUES (?, ?)";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(1, $this->nombreRol, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->descripcion, PDO::PARAM_STR);
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->bindValue(1, $this->getNombreRol(), PDO::PARAM_STR);
+        $stmt->bindValue(2, $this->getDescripcion(), PDO::PARAM_STR);
         return $stmt->execute();
     }
 
@@ -113,10 +113,10 @@ class Rol extends Model
         $this->setNombreRol($nombre_rol);
         $this->setDescripcion($descripcion);
         $sql = "UPDATE roles SET nombre_rol = ?, descripcion = ? WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(1, $this->nombreRol, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->descripcion, PDO::PARAM_STR);
-        $stmt->bindParam(3, $this->id, PDO::PARAM_INT);
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->bindValue(1, $this->getNombreRol(), PDO::PARAM_STR);
+        $stmt->bindValue(2, $this->getDescripcion(), PDO::PARAM_STR);
+        $stmt->bindValue(3, $this->getId(), PDO::PARAM_INT);
         return $stmt->execute();
     }
 
@@ -124,13 +124,13 @@ class Rol extends Model
     {
         $id = $this->sanitizeInt($id);
         $sql = "SELECT COUNT(*) AS total FROM rol_usuarios WHERE fk_rol = ?";
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         $fila = $stmt->fetch();
         if ((int)$fila['total'] > 0) return false;
 
-        $stmt = $this->db->prepare("UPDATE roles SET activo = 0 WHERE id = ?");
+        $stmt = $this->getDb()->prepare("UPDATE roles SET activo = 0 WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
@@ -146,7 +146,7 @@ class Rol extends Model
      */
     public function obtenerPermisos(): array
     {
-        $stmt = $this->db->query("SELECT id, permisos AS nombre FROM permisos ORDER BY permisos");
+        $stmt = $this->getDb()->query("SELECT id, permisos AS nombre FROM permisos ORDER BY permisos");
         $filas = $stmt->fetchAll();
 
         $salida = [];
@@ -165,7 +165,7 @@ class Rol extends Model
     {
         $rol_id = $this->sanitizeInt($rol_id);
         $sql = "SELECT fk_permiso AS permiso_id FROM permisos_rol WHERE fk_rol = ?";
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
         $stmt->execute();
         $rows = $stmt->fetchAll();
@@ -190,31 +190,31 @@ class Rol extends Model
         $permiso_ids = array_map('intval', $permiso_ids);
         $permiso_ids = array_values(array_unique($permiso_ids));
 
-        $stmtIds = $this->db->query("SELECT id FROM permisos");
+        $stmtIds = $this->getDb()->query("SELECT id FROM permisos");
         $permitidos = array_map('intval', array_column($stmtIds->fetchAll(), 'id'));
 
         $permiso_ids = array_values(array_filter($permiso_ids, function (int $pid) use ($permitidos) {
             return $pid > 0 && in_array($pid, $permitidos, true);
         }));
 
-        $this->db->beginTransaction();
+        $this->getDb()->beginTransaction();
         try {
-            $stmt = $this->db->prepare("DELETE FROM permisos_rol WHERE fk_rol = ?");
+            $stmt = $this->getDb()->prepare("DELETE FROM permisos_rol WHERE fk_rol = ?");
             $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
             $stmt->execute();
             if (!empty($permiso_ids)) {
                 $sql = "INSERT INTO permisos_rol (fk_rol, fk_permiso) VALUES (?, ?)";
-                $stmt = $this->db->prepare($sql);
+                $stmt = $this->getDb()->prepare($sql);
                 $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
                 foreach ($permiso_ids as $pid) {
                     $stmt->bindParam(2, $pid, PDO::PARAM_INT);
                     $stmt->execute();
                 }
             }
-            $this->db->commit();
+            $this->getDb()->commit();
             return true;
         } catch (\Exception $e) {
-            $this->db->rollBack();
+            $this->getDb()->rollBack();
             Logger::error($e, 'Rol - actualizar permisos');
             return false;
         }
@@ -222,13 +222,13 @@ class Rol extends Model
 
     public function obtenerRoles(): array
     {
-        $stmt = $this->db->query("SELECT id, nombre_rol AS nombre FROM roles WHERE activo = 1 ORDER BY nombre_rol");
+        $stmt = $this->getDb()->query("SELECT id, nombre_rol AS nombre FROM roles WHERE activo = 1 ORDER BY nombre_rol");
         return $stmt->fetchAll();
     }
 
     public function obtenerUsuarios(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT u.id, u.user_name AS username, u.nombre, u.apellido, u.email, u.estatus AS activo,
                    r.nombre_rol AS rol
             FROM usuarios u
@@ -257,7 +257,7 @@ class Rol extends Model
 
         // usuarios.fk_rol_usuario referencia rol_usuarios.id (no roles.id).
         // Buscamos el rol_usuarios.id correspondiente al rol seleccionado.
-        $stmt = $this->db->prepare("SELECT ru.id, r.nombre_rol AS rol FROM rol_usuarios ru JOIN roles r ON r.id = ru.fk_rol WHERE ru.fk_rol = ? LIMIT 1");
+        $stmt = $this->getDb()->prepare("SELECT ru.id, r.nombre_rol AS rol FROM rol_usuarios ru JOIN roles r ON r.id = ru.fk_rol WHERE ru.fk_rol = ? LIMIT 1");
         $stmt->bindParam(1, $rol_id, PDO::PARAM_INT);
         $stmt->execute();
         $rolUsuarios = $stmt->fetch();
@@ -268,7 +268,7 @@ class Rol extends Model
 
         $rolUsuariosId = (int)$rolUsuarios['id'];
 
-        $stmt = $this->db->prepare("UPDATE usuarios SET fk_rol_usuario = ? WHERE id = ?");
+        $stmt = $this->getDb()->prepare("UPDATE usuarios SET fk_rol_usuario = ? WHERE id = ?");
         $stmt->bindParam(1, $rolUsuariosId, PDO::PARAM_INT);
         $stmt->bindParam(2, $usuario_id, PDO::PARAM_INT);
         return $stmt->execute();
@@ -278,12 +278,12 @@ class Rol extends Model
     {
         $nombre = $this->sanitizeString($nombre);
         if ($excludeId > 0) {
-            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM roles WHERE nombre_rol = ? AND id != ?");
+            $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM roles WHERE nombre_rol = ? AND id != ?");
             $stmt->bindParam(1, $nombre, PDO::PARAM_STR);
             $stmt->bindParam(2, $excludeId, PDO::PARAM_INT);
             $stmt->execute();
         } else {
-            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM roles WHERE nombre_rol = ?");
+            $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM roles WHERE nombre_rol = ?");
             $stmt->bindParam(1, $nombre, PDO::PARAM_STR);
             $stmt->execute();
         }
@@ -292,13 +292,13 @@ class Rol extends Model
 
     public function totalRoles(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM roles WHERE activo = 1");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM roles WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
     public function totalPermisos(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM permisos");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM permisos");
         return (int)$stmt->fetch()['total'];
     }
 }

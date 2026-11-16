@@ -30,6 +30,8 @@
     <link rel="stylesheet" href="Public/css/jquery.toast.min.css">
     <!-- Estilos EIS de validación (jQuery Validation) y notificaciones (jQuery Toast) -->
     <link rel="stylesheet" href="Public/css/forms.eis.css">
+    <!-- Spinner de carga 3D Tower Loader -->
+    <link rel="stylesheet" href="Public/css/loader.css">
     <!-- Estilos del submenú de Solicitudes -->
     <style>
         .has-submenu .submenu-list {
@@ -233,6 +235,8 @@
 
     <!-- Core: funciones compartidas en todas las páginas (namespace EIS, utilidades) -->
     <script src="Public/js/app.core.js"></script>
+    <!-- AJAX: plantilla única para todas las peticiones de los módulos -->
+    <script src="Public/js/app.ajax.js"></script>
     <!-- Regex: patrones generados desde regex_validations.json (fuente única) -->
     <script src="Public/js/regex_validations.js"></script>
     <!-- Validate: validación de formularios del lado del cliente (lado navegador) -->

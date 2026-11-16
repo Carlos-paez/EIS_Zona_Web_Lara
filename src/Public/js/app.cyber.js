@@ -189,8 +189,8 @@ $(function () {
     // ================================================================
     function cargarEstado() {
         $.when(
-            $.getJSON(API + 'estaciones'),
-            $.getJSON(API + 'tarifas')
+            EIS.ajax.get(API + 'estaciones', { showServerError: false, showNetworkError: false }),
+            EIS.ajax.get(API + 'tarifas', { showServerError: false, showNetworkError: false })
         ).done(function (r1, r2) {
             if (r1[0] && r1[0].success) {
                 estaciones = r1[0].data || [];
@@ -227,19 +227,22 @@ $(function () {
     // ================================================================
     function buscarCliente(cedula) {
         if (!cedula) return;
-        $.ajax({url: API + 'buscarCliente&cedula=' + encodeURIComponent(cedula), method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success || !r.data) return;
-            var c = r.data;
-            var nombreCompleto = (c.nombre || '') + ((c.apellido || '') ? ' ' + c.apellido : '');
-            if (nombreCompleto) {
-                $('#cyberCiudadano').val(nombreCompleto);
-            }
-            $('#cyberDireccion').val(c.direccion || '');
-            $('#cyberTelefono').val(c.telefono || '');
-            M.updateTextFields();
-            EIS.toast('Cliente encontrado. Se precargaron sus datos.', 'indigo', 'person');
-        }).fail(function () {
-            EIS.toast('No se pudo buscar el cliente. Intenta de nuevo.', 'red', 'error');
+        EIS.ajax.get(API + 'buscarCliente', {
+            data: { cedula: cedula },
+            showServerError: false,
+            onSuccess: function (r) {
+                if (!r.data) return;
+                var c = r.data;
+                var nombreCompleto = (c.nombre || '') + ((c.apellido || '') ? ' ' + c.apellido : '');
+                if (nombreCompleto) {
+                    $('#cyberCiudadano').val(nombreCompleto);
+                }
+                $('#cyberDireccion').val(c.direccion || '');
+                $('#cyberTelefono').val(c.telefono || '');
+                M.updateTextFields();
+                EIS.toast('Cliente encontrado. Se precargaron sus datos.', 'indigo', 'person');
+            },
+            errorMessage: 'No se pudo buscar el cliente. Intenta de nuevo.'
         });
     }
 
@@ -258,22 +261,13 @@ $(function () {
             abrirModalIniciar(id);
         } else if (status === 'ocupada') {
             if (confirm('¿Finalizar la sesión en la estación ' + id + '?')) {
-                $.ajax({
-                    url: API + 'finalizar',
-                    type: 'POST',
-                    data: { sesion_id: sesionId },
-                    dataType: 'json',
-                    success: function (r) {
-                        if (r.success) {
-                            EIS.toast(r.message, 'green', 'stop_circle');
-                            cargarEstado();
-                        } else {
-                            EIS.toast(r.error || 'No se pudo finalizar la sesión. Intenta de nuevo.', 'red', 'error');
-                        }
+                EIS.ajax.post(API + 'finalizar', { sesion_id: sesionId }, {
+                    successToast: true,
+                    successIcon: 'stop_circle',
+                    onSuccess: function () {
+                        cargarEstado();
                     },
-                    error: function () {
-                        EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-                    }
+                    errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
                 });
             }
         }
@@ -310,25 +304,16 @@ $(function () {
         var $btn = $('#btnIniciarSesion');
         $btn.prop('disabled', true);
 
-        $.ajax({
-            url: API + 'iniciar',
-            type: 'POST',
-            data: $form.serialize(),
-            dataType: 'json',
-            success: function (r) {
-                $btn.prop('disabled', false);
-                if (r.success) {
-                    EIS.toast(r.message || 'Sesión iniciada', 'green', 'play_circle');
-                    $('#cyberModal').modal('close');
-                    cargarEstado();
-                } else {
-                    EIS.mostrarErroresFormulario($form, r);
-                }
+        EIS.ajax.form(API + 'iniciar', $form, {
+            successToast: 'Sesión iniciada',
+            successIcon: 'play_circle',
+            onSuccess: function () {
+                $('#cyberModal').modal('close');
+                cargarEstado();
             },
-            error: function () {
-                $btn.prop('disabled', false);
-                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-            }
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
+        }).always(function () {
+            $btn.prop('disabled', false);
         });
     });
 
@@ -378,13 +363,11 @@ $(function () {
         $('#btnGuardarPC').removeClass('indigo').addClass('orange');
         $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Actualizar PC');
 
-        $.ajax({
-            url: API + 'obtenerPC&id=' + encodeURIComponent(id),
-            type: 'GET',
-            dataType: 'json',
-            success: function (r) {
-                if (!r.success || !r.data) {
-                    EIS.toast((r.error) || 'No se pudo cargar la PC. Intenta de nuevo.', 'red', 'error');
+        EIS.ajax.get(API + 'obtenerPC', {
+            data: { id: id },
+            onSuccess: function (r) {
+                if (!r.data) {
+                    EIS.toast('No se pudo cargar la PC. Intenta de nuevo.', 'red', 'error');
                     return;
                 }
                 var pc = r.data;
@@ -397,9 +380,7 @@ $(function () {
                 M.updateTextFields();
                 $('#modalPCForm').modal('open');
             },
-            error: function () {
-                EIS.toast('No se pudo conectar con el servidor al cargar la PC. Intenta de nuevo.', 'red', 'error');
-            }
+            errorMessage: 'No se pudo conectar con el servidor al cargar la PC. Intenta de nuevo.'
         });
     });
 
@@ -419,25 +400,16 @@ $(function () {
         var $btn = $(this);
         $btn.prop('disabled', true).html('<i class="material-icons left">hourglass_top</i> Eliminando...');
 
-        $.ajax({
-            url: API + 'eliminarPC',
-            type: 'POST',
-            data: { id: id },
-            dataType: 'json',
-            success: function (r) {
-                $btn.prop('disabled', false).html('<i class="material-icons left">delete_forever</i> Eliminar');
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'delete');
-                    $('#modalConfirmarEliminar').modal('close');
-                    cargarEstado();
-                } else {
-                    EIS.toast(r.error || 'No se pudo eliminar la PC. Intenta de nuevo.', 'red', 'error');
-                }
+        EIS.ajax.post(API + 'eliminarPC', { id: id }, {
+            successToast: true,
+            successIcon: 'delete',
+            onSuccess: function () {
+                $('#modalConfirmarEliminar').modal('close');
+                cargarEstado();
             },
-            error: function () {
-                $btn.prop('disabled', false).html('<i class="material-icons left">delete_forever</i> Eliminar');
-                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-            }
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
+        }).always(function () {
+            $btn.prop('disabled', false).html('<i class="material-icons left">delete_forever</i> Eliminar');
         });
     });
 
@@ -466,30 +438,22 @@ $(function () {
 
         var url = id ? API + 'actualizarPC' : API + 'crearPC';
 
-        $.ajax({
-            url: url,
-            type: 'POST',
-            data: $form.serialize(),
-            dataType: 'json',
-            success: function (r) {
-                $btn.prop('disabled', false);
-                $('#btnGuardarPC').removeClass('orange').addClass('indigo');
-                $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
-                    $('#modalPCForm').modal('close');
-                    cargarEstado();
-                } else {
-                    EIS.mostrarErroresFormulario($form, r);
-                }
+        EIS.ajax.form(url, $form, {
+            successToast: true,
+            onSuccess: function () {
+                $('#modalPCForm').modal('close');
+                cargarEstado();
             },
-            error: function () {
-                $btn.prop('disabled', false);
-                $('#btnGuardarPC').removeClass('orange').addClass('indigo');
-                $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
-                $('#pcFormErrorMessage').text('No se pudo conectar con el servidor. Intenta de nuevo.');
-                $('#pcFormError').slideDown(300);
+            onError: function (r, xhr) {
+                if (xhr) {
+                    $('#pcFormErrorMessage').text('No se pudo conectar con el servidor. Intenta de nuevo.');
+                    $('#pcFormError').slideDown(300);
+                }
             }
+        }).always(function () {
+            $btn.prop('disabled', false);
+            $('#btnGuardarPC').removeClass('orange').addClass('indigo');
+            $('#btnGuardarPC').html('<i class="material-icons left" style="margin:0;">save</i> Guardar PC');
         });
     });
 
@@ -534,17 +498,13 @@ $(function () {
 
     function cargarHistorialEstacion(activoId, nombre) {
         var $resultados = $('#historialResultados');
-        $resultados.html('<div class="center-align" style="padding:2rem 0;"><div class="preloader-wrapper small active"><div class="spinner-layer spinner-green-only"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div><p style="color:var(--text-muted);margin-top:1rem;">Cargando historial de ' + escHtml(nombre) + '...</p></div>');
+        $resultados.html('<div class="center-align" style="padding:2rem 0;"><div class="eis-loader-wrapper" style="height:60px;"><div class="eis-tower-loader" style="scale:1.6;"><div class="box box-1"><div class="side-left"></div><div class="side-right"></div><div class="side-top"></div></div><div class="box box-2"><div class="side-left"></div><div class="side-right"></div><div class="side-top"></div></div><div class="box box-3"><div class="side-left"></div><div class="side-right"></div><div class="side-top"></div></div><div class="box box-4"><div class="side-left"></div><div class="side-right"></div><div class="side-top"></div></div></div></div><p style="color:var(--text-muted);margin-top:1.5rem;">Cargando historial de ' + escHtml(nombre) + '...</p></div>');
 
-        $.ajax({
-            url: API + 'historial&activo_id=' + encodeURIComponent(activoId),
-            type: 'GET',
-            dataType: 'json',
-            success: function (r) {
-                if (!r.success) {
-                    $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>' + escHtml(r.error || 'No se pudo cargar el historial. Intenta de nuevo.') + '</div>');
-                    return;
-                }
+        EIS.ajax.get(API + 'historial', {
+            data: { activo_id: activoId },
+            showServerError: false,
+            showNetworkError: false,
+            onSuccess: function (r) {
                 var datos = r.data || [];
                 if (datos.length === 0) {
                     $resultados.html('<div class="center-align" style="padding:2rem 0;"><i class="material-icons" style="font-size:3.5rem;display:block;margin-bottom:0.5rem;opacity:0.3;">hourglass_empty</i><p style="color:var(--text-muted);font-size:1rem;"><strong>' + escHtml(nombre) + '</strong> no tiene sesiones registradas</p></div>');
@@ -566,8 +526,12 @@ $(function () {
                     EIS.datatable('#tabla-historial');
                 }
             },
-            error: function () {
-                $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>No se pudo conectar con el servidor. Intenta de nuevo.</div>');
+            onError: function (r, xhr) {
+                if (xhr) {
+                    $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>No se pudo conectar con el servidor. Intenta de nuevo.</div>');
+                } else {
+                    $resultados.html('<div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:1rem;"><i class="material-icons left" style="font-size:1.3rem;">error</i>' + escHtml((r && r.error) || 'No se pudo cargar el historial. Intenta de nuevo.') + '</div>');
+                }
             }
         });
     }

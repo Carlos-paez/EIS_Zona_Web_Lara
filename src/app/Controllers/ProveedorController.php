@@ -14,7 +14,7 @@ class ProveedorController extends BaseController
 
     public function __construct()
     {
-        $this->model = new Proveedor();
+        $this->setModel(new Proveedor());
     }
 
     public function getModel(): Proveedor
@@ -65,13 +65,13 @@ class ProveedorController extends BaseController
 
     private function listar(): void
     {
-        $ordenes = $this->model->obtenerOrdenes();
+        $ordenes = $this->getModel()->obtenerOrdenes();
         $this->jsonSuccess($ordenes);
     }
 
     private function kpis(): void
     {
-        $porEstado = $this->model->contarPorEstado();
+        $porEstado = $this->getModel()->contarPorEstado();
         $pendientes = 0;
         $recibidas = 0;
         foreach ($porEstado as $row) {
@@ -80,7 +80,7 @@ class ProveedorController extends BaseController
             elseif ($est === 'recibida' || str_contains($est, 'recib')) $recibidas = (int)$row['total'];
         }
         $this->setResult([
-            'total'      => $this->model->totalSolicitudes(),
+            'total'      => $this->getModel()->totalSolicitudes(),
             'pendientes' => $pendientes,
             'recibidas'  => $recibidas,
         ]);
@@ -91,7 +91,7 @@ class ProveedorController extends BaseController
     {
         $id = Validator::id($_GET['id'] ?? null, 'ID de la solicitud');
         $this->set('id', $id);
-        $orden = $this->model->obtenerOrdenPorId($id);
+        $orden = $this->getModel()->obtenerOrdenPorId($id);
         if ($orden) {
             $this->jsonSuccess($orden);
         } else {
@@ -101,13 +101,13 @@ class ProveedorController extends BaseController
 
     private function productos(): void
     {
-        $productos = $this->model->obtenerProductos();
+        $productos = $this->getModel()->obtenerProductos();
         $this->jsonSuccess($productos);
     }
 
     private function statuses(): void
     {
-        $statuses = $this->model->obtenerStatuses();
+        $statuses = $this->getModel()->obtenerStatuses();
         $this->jsonSuccess($statuses);
     }
 
@@ -135,16 +135,16 @@ class ProveedorController extends BaseController
             ->set('fk_proveedor', $fk_proveedor)
             ->set('fk_status', $fk_status);
 
-        if (!$this->model->existeProveedor($fk_proveedor)) {
+        if (!$this->getModel()->existeProveedor($fk_proveedor)) {
             $this->jsonError('El proveedor seleccionado no existe.', null, 400);
             return;
         }
-        if (!$this->model->existeStatus($fk_status)) {
+        if (!$this->getModel()->existeStatus($fk_status)) {
             $this->jsonError('El estado seleccionado no existe.', null, 400);
             return;
         }
 
-        $resultado = $this->model->crearOrden($numero, $fecha, $fk_proveedor, $fk_status);
+        $resultado = $this->getModel()->crearOrden($numero, $fecha, $fk_proveedor, $fk_status);
         if ($resultado) {
             $this->jsonSuccess(['id' => $resultado], 'Solicitud creada exitosamente');
         } else {
@@ -179,16 +179,16 @@ class ProveedorController extends BaseController
             ->set('fk_proveedor', $fk_proveedor)
             ->set('fk_status', $fk_status);
 
-        if (!$this->model->existeProveedor($fk_proveedor)) {
+        if (!$this->getModel()->existeProveedor($fk_proveedor)) {
             $this->jsonError('El proveedor seleccionado no existe.', null, 400);
             return;
         }
-        if (!$this->model->existeStatus($fk_status)) {
+        if (!$this->getModel()->existeStatus($fk_status)) {
             $this->jsonError('El estado seleccionado no existe.', null, 400);
             return;
         }
 
-        $resultado = $this->model->actualizarOrden($id, $numero, $fecha, $fk_proveedor, $fk_status);
+        $resultado = $this->getModel()->actualizarOrden($id, $numero, $fecha, $fk_proveedor, $fk_status);
         if ($resultado) {
             $this->jsonSuccess(null, 'Solicitud actualizada exitosamente');
         } else {
@@ -204,7 +204,7 @@ class ProveedorController extends BaseController
         }
 
         $id = Validator::id($_POST['id'] ?? null, 'ID de la solicitud');
-        $resultado = $this->model->eliminarOrden($id);
+        $resultado = $this->getModel()->eliminarOrden($id);
         if ($resultado) {
             $this->jsonSuccess(null, 'Solicitud eliminada exitosamente');
         } else {
@@ -215,8 +215,8 @@ class ProveedorController extends BaseController
     private function lineas(): void
     {
         $orden_id = Validator::id($_GET['orden_id'] ?? null, 'ID de la solicitud');
-        $lineas = $this->model->obtenerLineas($orden_id);
-        $orden = $this->model->obtenerOrdenPorId($orden_id);
+        $lineas = $this->getModel()->obtenerLineas($orden_id);
+        $orden = $this->getModel()->obtenerOrdenPorId($orden_id);
         echo json_encode(['success' => true, 'data' => ['lineas' => $lineas, 'orden' => $orden]]);
     }
 
@@ -244,7 +244,7 @@ class ProveedorController extends BaseController
             ->set('cantidad', $cantidad)
             ->set('precio', $precio);
 
-        $resultado = $this->model->agregarLinea($orden_id, $producto_id, $cantidad, $precio);
+        $resultado = $this->getModel()->agregarLinea($orden_id, $producto_id, $cantidad, $precio);
         if ($resultado) {
             $this->jsonSuccess(null, 'Producto agregado a la solicitud');
         } else {
@@ -261,7 +261,7 @@ class ProveedorController extends BaseController
 
         $id = Validator::id($_POST['id'] ?? null, 'ID de la línea');
         $this->set('id', $id);
-        $resultado = $this->model->eliminarLinea($id);
+        $resultado = $this->getModel()->eliminarLinea($id);
         if ($resultado) {
             $this->jsonSuccess(null, 'Línea eliminada');
         } else {
@@ -271,7 +271,7 @@ class ProveedorController extends BaseController
 
     private function siguienteNumero(): void
     {
-        $numero = $this->model->obtenerSiguienteNumeroOrden();
+        $numero = $this->getModel()->obtenerSiguienteNumeroOrden();
         $this->jsonSuccess(['numero' => $numero]);
     }
 }

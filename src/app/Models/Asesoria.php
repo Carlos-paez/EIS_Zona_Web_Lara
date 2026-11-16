@@ -161,16 +161,16 @@ class Asesoria extends Model
     public function toArray(): array
     {
         return [
-            'id'                  => $this->id,
-            'cedula'              => $this->cedula,
-            'nombre'              => $this->nombre,
-            'apellido'            => $this->apellido,
-            'documento'           => $this->documento,
-            'descripcion'         => $this->descripcion,
-            'fecha'               => $this->fecha,
-            'fk_cliente_asesoria' => $this->fkClienteAsesoria,
-            'fk_tipo_asesoria'    => $this->fkTipoAsesoria,
-            'permitido'           => $this->permitido,
+            'id'                  => $this->getId(),
+            'cedula'              => $this->getCedula(),
+            'nombre'              => $this->getNombre(),
+            'apellido'            => $this->getApellido(),
+            'documento'           => $this->getDocumento(),
+            'descripcion'         => $this->getDescripcion(),
+            'fecha'               => $this->getFecha(),
+            'fk_cliente_asesoria' => $this->getFkClienteAsesoria(),
+            'fk_tipo_asesoria'    => $this->getFkTipoAsesoria(),
+            'permitido'           => $this->getPermitido(),
         ];
     }
 
@@ -210,7 +210,7 @@ class Asesoria extends Model
         $cliente_id = $cliente->obtenerOCrearPorCedula($cedula, $nombre, $apellido, $direccion, $telefono);
 
         // 2. Buscar o crear en cliente_asesoria vinculado al cliente
-        $stmt = $this->db->prepare("SELECT id FROM cliente_asesoria WHERE fk_cliente = ?");
+        $stmt = $this->getDb()->prepare("SELECT id FROM cliente_asesoria WHERE fk_cliente = ?");
         $stmt->bindParam(1, $cliente_id, PDO::PARAM_INT);
         $stmt->execute();
         $ca = $stmt->fetch();
@@ -219,10 +219,10 @@ class Asesoria extends Model
             return (int)$ca['id'];
         }
 
-        $stmt = $this->db->prepare("INSERT INTO cliente_asesoria (fk_cliente, email, rif, tipo) VALUES (?, 'N/A', 'N/A', 'civil')");
+        $stmt = $this->getDb()->prepare("INSERT INTO cliente_asesoria (fk_cliente, email, rif, tipo) VALUES (?, 'N/A', 'N/A', 'civil')");
         $stmt->bindParam(1, $cliente_id, PDO::PARAM_INT);
         $stmt->execute();
-        return (int)$this->db->lastInsertId();
+        return (int)$this->getDb()->lastInsertId();
     }
 
     /**
@@ -234,7 +234,7 @@ class Asesoria extends Model
     private function obtenerTipoAsesoria(string $documento): ?int
     {
         // Busca el tipo de asesoría usando LOWER para comparación sin distinción de mayúsculas
-        $stmt = $this->db->prepare("SELECT id FROM tipo_asesoria WHERE LOWER(tipo) = LOWER(?)");
+        $stmt = $this->getDb()->prepare("SELECT id FROM tipo_asesoria WHERE LOWER(tipo) = LOWER(?)");
         $stmt->bindParam(1, $documento, PDO::PARAM_STR);
         $stmt->execute();
         $tipo = $stmt->fetch();
@@ -267,26 +267,26 @@ class Asesoria extends Model
 
         try {
             // Transacción: cliente + cliente_asesoria + asesoria se registran o revierten juntos
-            $this->db->beginTransaction();
+            $this->getDb()->beginTransaction();
 
             // Obtiene o crea el cliente (crea o actualiza su data según lo enviado) y obtiene su ID
-            $fk_cliente = $this->obtenerOcrearCliente($this->cedula, $this->nombre, $this->apellido, $direccion, $telefono);
+            $fk_cliente = $this->obtenerOcrearCliente($this->getCedula(), $this->getNombre(), $this->getApellido(), $direccion, $telefono);
             // Obtiene el ID del tipo de asesoría
-            $fk_tipo_asesoria = $this->obtenerTipoAsesoria($this->documento);
+            $fk_tipo_asesoria = $this->obtenerTipoAsesoria($this->getDocumento());
 
             // Inserta la asesoría con la fecha actual (CURDATE) y las claves foráneas
             $sql = "INSERT INTO asesoria (documento, descripcion, fecha, fk_cliente_asesoria, fk_tipo_asesoria) VALUES (?, ?, CURDATE(), ?, ?)";
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindParam(1, $this->documento, PDO::PARAM_STR);
-            $stmt->bindParam(2, $this->descripcion, PDO::PARAM_STR);
+            $stmt = $this->getDb()->prepare($sql);
+            $stmt->bindValue(1, $this->getDocumento(), PDO::PARAM_STR);
+            $stmt->bindValue(2, $this->getDescripcion(), PDO::PARAM_STR);
             $stmt->bindParam(3, $fk_cliente, PDO::PARAM_INT);
             $stmt->bindParam(4, $fk_tipo_asesoria, PDO::PARAM_INT);
             $resultado = $stmt->execute();
 
-            $this->db->commit();
+            $this->getDb()->commit();
             return $resultado;
         } catch (\Throwable $e) {
-            $this->db->rollBack();
+            $this->getDb()->rollBack();
             throw $e;
         }
     }
@@ -299,7 +299,7 @@ class Asesoria extends Model
     public function obtenerTodas(): array
     {
         // Consulta que une asesoria con cliente_asesoria, clientes y tipo_asesoria
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT a.id, a.documento, a.descripcion, a.fecha,
                    cli.cedula, cli.nombre AS ciudadano_nombre, cli.apellido AS ciudadano_apellido,
                    CONCAT(cli.nombre, ' ', cli.apellido) AS ciudadano,
@@ -327,7 +327,7 @@ class Asesoria extends Model
         $this->setPermitido($estado === 'Permitido' ? 1 : 0);
 
         // Consulta parametrizada que filtra por el campo permitido de tipo_asesoria
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT a.id, a.documento, a.descripcion, a.fecha,
                    cli.cedula, cli.nombre AS ciudadano_nombre, cli.apellido AS ciudadano_apellido,
                    CONCAT(cli.nombre, ' ', cli.apellido) AS ciudadano,
@@ -340,7 +340,7 @@ class Asesoria extends Model
             ORDER BY a.fecha DESC
         ");
         // Ejecuta con el valor permitido calculado
-        $stmt->bindParam(1, $this->permitido, PDO::PARAM_INT);
+        $stmt->bindValue(1, $this->getPermitido(), PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll();
     }
@@ -357,7 +357,7 @@ class Asesoria extends Model
         $this->setId($id);
 
         // Consulta parametrizada que obtiene una asesoría por su ID
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT a.*, cli.cedula, cli.nombre AS ciudadano_nombre, cli.apellido AS ciudadano_apellido,
                    CONCAT(cli.nombre, ' ', cli.apellido) AS ciudadano,
                    ta.tipo AS tipo_documento, ta.permitido
@@ -367,7 +367,7 @@ class Asesoria extends Model
             LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id
             WHERE a.id = ? AND a.activo = 1
         ");
-        $stmt->bindParam(1, $this->id, PDO::PARAM_INT);
+        $stmt->bindValue(1, $this->getId(), PDO::PARAM_INT);
         $stmt->execute();
         // Retorna una sola fila o false
         return $stmt->fetch();
@@ -385,7 +385,7 @@ class Asesoria extends Model
         $cedula = $this->sanitizeString($cedula);
 
         // Consulta con INNER JOIN a cliente_asesoria para filtrar por cédula
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT a.id, a.documento, a.descripcion, a.fecha,
                    cli.cedula, cli.nombre AS ciudadano_nombre, cli.apellido AS ciudadano_apellido,
                    CONCAT(cli.nombre, ' ', cli.apellido) AS ciudadano,
@@ -412,7 +412,7 @@ class Asesoria extends Model
     public function contarPorEstado(): array
     {
         // Usa CASE para convertir el campo permitido a texto legible y cuenta registros
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT CASE WHEN ta.permitido = 1 THEN 'Permitido' ELSE 'Denegado' END AS estado, COUNT(*) AS total
             FROM asesoria a
             LEFT JOIN tipo_asesoria ta ON a.fk_tipo_asesoria = ta.id

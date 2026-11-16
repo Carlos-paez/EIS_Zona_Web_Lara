@@ -23,7 +23,7 @@ class Venta extends Model
      */
     public function listarProductos(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT id, codigo, nombre, descripcion, stock, precio_venta
             FROM productos
             WHERE stock > 0 AND activo = 1
@@ -85,7 +85,7 @@ class Venta extends Model
         }
 
         try {
-            $this->db->beginTransaction();
+            $this->getDb()->beginTransaction();
 
             // 1. Obtener o crear el cliente (reutiliza el modelo centralizado)
             $cliente = new Cliente();
@@ -94,20 +94,20 @@ class Venta extends Model
             // 2. Crear la orden de venta
             $numero = 'V-' . date('YmdHis');
             $sql = "INSERT INTO orden_de_venta (numero_de_orden, fecha, fk_usuario, fk_cliente) VALUES (?, CURDATE(), ?, ?)";
-            $stmt = $this->db->prepare($sql);
+            $stmt = $this->getDb()->prepare($sql);
             $stmt->bindParam(1, $numero, PDO::PARAM_STR);
             $stmt->bindParam(2, $usuarioId, PDO::PARAM_INT);
             $stmt->bindParam(3, $fk_cliente, PDO::PARAM_INT);
             $stmt->execute();
-            $orden_id = (int)$this->db->lastInsertId();
+            $orden_id = (int)$this->getDb()->lastInsertId();
 
             // 3. Registrar las líneas de venta y descontar stock
             $sqlLinea = "INSERT INTO lineas_venta (cantidad, precio, fk_orden, fk_producto) VALUES (?, ?, ?, ?)";
-            $stmtLinea = $this->db->prepare($sqlLinea);
+            $stmtLinea = $this->getDb()->prepare($sqlLinea);
             $sqlStock = "UPDATE productos SET stock = stock - ? WHERE id = ? AND stock >= ?";
-            $stmtStock = $this->db->prepare($sqlStock);
+            $stmtStock = $this->getDb()->prepare($sqlStock);
             $sqlPrecio = "SELECT precio_venta, stock FROM productos WHERE id = ?";
-            $stmtPrecio = $this->db->prepare($sqlPrecio);
+            $stmtPrecio = $this->getDb()->prepare($sqlPrecio);
 
             $vistos = [];
 
@@ -151,11 +151,11 @@ class Venta extends Model
                 $stmtStock->execute();
             }
 
-            $this->db->commit();
+            $this->getDb()->commit();
             return $orden_id;
         } catch (\Throwable $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
+            if ($this->getDb()->inTransaction()) {
+                $this->getDb()->rollBack();
             }
             throw $e;
         }

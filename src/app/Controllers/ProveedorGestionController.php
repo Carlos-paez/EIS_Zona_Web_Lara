@@ -14,7 +14,7 @@ class ProveedorGestionController extends BaseController
 
     public function __construct()
     {
-        $this->model = new ProveedorGestion();
+        $this->setModel(new ProveedorGestion());
     }
 
     public function getModel(): ProveedorGestion
@@ -59,14 +59,14 @@ class ProveedorGestionController extends BaseController
 
     private function listar(): void
     {
-        $proveedores = $this->model->obtenerProveedores();
+        $proveedores = $this->getModel()->obtenerProveedores();
         $this->jsonSuccess($proveedores);
     }
 
     private function kpis(): void
     {
         $this->setResult([
-            'total' => $this->model->totalProveedores(),
+            'total' => $this->getModel()->totalProveedores(),
         ]);
         $this->jsonSuccess($this->getResult());
     }
@@ -75,7 +75,7 @@ class ProveedorGestionController extends BaseController
     {
         $id = Validator::id($_GET['id'] ?? null, 'ID del proveedor');
         $this->set('id', $id);
-        $proveedor = $this->model->obtenerProveedorPorId($id);
+        $proveedor = $this->getModel()->obtenerProveedorPorId($id);
         if ($proveedor) {
             $this->jsonSuccess($proveedor);
         } else {
@@ -107,12 +107,12 @@ class ProveedorGestionController extends BaseController
             ->set('email', $email)
             ->set('telefono', $telefono);
 
-        if ($this->model->existeRif($rif)) {
+        if ($this->getModel()->existeRif($rif)) {
             $this->jsonError('Ya existe un proveedor registrado con ese RIF.', null, 400);
             return;
         }
 
-        $resultado = $this->model->crearProveedor($rif, $nombre, $email, $telefono);
+        $resultado = $this->getModel()->crearProveedor($rif, $nombre, $email, $telefono);
         if ($resultado) {
             $this->jsonSuccess(null, 'Proveedor creado exitosamente');
         } else {
@@ -147,12 +147,12 @@ class ProveedorGestionController extends BaseController
             ->set('email', $email)
             ->set('telefono', $telefono);
 
-        if ($this->model->existeRif($rif, $id)) {
+        if ($this->getModel()->existeRif($rif, $id)) {
             $this->jsonError('Ya existe otro proveedor registrado con ese RIF.', null, 400);
             return;
         }
 
-        $resultado = $this->model->actualizarProveedor($id, $rif, $nombre, $email, $telefono);
+        $resultado = $this->getModel()->actualizarProveedor($id, $rif, $nombre, $email, $telefono);
         if ($resultado) {
             $this->jsonSuccess(null, 'Proveedor actualizado exitosamente');
         } else {
@@ -169,7 +169,7 @@ class ProveedorGestionController extends BaseController
 
         $id = Validator::id($_POST['id'] ?? null, 'ID del proveedor');
         $this->set('id', $id);
-        $resultado = $this->model->eliminarProveedor($id);
+        $resultado = $this->getModel()->eliminarProveedor($id);
         if ($resultado) {
             $this->jsonSuccess(null, 'Proveedor eliminado exitosamente');
         } else {

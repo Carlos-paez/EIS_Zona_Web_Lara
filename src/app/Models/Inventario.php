@@ -145,15 +145,15 @@ class Inventario extends Model
     public function toArray(): array
     {
         return [
-            'id'              => $this->id,
-            'codigo'          => $this->codigo,
-            'nombre'          => $this->nombre,
-            'descripcion'     => $this->descripcion,
-            'stock'           => $this->stock,
-            'stock_minimo'    => $this->stockMinimo,
-            'precio_compra'   => $this->precioCompra,
-            'precio_venta'    => $this->precioVenta,
-            'fk_categoria'    => $this->fkCategoria,
+            'id'              => $this->getId(),
+            'codigo'          => $this->getCodigo(),
+            'nombre'          => $this->getNombre(),
+            'descripcion'     => $this->getDescripcion(),
+            'stock'           => $this->getStock(),
+            'stock_minimo'    => $this->getStockMinimo(),
+            'precio_compra'   => $this->getPrecioCompra(),
+            'precio_venta'    => $this->getPrecioVenta(),
+            'fk_categoria'    => $this->getFkCategoria(),
         ];
     }
 
@@ -183,26 +183,26 @@ class Inventario extends Model
         $this->setPrecioVenta($precio_venta);
         $this->setDescripcion($descripcion);
 
-        if (!$this->existeCategoria($this->fkCategoria)) {
+        if (!$this->existeCategoria($this->getFkCategoria())) {
             throw new \InvalidArgumentException('La categoría seleccionada no existe.');
         }
 
         $sql = "INSERT INTO productos (codigo, nombre, descripcion, stock, stock_minimo, precio_compra, precio_venta, fk_categoria, fecha_creacion, fecha_actualizacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), CURDATE())";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(1, $this->codigo, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->nombre, PDO::PARAM_STR);
-        $stmt->bindParam(3, $this->descripcion, PDO::PARAM_STR);
-        $stmt->bindParam(4, $this->stock, PDO::PARAM_INT);
-        $stmt->bindParam(5, $this->stockMinimo, PDO::PARAM_INT);
-        $stmt->bindParam(6, $this->precioCompra, PDO::PARAM_STR);
-        $stmt->bindParam(7, $this->precioVenta, PDO::PARAM_STR);
-        $stmt->bindParam(8, $this->fkCategoria, PDO::PARAM_INT);
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->bindValue(1, $this->getCodigo(), PDO::PARAM_STR);
+        $stmt->bindValue(2, $this->getNombre(), PDO::PARAM_STR);
+        $stmt->bindValue(3, $this->getDescripcion(), PDO::PARAM_STR);
+        $stmt->bindValue(4, $this->getStock(), PDO::PARAM_INT);
+        $stmt->bindValue(5, $this->getStockMinimo(), PDO::PARAM_INT);
+        $stmt->bindValue(6, $this->getPrecioCompra(), PDO::PARAM_STR);
+        $stmt->bindValue(7, $this->getPrecioVenta(), PDO::PARAM_STR);
+        $stmt->bindValue(8, $this->getFkCategoria(), PDO::PARAM_INT);
         return $stmt->execute();
     }
 
     public function obtenerProductos(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT p.id, p.codigo, p.nombre, p.descripcion, p.stock, p.stock_minimo,
                    p.precio_compra, p.precio_venta, p.fecha_creacion, p.fecha_actualizacion,
                    p.fk_categoria AS categoria_id,
@@ -228,7 +228,7 @@ class Inventario extends Model
             LEFT JOIN categoria c ON p.fk_categoria = c.id
             WHERE p.id = ? AND p.activo = 1
         ";
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch();
@@ -247,7 +247,7 @@ class Inventario extends Model
             WHERE p.activo = 1 AND (p.nombre LIKE ? OR p.codigo LIKE ?)
             ORDER BY p.nombre
         ";
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         $buscar = "%$termino%";
         $stmt->bindParam(1, $buscar, PDO::PARAM_STR);
         $stmt->bindParam(2, $buscar, PDO::PARAM_STR);
@@ -267,21 +267,21 @@ class Inventario extends Model
         $this->setPrecioVenta($precio_venta);
         $this->setDescripcion($descripcion);
 
-        if (!$this->existeCategoria($this->fkCategoria)) {
+        if (!$this->existeCategoria($this->getFkCategoria())) {
             throw new \InvalidArgumentException('La categoría seleccionada no existe.');
         }
 
         $sql = "UPDATE productos SET codigo = ?, nombre = ?, descripcion = ?, stock = ?, stock_minimo = ?, precio_compra = ?, precio_venta = ?, fk_categoria = ?, fecha_actualizacion = CURDATE() WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(1, $this->codigo, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->nombre, PDO::PARAM_STR);
-        $stmt->bindParam(3, $this->descripcion, PDO::PARAM_STR);
-        $stmt->bindParam(4, $this->stock, PDO::PARAM_INT);
-        $stmt->bindParam(5, $this->stockMinimo, PDO::PARAM_INT);
-        $stmt->bindParam(6, $this->precioCompra, PDO::PARAM_STR);
-        $stmt->bindParam(7, $this->precioVenta, PDO::PARAM_STR);
-        $stmt->bindParam(8, $this->fkCategoria, PDO::PARAM_INT);
-        $stmt->bindParam(9, $this->id, PDO::PARAM_INT);
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->bindValue(1, $this->getCodigo(), PDO::PARAM_STR);
+        $stmt->bindValue(2, $this->getNombre(), PDO::PARAM_STR);
+        $stmt->bindValue(3, $this->getDescripcion(), PDO::PARAM_STR);
+        $stmt->bindValue(4, $this->getStock(), PDO::PARAM_INT);
+        $stmt->bindValue(5, $this->getStockMinimo(), PDO::PARAM_INT);
+        $stmt->bindValue(6, $this->getPrecioCompra(), PDO::PARAM_STR);
+        $stmt->bindValue(7, $this->getPrecioVenta(), PDO::PARAM_STR);
+        $stmt->bindValue(8, $this->getFkCategoria(), PDO::PARAM_INT);
+        $stmt->bindValue(9, $this->getId(), PDO::PARAM_INT);
         return $stmt->execute();
     }
 
@@ -289,39 +289,39 @@ class Inventario extends Model
     {
         $id = $this->sanitizeInt($id);
         $sql = "UPDATE productos SET activo = 0 WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
 
     public function totalProductos(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE activo = 1");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM productos WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
     public function stockCritico(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE stock <= 0 AND activo = 1");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM productos WHERE stock <= 0 AND activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
     public function stockBajo(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE stock > 0 AND stock <= stock_minimo AND activo = 1");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM productos WHERE stock > 0 AND stock <= stock_minimo AND activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
     public function valorTotalInventario(): float
     {
-        $stmt = $this->db->query("SELECT SUM(stock * precio_venta) AS total FROM productos WHERE activo = 1");
+        $stmt = $this->getDb()->query("SELECT SUM(stock * precio_venta) AS total FROM productos WHERE activo = 1");
         $fila = $stmt->fetch();
         return $fila['total'] ? (float)$fila['total'] : 0.0;
     }
 
     public function obtenerCategorias(): array
     {
-        $stmt = $this->db->query("SELECT id, nombre_categoria AS nombre FROM categoria WHERE activo = 1 ORDER BY nombre_categoria");
+        $stmt = $this->getDb()->query("SELECT id, nombre_categoria AS nombre FROM categoria WHERE activo = 1 ORDER BY nombre_categoria");
         return $stmt->fetchAll();
     }
 
@@ -331,7 +331,7 @@ class Inventario extends Model
         $this->validateNotEmpty($nombre, 'nombre de categoría');
         $this->validateLength($nombre, 'nombre de categoría', self::MAX_NOMBRE);
         $sql = "INSERT INTO categoria (nombre_categoria) VALUES (?)";
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         $stmt->bindParam(1, $nombre, PDO::PARAM_STR);
         return $stmt->execute();
     }
@@ -343,7 +343,7 @@ class Inventario extends Model
         $this->validateNotEmpty($nombre, 'nombre de categoría');
         $this->validateLength($nombre, 'nombre de categoría', self::MAX_NOMBRE);
         $sql = "UPDATE categoria SET nombre_categoria = ? WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         $stmt->bindParam(1, $nombre, PDO::PARAM_STR);
         $stmt->bindParam(2, $id, PDO::PARAM_INT);
         return $stmt->execute();
@@ -353,7 +353,7 @@ class Inventario extends Model
     {
         $id = $this->sanitizeInt($id);
         $sql = "UPDATE categoria SET activo = 0 WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
@@ -362,12 +362,12 @@ class Inventario extends Model
     {
         $codigo = $this->sanitizeString($codigo);
         if ($excludeId > 0) {
-            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM productos WHERE codigo = ? AND id != ?");
+            $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM productos WHERE codigo = ? AND id != ?");
             $stmt->bindParam(1, $codigo, PDO::PARAM_STR);
             $stmt->bindParam(2, $excludeId, PDO::PARAM_INT);
             $stmt->execute();
         } else {
-            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM productos WHERE codigo = ?");
+            $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM productos WHERE codigo = ?");
             $stmt->bindParam(1, $codigo, PDO::PARAM_STR);
             $stmt->execute();
         }
@@ -377,7 +377,7 @@ class Inventario extends Model
     public function existeCategoria(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM categoria WHERE id = ?");
+        $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM categoria WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return (int)$stmt->fetch()['total'] > 0;

@@ -15,7 +15,7 @@ class AuthController extends BaseController
 
     public function __construct()
     {
-        $this->model = new Usuario();
+        $this->setModel(new Usuario());
     }
 
     public function getModel(): Usuario
@@ -68,7 +68,7 @@ class AuthController extends BaseController
 
         $usuario = null;
         try {
-            $usuario = $this->model->autenticar($username, $password);
+            $usuario = $this->getModel()->autenticar($username, $password);
         } catch (\PDOException $e) {
             Logger::error($e, 'Login - error de base de datos');
             $this->redirigirLogin('1');

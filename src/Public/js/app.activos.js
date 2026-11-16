@@ -2,32 +2,23 @@ $(function () {
     var API = '?pagina=activos&action=';
 
     function refrescarKPI() {
-        $.ajax({
-            url: API + 'kpis',
-            type: 'GET',
-            dataType: 'json',
-            success: function (r) {
-                if (!r.success) return;
+        EIS.ajax.get(API + 'kpis', {
+            showServerError: false,
+            onSuccess: function (r) {
                 var d = r.data || {};
                 $('#kpi-total').text(d.total || 0);
                 $('#kpi-ciber').text(d.ciber || 0);
                 $('#kpi-ocupados').text(d.ocupados || 0);
                 $('#kpi-inactivos').text(d.inactivos || 0);
             },
-            error: function () {
-                EIS.toast('No se pudieron cargar los indicadores. Intenta de nuevo.', 'red', 'error');
-            }
+            errorMessage: 'No se pudieron cargar los indicadores. Intenta de nuevo.'
         });
     }
 
     function refrescarTabla() {
-        $.ajax({
-            url: API + 'listar',
-            type: 'GET',
-            dataType: 'json',
-            success: function (r) {
-                if (!r.success) return;
-
+        EIS.ajax.get(API + 'listar', {
+            showServerError: false,
+            onSuccess: function (r) {
             var tbody = $('#tabla-activos tbody');
             tbody.empty();
 
@@ -65,10 +56,8 @@ $(function () {
 
             $('.tooltipped').tooltip();
             EIS.datatableRefresh('#tabla-activos');
-        },
-        error: function () {
-            EIS.toast('No se pudieron cargar los activos. Intenta de nuevo.', 'red', 'error');
-        }
+            },
+            errorMessage: 'No se pudieron cargar los activos. Intenta de nuevo.'
         });
     }
 
@@ -97,12 +86,9 @@ $(function () {
 
     $(document).on('click', '.btn-editar-activo', function () {
         var id = $(this).data('id');
-        $.ajax({
-            url: API + 'detalle&id=' + id,
-            type: 'GET',
-            dataType: 'json',
-            success: function (r) {
-                if (!r.success) { EIS.toast(r.error || 'No se pudieron cargar los datos. Intenta de nuevo.', 'red', 'error'); return; }
+        EIS.ajax.get(API + 'detalle', {
+            data: { id: id },
+            onSuccess: function (r) {
                 EIS.limpiarErroresFormulario('#form-activo');
                 var a = r.data;
                 $('#activo-id').val(a.id);
@@ -116,9 +102,7 @@ $(function () {
                 M.updateTextFields();
                 $('#modal-activo').modal('open');
             },
-            error: function () {
-                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-            }
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
         });
     });
 
@@ -131,24 +115,14 @@ $(function () {
 
         var id = $('#activo-id').val();
         var accion = id ? 'actualizar' : 'crear';
-        $.ajax({
-            url: API + accion,
-            type: 'POST',
-            data: $form.serialize(),
-            dataType: 'json',
-            success: function (r) {
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
-                    $('#modal-activo').modal('close');
-                    refrescarKPI();
-                    refrescarTabla();
-                } else {
-                    EIS.mostrarErroresFormulario($form, r);
-                }
+        EIS.ajax.form(API + accion, $form, {
+            successToast: true,
+            onSuccess: function () {
+                $('#modal-activo').modal('close');
+                refrescarKPI();
+                refrescarTabla();
             },
-            error: function () {
-                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-            }
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
         });
     });
 
@@ -156,23 +130,13 @@ $(function () {
         var id = $(this).data('id');
         var nombre = $(this).data('nombre');
         if (confirm('¿Eliminar el activo "' + nombre + '"?\nNota: No se puede eliminar si tiene sesiones de cybercafé asociadas.')) {
-            $.ajax({
-                url: API + 'eliminar',
-                type: 'POST',
-                data: { id: id },
-                dataType: 'json',
-                success: function (r) {
-                    if (r.success) {
-                        EIS.toast(r.message, 'green', 'check_circle');
-                        refrescarKPI();
-                        refrescarTabla();
-                    } else {
-                        EIS.toast(r.error || 'No se pudo eliminar. Intenta de nuevo.', 'red', 'error');
-                    }
+            EIS.ajax.post(API + 'eliminar', { id: id }, {
+                successToast: true,
+                onSuccess: function () {
+                    refrescarKPI();
+                    refrescarTabla();
                 },
-                error: function () {
-                    EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-                }
+                errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
             });
         }
     });

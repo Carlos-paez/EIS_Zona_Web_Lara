@@ -15,7 +15,7 @@ class VentaController extends BaseController
 
     public function __construct()
     {
-        $this->model = new Venta();
+        $this->setModel(new Venta());
     }
 
     public function getModel(): Venta
@@ -58,7 +58,7 @@ class VentaController extends BaseController
 
     private function productos(): void
     {
-        $productos = $this->model->listarProductos();
+        $productos = $this->getModel()->listarProductos();
         $this->jsonSuccess($productos);
     }
 
@@ -112,7 +112,7 @@ class VentaController extends BaseController
 
         $usuarioId = (int)($_SESSION['user_id'] ?? 0);
 
-        $orden_id = $this->model->registrarVenta($items, $ciudadano, $cedula, $direccion, $telefono, $usuarioId);
+        $orden_id = $this->getModel()->registrarVenta($items, $ciudadano, $cedula, $direccion, $telefono, $usuarioId);
         if ($orden_id) {
             $this->jsonSuccess(['orden_id' => $orden_id], 'Venta registrada exitosamente');
         } else {

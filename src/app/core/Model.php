@@ -10,7 +10,7 @@ abstract class Model
 
     public function __construct()
     {
-        $this->db = Database::getConnection();
+        $this->setDb(Database::getConnection());
     }
 
     public function getDb(): PDO
@@ -152,7 +152,7 @@ abstract class Model
             throw new \InvalidArgumentException('El nombre de la tabla no es válido.');
         }
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM `$tabla` WHERE id = ?");
+        $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM `$tabla` WHERE id = ?");
         $stmt->bindParam(1, $id, \PDO::PARAM_INT);
         $stmt->execute();
         return (int)$stmt->fetch()['total'] > 0;

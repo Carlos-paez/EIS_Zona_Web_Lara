@@ -35,7 +35,23 @@ final class LoginThrottle
     public function __construct(string $usuario)
     {
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'desconocida';
-        $this->clave = hash('sha256', mb_strtolower(trim($usuario)) . '|' . $ip);
+        $this->setClave(hash('sha256', mb_strtolower(trim($usuario)) . '|' . $ip));
+    }
+
+    /**
+     * Devuelve la huella usuario|IP vigilada (getter).
+     */
+    public function getClave(): string
+    {
+        return $this->clave;
+    }
+
+    /**
+     * Asigna la huella usuario|IP vigilada (setter).
+     */
+    public function setClave(string $clave): void
+    {
+        $this->clave = $clave;
     }
 
     /**
@@ -57,7 +73,7 @@ final class LoginThrottle
             return $hastaSesion - time();
         }
 
-        $registro = $this->leer()[$this->clave] ?? null;
+        $registro = $this->leer()[$this->getClave()] ?? null;
         if ($registro === null) {
             return 0;
         }
@@ -73,7 +89,7 @@ final class LoginThrottle
     {
         $ahora = time();
         $datos = $this->podar($this->leer());
-        $registro = $datos[$this->clave]
+        $registro = $datos[$this->getClave()]
             ?? ['intentos' => 0, 'primer_intento' => $ahora, 'bloqueado_hasta' => 0];
 
         // Si la ventana de conteo ya expiró, se reinicia.
@@ -88,7 +104,7 @@ final class LoginThrottle
             $registro['primer_intento']  = $ahora;
         }
 
-        $datos[$this->clave] = $registro;
+        $datos[$this->getClave()] = $registro;
         $this->escribir($datos);
 
         if (($registro['bloqueado_hasta'] ?? 0) > $ahora) {
@@ -104,8 +120,8 @@ final class LoginThrottle
         unset($_SESSION[self::SESION_CLAVE]);
 
         $datos = $this->leer();
-        if (isset($datos[$this->clave])) {
-            unset($datos[$this->clave]);
+        if (isset($datos[$this->getClave()])) {
+            unset($datos[$this->getClave()]);
             $this->escribir($datos);
         }
     }

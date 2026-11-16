@@ -259,6 +259,7 @@ Navegador → src/.htaccess → src/index.php → App\Core\Router->handle()
 
 ### JavaScript Modular
 - **`app.core.js`** — namespace `EIS`, `debounce`, `EIS.toast` (jQuery Toast con respaldo Materialize), `escHtml` (XSS), `EIS.formSelect` (re-inicialización de selects evitando el bug de doble `formSelect`) y la familia de helpers de **DataTables**: `EIS.datatable`, `EIS.datatableRefresh`, `EIS.datatableWireSearch`, `EIS.datatableWireColumnFilter`, `EIS.datatableDestroy`
+- **`app.ajax.js`** — plantilla única de peticiones AJAX: `EIS.ajax`, `EIS.ajax.get`, `EIS.ajax.post` y `EIS.ajax.form`. Centraliza `dataType: 'json'`, la serialización de formularios, los toasts de éxito, el manejo de errores de red/HTTP y el pintado de `fieldErrors` del servidor (tanto en respuestas 200 como en HTTP 4xx/5xx)
 - **`app.validate.js`** — validación de formularios con **jQuery Validation** como motor principal y respaldo propio; las reglas se generan desde los atributos HTML5 (`required`, `minlength`, `maxlength`, `min`, `max`, `type`, `pattern`) y desde `data-validate`, reutilizando `regex_validations.json` como fuente única mediante la regla puente `eisRegla`. Incluye mensajes en español, resaltado Materialize, bloqueo de envíos inválidos y protección contra doble clic
 - **`jquery.validate.min.js`** + **`jquery.toast.min.js`** + **`jquery.toast.min.css`** + **`forms.eis.css`** — plugins locales de validación y notificaciones, con estilos de error y toast adaptados a los temas claro/oscuro
 - **`app.init.js`** — inicia Materialize, reloj, tema oscuro/claro
@@ -272,9 +273,9 @@ Navegador → src/.htaccess → src/index.php → App\Core\Router->handle()
 
 ### Offline / PWA
 - Assets locales (sin CDNs)
-- Service Worker (`sw.js`) con estrategia **Stale-While-Revalidate** y caché versionada (`CACHE_NAME = 'eis-cache-v9'`)
+- Service Worker (`sw.js`) con estrategia **Stale-While-Revalidate** y caché versionada (`CACHE_NAME = 'eis-cache-v13'`)
 - Página offline (`offline.php`) y manifiesto (`manifest.json`)
-- Al corregir un JS servido por el SW hay que subir `CACHE_NAME` (v8→v9 ya hecho al integrar jQuery Validation/jQuery Toast; futuro v10...) para que el navegador reemplace el SW y no sirva el script obsoleto
+- Al corregir un JS servido por el SW hay que subir `CACHE_NAME` (v12→v13 al integrar `app.ajax.js`) para que el navegador reemplace el SW y no sirva el script obsoleto
 
 ---
 

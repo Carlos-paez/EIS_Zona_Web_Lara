@@ -62,14 +62,15 @@ $(function () {
     //            actualiza el chip del banner y el badge.
     // ================================================================
     function refrescarKPI() {
-        $.ajax({url: API + 'kpis', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) return;
-            var k = r.data;
-            $('#totalAsesoriasBadge').text(k.total);
-            var msg = k.total + ' registradas' + (k.derivadas > 0 ? ' (' + k.derivadas + ' derivadas)' : '');
-            $('#asesoriasCountChip span').text(msg);
-        }).fail(function () {
-            EIS.toast('No se pudieron cargar los indicadores. Intenta de nuevo.', 'red', 'error');
+        EIS.ajax.get(API + 'kpis', {
+            showServerError: false,
+            onSuccess: function (r) {
+                var k = r.data;
+                $('#totalAsesoriasBadge').text(k.total);
+                var msg = k.total + ' registradas' + (k.derivadas > 0 ? ' (' + k.derivadas + ' derivadas)' : '');
+                $('#asesoriasCountChip span').text(msg);
+            },
+            errorMessage: 'No se pudieron cargar los indicadores. Intenta de nuevo.'
         });
     }
 
@@ -119,12 +120,12 @@ $(function () {
     // PROPÓSITO: Solicita al backend el listado completo de asesorías.
     // ================================================================
     function cargarAsesorias() {
-        $.ajax({url: API + 'listar', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) { EIS.toast(r.error || 'No se pudieron cargar los datos. Intenta de nuevo.', 'red', 'error'); return; }
-            asesoriasRegistradas = r.data || [];
-            actualizarHistorial();
-        }).fail(function () {
-            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
+        EIS.ajax.get(API + 'listar', {
+            onSuccess: function (r) {
+                asesoriasRegistradas = r.data || [];
+                actualizarHistorial();
+            },
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
         });
     }
 
@@ -192,13 +193,8 @@ $(function () {
             return a.cedula === cedula;
         });
 
-        $.ajax({
-            url: API + 'crear',
-            type: 'POST',
-            data: $form.serialize(),
-            dataType: 'json',
-            success: function (r) {
-            if (r.success) {
+        EIS.ajax.form(API + 'crear', $form, {
+            onSuccess: function () {
                 EIS.toast(
                     existeCliente
                         ? 'Asesoría registrada. Información del cliente actualizada.'
@@ -213,13 +209,8 @@ $(function () {
                 $('label').removeClass('active');
                 cargarAsesorias();
                 refrescarKPI();
-            } else {
-                EIS.mostrarErroresFormulario($form, r);
-            }
-        },
-        error: function () {
-            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-        }
+            },
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
         });
     });
 

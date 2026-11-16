@@ -20,7 +20,7 @@ class CiberController
 
     public function __construct()
     {
-        $this->model = new CiberControl();
+        $this->setModel(new CiberControl());
     }
 
     public function getModel(): CiberControl
@@ -79,7 +79,7 @@ class CiberController
     {
         $estaciones = [];
         try {
-            $estaciones = $this->model->listarEstaciones();
+            $estaciones = $this->getModel()->listarEstaciones();
         } catch (\Throwable $e) {
             Logger::error($e, 'Cyber - listar estaciones (vista)');
             $estaciones = [];
@@ -102,7 +102,7 @@ class CiberController
 
         $clientes = [];
         try {
-            $clientes = $this->model->listarEstaciones();
+            $clientes = $this->getModel()->listarEstaciones();
         } catch (\Throwable $e) {
             Logger::error($e, 'Cyber - listar clientes (vista)');
             $clientes = [];
@@ -110,7 +110,7 @@ class CiberController
 
         $tarifas = [];
         try {
-            $tarifas = $this->model->listarTarifas();
+            $tarifas = $this->getModel()->listarTarifas();
         } catch (\Throwable $e) {
             Logger::error($e, 'Cyber - listar tarifas (vista)');
             $tarifas = [];
@@ -118,7 +118,7 @@ class CiberController
 
         $tiposActivo = [];
         try {
-            $tiposActivo = $this->model->listarTiposActivo();
+            $tiposActivo = $this->getModel()->listarTiposActivo();
         } catch (\Throwable $e) {
             Logger::error($e, 'Cyber - listar tipos de activo (vista)');
             $tiposActivo = [];
@@ -138,7 +138,7 @@ class CiberController
      */
     private function estaciones(): void
     {
-        $estaciones = $this->model->listarEstaciones();
+        $estaciones = $this->getModel()->listarEstaciones();
         echo json_encode(['success' => true, 'data' => $estaciones]);
     }
 
@@ -147,7 +147,7 @@ class CiberController
      */
     private function tarifas(): void
     {
-        echo json_encode(['success' => true, 'data' => $this->model->listarTarifas()]);
+        echo json_encode(['success' => true, 'data' => $this->getModel()->listarTarifas()]);
     }
 
     /**
@@ -160,7 +160,7 @@ class CiberController
             echo json_encode(['success' => true, 'data' => null]);
             return;
         }
-        $cliente = $this->model->buscarCliente($cedula);
+        $cliente = $this->getModel()->buscarCliente($cedula);
         echo json_encode(['success' => true, 'data' => $cliente ?: null]);
     }
 
@@ -219,7 +219,7 @@ class CiberController
 
         $sesionId = Validator::id($_POST['sesion_id'] ?? null, 'ID de sesión');
 
-        $resultado = $this->model->finalizarSesion($sesionId);
+        $resultado = $this->getModel()->finalizarSesion($sesionId);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Sesión finalizada correctamente']
@@ -232,7 +232,7 @@ class CiberController
      */
     private function estadisticas(): void
     {
-        $estaciones = $this->model->listarEstaciones();
+        $estaciones = $this->getModel()->listarEstaciones();
         $total = count($estaciones);
         $ocupadas = count(array_filter($estaciones, fn($e) => ($e['estado'] ?? '') === 'ocupada'));
         $disponibles = $total - $ocupadas;
@@ -254,7 +254,7 @@ class CiberController
     private function historial(): void
     {
         $activoId = Validator::id($_GET['activo_id'] ?? null, 'ID del equipo');
-        $historial = $this->model->historialEstacion($activoId);
+        $historial = $this->getModel()->historialEstacion($activoId);
         echo json_encode(['success' => true, 'data' => $historial]);
     }
 
@@ -263,7 +263,7 @@ class CiberController
      */
     private function tiposActivo(): void
     {
-        echo json_encode(['success' => true, 'data' => $this->model->listarTiposActivo()]);
+        echo json_encode(['success' => true, 'data' => $this->getModel()->listarTiposActivo()]);
     }
 
     /**
@@ -272,7 +272,7 @@ class CiberController
     private function obtenerPC(): void
     {
         $id = Validator::id($_GET['id'] ?? null, 'ID de la PC');
-        $pc = $this->model->obtenerPC($id);
+        $pc = $this->getModel()->obtenerPC($id);
         echo json_encode(
             $pc
                 ? ['success' => true, 'data' => $pc]
@@ -306,7 +306,7 @@ class CiberController
         $tipoActivo  = $datos['tipo_activo_id'];
         $activa      = $datos['activa'];
 
-        $id = $this->model->crearPC($marca, $descripcion, $tipoActivo, $activa);
+        $id = $this->getModel()->crearPC($marca, $descripcion, $tipoActivo, $activa);
         echo json_encode(
             $id
                 ? ['success' => true, 'message' => 'PC creada exitosamente', 'data' => ['id' => $id]]
@@ -342,7 +342,7 @@ class CiberController
         $tipoActivo  = $datos['tipo_activo_id'];
         $activa      = $datos['activa'];
 
-        $resultado = $this->model->actualizarPC($id, $marca, $descripcion, $tipoActivo, $activa);
+        $resultado = $this->getModel()->actualizarPC($id, $marca, $descripcion, $tipoActivo, $activa);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'PC actualizada exitosamente']
@@ -367,7 +367,7 @@ class CiberController
         $id     = Validator::id($_POST['id'] ?? null, 'ID de la PC');
         $activa = Validator::bool($_POST['activa'] ?? null, 'estado', true);
 
-        $resultado = $this->model->cambiarEstadoPC($id, $activa);
+        $resultado = $this->getModel()->cambiarEstadoPC($id, $activa);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => $activa ? 'PC activada' : 'PC desactivada']
@@ -391,7 +391,7 @@ class CiberController
 
         $id = Validator::id($_POST['id'] ?? null, 'ID de la PC');
 
-        $resultado = $this->model->eliminarPC($id);
+        $resultado = $this->getModel()->eliminarPC($id);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'PC eliminada exitosamente']

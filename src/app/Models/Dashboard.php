@@ -20,7 +20,7 @@ class Dashboard extends Model
      */
     public function ventasHoy(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT COALESCE(SUM(lv.cantidad * lv.precio), 0) AS total,
                    COUNT(DISTINCT ov.id) AS transacciones
             FROM orden_de_venta ov
@@ -41,7 +41,7 @@ class Dashboard extends Model
      */
     public function ventasUltimos7Dias(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT COALESCE(SUM(lv.cantidad * lv.precio), 0) AS total,
                    COUNT(DISTINCT ov.id) AS transacciones
             FROM orden_de_venta ov
@@ -62,7 +62,7 @@ class Dashboard extends Model
      */
     public function stockCritico(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE stock <= stock_minimo AND activo = 1");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM productos WHERE stock <= stock_minimo AND activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -73,7 +73,7 @@ class Dashboard extends Model
      */
     public function stockAgotado(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM productos WHERE stock <= 0 AND activo = 1");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM productos WHERE stock <= 0 AND activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -84,7 +84,7 @@ class Dashboard extends Model
      */
     public function sesionesCyberActivas(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM sesion_ciber WHERE finalizada = 0");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM sesion_ciber WHERE finalizada = 0");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -95,7 +95,7 @@ class Dashboard extends Model
      */
     public function solicitudesPendientes(): int
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT COUNT(*) AS total
             FROM orden_abastecimiento oa
             JOIN status_seguimiento ss ON oa.fk_status = ss.id
@@ -111,7 +111,7 @@ class Dashboard extends Model
      */
     public function ventasPorDia(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT ov.fecha,
                    COALESCE(SUM(lv.cantidad * lv.precio), 0) AS total,
                    COUNT(DISTINCT ov.id) AS transacciones
@@ -131,7 +131,7 @@ class Dashboard extends Model
      */
     public function productosStockCritico(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT nombre, stock, stock_minimo
             FROM productos
             WHERE stock <= stock_minimo AND activo = 1
@@ -148,7 +148,7 @@ class Dashboard extends Model
      */
     public function actividadReciente(): array
     {
-        $ventas = $this->db->query("
+        $ventas = $this->getDb()->query("
             SELECT CONCAT('Venta ', ov.numero_de_orden, ' procesada') AS titulo,
                    CONCAT('Fecha: ', ov.fecha, ' - $', FORMAT(COALESCE((
                        SELECT SUM(lv2.cantidad * lv2.precio)
@@ -163,7 +163,7 @@ class Dashboard extends Model
             LIMIT 4
         ")->fetchAll();
 
-        $solicitudes = $this->db->query("
+        $solicitudes = $this->getDb()->query("
             SELECT CONCAT('Solicitud ', oa.numero_de_orden) AS titulo,
                    CONCAT('Proveedor: ', COALESCE(p.nombre, 'N/A')) AS detalle,
                    'request_quote' AS icono,
@@ -177,7 +177,7 @@ class Dashboard extends Model
             LIMIT 4
         ")->fetchAll();
 
-        $cyber = $this->db->query("
+        $cyber = $this->getDb()->query("
             SELECT CONCAT('Sesión Cyber ', IF(sc.finalizada = 0, 'activa', 'finalizada')) AS titulo,
                    CONCAT('Estación: ', COALESCE(a.marca, 'N/A')) AS detalle,
                    'desktop_windows' AS icono,

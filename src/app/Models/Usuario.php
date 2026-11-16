@@ -123,14 +123,14 @@ class Usuario extends Model
     public function toArray(): array
     {
         return [
-            'id'               => $this->id,
-            'user_name'        => $this->userName,
-            'password_hash'    => $this->passwordHash,
-            'nombre'           => $this->nombre,
-            'apellido'         => $this->apellido,
-            'email'            => $this->email,
-            'estatus'          => $this->estatus,
-            'fk_rol_usuario'   => $this->fkRolUsuario,
+            'id'               => $this->getId(),
+            'user_name'        => $this->getUserName(),
+            'password_hash'    => $this->getPasswordHash(),
+            'nombre'           => $this->getNombre(),
+            'apellido'         => $this->getApellido(),
+            'email'            => $this->getEmail(),
+            'estatus'          => $this->getEstatus(),
+            'fk_rol_usuario'   => $this->getFkRolUsuario(),
         ];
     }
 
@@ -172,19 +172,19 @@ class Usuario extends Model
         $hash = $this->hashPassword($password);
 
         $sql = "INSERT INTO usuarios (user_name, password_hash, nombre, apellido, email, estatus, fk_rol_usuario) VALUES (?, ?, ?, ?, ?, '1', ?)";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(1, $this->userName, PDO::PARAM_STR);
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->bindValue(1, $this->getUserName(), PDO::PARAM_STR);
         $stmt->bindParam(2, $hash, PDO::PARAM_STR);
-        $stmt->bindParam(3, $this->nombre, PDO::PARAM_STR);
-        $stmt->bindParam(4, $this->apellido, PDO::PARAM_STR);
-        $stmt->bindParam(5, $this->email, PDO::PARAM_STR);
-        $stmt->bindParam(6, $this->fkRolUsuario, PDO::PARAM_INT);
+        $stmt->bindValue(3, $this->getNombre(), PDO::PARAM_STR);
+        $stmt->bindValue(4, $this->getApellido(), PDO::PARAM_STR);
+        $stmt->bindValue(5, $this->getEmail(), PDO::PARAM_STR);
+        $stmt->bindValue(6, $this->getFkRolUsuario(), PDO::PARAM_INT);
         return $stmt->execute();
     }
 
     public function obtenerTodos(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT u.id, u.user_name AS username, u.nombre, u.apellido, u.email,
                    CASE WHEN u.estatus IN ('1','activo') THEN '1' ELSE '0' END AS activo,
                    r.nombre_rol AS rol_nombre, u.fk_rol_usuario
@@ -200,7 +200,7 @@ class Usuario extends Model
     public function obtenerPorId(int $id): array|false
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT u.*, r.nombre_rol AS rol_nombre,
                    CASE WHEN u.estatus IN ('1','activo') THEN '1' ELSE '0' END AS estatus_num
             FROM usuarios u
@@ -216,7 +216,7 @@ class Usuario extends Model
     public function obtenerPorUsername(string $username): array|false
     {
         $username = $this->sanitizeString($username);
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT u.*, r.nombre_rol AS rol_nombre
             FROM usuarios u
             LEFT JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
@@ -236,7 +236,7 @@ class Usuario extends Model
             $excludeId = $this->sanitizeInt($excludeId);
             $sql .= " AND id != ?";
         }
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->getDb()->prepare($sql);
         $stmt->bindParam(1, $username, PDO::PARAM_STR);
         if ($excludeId !== null) {
             $stmt->bindParam(2, $excludeId, PDO::PARAM_INT);
@@ -252,7 +252,7 @@ class Usuario extends Model
             throw new \InvalidArgumentException('El identificador del usuario no es válido.');
         }
         $estatus = $activo ? '1' : '0';
-        $stmt = $this->db->prepare("UPDATE usuarios SET estatus = ? WHERE id = ?");
+        $stmt = $this->getDb()->prepare("UPDATE usuarios SET estatus = ? WHERE id = ?");
         $stmt->bindParam(1, $estatus, PDO::PARAM_STR);
         $stmt->bindParam(2, $id, PDO::PARAM_INT);
         return $stmt->execute();
@@ -260,14 +260,14 @@ class Usuario extends Model
 
     public function obtenerRolesAsignables(): array
     {
-        $stmt = $this->db->query("SELECT ru.id, r.nombre_rol AS nombre FROM rol_usuarios ru JOIN roles r ON r.id = ru.fk_rol ORDER BY r.nombre_rol");
+        $stmt = $this->getDb()->query("SELECT ru.id, r.nombre_rol AS nombre FROM rol_usuarios ru JOIN roles r ON r.id = ru.fk_rol ORDER BY r.nombre_rol");
         return $stmt->fetchAll();
     }
 
     private function existeRolUsuario(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM rol_usuarios WHERE id = ?");
+        $stmt = $this->getDb()->prepare("SELECT COUNT(*) FROM rol_usuarios WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return (int)$stmt->fetchColumn() > 0;
@@ -291,7 +291,7 @@ class Usuario extends Model
     public function obtenerPermisosPorUsuario(int $user_id): array
     {
         $user_id = $this->sanitizeInt($user_id);
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT DISTINCT p.permisos AS nombre
             FROM usuarios u
             INNER JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
@@ -317,7 +317,7 @@ class Usuario extends Model
     public function obtenerEstadoYRol(int $id): ?array
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT u.id,
                    u.estatus,
                    u.activo,
@@ -354,14 +354,14 @@ class Usuario extends Model
      */
     public function obtenerTodosLosPermisos(): array
     {
-        $stmt = $this->db->query("SELECT permisos AS nombre FROM permisos ORDER BY permisos");
+        $stmt = $this->getDb()->query("SELECT permisos AS nombre FROM permisos ORDER BY permisos");
         return array_column($stmt->fetchAll(), 'nombre');
     }
 
     public function obtenerRolUsuario(int $user_id): ?string
     {
         $user_id = $this->sanitizeInt($user_id);
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT r.nombre_rol
             FROM usuarios u
             INNER JOIN rol_usuarios ru ON u.fk_rol_usuario = ru.id
@@ -384,13 +384,13 @@ class Usuario extends Model
         $this->setFkRolUsuario($fk_rol_usuario);
 
         $sql = "UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, fk_rol_usuario = COALESCE(?, fk_rol_usuario), estatus = ? WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(1, $this->nombre, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->apellido, PDO::PARAM_STR);
-        $stmt->bindParam(3, $this->email, PDO::PARAM_STR);
-        $stmt->bindParam(4, $this->fkRolUsuario, PDO::PARAM_INT);
-        $stmt->bindParam(5, $this->estatus, PDO::PARAM_STR);
-        $stmt->bindParam(6, $this->id, PDO::PARAM_INT);
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->bindValue(1, $this->getNombre(), PDO::PARAM_STR);
+        $stmt->bindValue(2, $this->getApellido(), PDO::PARAM_STR);
+        $stmt->bindValue(3, $this->getEmail(), PDO::PARAM_STR);
+        $stmt->bindValue(4, $this->getFkRolUsuario(), PDO::PARAM_INT);
+        $stmt->bindValue(5, $this->getEstatus(), PDO::PARAM_STR);
+        $stmt->bindValue(6, $this->getId(), PDO::PARAM_INT);
         return $stmt->execute();
     }
 
@@ -398,7 +398,7 @@ class Usuario extends Model
     {
         $id = $this->sanitizeInt($id);
         $hash = $this->hashPassword($password);
-        $stmt = $this->db->prepare("UPDATE usuarios SET password_hash = ? WHERE id = ?");
+        $stmt = $this->getDb()->prepare("UPDATE usuarios SET password_hash = ? WHERE id = ?");
         $stmt->bindParam(1, $hash, PDO::PARAM_STR);
         $stmt->bindParam(2, $id, PDO::PARAM_INT);
         return $stmt->execute();
@@ -407,7 +407,7 @@ class Usuario extends Model
     public function eliminar(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("UPDATE usuarios SET activo = 0 WHERE id = ?");
+        $stmt = $this->getDb()->prepare("UPDATE usuarios SET activo = 0 WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         return $stmt->execute();
     }

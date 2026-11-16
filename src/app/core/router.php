@@ -74,6 +74,22 @@ class Router
     /** @var string Página actual resuelta. */
     private string $pagina;
 
+    /**
+     * Devuelve la página actual (getter).
+     */
+    public function getPagina(): string
+    {
+        return $this->pagina;
+    }
+
+    /**
+     * Asigna la página actual (setter).
+     */
+    public function setPagina(string $pagina): void
+    {
+        $this->pagina = $pagina;
+    }
+
     public function __construct()
     {
         // Sesión única para toda la aplicación.
@@ -92,11 +108,11 @@ class Router
      */
     public function handle(): void
     {
-        $this->pagina = $this->resolvePagina();
+        $this->setPagina($this->resolvePagina());
 
         // Página de cierre de sesión (GET ?pagina=login con intención de logout).
         if (
-            $this->pagina === 'login'
+            $this->getPagina() === 'login'
             && isset($_GET['logout'])
             && isset($_SESSION['logged_in'])
         ) {
@@ -106,7 +122,7 @@ class Router
         // Control de acceso: las páginas privadas requieren sesión.
         if (
             !isset($_SESSION['logged_in'])
-            && !in_array($this->pagina, self::PUBLIC_PAGES, true)
+            && !in_array($this->getPagina(), self::PUBLIC_PAGES, true)
         ) {
             $this->redirect('login');
         }
@@ -122,17 +138,17 @@ class Router
 
         // Control de acceso por página: cada módulo exige su permiso base.
         // Las páginas sin vista se resuelven después con un 404, no con un 403.
-        if (!$this->esPaginaPublica() && $this->tieneVista() && !Permisos::accesoPagina($this->pagina)) {
+        if (!$this->esPaginaPublica() && $this->tieneVista() && !Permisos::accesoPagina($this->getPagina())) {
             $this->denegar('No tienes permisos para acceder a este módulo.');
         }
 
         // Despacho de peticiones AJAX de los módulos (?pagina=X&action=Y).
-        if (array_key_exists($this->pagina, self::CONTROLLERS) && isset($_GET['action'])) {
+        if (array_key_exists($this->getPagina(), self::CONTROLLERS) && isset($_GET['action'])) {
             $this->dispatchAction();
         }
 
         // Flujo de inicio de sesión (POST ?pagina=login_validate).
-        if ($this->pagina === 'login_validate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($this->getPagina() === 'login_validate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             (new AuthController())->login();
             return;
         }
@@ -164,11 +180,11 @@ class Router
     {
         $accion = (string)$_GET['action'];
 
-        if (!Permisos::puedeAccion($this->pagina, $accion)) {
+        if (!Permisos::puedeAccion($this->getPagina(), $accion)) {
             $this->denegar('No tienes permisos para realizar esta acción.', true);
         }
 
-        $controllerClass = self::CONTROLLERS[$this->pagina];
+        $controllerClass = self::CONTROLLERS[$this->getPagina()];
         $controller      = new $controllerClass();
 
         if (method_exists($controller, 'handle')) {
@@ -228,7 +244,7 @@ class Router
      */
     private function esPaginaPublica(): bool
     {
-        return in_array($this->pagina, self::PUBLIC_PAGES, true);
+        return in_array($this->getPagina(), self::PUBLIC_PAGES, true);
     }
 
     /**
@@ -236,7 +252,7 @@ class Router
      */
     private function tieneVista(): bool
     {
-        return is_file($this->viewsDir() . $this->pagina . '.php');
+        return is_file($this->viewsDir() . $this->getPagina() . '.php');
     }
 
     /**
@@ -264,8 +280,8 @@ class Router
     private function render(): void
     {
         // Vista de inicio de sesión (páginas públicas).
-        if (in_array($this->pagina, self::PUBLIC_PAGES, true)) {
-            $rutaVista = $this->viewsDir() . $this->pagina . '.php';
+        if (in_array($this->getPagina(), self::PUBLIC_PAGES, true)) {
+            $rutaVista = $this->viewsDir() . $this->getPagina() . '.php';
             if (is_file($rutaVista)) {
                 require $rutaVista;
             } else {
@@ -276,18 +292,18 @@ class Router
         }
 
         // Vistas protegidas con layout.
-        $rutaVista = $this->viewsDir() . $this->pagina . '.php';
+        $rutaVista = $this->viewsDir() . $this->getPagina() . '.php';
 
         if (!is_file($rutaVista)) {
             http_response_code(404);
             echo '<h1>Error 404: Página no encontrada</h1>';
-            echo "<p>La página <strong>{$this->pagina}</strong> no existe.</p>";
+            echo "<p>La página <strong>{$this->getPagina()}</strong> no existe.</p>";
             echo "<a href='?pagina=dashboard'>Volver al dashboard</a>";
             return;
         }
 
-        $pageTitle  = self::PAGE_TITLES[$this->pagina] ?? 'EIS System';
-        $headerExtra = self::PAGE_EXTRA_HEADERS[$this->pagina] ?? '';
+        $pageTitle  = self::PAGE_TITLES[$this->getPagina()] ?? 'EIS System';
+        $headerExtra = self::PAGE_EXTRA_HEADERS[$this->getPagina()] ?? '';
 
         $this->renderLayout($rutaVista, $pageTitle, $headerExtra);
     }
@@ -304,7 +320,7 @@ class Router
      */
     private function renderLayout(string $contentView, string $pageTitle, string $headerExtra = ''): void
     {
-        $pagina            = $this->pagina;
+        $pagina            = $this->getPagina();
         $permisosUsuario   = Permisos::permisosDeSesion();
         $paginasPermitidas = Permisos::paginasPermitidas();
         $puede             = static fn(string $permiso): bool => Permisos::puede($permiso);

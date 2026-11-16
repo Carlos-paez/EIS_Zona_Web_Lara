@@ -14,7 +14,7 @@ class InventarioController extends BaseController
 
     public function __construct()
     {
-        $this->model = new Inventario();
+        $this->setModel(new Inventario());
     }
 
     public function getModel(): Inventario
@@ -64,24 +64,24 @@ class InventarioController extends BaseController
 
     private function listar(): void
     {
-        $productos = $this->model->obtenerProductos();
+        $productos = $this->getModel()->obtenerProductos();
         $this->jsonSuccess($productos);
     }
 
     private function kpis(): void
     {
         $this->setResult([
-            'total'   => $this->model->totalProductos(),
-            'critico' => $this->model->stockCritico(),
-            'bajo'    => $this->model->stockBajo(),
-            'valor'   => $this->model->valorTotalInventario(),
+            'total'   => $this->getModel()->totalProductos(),
+            'critico' => $this->getModel()->stockCritico(),
+            'bajo'    => $this->getModel()->stockBajo(),
+            'valor'   => $this->getModel()->valorTotalInventario(),
         ]);
         $this->jsonSuccess($this->getResult());
     }
 
     private function categorias(): void
     {
-        $categorias = $this->model->obtenerCategorias();
+        $categorias = $this->getModel()->obtenerCategorias();
         $this->jsonSuccess($categorias);
     }
 
@@ -96,7 +96,7 @@ class InventarioController extends BaseController
             $this->jsonError('El identificador no es válido.', null, 400);
             return;
         }
-        $producto = $this->model->obtenerProductoPorId($id);
+        $producto = $this->getModel()->obtenerProductoPorId($id);
         if ($producto) {
             $this->jsonSuccess($producto);
         } else {
@@ -109,9 +109,9 @@ class InventarioController extends BaseController
         $termino = Validator::busqueda($_POST['termino'] ?? '', 'búsqueda');
         $this->set('termino', $termino);
         if ($termino === '') {
-            $productos = $this->model->obtenerProductos();
+            $productos = $this->getModel()->obtenerProductos();
         } else {
-            $productos = $this->model->buscarProductos($termino);
+            $productos = $this->getModel()->buscarProductos($termino);
         }
         $this->jsonSuccess($productos);
     }
@@ -157,12 +157,12 @@ class InventarioController extends BaseController
             return;
         }
 
-        if ($this->model->existeCodigo($codigo)) {
+        if ($this->getModel()->existeCodigo($codigo)) {
             $this->jsonError('Ya existe un producto registrado con ese código.', null, 400);
             return;
         }
 
-        $resultado = $this->model->crearProducto($codigo, $nombre, $categoria_id, $stock, $stock_minimo, $costo_compra, $precio_venta, $descripcion);
+        $resultado = $this->getModel()->crearProducto($codigo, $nombre, $categoria_id, $stock, $stock_minimo, $costo_compra, $precio_venta, $descripcion);
         if ($resultado) {
             $this->jsonSuccess(null, 'Producto creado exitosamente');
         } else {
@@ -214,12 +214,12 @@ class InventarioController extends BaseController
             return;
         }
 
-        if ($this->model->existeCodigo($codigo, $id)) {
+        if ($this->getModel()->existeCodigo($codigo, $id)) {
             $this->jsonError('Ya existe otro producto registrado con ese código.', null, 400);
             return;
         }
 
-        $resultado = $this->model->actualizarProducto($id, $codigo, $nombre, $categoria_id, $stock, $stock_minimo, $costo_compra, $precio_venta, $descripcion);
+        $resultado = $this->getModel()->actualizarProducto($id, $codigo, $nombre, $categoria_id, $stock, $stock_minimo, $costo_compra, $precio_venta, $descripcion);
         if ($resultado) {
             $this->jsonSuccess(null, 'Producto actualizado exitosamente');
         } else {
@@ -236,7 +236,7 @@ class InventarioController extends BaseController
 
         $id = Validator::id($_POST['id'] ?? null, 'ID del producto');
         $this->set('id', $id);
-        $resultado = $this->model->eliminarProducto($id);
+        $resultado = $this->getModel()->eliminarProducto($id);
         if ($resultado) {
             $this->jsonSuccess(null, 'Producto eliminado exitosamente');
         } else {
@@ -257,7 +257,7 @@ class InventarioController extends BaseController
 
         $nombre = $datos['nombre'];
         $this->set('nombre', $nombre);
-        $resultado = $this->model->crearCategoria($nombre);
+        $resultado = $this->getModel()->crearCategoria($nombre);
         if ($resultado) {
             $this->jsonSuccess(null, 'Categoría creada exitosamente');
         } else {
@@ -280,7 +280,7 @@ class InventarioController extends BaseController
         $id     = $datos['id'];
         $nombre = $datos['nombre'];
         $this->set('id', $id)->set('nombre', $nombre);
-        $resultado = $this->model->actualizarCategoria($id, $nombre);
+        $resultado = $this->getModel()->actualizarCategoria($id, $nombre);
         if ($resultado) {
             $this->jsonSuccess(null, 'Categoría actualizada exitosamente');
         } else {
@@ -297,7 +297,7 @@ class InventarioController extends BaseController
 
         $id = Validator::id($_POST['id'] ?? null, 'ID de la categoría');
         $this->set('id', $id);
-        $resultado = $this->model->eliminarCategoria($id);
+        $resultado = $this->getModel()->eliminarCategoria($id);
         if ($resultado) {
             $this->jsonSuccess(null, 'Categoría eliminada exitosamente');
         } else {

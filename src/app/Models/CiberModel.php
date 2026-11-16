@@ -7,12 +7,28 @@ require_once __DIR__ . '/../../Config/database.php';
 
 class CiberModel
 {
-    /** @var PDO */
+    /** @var PDO|null */
     protected $pdo;
 
     public function __construct()
     {
         global $pdo;
+        $this->setPdo($pdo);
+    }
+
+    /**
+     * Devuelve la conexión PDO del modelo.
+     */
+    public function getPdo(): ?PDO
+    {
+        return $this->pdo;
+    }
+
+    /**
+     * Asigna la conexión PDO del modelo.
+     */
+    public function setPdo(?PDO $pdo): void
+    {
         $this->pdo = $pdo;
     }
 
@@ -22,7 +38,7 @@ class CiberModel
      */
     public function obtenerEstaciones(): array
     {
-        if (!$this->pdo) {
+        if (!$this->getPdo()) {
             return [];
         }
 
@@ -98,7 +114,7 @@ class CiberModel
                     WHERE a.is_ciber = 1 
                     ORDER BY a.id_activo";
 
-            $stmt = $this->pdo->query($sql);
+            $stmt = $this->getPdo()->query($sql);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         } catch (PDOException $e) {
@@ -161,7 +177,7 @@ class CiberModel
                     JOIN tipo_activo t ON a.fk_tipo_activo = t.id_tipo_activo
                     WHERE a.id_activo = ?";
 
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([$activoId]);
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
@@ -176,7 +192,7 @@ class CiberModel
      */
     public function iniciarSesion(int $activoId, int $clienteId, int $tarifaId, string $tiempo): array
     {
-        if (!$this->pdo) {
+        if (!$this->getPdo()) {
             return ['success' => false, 'message' => 'No se pudo conectar con la base de datos. Intenta de nuevo.'];
         }
 
@@ -194,7 +210,7 @@ class CiberModel
                     FROM activos a
                     WHERE a.id_activo = ? AND a.is_ciber = 1 AND a.activa = 1";
             
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([$activoId]);
             $activo = $stmt->fetch();
 
@@ -210,10 +226,10 @@ class CiberModel
             $sql = "INSERT INTO sesion_ciber (tiempo_uso, fk_cliente, fk_tarifa, fk_activo, created_at) 
                     VALUES (?, ?, ?, ?, NOW())";
             
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([$tiempo, $clienteId, $tarifaId, $activoId]);
             
-            $sesionId = $this->pdo->lastInsertId();
+            $sesionId = $this->getPdo()->lastInsertId();
 
             // Obtener datos actualizados de la PC
             $estacionActualizada = $this->obtenerEstacionPorId($activoId);
@@ -239,7 +255,7 @@ class CiberModel
      */
     public function finalizarSesion(int $sesionId): array
     {
-        if (!$this->pdo) {
+        if (!$this->getPdo()) {
             return ['success' => false, 'message' => 'No se pudo conectar con la base de datos. Intenta de nuevo.'];
         }
 
@@ -256,7 +272,7 @@ class CiberModel
                     JOIN tarifas t ON s.fk_tarifa = t.id_tarifa
                     WHERE s.id_sesion = ?";
             
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([$sesionId]);
             $sesion = $stmt->fetch();
 
@@ -282,7 +298,7 @@ class CiberModel
                     SET tiempo_uso = SEC_TO_TIME(?)
                     WHERE id_sesion = ?";
             
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([$minutosFacturar * 60, $sesionId]);
 
             // Obtener datos actualizados de la PC
@@ -311,7 +327,7 @@ class CiberModel
      */
     public function obtenerHistorialEstacion(int $activoId, int $limit = 20): array
     {
-        if (!$this->pdo) {
+        if (!$this->getPdo()) {
             return [];
         }
 
@@ -337,7 +353,7 @@ class CiberModel
                     ORDER BY s.created_at DESC
                     LIMIT ?";
 
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([$activoId, $limit]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -352,7 +368,7 @@ class CiberModel
      */
     public function obtenerEstadisticas(): array
     {
-        if (!$this->pdo) {
+        if (!$this->getPdo()) {
             return [
                 'total' => 0,
                 'disponibles' => 0,
@@ -366,7 +382,7 @@ class CiberModel
         try {
             // Total de PCs
             $sql = "SELECT COUNT(*) as total FROM activos WHERE is_ciber = 1 AND activa = 1";
-            $total = (int)$this->pdo->query($sql)->fetchColumn();
+            $total = (int)$this->getPdo()->query($sql)->fetchColumn();
 
             // PCs disponibles
             $sql = "SELECT COUNT(*) as disponibles 
@@ -377,32 +393,32 @@ class CiberModel
                         WHERE s.fk_activo = a.id_activo 
                         AND DATE_ADD(s.created_at, INTERVAL TIME_TO_SEC(s.tiempo_uso) SECOND) > NOW()
                     )";
-            $disponibles = (int)$this->pdo->query($sql)->fetchColumn();
+            $disponibles = (int)$this->getPdo()->query($sql)->fetchColumn();
 
             // PCs ocupadas
             $sql = "SELECT COUNT(DISTINCT fk_activo) as ocupadas 
                     FROM sesion_ciber s
                     WHERE DATE_ADD(s.created_at, INTERVAL TIME_TO_SEC(s.tiempo_uso) SECOND) > NOW()";
-            $ocupadas = (int)$this->pdo->query($sql)->fetchColumn();
+            $ocupadas = (int)$this->getPdo()->query($sql)->fetchColumn();
 
             // PCs en mantenimiento (activas = 0)
             $sql = "SELECT COUNT(*) as mantenimiento 
                     FROM activos 
                     WHERE is_ciber = 1 AND activa = 0";
-            $mantenimiento = (int)$this->pdo->query($sql)->fetchColumn();
+            $mantenimiento = (int)$this->getPdo()->query($sql)->fetchColumn();
 
             // Sesiones de hoy
             $sql = "SELECT COUNT(*) as sesiones_hoy 
                     FROM sesion_ciber 
                     WHERE DATE(created_at) = CURDATE()";
-            $sesionesHoy = (int)$this->pdo->query($sql)->fetchColumn();
+            $sesionesHoy = (int)$this->getPdo()->query($sql)->fetchColumn();
 
             // Ingresos de hoy
             $sql = "SELECT COALESCE(SUM((TIME_TO_SEC(s.tiempo_uso) / 3600) * t.tarifa_hora), 0) as ingresos_hoy
                     FROM sesion_ciber s
                     JOIN tarifas t ON s.fk_tarifa = t.id_tarifa
                     WHERE DATE(s.created_at) = CURDATE()";
-            $ingresosHoy = (float)$this->pdo->query($sql)->fetchColumn();
+            $ingresosHoy = (float)$this->getPdo()->query($sql)->fetchColumn();
 
             return [
                 'total' => $total,
@@ -431,7 +447,7 @@ class CiberModel
      */
     public function obtenerClientes(): array
     {
-        if (!$this->pdo) {
+        if (!$this->getPdo()) {
             return [];
         }
 
@@ -439,7 +455,7 @@ class CiberModel
             $sql = "SELECT id_cliente, CONCAT(nombre, ' ', apellido) as nombre_completo 
                     FROM clientes 
                     ORDER BY nombre";
-            $stmt = $this->pdo->query($sql);
+            $stmt = $this->getPdo()->query($sql);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         } catch (PDOException $e) {
@@ -453,13 +469,13 @@ class CiberModel
      */
     public function buscarClientePorNombre(string $nombreCompleto): int
     {
-        if (!$this->pdo) {
+        if (!$this->getPdo()) {
             return 0;
         }
 
         try {
             $sql = "SELECT id_cliente FROM clientes WHERE CONCAT(nombre, ' ', apellido) LIKE ? LIMIT 1";
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $search = '%' . $nombreCompleto . '%';
             $stmt->execute([$search]);
             $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -476,7 +492,7 @@ class CiberModel
      */
     public function crearClientePorNombre(string $nombreCompleto): int
     {
-        if (!$this->pdo) {
+        if (!$this->getPdo()) {
             return 0;
         }
 
@@ -500,10 +516,10 @@ class CiberModel
         for ($intento = 0; $intento < $maxIntentos; $intento++) {
             try {
                 $cedula = 'TEMP-' . date('YmdHis') . '-' . mt_rand(100, 999);
-                $stmt = $this->pdo->prepare($sql);
+                $stmt = $this->getPdo()->prepare($sql);
                 $stmt->execute([$cedula, $nombre, $apellido]);
 
-                return (int)$this->pdo->lastInsertId();
+                return (int)$this->getPdo()->lastInsertId();
             } catch (PDOException $e) {
                 if ($intento === $maxIntentos - 1) {
                     error_log('Error en crearClientePorNombre: ' . $e->getMessage());
@@ -520,7 +536,7 @@ class CiberModel
      */
     public function obtenerTarifas(): array
     {
-        if (!$this->pdo) {
+        if (!$this->getPdo()) {
             return [];
         }
 
@@ -528,7 +544,7 @@ class CiberModel
             $sql = "SELECT id_tarifa, tarifa_hora, precio_tiempo 
                     FROM tarifas 
                     ORDER BY tarifa_hora";
-            $stmt = $this->pdo->query($sql);
+            $stmt = $this->getPdo()->query($sql);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         } catch (PDOException $e) {
@@ -546,7 +562,7 @@ class CiberModel
      */
     public function obtenerTiposActivo(): array
     {
-        if (!$this->pdo) {
+        if (!$this->getPdo()) {
             return [];
         }
 
@@ -559,7 +575,7 @@ class CiberModel
                        OR nombre_tipo LIKE '%Premium%'
                     ORDER BY nombre_tipo";
             
-            $stmt = $this->pdo->query($sql);
+            $stmt = $this->getPdo()->query($sql);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
             
         } catch (PDOException $e) {
@@ -595,7 +611,7 @@ class CiberModel
                     JOIN tipo_activo t ON a.fk_tipo_activo = t.id_tipo_activo
                     WHERE a.id_activo = ? AND a.is_ciber = 1";
             
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([$id]);
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
             
@@ -614,7 +630,7 @@ class CiberModel
             // Validar que no exista una PC con la misma marca y descripción
             $sql = "SELECT COUNT(*) FROM activos 
                     WHERE marca = ? AND descripcion = ? AND is_ciber = 1";
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([$datos['marca'], $datos['descripcion']]);
             
             if ($stmt->fetchColumn() > 0) {
@@ -624,7 +640,7 @@ class CiberModel
             $sql = "INSERT INTO activos (marca, descripcion, is_ciber, activa, fk_tipo_activo) 
                     VALUES (?, ?, ?, ?, ?)";
             
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([
                 $datos['marca'],
                 $datos['descripcion'],
@@ -635,7 +651,7 @@ class CiberModel
             
             return [
                 'success' => true,
-                'id' => (int)$this->pdo->lastInsertId()
+                'id' => (int)$this->getPdo()->lastInsertId()
             ];
             
         } catch (PDOException $e) {
@@ -652,7 +668,7 @@ class CiberModel
         try {
             // Validar que la PC existe
             $sql = "SELECT id_activo FROM activos WHERE id_activo = ? AND is_ciber = 1";
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([$id]);
             
             if (!$stmt->fetch()) {
@@ -662,7 +678,7 @@ class CiberModel
             // Verificar duplicados (excepto la misma PC)
             $sql = "SELECT COUNT(*) FROM activos 
                     WHERE marca = ? AND descripcion = ? AND is_ciber = 1 AND id_activo != ?";
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([$datos['marca'], $datos['descripcion'], $id]);
             
             if ($stmt->fetchColumn() > 0) {
@@ -673,7 +689,7 @@ class CiberModel
                     SET marca = ?, descripcion = ?, activa = ?, fk_tipo_activo = ?
                     WHERE id_activo = ? AND is_ciber = 1";
             
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([
                 $datos['marca'],
                 $datos['descripcion'],
@@ -697,7 +713,7 @@ class CiberModel
     {
         try {
             $sql = "UPDATE activos SET activa = ? WHERE id_activo = ? AND is_ciber = 1";
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([$activa, $id]);
             
             return ['success' => true];
@@ -718,7 +734,7 @@ class CiberModel
                     WHERE s.fk_activo = ?
                     AND DATE_ADD(s.created_at, INTERVAL TIME_TO_SEC(s.tiempo_uso) SECOND) > NOW()";
             
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([$id]);
             
             return $stmt->fetchColumn() > 0;
@@ -736,7 +752,7 @@ class CiberModel
     {
         try {
             $sql = "SELECT COUNT(*) FROM sesion_ciber WHERE fk_activo = ?";
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([$id]);
             
             return $stmt->fetchColumn() > 0;
@@ -754,7 +770,7 @@ class CiberModel
     {
         try {
             $sql = "DELETE FROM activos WHERE id_activo = ? AND is_ciber = 1";
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute([$id]);
             
             if ($stmt->rowCount() > 0) {

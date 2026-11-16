@@ -94,11 +94,11 @@ class ProveedorGestion extends Model
     public function toArray(): array
     {
         return [
-            'id'       => $this->id,
-            'rif'      => $this->rif,
-            'nombre'   => $this->nombre,
-            'email'    => $this->email,
-            'telefono' => $this->telefono,
+            'id'       => $this->getId(),
+            'rif'      => $this->getRif(),
+            'nombre'   => $this->getNombre(),
+            'email'    => $this->getEmail(),
+            'telefono' => $this->getTelefono(),
         ];
     }
 
@@ -115,14 +115,14 @@ class ProveedorGestion extends Model
 
     public function obtenerProveedores(): array
     {
-        $stmt = $this->db->query("SELECT id, rif, nombre, email, telefono FROM proveedores WHERE activo = 1 ORDER BY nombre");
+        $stmt = $this->getDb()->query("SELECT id, rif, nombre, email, telefono FROM proveedores WHERE activo = 1 ORDER BY nombre");
         return $stmt->fetchAll();
     }
 
     public function obtenerProveedorPorId(int $id): array|false
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT * FROM proveedores WHERE id = ? AND activo = 1");
+        $stmt = $this->getDb()->prepare("SELECT * FROM proveedores WHERE id = ? AND activo = 1");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch();
@@ -136,11 +136,11 @@ class ProveedorGestion extends Model
         $this->setTelefono($telefono);
 
         $sql = "INSERT INTO proveedores (rif, nombre, email, telefono) VALUES (?, ?, ?, ?)";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(1, $this->rif, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->nombre, PDO::PARAM_STR);
-        $stmt->bindParam(3, $this->email, PDO::PARAM_STR);
-        $stmt->bindParam(4, $this->telefono, PDO::PARAM_STR);
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->bindValue(1, $this->getRif(), PDO::PARAM_STR);
+        $stmt->bindValue(2, $this->getNombre(), PDO::PARAM_STR);
+        $stmt->bindValue(3, $this->getEmail(), PDO::PARAM_STR);
+        $stmt->bindValue(4, $this->getTelefono(), PDO::PARAM_STR);
         return $stmt->execute();
     }
 
@@ -153,26 +153,26 @@ class ProveedorGestion extends Model
         $this->setTelefono($telefono);
 
         $sql = "UPDATE proveedores SET rif = ?, nombre = ?, email = ?, telefono = ? WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(1, $this->rif, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->nombre, PDO::PARAM_STR);
-        $stmt->bindParam(3, $this->email, PDO::PARAM_STR);
-        $stmt->bindParam(4, $this->telefono, PDO::PARAM_STR);
-        $stmt->bindParam(5, $this->id, PDO::PARAM_INT);
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->bindValue(1, $this->getRif(), PDO::PARAM_STR);
+        $stmt->bindValue(2, $this->getNombre(), PDO::PARAM_STR);
+        $stmt->bindValue(3, $this->getEmail(), PDO::PARAM_STR);
+        $stmt->bindValue(4, $this->getTelefono(), PDO::PARAM_STR);
+        $stmt->bindValue(5, $this->getId(), PDO::PARAM_INT);
         return $stmt->execute();
     }
 
     public function eliminarProveedor(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("UPDATE proveedores SET activo = 0 WHERE id = ?");
+        $stmt = $this->getDb()->prepare("UPDATE proveedores SET activo = 0 WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
 
     public function totalProveedores(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM proveedores WHERE activo = 1");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM proveedores WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -180,12 +180,12 @@ class ProveedorGestion extends Model
     {
         $rif = $this->sanitizeString($rif);
         if ($excludeId > 0) {
-            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM proveedores WHERE rif = ? AND id != ?");
+            $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM proveedores WHERE rif = ? AND id != ?");
             $stmt->bindParam(1, $rif, PDO::PARAM_STR);
             $stmt->bindParam(2, $excludeId, PDO::PARAM_INT);
             $stmt->execute();
         } else {
-            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM proveedores WHERE rif = ?");
+            $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM proveedores WHERE rif = ?");
             $stmt->bindParam(1, $rif, PDO::PARAM_STR);
             $stmt->execute();
         }

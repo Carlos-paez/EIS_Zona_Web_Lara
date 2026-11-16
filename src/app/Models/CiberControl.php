@@ -24,7 +24,7 @@ class CiberControl extends Model
      */
     public function listarEstaciones(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT a.id, a.marca, a.descripcion, a.fk_tipo_activo,
                    ta.nombre_tipo,
                    sc.id AS sesion_id, sc.tiempo_uso, sc.fk_tarifa,
@@ -58,7 +58,7 @@ class CiberControl extends Model
      */
     public function listarTarifas(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT id, tarifa_hora, precio_tiempo
             FROM tarifas
             ORDER BY tarifa_hora
@@ -137,10 +137,10 @@ class CiberControl extends Model
         }
 
         try {
-            $this->db->beginTransaction();
+            $this->getDb()->beginTransaction();
 
             // 1. Verifica que la estación exista, esté activa y sea de cybercafé
-            $stmt = $this->db->prepare("SELECT id FROM activos WHERE id = ? AND is_ciber = 1 AND activa = 1 AND activo = 1");
+            $stmt = $this->getDb()->prepare("SELECT id FROM activos WHERE id = ? AND is_ciber = 1 AND activa = 1 AND activo = 1");
             $stmt->bindParam(1, $activoId, PDO::PARAM_INT);
             $stmt->execute();
             if (!$stmt->fetch()) {
@@ -148,7 +148,7 @@ class CiberControl extends Model
             }
 
             // 2. Verifica que la estación no tenga una sesión sin finalizar
-            $stmt = $this->db->prepare("SELECT id FROM sesion_ciber WHERE fk_activo = ? AND finalizada = 0 LIMIT 1");
+            $stmt = $this->getDb()->prepare("SELECT id FROM sesion_ciber WHERE fk_activo = ? AND finalizada = 0 LIMIT 1");
             $stmt->bindParam(1, $activoId, PDO::PARAM_INT);
             $stmt->execute();
             if ($stmt->fetch()) {
@@ -156,7 +156,7 @@ class CiberControl extends Model
             }
 
             // 3. Verifica que la tarifa exista
-            $stmt = $this->db->prepare("SELECT id FROM tarifas WHERE id = ?");
+            $stmt = $this->getDb()->prepare("SELECT id FROM tarifas WHERE id = ?");
             $stmt->bindParam(1, $tarifaId, PDO::PARAM_INT);
             $stmt->execute();
             if (!$stmt->fetch()) {
@@ -169,20 +169,20 @@ class CiberControl extends Model
 
             // 5. Registrar la sesión de cybercafé
             $sql = "INSERT INTO sesion_ciber (tiempo_uso, fk_cliente, fk_tarifa, fk_activo) VALUES (?, ?, ?, ?)";
-            $stmt = $this->db->prepare($sql);
+            $stmt = $this->getDb()->prepare($sql);
             $stmt->bindParam(1, $tiempoUso, PDO::PARAM_STR);
             $stmt->bindParam(2, $fk_cliente, PDO::PARAM_INT);
             $stmt->bindParam(3, $tarifaId, PDO::PARAM_INT);
             $stmt->bindParam(4, $activoId, PDO::PARAM_INT);
             $stmt->execute();
 
-            $sesion_id = (int)$this->db->lastInsertId();
+            $sesion_id = (int)$this->getDb()->lastInsertId();
 
-            $this->db->commit();
+            $this->getDb()->commit();
             return $sesion_id;
         } catch (\Throwable $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
+            if ($this->getDb()->inTransaction()) {
+                $this->getDb()->rollBack();
             }
             throw $e;
         }
@@ -195,7 +195,7 @@ class CiberControl extends Model
      */
     public function listarTiposActivo(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT id, nombre_tipo
             FROM tipo_activo
             ORDER BY nombre_tipo
@@ -212,7 +212,7 @@ class CiberControl extends Model
     public function obtenerPC(int $id): array|false
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT a.id, a.marca, a.descripcion, a.activa, a.is_ciber,
                    a.fk_tipo_activo AS tipo_activo_id, ta.nombre_tipo
             FROM activos a
@@ -252,7 +252,7 @@ class CiberControl extends Model
             throw new \InvalidArgumentException('Debes seleccionar un tipo de PC válido.');
         }
 
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT COUNT(*) FROM activos
             WHERE marca = ? AND descripcion = ? AND is_ciber = 1
         ");
@@ -263,7 +263,7 @@ class CiberControl extends Model
             throw new \InvalidArgumentException('Ya existe una PC registrada con esa marca y descripción.');
         }
 
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             INSERT INTO activos (marca, descripcion, is_ciber, activa, fk_tipo_activo)
             VALUES (?, ?, 1, ?, ?)
         ");
@@ -272,7 +272,7 @@ class CiberControl extends Model
         $stmt->bindParam(3, $activa, PDO::PARAM_INT);
         $stmt->bindParam(4, $tipoActivoId, PDO::PARAM_INT);
         $stmt->execute();
-        return (int)$this->db->lastInsertId();
+        return (int)$this->getDb()->lastInsertId();
     }
 
     /**
@@ -308,7 +308,7 @@ class CiberControl extends Model
             throw new \InvalidArgumentException('Debes seleccionar un tipo de PC válido.');
         }
 
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT COUNT(*) FROM activos
             WHERE marca = ? AND descripcion = ? AND is_ciber = 1 AND id != ?
         ");
@@ -320,7 +320,7 @@ class CiberControl extends Model
             throw new \InvalidArgumentException('Ya existe otra PC registrada con esa marca y descripción.');
         }
 
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             UPDATE activos SET marca = ?, descripcion = ?, activa = ?, fk_tipo_activo = ?
             WHERE id = ? AND is_ciber = 1
         ");
@@ -343,7 +343,7 @@ class CiberControl extends Model
     {
         $id     = $this->sanitizeInt($id);
         $activa = $activa ? 1 : 0;
-        $stmt   = $this->db->prepare("UPDATE activos SET activa = ? WHERE id = ? AND is_ciber = 1");
+        $stmt   = $this->getDb()->prepare("UPDATE activos SET activa = ? WHERE id = ? AND is_ciber = 1");
         $stmt->bindParam(1, $activa, PDO::PARAM_INT);
         $stmt->bindParam(2, $id, PDO::PARAM_INT);
         return $stmt->execute();
@@ -358,7 +358,7 @@ class CiberControl extends Model
     public function tieneSesiones(int $id): bool
     {
         $id   = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM sesion_ciber WHERE fk_activo = ?");
+        $stmt = $this->getDb()->prepare("SELECT COUNT(*) FROM sesion_ciber WHERE fk_activo = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return (int)$stmt->fetchColumn() > 0;
@@ -376,7 +376,7 @@ class CiberControl extends Model
         if ($this->tieneSesiones($id)) {
             throw new \InvalidArgumentException('No se puede eliminar una PC con sesiones registradas. Desactívala en su lugar.');
         }
-        $stmt = $this->db->prepare("UPDATE activos SET activo = 0 WHERE id = ? AND is_ciber = 1");
+        $stmt = $this->getDb()->prepare("UPDATE activos SET activo = 0 WHERE id = ? AND is_ciber = 1");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
@@ -396,7 +396,7 @@ class CiberControl extends Model
             $limit = 20;
         }
 
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT sc.id AS sesion_id, sc.tiempo_uso,
                    CASE WHEN sc.finalizada = 1 THEN 'cerrada' ELSE 'activa' END AS estado,
                    CONCAT(cli.nombre, ' ', cli.apellido) AS cliente_nombre,
@@ -427,7 +427,7 @@ class CiberControl extends Model
             throw new \InvalidArgumentException('El identificador de la sesión no es válido.');
         }
 
-        $stmt = $this->db->prepare("UPDATE sesion_ciber SET finalizada = 1 WHERE id = ? AND finalizada = 0");
+        $stmt = $this->getDb()->prepare("UPDATE sesion_ciber SET finalizada = 1 WHERE id = ? AND finalizada = 0");
         $stmt->bindParam(1, $sesionId, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->rowCount() > 0;
@@ -436,7 +436,7 @@ class CiberControl extends Model
     private function existeTipoActivo(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM tipo_activo WHERE id = ?");
+        $stmt = $this->getDb()->prepare("SELECT COUNT(*) FROM tipo_activo WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return (int)$stmt->fetchColumn() > 0;

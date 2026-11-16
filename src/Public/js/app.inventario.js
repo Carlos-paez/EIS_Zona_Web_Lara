@@ -37,16 +37,16 @@ $(function () {
     function refrescarKPI() {
         // GET request a ?pagina=inventario&action=kpis
         // El servidor responde con un JSON que contiene total, crítico, bajo y valor
-        $.ajax({url: API + 'kpis', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) return; // Si la respuesta no es exitosa, no hago nada
-            // Actualizo cada tarjeta KPI con los valores recibidos
-            $('#kpi-total').text(r.data.total);       // Total de productos
-            $('#kpi-critico').text(r.data.critico);   // Productos con stock crítico
-            $('#kpi-bajo').text(r.data.bajo);         // Productos con stock bajo
-            $('#kpi-valor').text('$' + parseFloat(r.data.valor).toFixed(2)); // Valor total del inventario en $
-        }).fail(function () {
-            // Si hay un error de conexión, muestro un toast de error
-            EIS.toast('No se pudieron cargar los indicadores. Intenta de nuevo.', 'red', 'error');
+        EIS.ajax.get(API + 'kpis', {
+            showServerError: false,
+            onSuccess: function (r) {
+                // Actualizo cada tarjeta KPI con los valores recibidos
+                $('#kpi-total').text(r.data.total);       // Total de productos
+                $('#kpi-critico').text(r.data.critico);   // Productos con stock crítico
+                $('#kpi-bajo').text(r.data.bajo);         // Productos con stock bajo
+                $('#kpi-valor').text('$' + parseFloat(r.data.valor).toFixed(2)); // Valor total del inventario en $
+            },
+            errorMessage: 'No se pudieron cargar los indicadores. Intenta de nuevo.'
         });
     }
 
@@ -60,9 +60,9 @@ $(function () {
     function refrescarTabla() {
         // GET request a ?pagina=inventario&action=listar
         // El servidor devuelve un arreglo con todos los productos activos
-        $.ajax({url: API + 'listar', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) return; // Si la respuesta no es exitosa, salgo
-
+        EIS.ajax.get(API + 'listar', {
+            showServerError: false,
+            onSuccess: function (r) {
             // Referencia al <tbody> de la tabla de productos
             var tbody = $('#tabla-productos tbody');
             // Limpio el contenido actual del tbody para regenerarlo
@@ -140,9 +140,8 @@ $(function () {
 
             // Refresco la instancia de DataTables con las filas recién cargadas
             EIS.datatableRefresh('#tabla-productos');
-        }).fail(function () {
-            // Si hay error de conexión, muestro toast de error
-            EIS.toast('No se pudo cargar la tabla. Intenta de nuevo.', 'red', 'error');
+            },
+            errorMessage: 'No se pudo cargar la tabla. Intenta de nuevo.'
         });
     }
 
@@ -213,16 +212,18 @@ $(function () {
     //            de producto para que siempre tenga datos frescos.
     // ================================================================
     function cargarSelectCategorias(selectedId) {
-        $.ajax({url: API + 'categorias', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) return;
-            var sel = $('#producto-categoria');
-            sel.empty().append('<option value="" disabled selected>Seleccione</option>');
-            $.each(r.data, function (i, c) {
-                var opt = '<option value="' + c.id + '">' + $('<span>').text(c.nombre).html() + '</option>';
-                sel.append(opt);
-            });
-            if (selectedId) sel.val(selectedId);
-            EIS.formSelect(sel);
+        EIS.ajax.get(API + 'categorias', {
+            showServerError: false,
+            onSuccess: function (r) {
+                var sel = $('#producto-categoria');
+                sel.empty().append('<option value="" disabled selected>Seleccione</option>');
+                $.each(r.data, function (i, c) {
+                    var opt = '<option value="' + c.id + '">' + $('<span>').text(c.nombre).html() + '</option>';
+                    sel.append(opt);
+                });
+                if (selectedId) sel.val(selectedId);
+                EIS.formSelect(sel);
+            }
         });
     }
 
@@ -232,8 +233,9 @@ $(function () {
     //            gestión de categorías.
     // ================================================================
     function cargarCategorias() {
-        $.ajax({url: API + 'categorias', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) return;
+        EIS.ajax.get(API + 'categorias', {
+            showServerError: false,
+            onSuccess: function (r) {
             var tbody = $('#tabla-categorias tbody');
             tbody.empty();
             if (!r.data.length) {
@@ -253,6 +255,7 @@ $(function () {
             });
             $('.tooltipped').tooltip();
             EIS.datatableRefresh('#tabla-categorias');
+            }
         });
     }
 
@@ -277,25 +280,15 @@ $(function () {
         e.preventDefault();
         var $form = $(this);
         var accion = $('#categoria-id').val() ? 'actualizarCategoria' : 'crearCategoria';
-        $.ajax({
-            url: API + accion,
-            type: 'POST',
-            data: $form.serialize(),
-            dataType: 'json',
-            success: function (r) {
-            if (r.success) {
-                EIS.toast(r.message, 'green', 'check_circle');
+        EIS.ajax.form(API + accion, $form, {
+            successToast: true,
+            onSuccess: function () {
                 $('#form-categoria')[0].reset();
                 $('#categoria-id').val('');
                 M.updateTextFields();
                 cargarCategorias();
-            } else {
-                EIS.mostrarErroresFormulario($form, r);
-            }
-        },
-        error: function () {
-            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-        }
+            },
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
         });
     });
 
@@ -319,22 +312,12 @@ $(function () {
         var id = $(this).data('id');
         var nombre = $(this).data('nombre');
         if (confirm('¿Eliminar la categoría "' + nombre + '"?')) {
-            $.ajax({
-                url: API + 'eliminarCategoria',
-                type: 'POST',
-                data: { id: id },
-                dataType: 'json',
-                success: function (r) {
-                    if (r.success) {
-                        EIS.toast(r.message, 'green', 'check_circle');
-                        cargarCategorias();
-                    } else {
-                        EIS.toast(r.error || 'No se pudo eliminar. Intenta de nuevo.', 'red', 'error');
-                    }
+            EIS.ajax.post(API + 'eliminarCategoria', { id: id }, {
+                successToast: true,
+                onSuccess: function () {
+                    cargarCategorias();
                 },
-                error: function () {
-                    EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-                }
+                errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
             });
         }
     });
@@ -370,21 +353,13 @@ $(function () {
     // ================================================================
     $(document).on('click', '.btn-editar', function () {
         var id = $(this).data('id');
-        $.ajax({
-            url: API + 'detalle&id=' + id,
-            type: 'GET',
-            dataType: 'json',
-            success: function (r) {
-                if (r.success) {
-                    cargarSelectCategorias(r.data.categoria_id);
-                    abrirModalProducto('Editar Producto', r.data);
-                } else {
-                    EIS.toast(r.error || 'No se pudo cargar el producto. Intenta de nuevo.', 'red', 'error');
-                }
+        EIS.ajax.get(API + 'detalle', {
+            data: { id: id },
+            onSuccess: function (r) {
+                cargarSelectCategorias(r.data.categoria_id);
+                abrirModalProducto('Editar Producto', r.data);
             },
-            error: function () {
-                EIS.toast('No se pudo conectar con el servidor al cargar el producto. Intenta de nuevo.', 'red', 'error');
-            }
+            errorMessage: 'No se pudo conectar con el servidor al cargar el producto. Intenta de nuevo.'
         });
     });
 
@@ -398,26 +373,13 @@ $(function () {
         // Confirmación nativa del navegador antes de eliminar
         if (confirm('¿Eliminar el producto "' + nombre + '"?')) {
             // POST request para eliminar el producto
-            $.ajax({
-                url: API + 'eliminar',
-                type: 'POST',
-                data: { id: id },
-                dataType: 'json',
-                success: function (r) {
-                    if (r.success) {
-                        // Si la eliminación es exitosa, muestro toast y refresco
-                        EIS.toast(r.message, 'green', 'check_circle');
-                        refrescarTabla(); // Recargo la tabla
-                        refrescarKPI();   // Actualizo los indicadores
-                    } else {
-                        // Si hay error, muestro el mensaje del servidor
-                        EIS.toast(r.error || 'No se pudo eliminar. Intenta de nuevo.', 'red', 'error');
-                    }
+            EIS.ajax.post(API + 'eliminar', { id: id }, {
+                successToast: true,
+                onSuccess: function () {
+                    refrescarTabla(); // Recargo la tabla
+                    refrescarKPI();   // Actualizo los indicadores
                 },
-                error: function () {
-                    // Si hay error de conexión, muestro toast de error
-                    EIS.toast('No se pudo conectar con el servidor al eliminar. Intenta de nuevo.', 'red', 'error');
-                }
+                errorMessage: 'No se pudo conectar con el servidor al eliminar. Intenta de nuevo.'
             });
         }
     });
@@ -473,24 +435,15 @@ $(function () {
         var accion = id ? 'actualizar' : 'crear';
         var data = $form.serialize();
 
-        $.ajax({
-            url: API + accion,
-            type: 'POST',
-            data: data,
-            dataType: 'json',
-            success: function (r) {
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
-                    $('#modal-producto').modal('close');
-                    refrescarTabla();
-                    refrescarKPI();
-                } else {
-                    EIS.mostrarErroresFormulario($form, r);
-                }
+        EIS.ajax.post(API + accion, data, {
+            form: $form,
+            successToast: true,
+            onSuccess: function () {
+                $('#modal-producto').modal('close');
+                refrescarTabla();
+                refrescarKPI();
             },
-            error: function () {
-                EIS.toast('No se pudo conectar con el servidor al guardar. Intenta de nuevo.', 'red', 'error');
-            }
+            errorMessage: 'No se pudo conectar con el servidor al guardar. Intenta de nuevo.'
         });
     });
 

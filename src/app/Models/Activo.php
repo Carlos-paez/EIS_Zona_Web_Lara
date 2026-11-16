@@ -93,12 +93,12 @@ class Activo extends Model
     public function toArray(): array
     {
         return [
-            'id'             => $this->id,
-            'marca'          => $this->marca,
-            'descripcion'    => $this->descripcion,
-            'fk_tipo_activo' => $this->fkTipoActivo,
-            'activa'         => $this->activa,
-            'is_ciber'       => $this->isCiber,
+            'id'             => $this->getId(),
+            'marca'          => $this->getMarca(),
+            'descripcion'    => $this->getDescripcion(),
+            'fk_tipo_activo' => $this->getFkTipoActivo(),
+            'activa'         => $this->getActiva(),
+            'is_ciber'       => $this->getIsCiber(),
         ];
     }
 
@@ -122,7 +122,7 @@ class Activo extends Model
      */
     public function obtenerActivos(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT a.id, a.marca, a.descripcion, a.activa, a.is_ciber,
                    a.fk_tipo_activo AS tipo_activo_id, ta.nombre_tipo,
                    CASE WHEN sc.id IS NOT NULL THEN 'ocupada' ELSE 'disponible' END AS estado
@@ -150,7 +150,7 @@ class Activo extends Model
         if ($id <= 0) {
             return false;
         }
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT a.id, a.marca, a.descripcion, a.activa, a.is_ciber,
                    a.fk_tipo_activo AS tipo_activo_id, ta.nombre_tipo
             FROM activos a
@@ -180,27 +180,27 @@ class Activo extends Model
         $this->setActiva($activa);
         $this->setIsCiber($isCiber);
 
-        if ($this->fkTipoActivo <= 0) {
+        if ($this->getFkTipoActivo() <= 0) {
             throw new \InvalidArgumentException('Debes seleccionar un tipo de activo.');
         }
-        if (!$this->existeTipoActivo($this->fkTipoActivo)) {
+        if (!$this->existeTipoActivo($this->getFkTipoActivo())) {
             throw new \InvalidArgumentException('El tipo de activo seleccionado no existe.');
         }
-        if ($this->existeActivo($this->marca, $this->descripcion)) {
+        if ($this->existeActivo($this->getMarca(), $this->getDescripcion())) {
             throw new \InvalidArgumentException('Ya existe un activo registrado con esa marca y descripción.');
         }
 
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             INSERT INTO activos (marca, descripcion, is_ciber, activa, fk_tipo_activo)
             VALUES (?, ?, ?, ?, ?)
         ");
-        $stmt->bindParam(1, $this->marca, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->descripcion, PDO::PARAM_STR);
-        $stmt->bindParam(3, $this->isCiber, PDO::PARAM_INT);
-        $stmt->bindParam(4, $this->activa, PDO::PARAM_INT);
-        $stmt->bindParam(5, $this->fkTipoActivo, PDO::PARAM_INT);
+        $stmt->bindValue(1, $this->getMarca(), PDO::PARAM_STR);
+        $stmt->bindValue(2, $this->getDescripcion(), PDO::PARAM_STR);
+        $stmt->bindValue(3, $this->getIsCiber(), PDO::PARAM_INT);
+        $stmt->bindValue(4, $this->getActiva(), PDO::PARAM_INT);
+        $stmt->bindValue(5, $this->getFkTipoActivo(), PDO::PARAM_INT);
         $stmt->execute();
-        return (int)$this->db->lastInsertId();
+        return (int)$this->getDb()->lastInsertId();
     }
 
     /**
@@ -223,29 +223,29 @@ class Activo extends Model
         $this->setActiva($activa);
         $this->setIsCiber($isCiber);
 
-        if ($this->id <= 0) {
+        if ($this->getId() <= 0) {
             throw new \InvalidArgumentException('El identificador no es válido.');
         }
-        if ($this->fkTipoActivo <= 0) {
+        if ($this->getFkTipoActivo() <= 0) {
             throw new \InvalidArgumentException('Debes seleccionar un tipo de activo.');
         }
-        if (!$this->existeTipoActivo($this->fkTipoActivo)) {
+        if (!$this->existeTipoActivo($this->getFkTipoActivo())) {
             throw new \InvalidArgumentException('El tipo de activo seleccionado no existe.');
         }
-        if ($this->existeActivo($this->marca, $this->descripcion, $this->id)) {
+        if ($this->existeActivo($this->getMarca(), $this->getDescripcion(), $this->getId())) {
             throw new \InvalidArgumentException('Ya existe otro activo registrado con esa marca y descripción.');
         }
 
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             UPDATE activos SET marca = ?, descripcion = ?, is_ciber = ?, activa = ?, fk_tipo_activo = ?
             WHERE id = ?
         ");
-        $stmt->bindParam(1, $this->marca, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->descripcion, PDO::PARAM_STR);
-        $stmt->bindParam(3, $this->isCiber, PDO::PARAM_INT);
-        $stmt->bindParam(4, $this->activa, PDO::PARAM_INT);
-        $stmt->bindParam(5, $this->fkTipoActivo, PDO::PARAM_INT);
-        $stmt->bindParam(6, $this->id, PDO::PARAM_INT);
+        $stmt->bindValue(1, $this->getMarca(), PDO::PARAM_STR);
+        $stmt->bindValue(2, $this->getDescripcion(), PDO::PARAM_STR);
+        $stmt->bindValue(3, $this->getIsCiber(), PDO::PARAM_INT);
+        $stmt->bindValue(4, $this->getActiva(), PDO::PARAM_INT);
+        $stmt->bindValue(5, $this->getFkTipoActivo(), PDO::PARAM_INT);
+        $stmt->bindValue(6, $this->getId(), PDO::PARAM_INT);
         return $stmt->execute() && $stmt->rowCount() >= 0;
     }
 
@@ -263,7 +263,7 @@ class Activo extends Model
         if ($id <= 0) {
             throw new \InvalidArgumentException('El identificador no es válido.');
         }
-        $stmt = $this->db->prepare("UPDATE activos SET activa = ? WHERE id = ?");
+        $stmt = $this->getDb()->prepare("UPDATE activos SET activa = ? WHERE id = ?");
         $stmt->bindParam(1, $activa, PDO::PARAM_INT);
         $stmt->bindParam(2, $id, PDO::PARAM_INT);
         return $stmt->execute();
@@ -284,7 +284,7 @@ class Activo extends Model
         if ($this->tieneSesiones($id)) {
             throw new \InvalidArgumentException('No se puede eliminar un activo con sesiones de cybercafé registradas. Desactívalo en su lugar.');
         }
-        $stmt = $this->db->prepare("UPDATE activos SET activo = 0 WHERE id = ?");
+        $stmt = $this->getDb()->prepare("UPDATE activos SET activo = 0 WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
@@ -294,12 +294,12 @@ class Activo extends Model
         $marca       = $this->sanitizeString($marca);
         $descripcion = $this->sanitizeString($descripcion);
         if ($excludeId > 0) {
-            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM activos WHERE marca = ? AND descripcion = ? AND id != ?");
+            $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM activos WHERE marca = ? AND descripcion = ? AND id != ?");
             $stmt->bindParam(1, $marca, PDO::PARAM_STR);
             $stmt->bindParam(2, $descripcion, PDO::PARAM_STR);
             $stmt->bindParam(3, $excludeId, PDO::PARAM_INT);
         } else {
-            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM activos WHERE marca = ? AND descripcion = ?");
+            $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM activos WHERE marca = ? AND descripcion = ?");
             $stmt->bindParam(1, $marca, PDO::PARAM_STR);
             $stmt->bindParam(2, $descripcion, PDO::PARAM_STR);
         }
@@ -310,7 +310,7 @@ class Activo extends Model
     public function existeTipoActivo(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM tipo_activo WHERE id = ?");
+        $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM tipo_activo WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return (int)$stmt->fetch()['total'] > 0;
@@ -319,7 +319,7 @@ class Activo extends Model
     public function tieneSesiones(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM sesion_ciber WHERE fk_activo = ?");
+        $stmt = $this->getDb()->prepare("SELECT COUNT(*) FROM sesion_ciber WHERE fk_activo = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return (int)$stmt->fetchColumn() > 0;
@@ -332,25 +332,25 @@ class Activo extends Model
      */
     public function listarTiposActivo(): array
     {
-        $stmt = $this->db->query("SELECT id, nombre_tipo FROM tipo_activo ORDER BY nombre_tipo");
+        $stmt = $this->getDb()->query("SELECT id, nombre_tipo FROM tipo_activo ORDER BY nombre_tipo");
         return $stmt->fetchAll();
     }
 
     public function totalActivos(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM activos WHERE activo = 1");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM activos WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
     public function totalCiber(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM activos WHERE is_ciber = 1 AND activo = 1");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM activos WHERE is_ciber = 1 AND activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
     public function totalActivosOcupados(): int
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT COUNT(*) AS total
             FROM sesion_ciber s
             JOIN (
@@ -365,13 +365,13 @@ class Activo extends Model
 
     public function totalInactivos(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM activos WHERE activa = 0 AND activo = 1");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM activos WHERE activa = 0 AND activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
     public function totalPorTipo(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT ta.nombre_tipo, COUNT(a.id) AS cantidad
             FROM tipo_activo ta
             LEFT JOIN activos a ON a.fk_tipo_activo = ta.id AND a.activo = 1

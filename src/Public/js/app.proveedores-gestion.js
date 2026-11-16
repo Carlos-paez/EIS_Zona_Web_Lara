@@ -12,11 +12,12 @@ $(function () {
     // PROPÓSITO: Actualiza el indicador del total de proveedores.
     // ================================================================
     function refrescarKPI() {
-        $.ajax({url: API + 'kpis', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) return;
-            $('#kpi-total').text(r.data.total);
-        }).fail(function () {
-            EIS.toast('No se pudieron cargar los indicadores. Intenta de nuevo.', 'red', 'error');
+        EIS.ajax.get(API + 'kpis', {
+            showServerError: false,
+            onSuccess: function (r) {
+                $('#kpi-total').text(r.data.total);
+            },
+            errorMessage: 'No se pudieron cargar los indicadores. Intenta de nuevo.'
         });
     }
 
@@ -25,9 +26,9 @@ $(function () {
     // PROPÓSITO: Recarga la tabla de proveedores desde el servidor.
     // ================================================================
     function refrescarTabla() {
-        $.ajax({url: API + 'listar', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) return;
-
+        EIS.ajax.get(API + 'listar', {
+            showServerError: false,
+            onSuccess: function (r) {
             var tbody = $('#tabla-proveedores tbody');
             tbody.empty();
 
@@ -64,8 +65,8 @@ $(function () {
 
             $('.tooltipped').tooltip();
             EIS.datatableRefresh('#tabla-proveedores');
-        }).fail(function () {
-            EIS.toast('No se pudieron cargar los proveedores. Intenta de nuevo.', 'red', 'error');
+            },
+            errorMessage: 'No se pudieron cargar los proveedores. Intenta de nuevo.'
         });
     }
 
@@ -99,20 +100,21 @@ $(function () {
     // Botón "Editar" en cada fila
     $(document).on('click', '.btn-editar-proveedor', function () {
         var id = $(this).data('id');
-        $.ajax({url: API + 'detalle&id=' + id, method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) { EIS.toast(r.error || 'No se pudieron cargar los datos. Intenta de nuevo.', 'red', 'error'); return; }
-            EIS.limpiarErroresFormulario('#form-proveedor');
-            var p = r.data;
-            $('#proveedor-id').val(p.id);
-            $('#proveedor-rif').val(p.rif);
-            $('#proveedor-nombre').val(p.nombre);
-            $('#proveedor-email').val(p.email);
-            $('#proveedor-telefono').val(p.telefono);
-            $('#modal-proveedor-title').text('Editar Proveedor: ' + p.nombre);
-            M.updateTextFields();
-            $('#modal-proveedor').modal('open');
-        }).fail(function () {
-            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
+        EIS.ajax.get(API + 'detalle', {
+            data: { id: id },
+            onSuccess: function (r) {
+                EIS.limpiarErroresFormulario('#form-proveedor');
+                var p = r.data;
+                $('#proveedor-id').val(p.id);
+                $('#proveedor-rif').val(p.rif);
+                $('#proveedor-nombre').val(p.nombre);
+                $('#proveedor-email').val(p.email);
+                $('#proveedor-telefono').val(p.telefono);
+                $('#modal-proveedor-title').text('Editar Proveedor: ' + p.nombre);
+                M.updateTextFields();
+                $('#modal-proveedor').modal('open');
+            },
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
         });
     });
 
@@ -127,24 +129,14 @@ $(function () {
 
         var id = $('#proveedor-id').val();
         var accion = id ? 'actualizar' : 'crear';
-        $.ajax({
-            url: API + accion,
-            type: 'POST',
-            data: $form.serialize(),
-            dataType: 'json',
-            success: function (r) {
-            if (r.success) {
-                EIS.toast(r.message, 'green', 'check_circle');
+        EIS.ajax.form(API + accion, $form, {
+            successToast: true,
+            onSuccess: function () {
                 $('#modal-proveedor').modal('close');
                 refrescarKPI();
                 refrescarTabla();
-            } else {
-                EIS.mostrarErroresFormulario($form, r);
-            }
-        },
-        error: function () {
-            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-        }
+            },
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
         });
     });
 
@@ -153,23 +145,13 @@ $(function () {
         var id = $(this).data('id');
         var nombre = $(this).data('nombre');
         if (confirm('¿Eliminar el proveedor "' + nombre + '"?\nNota: No se puede eliminar si tiene solicitudes asociadas.')) {
-            $.ajax({
-                url: API + 'eliminar',
-                type: 'POST',
-                data: { id: id },
-                dataType: 'json',
-                success: function (r) {
-                    if (r.success) {
-                        EIS.toast(r.message, 'green', 'check_circle');
-                        refrescarKPI();
-                        refrescarTabla();
-                    } else {
-                        EIS.toast(r.error || 'No se pudo eliminar. Intenta de nuevo.', 'red', 'error');
-                    }
+            EIS.ajax.post(API + 'eliminar', { id: id }, {
+                successToast: true,
+                onSuccess: function () {
+                    refrescarKPI();
+                    refrescarTabla();
                 },
-                error: function () {
-                    EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-                }
+                errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
             });
         }
     });

@@ -17,7 +17,7 @@ class DashboardController extends BaseController
 
     public function __construct()
     {
-        $this->model = new Dashboard();
+        $this->setModel(new Dashboard());
     }
 
     public function getModel(): Dashboard
@@ -50,6 +50,6 @@ class DashboardController extends BaseController
 
     private function kpis(): void
     {
-        $this->jsonSuccess($this->model->kpis());
+        $this->jsonSuccess($this->getModel()->kpis());
     }
 }

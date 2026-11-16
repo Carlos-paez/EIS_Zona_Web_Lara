@@ -22,33 +22,37 @@ $(function () {
     // ================================================================
     function refrescarKPI() {
         // Primera llamada: obtengo la lista de roles para calcular KPIs
-        $.ajax({url: API + 'listar', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success || !r.data) return; // Si hay error, salgo
-            var totalRoles = r.data.length; // Cantidad total de roles
-            var totalUsuarios = 0; // Acumulador de usuarios
-            var conRol = 0; // Contador de roles que tienen al menos 1 usuario
+        EIS.ajax.get(API + 'listar', {
+            showServerError: false,
+            onSuccess: function (r) {
+                if (!r.data) return;
+                var totalRoles = r.data.length; // Cantidad total de roles
+                var totalUsuarios = 0; // Acumulador de usuarios
+                var conRol = 0; // Contador de roles que tienen al menos 1 usuario
 
-            // Recorro cada rol y sumo sus usuarios
-            $.each(r.data, function (i, rol) {
-                totalUsuarios += parseInt(rol.total_usuarios) || 0;
-                if (parseInt(rol.total_usuarios) > 0) conRol++;
-            });
+                // Recorro cada rol y sumo sus usuarios
+                $.each(r.data, function (i, rol) {
+                    totalUsuarios += parseInt(rol.total_usuarios) || 0;
+                    if (parseInt(rol.total_usuarios) > 0) conRol++;
+                });
 
-            // Actualizo las tarjetas KPI
-            $('#kpi-roles').text(totalRoles);       // Total de roles
-            $('#kpi-usuarios').text(totalUsuarios); // Total de usuarios con rol
-            $('#kpi-con-rol').text(conRol);         // Roles con al menos 1 usuario
-        }).fail(function () {
-            EIS.toast('No se pudieron cargar los indicadores. Intenta de nuevo.', 'red', 'error');
+                // Actualizo las tarjetas KPI
+                $('#kpi-roles').text(totalRoles);       // Total de roles
+                $('#kpi-usuarios').text(totalUsuarios); // Total de usuarios con rol
+                $('#kpi-con-rol').text(conRol);         // Roles con al menos 1 usuario
+            },
+            errorMessage: 'No se pudieron cargar los indicadores. Intenta de nuevo.'
         });
 
         // Segunda llamada: obtengo la lista de permisos para el KPI de permisos
-        $.ajax({url: API + 'permisos', method: "GET", dataType: "json"}).done(function(r) {
-            if (r.success && r.data) {
-                $('#kpi-permisos').text(r.data.length); // Total de permisos registrados
-            }
-        }).fail(function () {
-            EIS.toast('No se pudieron cargar los permisos. Intenta de nuevo.', 'red', 'error');
+        EIS.ajax.get(API + 'permisos', {
+            showServerError: false,
+            onSuccess: function (r) {
+                if (r.data) {
+                    $('#kpi-permisos').text(r.data.length); // Total de permisos registrados
+                }
+            },
+            errorMessage: 'No se pudieron cargar los permisos. Intenta de nuevo.'
         });
     }
 
@@ -60,9 +64,9 @@ $(function () {
     // ================================================================
     function refrescarTabla() {
         // GET request para obtener todos los roles
-        $.ajax({url: API + 'listar', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) return; // Si hay error, salgo
-
+        EIS.ajax.get(API + 'listar', {
+            showServerError: false,
+            onSuccess: function (r) {
             var tbody = $('#tabla-roles-body'); // <tbody> de la tabla de roles
             tbody.empty(); // Limpio el contenido actual
 
@@ -115,8 +119,8 @@ $(function () {
             // Actualizo el contador de resultados
             $('.tooltipped').tooltip();
             EIS.datatableRefresh('.rol-table');
-        }).fail(function () {
-            EIS.toast('No se pudo cargar la tabla. Intenta de nuevo.', 'red', 'error');
+            },
+            errorMessage: 'No se pudo cargar la tabla. Intenta de nuevo.'
         });
     }
 
@@ -189,15 +193,22 @@ $(function () {
         $('#modalPermisos').modal('open');           // Abro el modal
 
         // Primera llamada: obtengo todos los permisos disponibles (enriquecidos con catálogo)
-        $.ajax({url: API + 'permisos', method: "GET", dataType: "json"}).done(function(rPermisos) {
-            if (!rPermisos.success || !rPermisos.data) {
+        EIS.ajax.get(API + 'permisos', {
+            showServerError: false,
+            showNetworkError: false,
+            onSuccess: function (rPermisos) {
+            if (!rPermisos.data) {
                 $('#permisos-container').html('<p style="color:var(--danger);text-align:center;">No se pudieron cargar los permisos. Intenta de nuevo.</p>');
                 return;
             }
 
             // Segunda llamada: obtengo los permisos ya asignados a este rol
-            $.ajax({url: API + 'permisosRol&rol_id=' + rol_id, method: "GET", dataType: "json"}).done(function(rAsignados) {
-                var asignados = rAsignados.success ? (rAsignados.data || []) : []; // IDs de permisos asignados
+            EIS.ajax.get(API + 'permisosRol', {
+                data: { rol_id: rol_id },
+                showServerError: false,
+                showNetworkError: false,
+                onSuccess: function (rAsignados) {
+                var asignados = rAsignados.data || []; // IDs de permisos asignados
                 var html = '';
 
                 // Agrupo los permisos por módulo.
@@ -245,11 +256,15 @@ $(function () {
 
                 // Inserto los grupos de permisos en el contenedor
                 $('#permisos-container').html(html || '<p style="color:var(--text-muted);text-align:center;">No hay permisos disponibles</p>');
-            }).fail(function () {
-                $('#permisos-container').html('<p style="color:var(--danger);text-align:center;">No se pudieron cargar los permisos del rol. Intenta de nuevo.</p>');
+                },
+                onError: function () {
+                    $('#permisos-container').html('<p style="color:var(--danger);text-align:center;">No se pudieron cargar los permisos del rol. Intenta de nuevo.</p>');
+                }
             });
-        }).fail(function () {
-            $('#permisos-container').html('<p style="color:var(--danger);text-align:center;">No se pudieron cargar los permisos. Intenta de nuevo.</p>');
+            },
+            onError: function () {
+                $('#permisos-container').html('<p style="color:var(--danger);text-align:center;">No se pudieron cargar los permisos. Intenta de nuevo.</p>');
+            }
         });
     }
 
@@ -265,26 +280,28 @@ $(function () {
         $('#asignar-rol').empty().append('<option value="" disabled selected>Seleccionar rol</option>');
 
         // Obtengo usuarios y roles del servidor
-        $.ajax({url: API + 'usuarios', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success || !r.data) return;
+        EIS.ajax.get(API + 'usuarios', {
+            showServerError: false,
+            onSuccess: function (r) {
+                if (!r.data) return;
 
-            // Lleno el select de usuarios
-            $.each(r.data.usuarios, function (i, u) {
-                var estado = u.activo ? '' : ' (Inactivo)'; // Indico si el usuario está inactivo
-                $('#asignar-usuario').append('<option value="' + u.id + '">' + $('<span>').text(u.nombre).html() + ' (' + $('<span>').text(u.username).html() + ') - ' + $('<span>').text(u.rol || 'Sin rol').html() + estado + '</option>');
-            });
+                // Lleno el select de usuarios
+                $.each(r.data.usuarios, function (i, u) {
+                    var estado = u.activo ? '' : ' (Inactivo)'; // Indico si el usuario está inactivo
+                    $('#asignar-usuario').append('<option value="' + u.id + '">' + $('<span>').text(u.nombre).html() + ' (' + $('<span>').text(u.username).html() + ') - ' + $('<span>').text(u.rol || 'Sin rol').html() + estado + '</option>');
+                });
 
-            // Lleno el select de roles
-            $.each(r.data.roles, function (i, rol) {
-                $('#asignar-rol').append('<option value="' + rol.id + '">' + $('<span>').text(rol.nombre).html() + '</option>');
-            });
+                // Lleno el select de roles
+                $.each(r.data.roles, function (i, rol) {
+                    $('#asignar-rol').append('<option value="' + rol.id + '">' + $('<span>').text(rol.nombre).html() + '</option>');
+                });
 
-            // (Re)inicializo los selects de Materialize y abro el modal
-            EIS.formSelect('#asignar-usuario');
-            EIS.formSelect('#asignar-rol');
-            $('#modalAsignar').modal('open');
-        }).fail(function () {
-            EIS.toast('No se pudieron cargar los usuarios. Intenta de nuevo.', 'red', 'error');
+                // (Re)inicializo los selects de Materialize y abro el modal
+                EIS.formSelect('#asignar-usuario');
+                EIS.formSelect('#asignar-rol');
+                $('#modalAsignar').modal('open');
+            },
+            errorMessage: 'No se pudieron cargar los usuarios. Intenta de nuevo.'
         });
     }
 
@@ -301,20 +318,12 @@ $(function () {
     $(document).on('click', '.btn-editar-rol', function () {
         var id = $(this).data('id'); // ID del rol
         // Cargo los datos del rol vía AJAX
-        $.ajax({
-            url: API + 'detalle&id=' + id,
-            type: 'GET',
-            dataType: 'json',
-            success: function (r) {
-                if (r.success) {
-                    abrirModalRol('Editar Rol', r.data); // Abro modal con datos
-                } else {
-                    EIS.toast(r.error || 'No se pudo cargar el rol. Intenta de nuevo.', 'red', 'error');
-                }
+        EIS.ajax.get(API + 'detalle', {
+            data: { id: id },
+            onSuccess: function (r) {
+                abrirModalRol('Editar Rol', r.data); // Abro modal con datos
             },
-            error: function () {
-                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-            }
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
         });
     });
 
@@ -325,24 +334,14 @@ $(function () {
         // Confirmación antes de eliminar
         if (confirm('¿Eliminar el rol "' + nombre + '"?')) {
             // POST request para eliminar el rol
-            $.ajax({
-            url: API + 'eliminar',
-            type: 'POST',
-            data: { id: id },
-            dataType: 'json',
-            success: function (r) {
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
+            EIS.ajax.post(API + 'eliminar', { id: id }, {
+                successToast: true,
+                onSuccess: function () {
                     refrescarTabla(); // Recargo tabla
                     refrescarKPI();   // Actualizo KPIs
-                } else {
-                    EIS.toast(r.error || 'No se pudo eliminar. Intenta de nuevo.', 'red', 'error');
-                }
-            },
-            error: function () {
-                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-            }
-        });
+                },
+                errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
+            });
         }
     });
 
@@ -381,24 +380,15 @@ $(function () {
         // el servidor vuelve a validar (fieldErrors) por seguridad.
 
         // POST request para crear o actualizar el rol
-        $.ajax({
-            url: API + accion,
-            type: 'POST',
-            data: data,
-            dataType: 'json',
-            success: function (r) {
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
-                    $('#modalRol').modal('close'); // Cierro modal
-                    refrescarTabla(); // Recargo tabla
-                    refrescarKPI();   // Actualizo KPIs
-                } else {
-                    EIS.mostrarErroresFormulario($form, r);
-                }
+        EIS.ajax.post(API + accion, data, {
+            form: $form,
+            successToast: true,
+            onSuccess: function () {
+                $('#modalRol').modal('close'); // Cierro modal
+                refrescarTabla(); // Recargo tabla
+                refrescarKPI();   // Actualizo KPIs
             },
-            error: function () {
-                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-            }
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
         });
     });
 
@@ -412,22 +402,12 @@ $(function () {
         });
 
         // POST request para guardar los permisos del rol
-        $.ajax({
-            url: API + 'guardarPermisos',
-            type: 'POST',
-            data: { rol_id: rol_id, permisos: permisos },
-            dataType: 'json',
-            success: function (r) {
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
-                    $('#modalPermisos').modal('close'); // Cierro modal
-                } else {
-                    EIS.toast(r.error || 'No se pudieron guardar los permisos. Intenta de nuevo.', 'red', 'error');
-                }
+        EIS.ajax.post(API + 'guardarPermisos', { rol_id: rol_id, permisos: permisos }, {
+            successToast: true,
+            onSuccess: function () {
+                $('#modalPermisos').modal('close'); // Cierro modal
             },
-            error: function () {
-                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-            }
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
         });
     });
 
@@ -443,24 +423,14 @@ $(function () {
         }
 
         // POST request para asignar el rol al usuario
-        $.ajax({
-            url: API + 'asignarRol',
-            type: 'POST',
-            data: { usuario_id: usuario_id, rol_id: rol_id },
-            dataType: 'json',
-            success: function (r) {
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
-                    $('#modalAsignar').modal('close'); // Cierro modal
-                    refrescarTabla(); // Recargo tabla
-                    refrescarKPI();   // Actualizo KPIs
-                } else {
-                    EIS.toast(r.error || 'No se pudo asignar el rol. Intenta de nuevo.', 'red', 'error');
-                }
+        EIS.ajax.post(API + 'asignarRol', { usuario_id: usuario_id, rol_id: rol_id }, {
+            successToast: true,
+            onSuccess: function () {
+                $('#modalAsignar').modal('close'); // Cierro modal
+                refrescarTabla(); // Recargo tabla
+                refrescarKPI();   // Actualizo KPIs
             },
-            error: function () {
-                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-            }
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
         });
     });
 

@@ -23,11 +23,29 @@ abstract class BaseController
     protected array $result = [];
 
     /**
+     * Obtener todos los datos hidratados (getter)
+     */
+    public function getInput(): array
+    {
+        return $this->input;
+    }
+
+    /**
+     * Reemplazar todos los datos hidratados (setter)
+     */
+    public function setInput(array $input): self
+    {
+        $this->input = $input;
+        return $this;
+    }
+
+    /**
      * Obtener valor del input hidratado
      */
     public function get(string $key, mixed $default = null): mixed
     {
-        return array_key_exists($key, $this->input) ? $this->input[$key] : $default;
+        $input = $this->getInput();
+        return array_key_exists($key, $input) ? $input[$key] : $default;
     }
 
     /**
@@ -35,8 +53,9 @@ abstract class BaseController
      */
     public function set(string $key, mixed $value): self
     {
-        $this->input[$key] = $value;
-        return $this;
+        $input = $this->getInput();
+        $input[$key] = $value;
+        return $this->setInput($input);
     }
 
     /**
@@ -44,7 +63,7 @@ abstract class BaseController
      */
     public function has(string $key): bool
     {
-        return array_key_exists($key, $this->input);
+        return array_key_exists($key, $this->getInput());
     }
 
     /**
@@ -52,7 +71,7 @@ abstract class BaseController
      */
     public function getAll(): array
     {
-        return $this->input;
+        return $this->getInput();
     }
 
     /**
@@ -60,8 +79,7 @@ abstract class BaseController
      */
     public function clearInput(): self
     {
-        $this->input = [];
-        return $this;
+        return $this->setInput([]);
     }
 
     /**
@@ -69,12 +87,13 @@ abstract class BaseController
      */
     public function addError(string $field, string $message): self
     {
-        $this->errors[$field] = $message;
-        return $this;
+        $errors = $this->getErrors();
+        $errors[$field] = $message;
+        return $this->setErrors($errors);
     }
 
     /**
-     * Obtener errores
+     * Obtener errores (getter)
      */
     public function getErrors(): array
     {
@@ -82,11 +101,20 @@ abstract class BaseController
     }
 
     /**
+     * Reemplazar los errores de validación (setter)
+     */
+    public function setErrors(array $errors): self
+    {
+        $this->errors = $errors;
+        return $this;
+    }
+
+    /**
      * Tiene errores?
      */
     public function hasErrors(): bool
     {
-        return !empty($this->errors);
+        return !empty($this->getErrors());
     }
 
     /**
@@ -94,8 +122,7 @@ abstract class BaseController
      */
     public function clearErrors(): self
     {
-        $this->errors = [];
-        return $this;
+        return $this->setErrors([]);
     }
 
     /**

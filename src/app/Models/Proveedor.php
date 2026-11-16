@@ -143,16 +143,16 @@ class Proveedor extends Model
     public function toArray(): array
     {
         return [
-            'id'           => $this->id,
-            'numero'       => $this->numero,
-            'fecha'        => $this->fecha,
-            'fk_proveedor' => $this->fkProveedor,
-            'fk_status'    => $this->fkStatus,
-            'linea_id'     => $this->lineaId,
-            'orden_id'     => $this->ordenId,
-            'producto_id'  => $this->productoId,
-            'cantidad'     => $this->cantidad,
-            'precio'       => $this->precio,
+            'id'           => $this->getId(),
+            'numero'       => $this->getNumero(),
+            'fecha'        => $this->getFecha(),
+            'fk_proveedor' => $this->getFkProveedor(),
+            'fk_status'    => $this->getFkStatus(),
+            'linea_id'     => $this->getLineaId(),
+            'orden_id'     => $this->getOrdenId(),
+            'producto_id'  => $this->getProductoId(),
+            'cantidad'     => $this->getCantidad(),
+            'precio'       => $this->getPrecio(),
         ];
     }
 
@@ -180,7 +180,7 @@ class Proveedor extends Model
     public function obtenerOrdenes(): array
     {
         // Consulta con JOIN a proveedores y status_seguimiento, ordenada por fecha descendente
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT oa.id, oa.numero_de_orden, oa.fecha,
                    p.id AS proveedor_id, p.nombre AS proveedor_nombre, p.rif,
                    ss.id AS status_id, ss.status AS estado
@@ -205,14 +205,14 @@ class Proveedor extends Model
         $this->setId($id);
 
         // Consulta parametrizada para una orden específica con proveedor y estado
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT oa.*, p.nombre AS proveedor_nombre, p.rif, ss.status AS estado
             FROM orden_abastecimiento oa
             LEFT JOIN proveedores p ON oa.fk_proveedor = p.id
             LEFT JOIN status_seguimiento ss ON oa.fk_status = ss.id
             WHERE oa.id = ? AND oa.activo = 1
         ");
-        $stmt->bindParam(1, $this->id, PDO::PARAM_INT);
+        $stmt->bindValue(1, $this->getId(), PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch();
     }
@@ -234,35 +234,35 @@ class Proveedor extends Model
         $this->setFkProveedor($fk_proveedor);
         $this->setFkStatus($fk_status);
 
-        if ($this->fecha === '') {
+        if ($this->getFecha() === '') {
             throw new \InvalidArgumentException('La fecha es obligatoria.');
         }
-        if (!$this->fkProveedor) {
+        if (!$this->getFkProveedor()) {
             throw new \InvalidArgumentException('El proveedor es obligatorio.');
         }
-        if (!$this->fkStatus) {
+        if (!$this->getFkStatus()) {
             throw new \InvalidArgumentException('El estado es obligatorio.');
         }
-        if (!$this->existeProveedor($this->fkProveedor)) {
+        if (!$this->existeProveedor($this->getFkProveedor())) {
             throw new \InvalidArgumentException('El proveedor seleccionado no existe.');
         }
-        if (!$this->existeStatus($this->fkStatus)) {
+        if (!$this->existeStatus($this->getFkStatus())) {
             throw new \InvalidArgumentException('El estado seleccionado no existe.');
         }
 
         $sql = "INSERT INTO orden_abastecimiento (numero_de_orden, fecha, fk_proveedor, fk_status) VALUES (?, ?, ?, ?)";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(1, $this->numero, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->fecha, PDO::PARAM_STR);
-        $stmt->bindParam(3, $this->fkProveedor, PDO::PARAM_INT);
-        $stmt->bindParam(4, $this->fkStatus, PDO::PARAM_INT);
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->bindValue(1, $this->getNumero(), PDO::PARAM_STR);
+        $stmt->bindValue(2, $this->getFecha(), PDO::PARAM_STR);
+        $stmt->bindValue(3, $this->getFkProveedor(), PDO::PARAM_INT);
+        $stmt->bindValue(4, $this->getFkStatus(), PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->rowCount() ? (int) $this->db->lastInsertId() : false;
+        return $stmt->rowCount() ? (int) $this->getDb()->lastInsertId() : false;
     }
 
     public function obtenerSiguienteNumeroOrden(): string
     {
-        $stmt = $this->db->query(
+        $stmt = $this->getDb()->query(
             "SELECT numero_de_orden FROM orden_abastecimiento
             ORDER BY id DESC LIMIT 1"
         );
@@ -297,29 +297,29 @@ class Proveedor extends Model
         $this->setFkProveedor($fk_proveedor);
         $this->setFkStatus($fk_status);
 
-        if ($this->fecha === '') {
+        if ($this->getFecha() === '') {
             throw new \InvalidArgumentException('La fecha es obligatoria.');
         }
-        if (!$this->fkProveedor) {
+        if (!$this->getFkProveedor()) {
             throw new \InvalidArgumentException('El proveedor es obligatorio.');
         }
-        if (!$this->fkStatus) {
+        if (!$this->getFkStatus()) {
             throw new \InvalidArgumentException('El estado es obligatorio.');
         }
-        if (!$this->existeProveedor($this->fkProveedor)) {
+        if (!$this->existeProveedor($this->getFkProveedor())) {
             throw new \InvalidArgumentException('El proveedor seleccionado no existe.');
         }
-        if (!$this->existeStatus($this->fkStatus)) {
+        if (!$this->existeStatus($this->getFkStatus())) {
             throw new \InvalidArgumentException('El estado seleccionado no existe.');
         }
 
         $sql = "UPDATE orden_abastecimiento SET numero_de_orden = ?, fecha = ?, fk_proveedor = ?, fk_status = ? WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(1, $this->numero, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->fecha, PDO::PARAM_STR);
-        $stmt->bindParam(3, $this->fkProveedor, PDO::PARAM_INT);
-        $stmt->bindParam(4, $this->fkStatus, PDO::PARAM_INT);
-        $stmt->bindParam(5, $this->id, PDO::PARAM_INT);
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->bindValue(1, $this->getNumero(), PDO::PARAM_STR);
+        $stmt->bindValue(2, $this->getFecha(), PDO::PARAM_STR);
+        $stmt->bindValue(3, $this->getFkProveedor(), PDO::PARAM_INT);
+        $stmt->bindValue(4, $this->getFkStatus(), PDO::PARAM_INT);
+        $stmt->bindValue(5, $this->getId(), PDO::PARAM_INT);
         return $stmt->execute();
     }
 
@@ -335,8 +335,8 @@ class Proveedor extends Model
         // Encapsulación: se carga el ID mediante el setter
         $this->setId($id);
 
-        $stmt = $this->db->prepare("UPDATE orden_abastecimiento SET activo = 0 WHERE id = ?");
-        $stmt->bindParam(1, $this->id, PDO::PARAM_INT);
+        $stmt = $this->getDb()->prepare("UPDATE orden_abastecimiento SET activo = 0 WHERE id = ?");
+        $stmt->bindValue(1, $this->getId(), PDO::PARAM_INT);
         return $stmt->execute();
     }
 
@@ -349,7 +349,7 @@ class Proveedor extends Model
     public function obtenerProveedores(): array
     {
         // Consulta todos los proveedores ordenados por nombre
-        $stmt = $this->db->query("SELECT id, rif, nombre, email, telefono FROM proveedores WHERE activo = 1 ORDER BY nombre");
+        $stmt = $this->getDb()->query("SELECT id, rif, nombre, email, telefono FROM proveedores WHERE activo = 1 ORDER BY nombre");
         return $stmt->fetchAll();
     }
 
@@ -361,7 +361,7 @@ class Proveedor extends Model
     public function obtenerStatuses(): array
     {
         // Consulta todos los registros de la tabla status_seguimiento ordenados por ID
-        $stmt = $this->db->query("SELECT id, status FROM status_seguimiento ORDER BY id");
+        $stmt = $this->getDb()->query("SELECT id, status FROM status_seguimiento ORDER BY id");
         return $stmt->fetchAll();
     }
 
@@ -373,7 +373,7 @@ class Proveedor extends Model
     public function obtenerProductos(): array
     {
         // Consulta básica de productos, solo los campos necesarios para una orden
-        $stmt = $this->db->query("SELECT id, codigo, nombre, precio_compra FROM productos WHERE activo = 1 ORDER BY nombre");
+        $stmt = $this->getDb()->query("SELECT id, codigo, nombre, precio_compra FROM productos WHERE activo = 1 ORDER BY nombre");
         return $stmt->fetchAll();
     }
 
@@ -389,7 +389,7 @@ class Proveedor extends Model
         $this->setOrdenId($orden_id);
 
         // Consulta parametrizada con JOIN a productos para obtener detalles de cada línea
-        $stmt = $this->db->prepare("
+        $stmt = $this->getDb()->prepare("
             SELECT la.id, la.cantidad, la.precio,
                    p.id AS producto_id, p.nombre AS producto_nombre, p.codigo AS producto_codigo
             FROM lineas_abastecimiento la
@@ -397,7 +397,7 @@ class Proveedor extends Model
             WHERE la.fk_orden_abastecimiento = ?
             ORDER BY la.id
         ");
-        $stmt->bindParam(1, $this->ordenId, PDO::PARAM_INT);
+        $stmt->bindValue(1, $this->getOrdenId(), PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll();
     }
@@ -419,19 +419,19 @@ class Proveedor extends Model
         $this->setCantidad($cantidad);
         $this->setPrecio($precio);
 
-        if (!$this->existeOrden($this->ordenId)) {
+        if (!$this->existeOrden($this->getOrdenId())) {
             throw new \InvalidArgumentException('La orden de abastecimiento no existe.');
         }
-        if (!$this->existeProducto($this->productoId)) {
+        if (!$this->existeProducto($this->getProductoId())) {
             throw new \InvalidArgumentException('El producto seleccionado no existe.');
         }
 
         $sql = "INSERT INTO lineas_abastecimiento (cantidad, precio, fk_orden_abastecimiento, fk_producto) VALUES (?, ?, ?, ?)";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(1, $this->cantidad, PDO::PARAM_INT);
-        $stmt->bindParam(2, $this->precio, PDO::PARAM_STR);
-        $stmt->bindParam(3, $this->ordenId, PDO::PARAM_INT);
-        $stmt->bindParam(4, $this->productoId, PDO::PARAM_INT);
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->bindValue(1, $this->getCantidad(), PDO::PARAM_INT);
+        $stmt->bindValue(2, $this->getPrecio(), PDO::PARAM_STR);
+        $stmt->bindValue(3, $this->getOrdenId(), PDO::PARAM_INT);
+        $stmt->bindValue(4, $this->getProductoId(), PDO::PARAM_INT);
         return $stmt->execute();
     }
 
@@ -446,8 +446,8 @@ class Proveedor extends Model
         // Encapsulación: se carga el ID mediante el setter
         $this->setLineaId($id);
         // Elimina la línea de abastecimiento por su identificador único
-        $stmt = $this->db->prepare("DELETE FROM lineas_abastecimiento WHERE id = ?");
-        $stmt->bindParam(1, $this->lineaId, PDO::PARAM_INT);
+        $stmt = $this->getDb()->prepare("DELETE FROM lineas_abastecimiento WHERE id = ?");
+        $stmt->bindValue(1, $this->getLineaId(), PDO::PARAM_INT);
         return $stmt->execute();
     }
 
@@ -458,7 +458,7 @@ class Proveedor extends Model
      */
     public function totalSolicitudes(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM orden_abastecimiento WHERE activo = 1");
+        $stmt = $this->getDb()->query("SELECT COUNT(*) AS total FROM orden_abastecimiento WHERE activo = 1");
         return (int)$stmt->fetch()['total'];
     }
 
@@ -469,7 +469,7 @@ class Proveedor extends Model
      */
     public function contarPorEstado(): array
     {
-        $stmt = $this->db->query("
+        $stmt = $this->getDb()->query("
             SELECT ss.status AS estado, COUNT(*) AS total
             FROM orden_abastecimiento oa
             LEFT JOIN status_seguimiento ss ON oa.fk_status = ss.id
@@ -482,7 +482,7 @@ class Proveedor extends Model
     public function existeProveedor(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM proveedores WHERE id = ?");
+        $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM proveedores WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return (int)$stmt->fetch()['total'] > 0;
@@ -491,7 +491,7 @@ class Proveedor extends Model
     public function existeStatus(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM status_seguimiento WHERE id = ?");
+        $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM status_seguimiento WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return (int)$stmt->fetch()['total'] > 0;
@@ -500,7 +500,7 @@ class Proveedor extends Model
     public function existeOrden(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM orden_abastecimiento WHERE id = ?");
+        $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM orden_abastecimiento WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return (int)$stmt->fetch()['total'] > 0;
@@ -509,7 +509,7 @@ class Proveedor extends Model
     public function existeProducto(int $id): bool
     {
         $id = $this->sanitizeInt($id);
-        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM productos WHERE id = ?");
+        $stmt = $this->getDb()->prepare("SELECT COUNT(*) AS total FROM productos WHERE id = ?");
         $stmt->bindParam(1, $id, PDO::PARAM_INT);
         $stmt->execute();
         return (int)$stmt->fetch()['total'] > 0;

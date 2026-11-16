@@ -90,12 +90,11 @@
         }
 
         function cargarCatalogosFiltros() {
-            $.ajax({
-                url: '?pagina=reportes&action=filtros',
-                method: 'GET',
-                dataType: 'json',
-                success: function (resp) {
-                    if (resp && resp.success && resp.data) {
+            EIS.ajax.get('?pagina=reportes&action=filtros', {
+                showServerError: false,
+                showNetworkError: false,
+                onSuccess: function (resp) {
+                    if (resp && resp.data) {
                         poblarSelect('#filtroCategoria', resp.data.categorias, 'id', 'nombre_categoria', 'Todas las categorías');
                         poblarSelect('#filtroCliente', resp.data.clientes, 'id', 'cliente', 'Todos los clientes');
                         poblarSelect('#filtroProveedor', resp.data.proveedores, 'id', 'nombre', 'Todos los proveedores');
@@ -356,24 +355,19 @@
                 params.estado_cyber = $('#filtroCyber').val();
             }
 
-            $.ajax({
-                url: '?pagina=reportes&action=consultar',
-                method: 'GET',
+            EIS.ajax.get('?pagina=reportes&action=consultar', {
                 data: params,
-                dataType: 'json',
-                success: function (resp) {
+                showServerError: false,
+                showNetworkError: false,
+                onSuccess: function (resp) {
                     $loading.hide();
-                    if (resp && resp.success) {
-                        renderResultado(resp.data);
-                    } else {
-                        $error.show().text((resp && resp.error) || 'No se pudo consultar el reporte. Intenta de nuevo.');
-                    }
+                    renderResultado(resp.data);
                 },
-                error: function (xhr) {
+                onError: function (resp, xhr) {
                     $loading.hide();
                     var errMsg = 'No se pudo conectar con el servidor al consultar el reporte. Intenta de nuevo.';
-                    if (xhr.responseJSON && xhr.responseJSON.error) {
-                        errMsg = xhr.responseJSON.error;
+                    if (resp && resp.error) {
+                        errMsg = resp.error;
                     }
                     $error.show().text(errMsg);
                 }

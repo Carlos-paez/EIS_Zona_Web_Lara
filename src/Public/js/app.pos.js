@@ -38,13 +38,19 @@ $(function () {
     // PROPÓSITO: Solicita al backend el catálogo de productos disponibles.
     // ================================================================
     function cargarProductos() {
-        $.ajax({url: API + 'productos', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) { EIS.toast(r.error || 'No se pudieron cargar los productos. Intenta de nuevo.', 'red', 'error'); return; }
-            productos = r.data || [];
-            renderProductos();
-        }).fail(function () {
-            $('#posLoading').html('<i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">cloud_off</i> No se pudo conectar con el servidor. Intenta de nuevo.');
-            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
+        EIS.ajax.get(API + 'productos', {
+            onSuccess: function (r) {
+                productos = r.data || [];
+                renderProductos();
+            },
+            onError: function (r, xhr) {
+                if (xhr) {
+                    $('#posLoading').html('<i class="material-icons" style="font-size:3rem;display:block;margin-bottom:0.5rem;opacity:0.3;">cloud_off</i> No se pudo conectar con el servidor. Intenta de nuevo.');
+                    EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
+                } else {
+                    EIS.toast((r && r.error) || 'No se pudieron cargar los productos. Intenta de nuevo.', 'red', 'error');
+                }
+            }
         });
     }
 
@@ -268,12 +274,12 @@ $(function () {
     // PROPÓSITO: Solicita al backend la lista de clientes registrados.
     // ================================================================
     function cargarClientes() {
-        $.ajax({url: API + 'clientes', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) { EIS.toast(r.error || 'No se pudieron cargar los clientes. Intenta de nuevo.', 'red', 'error'); return; }
-            clientes = r.data || [];
-            poblarSelectClientes();
-        }).fail(function () {
-            EIS.toast('No se pudieron cargar los clientes. Intenta de nuevo.', 'red', 'error');
+        EIS.ajax.get(API + 'clientes', {
+            onSuccess: function (r) {
+                clientes = r.data || [];
+                poblarSelectClientes();
+            },
+            errorMessage: 'No se pudieron cargar los clientes. Intenta de nuevo.'
         });
     }
 
@@ -330,12 +336,15 @@ $(function () {
     // ================================================================
     function buscarCliente(cedula) {
         if (!cedula) return;
-        $.ajax({url: API + 'buscarCliente&cedula=' + encodeURIComponent(cedula), method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success || !r.data) return;
-            aplicarCliente(r.data);
-            EIS.toast('Cliente encontrado. Se precargaron sus datos.', 'indigo', 'person');
-        }).fail(function () {
-            EIS.toast('No se pudo buscar el cliente. Intenta de nuevo.', 'red', 'error');
+        EIS.ajax.get(API + 'buscarCliente', {
+            data: { cedula: cedula },
+            showServerError: false,
+            onSuccess: function (r) {
+                if (!r.data) return;
+                aplicarCliente(r.data);
+                EIS.toast('Cliente encontrado. Se precargaron sus datos.', 'indigo', 'person');
+            },
+            errorMessage: 'No se pudo buscar el cliente. Intenta de nuevo.'
         });
     }
 
@@ -467,31 +476,23 @@ $(function () {
         var $btn = $('#procesarVenta');
         $btn.prop('disabled', true);
 
-        $.ajax({
-            url: API + 'registrar',
-            type: 'POST',
-            data: $form.serialize() + '&items=' + encodeURIComponent(JSON.stringify(items)),
-            dataType: 'json',
-            success: function (r) {
-                $btn.prop('disabled', false);
-                if (r.success) {
-                    EIS.toast(r.message || '¡Venta registrada!', 'green', 'paid');
-                    posCart = [];
-                    posTotal = 0;
-                    actualizarPosUI();
-                    renderProductos();
-                    limpiarClienteForm();
-                    $('#posCartModal').modal('close');
-                    cargarProductos();
-                    cargarClientes();
-                } else {
-                    EIS.mostrarErroresFormulario($form, r);
-                }
+        EIS.ajax.post(API + 'registrar', $form.serialize() + '&items=' + encodeURIComponent(JSON.stringify(items)), {
+            form: $form,
+            successToast: '¡Venta registrada!',
+            successIcon: 'paid',
+            onSuccess: function () {
+                posCart = [];
+                posTotal = 0;
+                actualizarPosUI();
+                renderProductos();
+                limpiarClienteForm();
+                $('#posCartModal').modal('close');
+                cargarProductos();
+                cargarClientes();
             },
-            error: function () {
-                $btn.prop('disabled', false);
-                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
-            }
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
+        }).always(function () {
+            $btn.prop('disabled', false);
         });
     });
 

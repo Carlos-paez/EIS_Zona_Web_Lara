@@ -33,6 +33,8 @@
     <link rel="stylesheet" href="Public/css/jquery.toast.min.css">
     <!-- Estilos EIS de validación (jQuery Validation) y notificaciones (jQuery Toast) -->
     <link rel="stylesheet" href="Public/css/forms.eis.css">
+    <!-- Spinner de carga 3D Tower Loader -->
+    <link rel="stylesheet" href="Public/css/loader.css">
 </head>
 <body>
 

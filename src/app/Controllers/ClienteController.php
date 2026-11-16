@@ -14,7 +14,7 @@ class ClienteController extends BaseController
 
     public function __construct()
     {
-        $this->model = new Cliente();
+        $this->setModel(new Cliente());
     }
 
     public function getModel(): Cliente
@@ -64,14 +64,14 @@ class ClienteController extends BaseController
 
     private function listar(): void
     {
-        $clientes = $this->model->obtenerClientes();
+        $clientes = $this->getModel()->obtenerClientes();
         $this->jsonSuccess($clientes);
     }
 
     private function kpis(): void
     {
         $this->setResult([
-            'total' => $this->model->totalClientes(),
+            'total' => $this->getModel()->totalClientes(),
         ]);
         $this->jsonSuccess($this->getResult());
     }
@@ -80,7 +80,7 @@ class ClienteController extends BaseController
     {
         $this->hydrateFromGet(['id' => 'int']);
         $id = $this->get('id', 0) > 0 ? (int)$this->get('id') : Validator::id($_GET['id'] ?? null, 'ID del cliente');
-        $cliente = $this->model->obtenerClientePorId($id);
+        $cliente = $this->getModel()->obtenerClientePorId($id);
         if ($cliente) {
             $this->jsonSuccess($cliente);
         } else {
@@ -115,12 +115,12 @@ class ClienteController extends BaseController
             ->set('direccion', $direccion)
             ->set('telefono', $telefono);
 
-        if ($this->model->existeCedula($cedula)) {
+        if ($this->getModel()->existeCedula($cedula)) {
             $this->jsonError('Ya existe un cliente registrado con esa cédula.', null, 400);
             return;
         }
 
-        $resultado = $this->model->crearCliente($cedula, $nombre, $apellido, $direccion, $telefono);
+        $resultado = $this->getModel()->crearCliente($cedula, $nombre, $apellido, $direccion, $telefono);
         if ($resultado) {
             $this->jsonSuccess(null, 'Cliente creado exitosamente');
         } else {
@@ -158,12 +158,12 @@ class ClienteController extends BaseController
             ->set('direccion', $direccion)
             ->set('telefono', $telefono);
 
-        if ($this->model->existeCedula($cedula, $id)) {
+        if ($this->getModel()->existeCedula($cedula, $id)) {
             $this->jsonError('Ya existe otro cliente registrado con esa cédula.', null, 400);
             return;
         }
 
-        $resultado = $this->model->actualizarCliente($id, $cedula, $nombre, $apellido, $direccion, $telefono);
+        $resultado = $this->getModel()->actualizarCliente($id, $cedula, $nombre, $apellido, $direccion, $telefono);
         if ($resultado) {
             $this->jsonSuccess(null, 'Cliente actualizado exitosamente');
         } else {
@@ -180,7 +180,7 @@ class ClienteController extends BaseController
 
         $id = Validator::id($_POST['id'] ?? null, 'ID del cliente');
         $this->set('id', $id);
-        $resultado = $this->model->eliminarCliente($id);
+        $resultado = $this->getModel()->eliminarCliente($id);
         if ($resultado) {
             $this->jsonSuccess(null, 'Cliente eliminado exitosamente');
         } else {

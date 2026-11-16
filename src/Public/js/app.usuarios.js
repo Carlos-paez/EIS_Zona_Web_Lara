@@ -39,22 +39,23 @@ $(function () {
     }
 
     function refrescarKPI() {
-        $.ajax({url: API + 'kpis', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) return;
-            $('#kpi-total').text(r.data.total);
-            $('#kpi-activos').text(r.data.activos);
-            $('#kpi-inactivos').text(r.data.inactivos);
-            $('#kpi-admins').text(r.data.administradores);
-            $('#countUsuarios').text(r.data.total);
-        }).fail(function () {
-            EIS.toast('No se pudieron cargar los indicadores. Intenta de nuevo.', 'red', 'error');
+        EIS.ajax.get(API + 'kpis', {
+            showServerError: false,
+            onSuccess: function (r) {
+                $('#kpi-total').text(r.data.total);
+                $('#kpi-activos').text(r.data.activos);
+                $('#kpi-inactivos').text(r.data.inactivos);
+                $('#kpi-admins').text(r.data.administradores);
+                $('#countUsuarios').text(r.data.total);
+            },
+            errorMessage: 'No se pudieron cargar los indicadores. Intenta de nuevo.'
         });
     }
 
     function refrescarTabla() {
-        $.ajax({url: API + 'listar', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) return;
-
+        EIS.ajax.get(API + 'listar', {
+            showServerError: false,
+            onSuccess: function (r) {
             var tbody = $('#tabla-usuarios tbody');
             tbody.empty();
 
@@ -70,26 +71,27 @@ $(function () {
 
             $('.tooltipped').tooltip();
             EIS.datatableRefresh('#tabla-usuarios');
-        }).fail(function () {
-            EIS.toast('No se pudieron cargar los usuarios. Intenta de nuevo.', 'red', 'error');
+            },
+            errorMessage: 'No se pudieron cargar los usuarios. Intenta de nuevo.'
         });
     }
 
     function cargarRoles() {
-        $.ajax({url: API + 'roles', method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) return;
-            var $filter = $('#filterRol');
-            var $modal = $('#usuario-rol');
-            $.each(r.data, function (i, rol) {
-                var id = rol.id;
-                var nombre = '#' + rol.id + ' ' + (rol.nombre || rol.rol || '');
-                $filter.append($('<option>').val(id).text(nombre));
-                $modal.append($('<option>').val(id).text(nombre));
-            });
-            M.FormSelect.init($filter);
-            M.FormSelect.init($modal);
-        }).fail(function () {
-            EIS.toast('No se pudieron cargar los roles. Intenta de nuevo.', 'red', 'error');
+        EIS.ajax.get(API + 'roles', {
+            showServerError: false,
+            onSuccess: function (r) {
+                var $filter = $('#filterRol');
+                var $modal = $('#usuario-rol');
+                $.each(r.data, function (i, rol) {
+                    var id = rol.id;
+                    var nombre = '#' + rol.id + ' ' + (rol.nombre || rol.rol || '');
+                    $filter.append($('<option>').val(id).text(nombre));
+                    $modal.append($('<option>').val(id).text(nombre));
+                });
+                M.FormSelect.init($filter);
+                M.FormSelect.init($modal);
+            },
+            errorMessage: 'No se pudieron cargar los roles. Intenta de nuevo.'
         });
     }
 
@@ -124,29 +126,30 @@ $(function () {
     }
 
     function abrirEditar(id) {
-        $.ajax({url: API + 'detalle&id=' + id, method: "GET", dataType: "json"}).done(function(r) {
-            if (!r.success) { EIS.toast(r.error || 'No se pudieron cargar los datos. Intenta de nuevo.', 'red', 'error'); return; }
-            var u = r.data;
-            EIS.limpiarErroresFormulario('#form-usuario');
-            $('#form-usuario')[0].reset();
-            $('#usuario-id').val(u.id);
-            $('#usuario-nombre').val(u.nombre);
-            $('#usuario-apellido').val(u.apellido);
-            $('#usuario-username').val(u.user_name);
-            $('#usuario-username').prop('readonly', true);
-            $('#usuario-email').val(u.email);
-            $('#usuario-password').val('');
-            $('#label-password').text('Nueva contraseña (dejar vacío para no cambiar)');
-            $('#usuario-rol').val(u.fk_rol_usuario || '');
-            $('#usuario-estatus').val((u.estatus === '1' || u.estatus === 'activo') ? '1' : '0');
-            $('#modal-usuario-title').text('Editar Usuario: ' + u.nombre + ' ' + u.apellido);
-            M.updateTextFields();
-            M.textareaAutoResize && M.textareaAutoResize($('#usuario-nombre'));
-            M.FormSelect.init($('#usuario-rol'));
-            M.FormSelect.init($('#usuario-estatus'));
-            $('#modal-usuario').modal('open');
-        }).fail(function () {
-            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
+        EIS.ajax.get(API + 'detalle', {
+            data: { id: id },
+            onSuccess: function (r) {
+                var u = r.data;
+                EIS.limpiarErroresFormulario('#form-usuario');
+                $('#form-usuario')[0].reset();
+                $('#usuario-id').val(u.id);
+                $('#usuario-nombre').val(u.nombre);
+                $('#usuario-apellido').val(u.apellido);
+                $('#usuario-username').val(u.user_name);
+                $('#usuario-username').prop('readonly', true);
+                $('#usuario-email').val(u.email);
+                $('#usuario-password').val('');
+                $('#label-password').text('Nueva contraseña (dejar vacío para no cambiar)');
+                $('#usuario-rol').val(u.fk_rol_usuario || '');
+                $('#usuario-estatus').val((u.estatus === '1' || u.estatus === 'activo') ? '1' : '0');
+                $('#modal-usuario-title').text('Editar Usuario: ' + u.nombre + ' ' + u.apellido);
+                M.updateTextFields();
+                M.textareaAutoResize && M.textareaAutoResize($('#usuario-nombre'));
+                M.FormSelect.init($('#usuario-rol'));
+                M.FormSelect.init($('#usuario-estatus'));
+                $('#modal-usuario').modal('open');
+            },
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
         });
     }
 
@@ -161,16 +164,13 @@ $(function () {
         var activo = $btn.data('activo');
         var accion = activo === 1 ? 'desactivar' : 'activar';
         if (confirm('¿' + accion.charAt(0).toUpperCase() + accion.slice(1) + ' este usuario?')) {
-            $.post(API + 'estado', { id: id, activo: activo }, function (r) {
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
+            EIS.ajax.post(API + 'estado', { id: id, activo: activo }, {
+                successToast: true,
+                onSuccess: function () {
                     refrescarKPI();
                     refrescarTabla();
-                } else {
-                    EIS.toast(r.error || 'No se pudo cambiar el estado. Intenta de nuevo.', 'red', 'error');
-                }
-            }, 'json').fail(function () {
-                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
+                },
+                errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
             });
         }
     });
@@ -179,16 +179,13 @@ $(function () {
         var id = $(this).data('id');
         var nombre = $(this).data('nombre');
         if (confirm('¿Eliminar el usuario "' + nombre + '"?\nNota: No se puede eliminar si tiene registros asociados.')) {
-            $.post(API + 'eliminar', { id: id }, function (r) {
-                if (r.success) {
-                    EIS.toast(r.message, 'green', 'check_circle');
+            EIS.ajax.post(API + 'eliminar', { id: id }, {
+                successToast: true,
+                onSuccess: function () {
                     refrescarKPI();
                     refrescarTabla();
-                } else {
-                    EIS.toast(r.error || 'No se pudo eliminar. Intenta de nuevo.', 'red', 'error');
-                }
-            }, 'json').fail(function () {
-                EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
+                },
+                errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
             });
         }
     });
@@ -202,17 +199,14 @@ $(function () {
 
         var id = $('#usuario-id').val();
         var accion = id ? 'actualizar' : 'crear';
-        $.post(API + accion, $form.serialize(), function (r) {
-            if (r.success) {
-                EIS.toast(r.message, 'green', 'check_circle');
+        EIS.ajax.form(API + accion, $form, {
+            successToast: true,
+            onSuccess: function () {
                 $('#modal-usuario').modal('close');
                 refrescarKPI();
                 refrescarTabla();
-            } else {
-                EIS.mostrarErroresFormulario($form, r);
-            }
-        }, 'json').fail(function () {
-            EIS.toast('No se pudo conectar con el servidor. Intenta de nuevo.', 'red', 'error');
+            },
+            errorMessage: 'No se pudo conectar con el servidor. Intenta de nuevo.'
         });
     });
 

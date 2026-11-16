@@ -21,7 +21,7 @@ class ReporteController
 
     public function __construct()
     {
-        $this->model = new Reporte();
+        $this->setModel(new Reporte());
     }
 
     public function getModel(): Reporte
@@ -59,12 +59,12 @@ class ReporteController
 
     private function kpis(): void
     {
-        $this->json(true, $this->model->kpis());
+        $this->json(true, $this->getModel()->kpis());
     }
 
     private function filtros(): void
     {
-        $this->json(true, $this->model->catalogosFiltros());
+        $this->json(true, $this->getModel()->catalogosFiltros());
     }
 
     private function consultar(): void
@@ -85,7 +85,7 @@ class ReporteController
         }
 
         $filtros = $this->extraerFiltrosAdicionales();
-        $resultado = $this->model->consultar($tipo, $desde, $hasta, $filtros);
+        $resultado = $this->getModel()->consultar($tipo, $desde, $hasta, $filtros);
 
         header('Content-Type: application/json');
         echo json_encode(['success' => true, 'data' => $resultado]);
@@ -106,8 +106,8 @@ class ReporteController
         $hasta   = $datos['hasta'] ?? date('Y-m-d');
 
         $filtros = $this->extraerFiltrosAdicionales();
-        $resultado = $this->model->consultar($tipo, $desde, $hasta, $filtros);
-        $titulo    = $this->model->nombreTipo($tipo);
+        $resultado = $this->getModel()->consultar($tipo, $desde, $hasta, $filtros);
+        $titulo    = $this->getModel()->nombreTipo($tipo);
         $meta      = ['tipo' => $tipo, 'desde' => $desde, 'hasta' => $hasta];
 
         match ($formato) {

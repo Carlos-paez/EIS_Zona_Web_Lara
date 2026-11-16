@@ -23,6 +23,26 @@ final class ValidationException extends \InvalidArgumentException
     public function __construct(array $errores, string $mensaje = 'Revisa los datos ingresados e intenta de nuevo.')
     {
         parent::__construct($mensaje);
+        $this->setErrores($errores);
+    }
+
+    /**
+     * Devuelve los errores por campo (getter).
+     *
+     * @return array<string,string>
+     */
+    public function getErrores(): array
+    {
+        return $this->errores;
+    }
+
+    /**
+     * Asigna los errores por campo (setter).
+     *
+     * @param array<string,string> $errores
+     */
+    public function setErrores(array $errores): void
+    {
         $this->errores = $errores;
     }
 
@@ -33,6 +53,6 @@ final class ValidationException extends \InvalidArgumentException
      */
     public function errores(): array
     {
-        return $this->errores;
+        return $this->getErrores();
     }
 }

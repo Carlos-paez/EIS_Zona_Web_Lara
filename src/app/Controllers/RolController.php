@@ -14,7 +14,7 @@ class RolController extends BaseController
 
     public function __construct()
     {
-        $this->model = new Rol();
+        $this->setModel(new Rol());
     }
 
     public function getModel(): Rol
@@ -63,7 +63,7 @@ class RolController extends BaseController
 
     private function listar(): void
     {
-        $roles = $this->model->listarRoles();
+        $roles = $this->getModel()->listarRoles();
         $this->jsonSuccess($roles);
     }
 
@@ -71,7 +71,7 @@ class RolController extends BaseController
     {
         $id = Validator::id($_GET['id'] ?? null, 'ID del rol');
         $this->set('id', $id);
-        $rol = $this->model->obtenerRolPorId($id);
+        $rol = $this->getModel()->obtenerRolPorId($id);
         if ($rol) {
             $this->jsonSuccess($rol);
         } else {
@@ -95,12 +95,12 @@ class RolController extends BaseController
 
         $this->set('nombre_rol', $nombre_rol)->set('descripcion', $descripcion);
 
-        if ($this->model->existeNombreRol($nombre_rol)) {
+        if ($this->getModel()->existeNombreRol($nombre_rol)) {
             $this->jsonError('Ya existe un rol registrado con ese nombre.', null, 400);
             return;
         }
 
-        $resultado = $this->model->crearRol($nombre_rol, $descripcion);
+        $resultado = $this->getModel()->crearRol($nombre_rol, $descripcion);
         if ($resultado) {
             $this->jsonSuccess(null, 'Rol creado exitosamente');
         } else {
@@ -129,12 +129,12 @@ class RolController extends BaseController
             ->set('nombre_rol', $nombre_rol)
             ->set('descripcion', $descripcion);
 
-        if ($this->model->existeNombreRol($nombre_rol, $id)) {
+        if ($this->getModel()->existeNombreRol($nombre_rol, $id)) {
             $this->jsonError('Ya existe otro rol registrado con ese nombre.', null, 400);
             return;
         }
 
-        $resultado = $this->model->actualizarRol($id, $nombre_rol, $descripcion);
+        $resultado = $this->getModel()->actualizarRol($id, $nombre_rol, $descripcion);
         if ($resultado) {
             $this->jsonSuccess(null, 'Rol actualizado exitosamente');
         } else {
@@ -155,7 +155,7 @@ class RolController extends BaseController
             $this->jsonError('No se puede eliminar el rol de Administrador.', null, 400);
             return;
         }
-        $resultado = $this->model->eliminarRol($id);
+        $resultado = $this->getModel()->eliminarRol($id);
         if ($resultado) {
             $this->jsonSuccess(null, 'Rol eliminado exitosamente');
         } else {
@@ -165,7 +165,7 @@ class RolController extends BaseController
 
     private function permisos(): void
     {
-        $permisos = $this->model->obtenerPermisos();
+        $permisos = $this->getModel()->obtenerPermisos();
         $this->jsonSuccess($permisos);
     }
 
@@ -173,7 +173,7 @@ class RolController extends BaseController
     {
         $rol_id = Validator::id($_GET['rol_id'] ?? null, 'ID del rol');
         $this->set('rol_id', $rol_id);
-        $permisos = $this->model->obtenerPermisosPorRol($rol_id);
+        $permisos = $this->getModel()->obtenerPermisosPorRol($rol_id);
         $this->jsonSuccess($permisos);
     }
 
@@ -193,7 +193,7 @@ class RolController extends BaseController
         $this->set('rol_id', $rol_id)
             ->set('permisos', $permiso_ids);
 
-        $resultado = $this->model->guardarPermisosRol($rol_id, $permiso_ids);
+        $resultado = $this->getModel()->guardarPermisosRol($rol_id, $permiso_ids);
         if ($resultado) {
             $this->jsonSuccess(null, 'Permisos guardados exitosamente');
         } else {
@@ -203,8 +203,8 @@ class RolController extends BaseController
 
     private function usuarios(): void
     {
-        $usuarios = $this->model->obtenerUsuarios();
-        $roles = $this->model->obtenerRoles();
+        $usuarios = $this->getModel()->obtenerUsuarios();
+        $roles = $this->getModel()->obtenerRoles();
         $this->jsonSuccess([
             'usuarios' => $usuarios,
             'roles'    => $roles,
@@ -225,7 +225,7 @@ class RolController extends BaseController
             $this->jsonError('No se puede asignar el rol de Administrador directamente.', null, 400);
             return;
         }
-        $resultado = $this->model->asignarRolAUsuario($usuario_id, $rol_id);
+        $resultado = $this->getModel()->asignarRolAUsuario($usuario_id, $rol_id);
         if ($resultado) {
             $this->jsonSuccess(null, 'Rol asignado exitosamente');
         } else {

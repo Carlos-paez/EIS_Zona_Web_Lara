@@ -489,3 +489,95 @@ EIS.datatableDestroy = function (selector) {
         $table.find('.dataTables_empty').remove();
     }
 };
+
+// =====================================================================
+// SPINNER GLOBAL DE CARGA (3D TOWER LOADER)
+// Provee control programático y automático para todas las peticiones
+// y formularios de la aplicación.
+// Aparece de inmediato desde el primer milisegundo de cada acción.
+// =====================================================================
+(function ($) {
+    'use strict';
+
+    var pendingRequests = 0;
+    var overlayId = 'eisGlobalLoaderOverlay';
+    var textId = 'eisGlobalLoaderText';
+    var showTime = 0;
+    var minDisplayMs = 500; // Mantiene el spinner visible al menos 500ms para evitar parpadeos instantáneos
+
+    function ensureLoaderDom() {
+        if ($('#' + overlayId).length === 0) {
+            var html = [
+                '<div id="' + overlayId + '" class="eis-loader-overlay" aria-live="assertive" aria-label="Cargando">',
+                '  <div class="eis-loader-content">',
+                '    <div class="eis-loader-wrapper">',
+                '      <div class="eis-tower-loader">',
+                '        <div class="box box-1"><div class="side-left"></div><div class="side-right"></div><div class="side-top"></div></div>',
+                '        <div class="box box-2"><div class="side-left"></div><div class="side-right"></div><div class="side-top"></div></div>',
+                '        <div class="box box-3"><div class="side-left"></div><div class="side-right"></div><div class="side-top"></div></div>',
+                '        <div class="box box-4"><div class="side-left"></div><div class="side-right"></div><div class="side-top"></div></div>',
+                '      </div>',
+                '    </div>',
+                '    <div id="' + textId + '" class="eis-loader-text">Procesando...</div>',
+                '  </div>',
+                '</div>'
+            ].join('');
+            $('body').append(html);
+        }
+    }
+
+    EIS.showLoader = function (mensaje) {
+        ensureLoaderDom();
+        pendingRequests++;
+        if (mensaje) {
+            $('#' + textId).text(mensaje);
+        } else if (pendingRequests === 1) {
+            $('#' + textId).text('Procesando solicitud...');
+        }
+        showTime = Date.now();
+        $('#' + overlayId).addClass('active');
+    };
+
+    EIS.hideLoader = function (force) {
+        if (force) {
+            pendingRequests = 0;
+        } else {
+            pendingRequests = Math.max(0, pendingRequests - 1);
+        }
+
+        if (pendingRequests === 0) {
+            var elapsed = Date.now() - showTime;
+            var remaining = Math.max(0, minDisplayMs - elapsed);
+            setTimeout(function () {
+                if (pendingRequests === 0) {
+                    $('#' + overlayId).removeClass('active');
+                }
+            }, remaining);
+        }
+    };
+
+    // Auto-hook inmediato en ajaxSend para que aparezca en cuanto se despacha la petición
+    $(document).on('ajaxSend', function () {
+        EIS.showLoader();
+    });
+
+    $(document).ajaxStop(function () {
+        EIS.hideLoader(true);
+    });
+
+    $(document).ajaxError(function () {
+        EIS.hideLoader(true);
+    });
+
+    // Auto-hook para envíos tradicionales de formularios
+    $(document).on('submit', 'form', function (e) {
+        var $form = $(this);
+        if (e.isDefaultPrevented() || $form.data('no-loader')) {
+            return;
+        }
+        // Mostramos inmediatamente el spinner
+        EIS.showLoader('Enviando datos...');
+    });
+
+})(window.jQuery);
+

@@ -14,7 +14,7 @@ class ActivoController
 
     public function __construct()
     {
-        $this->model = new Activo();
+        $this->setModel(new Activo());
     }
 
     public function getModel(): Activo
@@ -65,7 +65,7 @@ class ActivoController
 
     private function listar(): void
     {
-        $activos = $this->model->obtenerActivos();
+        $activos = $this->getModel()->obtenerActivos();
         echo json_encode(['success' => true, 'data' => $activos]);
     }
 
@@ -74,23 +74,23 @@ class ActivoController
         echo json_encode([
             'success' => true,
             'data' => [
-                'total'     => $this->model->totalActivos(),
-                'ciber'     => $this->model->totalCiber(),
-                'ocupados'  => $this->model->totalActivosOcupados(),
-                'inactivos' => $this->model->totalInactivos(),
+                'total'     => $this->getModel()->totalActivos(),
+                'ciber'     => $this->getModel()->totalCiber(),
+                'ocupados'  => $this->getModel()->totalActivosOcupados(),
+                'inactivos' => $this->getModel()->totalInactivos(),
             ]
         ]);
     }
 
     private function tipos(): void
     {
-        echo json_encode(['success' => true, 'data' => $this->model->listarTiposActivo()]);
+        echo json_encode(['success' => true, 'data' => $this->getModel()->listarTiposActivo()]);
     }
 
     private function detalle(): void
     {
         $id = Validator::id($_GET['id'] ?? null, 'ID del activo');
-        $activo = $this->model->obtenerActivoPorId($id);
+        $activo = $this->getModel()->obtenerActivoPorId($id);
         if ($activo) {
             echo json_encode(['success' => true, 'data' => $activo]);
         } else {
@@ -119,7 +119,7 @@ class ActivoController
         $activa      = $datos['activa'];
         $isCiber     = $datos['is_ciber'];
 
-        $resultado = $this->model->crearActivo($marca, $descripcion, $tipoActivo, $activa, $isCiber);
+        $resultado = $this->getModel()->crearActivo($marca, $descripcion, $tipoActivo, $activa, $isCiber);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Activo creado exitosamente']
@@ -150,7 +150,7 @@ class ActivoController
         $activa      = $datos['activa'];
         $isCiber     = $datos['is_ciber'];
 
-        $resultado = $this->model->actualizarActivo($id, $marca, $descripcion, $tipoActivo, $activa, $isCiber);
+        $resultado = $this->getModel()->actualizarActivo($id, $marca, $descripcion, $tipoActivo, $activa, $isCiber);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Activo actualizado exitosamente']
@@ -168,7 +168,7 @@ class ActivoController
         $id     = Validator::id($_POST['id'] ?? null, 'ID del activo');
         $activa = Validator::bool($_POST['activa'] ?? null, 'estado', true);
 
-        $resultado = $this->model->cambiarEstadoActivo($id, $activa);
+        $resultado = $this->getModel()->cambiarEstadoActivo($id, $activa);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => $activa ? 'Activo activado' : 'Activo desactivado']
@@ -184,7 +184,7 @@ class ActivoController
         }
 
         $id = Validator::id($_POST['id'] ?? null, 'ID del activo');
-        $resultado = $this->model->eliminarActivo($id);
+        $resultado = $this->getModel()->eliminarActivo($id);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Activo eliminado exitosamente']

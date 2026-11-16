@@ -14,7 +14,7 @@ class AsesoriaController
 
     public function __construct()
     {
-        $this->model = new Asesoria();
+        $this->setModel(new Asesoria());
     }
 
     public function getModel(): Asesoria
@@ -57,14 +57,14 @@ class AsesoriaController
 
     private function listar(): void
     {
-        $asesorias = $this->model->obtenerTodas();
+        $asesorias = $this->getModel()->obtenerTodas();
         echo json_encode(['success' => true, 'data' => $asesorias]);
     }
 
     private function kpis(): void
     {
-        $total = $this->model->obtenerTodas();
-        $porEstado = $this->model->contarPorEstado();
+        $total = $this->getModel()->obtenerTodas();
+        $porEstado = $this->getModel()->contarPorEstado();
 
         $perm = 0;
         $den  = 0;
@@ -89,7 +89,7 @@ class AsesoriaController
     private function detalle(): void
     {
         $id = Validator::id($_GET['id'] ?? null, 'ID de la asesoría');
-        $asesoria = $this->model->obtenerPorId($id);
+        $asesoria = $this->getModel()->obtenerPorId($id);
         if ($asesoria) {
             echo json_encode(['success' => true, 'data' => $asesoria]);
         } else {
@@ -104,7 +104,7 @@ class AsesoriaController
             echo json_encode(['success' => true, 'data' => []]);
             return;
         }
-        $resultados = $this->model->buscarPorCedula($cedula);
+        $resultados = $this->getModel()->buscarPorCedula($cedula);
         echo json_encode(['success' => true, 'data' => $resultados]);
     }
 
@@ -131,7 +131,7 @@ class AsesoriaController
         $direccion   = $datos['direccion'];
         $telefono    = $datos['telefono'];
 
-        $resultado = $this->model->crear($ciudadano, $cedula, $documento, $descripcion, $direccion, $telefono);
+        $resultado = $this->getModel()->crear($ciudadano, $cedula, $documento, $descripcion, $direccion, $telefono);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Asesoría registrada exitosamente']

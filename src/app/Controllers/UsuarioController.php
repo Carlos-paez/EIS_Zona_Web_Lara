@@ -14,7 +14,7 @@ class UsuarioController
 
     public function __construct()
     {
-        $this->model = new Usuario();
+        $this->setModel(new Usuario());
     }
 
     public function getModel(): Usuario
@@ -68,14 +68,14 @@ class UsuarioController
 
     private function listar(): void
     {
-        $usuarios = $this->model->obtenerTodos();
+        $usuarios = $this->getModel()->obtenerTodos();
         echo json_encode(['success' => true, 'data' => $usuarios]);
     }
 
     private function detalle(): void
     {
         $id = Validator::id($_GET['id'] ?? null, 'ID del usuario');
-        $usuario = $this->model->obtenerPorId($id);
+        $usuario = $this->getModel()->obtenerPorId($id);
         if ($usuario) {
             $usuario['activo'] = $usuario['estatus_num'] ?? ($usuario['estatus'] === '1' || $usuario['estatus'] === 'activo' ? '1' : '0');
             echo json_encode(['success' => true, 'data' => $usuario]);
@@ -86,7 +86,7 @@ class UsuarioController
 
     private function kpis(): void
     {
-        $usuarios = $this->model->obtenerTodos();
+        $usuarios = $this->getModel()->obtenerTodos();
         $total = count($usuarios);
         $activos = count(array_filter($usuarios, fn($u) => ($u['activo'] ?? '0') === '1'));
         $adminCount = 0;
@@ -109,7 +109,7 @@ class UsuarioController
 
     private function roles(): void
     {
-        echo json_encode(['success' => true, 'data' => $this->model->obtenerRolesAsignables()]);
+        echo json_encode(['success' => true, 'data' => $this->getModel()->obtenerRolesAsignables()]);
     }
 
     private function crear(): void
@@ -135,11 +135,11 @@ class UsuarioController
         $password  = $datos['password'];
         $rol       = $datos['rol'];
 
-        if ($this->model->existeUsername($user_name)) {
+        if ($this->getModel()->existeUsername($user_name)) {
             throw new ValidationException(['user_name' => 'Ya existe un usuario con ese nombre de usuario']);
         }
 
-        $resultado = $this->model->crear($user_name, $password, $nombre, $apellido, $email, $rol > 0 ? $rol : null);
+        $resultado = $this->getModel()->crear($user_name, $password, $nombre, $apellido, $email, $rol > 0 ? $rol : null);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Usuario creado exitosamente']
@@ -176,11 +176,11 @@ class UsuarioController
             throw new \InvalidArgumentException('No puedes desactivar tu propio usuario.');
         }
 
-        $resultado = $this->model->actualizar($id, $nombre, $apellido, $email, $rol > 0 ? $rol : null, $estatus);
+        $resultado = $this->getModel()->actualizar($id, $nombre, $apellido, $email, $rol > 0 ? $rol : null, $estatus);
 
         if ($resultado && $password !== '') {
             try {
-                $resultado = $this->model->actualizarPassword($id, $password);
+                $resultado = $this->getModel()->actualizarPassword($id, $password);
             } catch (\InvalidArgumentException $e) {
                 echo json_encode(['success' => false, 'error' => $e->getMessage()]);
                 return;
@@ -213,7 +213,7 @@ class UsuarioController
             throw new \InvalidArgumentException('No puedes desactivar tu propio usuario.');
         }
 
-        $resultado = $this->model->cambiarEstado($id, $activo === 1);
+        $resultado = $this->getModel()->cambiarEstado($id, $activo === 1);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => $activo ? 'Usuario activado' : 'Usuario desactivado']
@@ -236,7 +236,7 @@ class UsuarioController
         $id       = $datos['id'];
         $password = $datos['password'];
 
-        $resultado = $this->model->actualizarPassword($id, $password);
+        $resultado = $this->getModel()->actualizarPassword($id, $password);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Contraseña actualizada']
@@ -257,7 +257,7 @@ class UsuarioController
             return;
         }
 
-        $resultado = $this->model->eliminar($id);
+        $resultado = $this->getModel()->eliminar($id);
         echo json_encode(
             $resultado
                 ? ['success' => true, 'message' => 'Usuario eliminado exitosamente']
