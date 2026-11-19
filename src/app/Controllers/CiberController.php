@@ -41,7 +41,9 @@ class CiberController extends BaseController
     {
         header('Content-Type: application/json');
 
-        $action = $_GET['action'] ?? '';
+        $this->cargarRequest();
+
+        $action = $this->get('action', '');
 
         try {
             match ($action) {
@@ -120,7 +122,8 @@ class CiberController extends BaseController
      */
     private function buscarCliente(): void
     {
-        $cedula = Validator::busqueda($_GET['cedula'] ?? '', 'cédula');
+        $cedula = Validator::busqueda($this->get('cedula', ''), 'cédula');
+        $this->set('cedula', $cedula);
         if ($cedula === '') {
             echo json_encode(['success' => true, 'data' => null]);
             return;
@@ -138,12 +141,12 @@ class CiberController extends BaseController
             echo json_encode(['success' => false, 'error' => 'El método de la solicitud no está permitido.']);
             return;
         }
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $datos = Validator::validar($_POST, [
+        $datos = $this->validarCampos([
             'ciudadano'  => ['label' => 'ciudadano', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El nombre del ciudadano contiene caracteres no permitidos'],
             'cedula'     => ['label' => 'cédula', 'type' => 'cedula'],
             'direccion'  => ['label' => 'dirección', 'type' => 'texto', 'required' => false, 'max' => 500, 'pattern' => Validator::patron('aplicacion.direccion'), 'patternMessage' => 'La dirección contiene caracteres no permitidos'],
@@ -160,6 +163,14 @@ class CiberController extends BaseController
         $activoId  = $datos['activo_id'];
         $tarifaId  = $datos['tarifa_id'];
         $tiempoUso = $datos['tiempo_uso'];
+
+        $this->set('ciudadano', $ciudadano)
+            ->set('cedula', $cedula)
+            ->set('direccion', $direccion)
+            ->set('telefono', $telefono)
+            ->set('activo_id', $activoId)
+            ->set('tarifa_id', $tarifaId)
+            ->set('tiempo_uso', $tiempoUso);
 
         $sesionId = $this->getModel()->iniciarSesion(
             $ciudadano,
@@ -187,12 +198,13 @@ class CiberController extends BaseController
             echo json_encode(['success' => false, 'error' => 'El método de la solicitud no está permitido.']);
             return;
         }
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $sesionId = Validator::id($_POST['sesion_id'] ?? null, 'ID de sesión');
+        $sesionId = Validator::id($this->get('sesion_id'), 'ID de sesión');
+        $this->set('sesion_id', $sesionId);
 
         $resultado = $this->getModel()->finalizarSesion($sesionId);
         echo json_encode(
@@ -228,7 +240,8 @@ class CiberController extends BaseController
      */
     private function historial(): void
     {
-        $activoId = Validator::id($_GET['activo_id'] ?? null, 'ID del equipo');
+        $activoId = Validator::id($this->get('activo_id'), 'ID del equipo');
+        $this->set('activo_id', $activoId);
         $historial = $this->getModel()->historialEstacion($activoId);
         echo json_encode(['success' => true, 'data' => $historial]);
     }
@@ -246,7 +259,8 @@ class CiberController extends BaseController
      */
     private function obtenerPC(): void
     {
-        $id = Validator::id($_GET['id'] ?? null, 'ID de la PC');
+        $id = Validator::id($this->get('id'), 'ID de la PC');
+        $this->set('id', $id);
         $pc = $this->getModel()->obtenerPC($id);
         echo json_encode(
             $pc
@@ -264,12 +278,12 @@ class CiberController extends BaseController
             echo json_encode(['success' => false, 'error' => 'El método de la solicitud no está permitido.']);
             return;
         }
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $datos = Validator::validar($_POST, [
+        $datos = $this->validarCampos([
             'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'La marca contiene caracteres no permitidos'],
             'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000, 'pattern' => Validator::patron('aplicacion.descripcion'), 'patternMessage' => 'La descripción contiene caracteres no permitidos'],
             'tipo_activo_id' => ['label' => 'tipo de PC', 'type' => 'id'],
@@ -280,6 +294,11 @@ class CiberController extends BaseController
         $descripcion = $datos['descripcion'];
         $tipoActivo  = $datos['tipo_activo_id'];
         $activa      = $datos['activa'];
+
+        $this->set('marca', $marca)
+            ->set('descripcion', $descripcion)
+            ->set('tipo_activo_id', $tipoActivo)
+            ->set('activa', $activa);
 
         $id = $this->getModel()->crearPC($marca, $descripcion, $tipoActivo, $activa);
         echo json_encode(
@@ -298,12 +317,12 @@ class CiberController extends BaseController
             echo json_encode(['success' => false, 'error' => 'El método de la solicitud no está permitido.']);
             return;
         }
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $datos = Validator::validar($_POST, [
+        $datos = $this->validarCampos([
             'id'             => ['label' => 'ID de la PC', 'type' => 'id'],
             'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'La marca contiene caracteres no permitidos'],
             'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000, 'pattern' => Validator::patron('aplicacion.descripcion'), 'patternMessage' => 'La descripción contiene caracteres no permitidos'],
@@ -316,6 +335,12 @@ class CiberController extends BaseController
         $descripcion = $datos['descripcion'];
         $tipoActivo  = $datos['tipo_activo_id'];
         $activa      = $datos['activa'];
+
+        $this->set('id', $id)
+            ->set('marca', $marca)
+            ->set('descripcion', $descripcion)
+            ->set('tipo_activo_id', $tipoActivo)
+            ->set('activa', $activa);
 
         $resultado = $this->getModel()->actualizarPC($id, $marca, $descripcion, $tipoActivo, $activa);
         echo json_encode(
@@ -334,13 +359,14 @@ class CiberController extends BaseController
             echo json_encode(['success' => false, 'error' => 'El método de la solicitud no está permitido.']);
             return;
         }
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $id     = Validator::id($_POST['id'] ?? null, 'ID de la PC');
-        $activa = Validator::bool($_POST['activa'] ?? null, 'estado', true);
+        $id     = Validator::id($this->get('id'), 'ID de la PC');
+        $activa = Validator::bool($this->get('activa'), 'estado', true);
+        $this->set('id', $id)->set('activa', $activa);
 
         $resultado = $this->getModel()->cambiarEstadoPC($id, $activa);
         echo json_encode(
@@ -359,12 +385,13 @@ class CiberController extends BaseController
             echo json_encode(['success' => false, 'error' => 'El método de la solicitud no está permitido.']);
             return;
         }
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $id = Validator::id($_POST['id'] ?? null, 'ID de la PC');
+        $id = Validator::id($this->get('id'), 'ID de la PC');
+        $this->set('id', $id);
 
         $resultado = $this->getModel()->eliminarPC($id);
         echo json_encode(

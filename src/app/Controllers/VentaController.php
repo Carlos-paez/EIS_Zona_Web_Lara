@@ -33,7 +33,9 @@ class VentaController extends BaseController
     {
         header('Content-Type: application/json');
 
-        $action = $_GET['action'] ?? '';
+        $this->cargarRequest();
+
+        $action = $this->get('action', '');
 
         try {
             match ($action) {
@@ -70,7 +72,7 @@ class VentaController extends BaseController
 
     private function buscarCliente(): void
     {
-        $cedula = Validator::texto($_GET['cedula'] ?? '', 'cédula', ['required' => false, 'max' => 20]);
+        $cedula = Validator::texto($this->get('cedula', ''), 'cédula', ['required' => false, 'max' => 20]);
         $this->set('cedula', $cedula);
         if ($cedula === '') {
             $this->jsonSuccess(null);
@@ -82,7 +84,7 @@ class VentaController extends BaseController
 
     private function registrar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
@@ -99,7 +101,7 @@ class VentaController extends BaseController
         $direccion = $datos['direccion'];
         $telefono  = $datos['telefono'];
         try {
-            $items = Validator::itemsVenta($_POST['items'] ?? '');
+            $items = Validator::itemsVenta($this->get('items', ''));
         } catch (\InvalidArgumentException $e) {
             throw new ValidationException(['items' => $e->getMessage()]);
         }

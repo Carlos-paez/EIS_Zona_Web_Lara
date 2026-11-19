@@ -42,7 +42,9 @@ class ClienteController extends BaseController
     {
         header('Content-Type: application/json');
 
-        $action = $_GET['action'] ?? '';
+        $this->cargarRequest();
+
+        $action = $this->get('action', '');
 
         try {
             match ($action) {
@@ -88,8 +90,8 @@ class ClienteController extends BaseController
 
     private function detalle(): void
     {
-        $this->hydrateFromGet(['id' => 'int']);
-        $id = $this->get('id', 0) > 0 ? (int)$this->get('id') : Validator::id($_GET['id'] ?? null, 'ID del cliente');
+        $id = Validator::id($this->get('id'), 'ID del cliente');
+        $this->set('id', $id);
         $cliente = $this->getModel()->obtenerClientePorId($id);
         if ($cliente) {
             $this->jsonSuccess($cliente);
@@ -100,7 +102,7 @@ class ClienteController extends BaseController
 
     private function crear(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
@@ -140,7 +142,7 @@ class ClienteController extends BaseController
 
     private function actualizar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
@@ -183,12 +185,12 @@ class ClienteController extends BaseController
 
     private function eliminar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
-        $id = Validator::id($_POST['id'] ?? null, 'ID del cliente');
+        $id = Validator::id($this->get('id'), 'ID del cliente');
         $this->set('id', $id);
         $resultado = $this->getModel()->eliminarCliente($id);
         if ($resultado) {

@@ -45,7 +45,9 @@ class ActivoController extends BaseController
     {
         header('Content-Type: application/json');
 
-        $action = $_GET['action'] ?? '';
+        $this->cargarRequest();
+
+        $action = $this->get('action', '');
 
         try {
             match ($action) {
@@ -103,7 +105,8 @@ class ActivoController extends BaseController
 
     private function detalle(): void
     {
-        $id = Validator::id($_GET['id'] ?? null, 'ID del activo');
+        $id = Validator::id($this->get('id'), 'ID del activo');
+        $this->set('id', $id);
         $activo = $this->getModel()->obtenerActivoPorId($id);
         if ($activo) {
             echo json_encode(['success' => true, 'data' => $activo]);
@@ -114,12 +117,12 @@ class ActivoController extends BaseController
 
     private function crear(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $datos = Validator::validar($_POST, [
+        $datos = $this->validarCampos([
             'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'La marca contiene caracteres no permitidos'],
             'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000, 'pattern' => Validator::patron('aplicacion.descripcion'), 'patternMessage' => 'La descripción contiene caracteres no permitidos'],
             'tipo_activo_id' => ['label' => 'tipo de activo', 'type' => 'id'],
@@ -133,6 +136,12 @@ class ActivoController extends BaseController
         $activa      = $datos['activa'];
         $isCiber     = $datos['is_ciber'];
 
+        $this->set('marca', $marca)
+            ->set('descripcion', $descripcion)
+            ->set('tipo_activo_id', $tipoActivo)
+            ->set('activa', $activa)
+            ->set('is_ciber', $isCiber);
+
         $resultado = $this->getModel()->crearActivo($marca, $descripcion, $tipoActivo, $activa, $isCiber);
         echo json_encode(
             $resultado
@@ -143,12 +152,12 @@ class ActivoController extends BaseController
 
     private function actualizar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $datos = Validator::validar($_POST, [
+        $datos = $this->validarCampos([
             'id'             => ['label' => 'ID del activo', 'type' => 'id'],
             'marca'          => ['label' => 'marca', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'La marca contiene caracteres no permitidos'],
             'descripcion'    => ['label' => 'descripción', 'type' => 'texto', 'required' => false, 'max' => 1000, 'pattern' => Validator::patron('aplicacion.descripcion'), 'patternMessage' => 'La descripción contiene caracteres no permitidos'],
@@ -164,6 +173,13 @@ class ActivoController extends BaseController
         $activa      = $datos['activa'];
         $isCiber     = $datos['is_ciber'];
 
+        $this->set('id', $id)
+            ->set('marca', $marca)
+            ->set('descripcion', $descripcion)
+            ->set('tipo_activo_id', $tipoActivo)
+            ->set('activa', $activa)
+            ->set('is_ciber', $isCiber);
+
         $resultado = $this->getModel()->actualizarActivo($id, $marca, $descripcion, $tipoActivo, $activa, $isCiber);
         echo json_encode(
             $resultado
@@ -174,13 +190,14 @@ class ActivoController extends BaseController
 
     private function estado(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $id     = Validator::id($_POST['id'] ?? null, 'ID del activo');
-        $activa = Validator::bool($_POST['activa'] ?? null, 'estado', true);
+        $id     = Validator::id($this->get('id'), 'ID del activo');
+        $activa = Validator::bool($this->get('activa'), 'estado', true);
+        $this->set('id', $id)->set('activa', $activa);
 
         $resultado = $this->getModel()->cambiarEstadoActivo($id, $activa);
         echo json_encode(
@@ -192,12 +209,13 @@ class ActivoController extends BaseController
 
     private function eliminar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $id = Validator::id($_POST['id'] ?? null, 'ID del activo');
+        $id = Validator::id($this->get('id'), 'ID del activo');
+        $this->set('id', $id);
         $resultado = $this->getModel()->eliminarActivo($id);
         echo json_encode(
             $resultado

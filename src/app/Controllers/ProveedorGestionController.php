@@ -42,7 +42,9 @@ class ProveedorGestionController extends BaseController
     {
         header('Content-Type: application/json');
 
-        $action = $_GET['action'] ?? '';
+        $this->cargarRequest();
+
+        $action = $this->get('action', '');
 
         try {
             match ($action) {
@@ -83,7 +85,7 @@ class ProveedorGestionController extends BaseController
 
     private function detalle(): void
     {
-        $id = Validator::id($_GET['id'] ?? null, 'ID del proveedor');
+        $id = Validator::id($this->get('id'), 'ID del proveedor');
         $this->set('id', $id);
         $proveedor = $this->getModel()->obtenerProveedorPorId($id);
         if ($proveedor) {
@@ -95,7 +97,7 @@ class ProveedorGestionController extends BaseController
 
     private function crear(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
@@ -132,7 +134,7 @@ class ProveedorGestionController extends BaseController
 
     private function actualizar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
@@ -172,12 +174,12 @@ class ProveedorGestionController extends BaseController
 
     private function eliminar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $id = Validator::id($_POST['id'] ?? null, 'ID del proveedor');
+        $id = Validator::id($this->get('id'), 'ID del proveedor');
         $this->set('id', $id);
         $resultado = $this->getModel()->eliminarProveedor($id);
         if ($resultado) {

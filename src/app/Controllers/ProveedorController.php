@@ -32,7 +32,9 @@ class ProveedorController extends BaseController
     {
         header('Content-Type: application/json');
 
-        $action = $_GET['action'] ?? '';
+        $this->cargarRequest();
+
+        $action = $this->get('action', '');
 
         try {
             match ($action) {
@@ -127,7 +129,7 @@ class ProveedorController extends BaseController
 
     private function detalle(): void
     {
-        $id = Validator::id($_GET['id'] ?? null, 'ID de la solicitud');
+        $id = Validator::id($this->get('id'), 'ID de la solicitud');
         $this->set('id', $id);
         $orden = $this->getModel()->obtenerOrdenPorId($id);
         if ($orden) {
@@ -151,7 +153,7 @@ class ProveedorController extends BaseController
 
     private function crear(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
@@ -192,7 +194,7 @@ class ProveedorController extends BaseController
 
     private function actualizar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
@@ -236,12 +238,12 @@ class ProveedorController extends BaseController
 
     private function eliminar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
-        $id = Validator::id($_POST['id'] ?? null, 'ID de la solicitud');
+        $id = Validator::id($this->get('id'), 'ID de la solicitud');
         $resultado = $this->getModel()->eliminarOrden($id);
         if ($resultado) {
             $this->jsonSuccess(null, 'Solicitud eliminada exitosamente');
@@ -252,7 +254,7 @@ class ProveedorController extends BaseController
 
     private function lineas(): void
     {
-        $orden_id = Validator::id($_GET['orden_id'] ?? null, 'ID de la solicitud');
+        $orden_id = Validator::id($this->get('orden_id'), 'ID de la solicitud');
         $lineas = $this->getModel()->obtenerLineas($orden_id);
         $orden = $this->getModel()->obtenerOrdenPorId($orden_id);
         echo json_encode(['success' => true, 'data' => ['lineas' => $lineas, 'orden' => $orden]]);
@@ -260,7 +262,7 @@ class ProveedorController extends BaseController
 
     private function agregarLinea(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
@@ -292,12 +294,12 @@ class ProveedorController extends BaseController
 
     private function eliminarLinea(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
-        $id = Validator::id($_POST['id'] ?? null, 'ID de la línea');
+        $id = Validator::id($this->get('id'), 'ID de la línea');
         $this->set('id', $id);
         $resultado = $this->getModel()->eliminarLinea($id);
         if ($resultado) {

@@ -32,7 +32,9 @@ class AsesoriaController extends BaseController
     {
         header('Content-Type: application/json');
 
-        $action = $_GET['action'] ?? '';
+        $this->cargarRequest();
+
+        $action = $this->get('action', '');
 
         try {
             match ($action) {
@@ -90,7 +92,8 @@ class AsesoriaController extends BaseController
 
     private function detalle(): void
     {
-        $id = Validator::id($_GET['id'] ?? null, 'ID de la asesoría');
+        $id = Validator::id($this->get('id'), 'ID de la asesoría');
+        $this->set('id', $id);
         $asesoria = $this->getModel()->obtenerPorId($id);
         if ($asesoria) {
             echo json_encode(['success' => true, 'data' => $asesoria]);
@@ -101,7 +104,8 @@ class AsesoriaController extends BaseController
 
     private function buscar(): void
     {
-        $cedula = Validator::busqueda($_GET['cedula'] ?? '', 'cédula');
+        $cedula = Validator::busqueda($this->get('cedula', ''), 'cédula');
+        $this->set('cedula', $cedula);
         if ($cedula === '') {
             echo json_encode(['success' => true, 'data' => []]);
             return;
@@ -121,12 +125,12 @@ class AsesoriaController extends BaseController
 
     private function crear(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $datos = Validator::validar($_POST, [
+        $datos = $this->validarCampos([
             'ciudadano'   => ['label' => 'ciudadano', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 200, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El ciudadano contiene caracteres no permitidos'],
             'cedula'      => ['label' => 'cédula', 'type' => 'cedula'],
             'documento'   => ['label' => 'tipo de documento', 'type' => 'texto', 'required' => true, 'min' => 1, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El tipo de documento contiene caracteres no permitidos'],
@@ -141,6 +145,13 @@ class AsesoriaController extends BaseController
         $descripcion = $datos['descripcion'];
         $direccion   = $datos['direccion'];
         $telefono    = $datos['telefono'];
+
+        $this->set('ciudadano', $ciudadano)
+            ->set('cedula', $cedula)
+            ->set('documento', $documento)
+            ->set('descripcion', $descripcion)
+            ->set('direccion', $direccion)
+            ->set('telefono', $telefono);
 
         $resultado = $this->getModel()->crear($ciudadano, $cedula, $documento, $descripcion, $direccion, $telefono);
         echo json_encode(

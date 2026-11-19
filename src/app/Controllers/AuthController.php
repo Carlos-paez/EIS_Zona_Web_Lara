@@ -37,7 +37,9 @@ class AuthController extends BaseController
      */
     public function index(): array
     {
-        $error = $_GET['error'] ?? null;
+        $this->cargarRequest();
+
+        $error = $this->get('error');
 
         return [
             'error'     => is_string($error) ? $error : '',
@@ -47,16 +49,18 @@ class AuthController extends BaseController
 
     public function login(): void
     {
+        $this->cargarRequest();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirigirLogin();
         }
 
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->redirigirLogin('1');
         }
 
-        $username = trim($_POST['username'] ?? '');
-        $password = $_POST['password'] ?? '';
+        $username = trim($this->get('username', ''));
+        $password = $this->get('password', '');
 
         // Protección contra fuerza bruta: se comprueba el bloqueo antes de
         // tocar la base de datos para no gastar recursos en intentos inválidos.

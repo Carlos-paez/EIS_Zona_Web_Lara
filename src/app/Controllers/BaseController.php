@@ -24,6 +24,18 @@ abstract class BaseController
     protected array $result = [];
 
     /**
+     * Punto único de entrada del estado de la petición.
+     *
+     * Los controladores no leen $_GET/$_POST directamente: cargan aquí los
+     * datos crudos y a partir de ese momento trabajan solo con set()/get().
+     * POST prevalece sobre GET cuando una clave aparece en ambos.
+     */
+    protected function cargarRequest(): self
+    {
+        return $this->setInput(array_merge($_GET, $_POST));
+    }
+
+    /**
      * Obtener todos los datos hidratados (getter)
      */
     public function getInput(): array

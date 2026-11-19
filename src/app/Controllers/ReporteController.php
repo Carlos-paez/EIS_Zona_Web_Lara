@@ -55,7 +55,9 @@ class ReporteController extends BaseController
 
     public function handle(): void
     {
-        $action = $_GET['action'] ?? '';
+        $this->cargarRequest();
+
+        $action = $this->get('action', '');
 
         try {
             match ($action) {
@@ -112,7 +114,7 @@ class ReporteController extends BaseController
 
     private function exportar(): void
     {
-        if (!Router::verifyCsrfToken($_GET['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
@@ -143,20 +145,23 @@ class ReporteController extends BaseController
     private function extraerFiltrosAdicionales(): array
     {
         $filtros = [];
-        if (!empty($_GET['categoria_id'])) {
-            $filtros['categoria_id'] = (int)$_GET['categoria_id'];
+        if (!empty($this->get('categoria_id'))) {
+            $filtros['categoria_id'] = (int)$this->get('categoria_id');
         }
-        if (!empty($_GET['proveedor_id'])) {
-            $filtros['proveedor_id'] = (int)$_GET['proveedor_id'];
+        if (!empty($this->get('proveedor_id'))) {
+            $filtros['proveedor_id'] = (int)$this->get('proveedor_id');
         }
-        if (!empty($_GET['cliente_id'])) {
-            $filtros['cliente_id'] = (int)$_GET['cliente_id'];
+        if (!empty($this->get('cliente_id'))) {
+            $filtros['cliente_id'] = (int)$this->get('cliente_id');
         }
-        if (!empty($_GET['status_id'])) {
-            $filtros['status_id'] = (int)$_GET['status_id'];
+        if (!empty($this->get('status_id'))) {
+            $filtros['status_id'] = (int)$this->get('status_id');
         }
-        if (isset($_GET['estado_cyber']) && $_GET['estado_cyber'] !== '') {
-            $filtros['estado'] = (int)$_GET['estado_cyber'];
+        if ($this->has('estado_cyber') && $this->get('estado_cyber') !== '') {
+            $filtros['estado'] = (int)$this->get('estado_cyber');
+        }
+        foreach ($filtros as $campo => $valor) {
+            $this->set($campo, $valor);
         }
         return $filtros;
     }
@@ -174,18 +179,18 @@ class ReporteController extends BaseController
             'tipo' => ['label' => 'tipo de reporte', 'type' => 'enum', 'allowed' => array_keys(Reporte::TIPOS), 'required' => true],
         ];
 
-        $tipo = $_GET['tipo'] ?? '';
+        $tipo = $this->get('tipo', '');
         $requiereFechas = !in_array($tipo, ['inventario', 'stock_bajo', 'cyber'], true);
 
         if ($requiereFechas) {
             $reglas['desde'] = ['label' => 'fecha inicial', 'type' => 'fecha', 'required' => true];
             $reglas['hasta'] = ['label' => 'fecha final', 'type' => 'fecha', 'required' => true];
-        } elseif (isset($_GET['desde']) && $_GET['desde'] !== '') {
+        } elseif ($this->has('desde') && $this->get('desde') !== '') {
             $reglas['desde'] = ['label' => 'fecha inicial', 'type' => 'fecha', 'required' => false];
         }
         if ($requiereFechas) {
             // already added
-        } elseif (isset($_GET['hasta']) && $_GET['hasta'] !== '') {
+        } elseif ($this->has('hasta') && $this->get('hasta') !== '') {
             $reglas['hasta'] = ['label' => 'fecha final', 'type' => 'fecha', 'required' => false];
         }
 
@@ -193,7 +198,10 @@ class ReporteController extends BaseController
             $reglas['formato'] = ['label' => 'formato de salida', 'type' => 'enum', 'allowed' => ['csv', 'excel', 'pdf'], 'required' => true];
         }
 
-        $datos = Validator::validar($_GET, $reglas);
+        $datos = $this->validarCampos($reglas, $this->getAll());
+        foreach ($datos as $campo => $valor) {
+            $this->set($campo, $valor);
+        }
 
         if (isset($datos['desde']) && isset($datos['hasta']) && $datos['desde'] !== '' && $datos['hasta'] !== '') {
             if ($datos['hasta'] < $datos['desde']) {

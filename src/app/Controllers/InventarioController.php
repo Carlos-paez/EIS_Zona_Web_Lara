@@ -50,7 +50,9 @@ class InventarioController extends BaseController
     {
         header('Content-Type: application/json');
 
-        $action = $_GET['action'] ?? '';
+        $this->cargarRequest();
+
+        $action = $this->get('action', '');
 
         try {
             match ($action) {
@@ -105,11 +107,8 @@ class InventarioController extends BaseController
 
     private function detalle(): void
     {
-        $this->hydrateFromGet(['id' => 'int']);
-        $id = $this->get('id', 0);
-        if (!$id) {
-            $id = (int)($_GET['id'] ?? 0);
-        }
+        $id = Validator::entero($this->get('id'), 'id', ['required' => false]);
+        $this->set('id', $id);
         if (!$id) {
             $this->jsonError('El identificador no es válido.', null, 400);
             return;
@@ -124,7 +123,7 @@ class InventarioController extends BaseController
 
     private function buscar(): void
     {
-        $termino = Validator::busqueda($_POST['termino'] ?? '', 'búsqueda');
+        $termino = Validator::busqueda($this->get('termino', ''), 'búsqueda');
         $this->set('termino', $termino);
         if ($termino === '') {
             $productos = $this->getModel()->obtenerProductos();
@@ -136,7 +135,7 @@ class InventarioController extends BaseController
 
     private function crear(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
@@ -190,7 +189,7 @@ class InventarioController extends BaseController
 
     private function actualizar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
@@ -247,12 +246,12 @@ class InventarioController extends BaseController
 
     private function eliminar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
-        $id = Validator::id($_POST['id'] ?? null, 'ID del producto');
+        $id = Validator::id($this->get('id'), 'ID del producto');
         $this->set('id', $id);
         $resultado = $this->getModel()->eliminarProducto($id);
         if ($resultado) {
@@ -264,7 +263,7 @@ class InventarioController extends BaseController
 
     private function crearCategoria(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
@@ -285,7 +284,7 @@ class InventarioController extends BaseController
 
     private function actualizarCategoria(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
@@ -308,12 +307,12 @@ class InventarioController extends BaseController
 
     private function eliminarCategoria(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
-        $id = Validator::id($_POST['id'] ?? null, 'ID de la categoría');
+        $id = Validator::id($this->get('id'), 'ID de la categoría');
         $this->set('id', $id);
         $resultado = $this->getModel()->eliminarCategoria($id);
         if ($resultado) {

@@ -31,7 +31,9 @@ class UsuarioController extends BaseController
     {
         header('Content-Type: application/json');
 
-        $action = $_GET['action'] ?? '';
+        $this->cargarRequest();
+
+        $action = $this->get('action', '');
 
         try {
             match ($action) {
@@ -74,7 +76,8 @@ class UsuarioController extends BaseController
 
     private function detalle(): void
     {
-        $id = Validator::id($_GET['id'] ?? null, 'ID del usuario');
+        $id = Validator::id($this->get('id'), 'ID del usuario');
+        $this->set('id', $id);
         $usuario = $this->getModel()->obtenerPorId($id);
         if ($usuario) {
             $usuario['activo'] = $usuario['estatus_num'] ?? ($usuario['estatus'] === '1' || $usuario['estatus'] === 'activo' ? '1' : '0');
@@ -139,12 +142,12 @@ class UsuarioController extends BaseController
 
     private function crear(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $datos = Validator::validar($_POST, [
+        $datos = $this->validarCampos([
             'user_name' => ['label' => 'nombre de usuario', 'type' => 'username'],
             'nombre'    => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
             'apellido'  => ['label' => 'apellido', 'type' => 'texto', 'required' => false, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El apellido contiene caracteres no permitidos'],
@@ -160,6 +163,13 @@ class UsuarioController extends BaseController
         $password  = $datos['password'];
         $rol       = $datos['rol'];
 
+        $this->set('user_name', $user_name)
+            ->set('nombre', $nombre)
+            ->set('apellido', $apellido)
+            ->set('email', $email)
+            ->set('password', $password)
+            ->set('rol', $rol);
+
         if ($this->getModel()->existeUsername($user_name)) {
             throw new ValidationException(['user_name' => 'Ya existe un usuario con ese nombre de usuario']);
         }
@@ -174,12 +184,12 @@ class UsuarioController extends BaseController
 
     private function actualizar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $datos = Validator::validar($_POST, [
+        $datos = $this->validarCampos([
             'id'       => ['label' => 'ID del usuario', 'type' => 'id'],
             'nombre'   => ['label' => 'nombre', 'type' => 'texto', 'required' => true, 'min' => 2, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El nombre contiene caracteres no permitidos'],
             'apellido' => ['label' => 'apellido', 'type' => 'texto', 'required' => false, 'max' => 100, 'pattern' => Validator::patron('aplicacion.texto_libre'), 'patternMessage' => 'El apellido contiene caracteres no permitidos'],
@@ -196,6 +206,14 @@ class UsuarioController extends BaseController
         $rol      = $datos['rol'];
         $estatus  = $datos['estatus'];
         $password = $datos['password'];
+
+        $this->set('id', $id)
+            ->set('nombre', $nombre)
+            ->set('apellido', $apellido)
+            ->set('email', $email)
+            ->set('rol', $rol)
+            ->set('estatus', $estatus)
+            ->set('password', $password);
 
         if ((int)$estatus === 0 && $id === (int)($_SESSION['user_id'] ?? 0)) {
             throw new \InvalidArgumentException('No puedes desactivar tu propio usuario.');
@@ -221,18 +239,20 @@ class UsuarioController extends BaseController
 
     private function estado(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $datos = Validator::validar($_POST, [
+        $datos = $this->validarCampos([
             'id'     => ['label' => 'ID del usuario', 'type' => 'id'],
             'activo' => ['label' => 'estado', 'type' => 'bool', 'required' => true],
         ]);
 
         $id     = $datos['id'];
         $activo = $datos['activo'];
+
+        $this->set('id', $id)->set('activo', $activo);
 
         if ($activo === 0 && $id === (int)($_SESSION['user_id'] ?? 0)) {
             throw new \InvalidArgumentException('No puedes desactivar tu propio usuario.');
@@ -248,18 +268,20 @@ class UsuarioController extends BaseController
 
     private function password(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $datos = Validator::validar($_POST, [
+        $datos = $this->validarCampos([
             'id'       => ['label' => 'ID del usuario', 'type' => 'id'],
             'password' => ['label' => 'contraseña', 'type' => 'password', 'required' => true, 'min' => 8, 'complejidad' => true],
         ]);
 
         $id       = $datos['id'];
         $password = $datos['password'];
+
+        $this->set('id', $id)->set('password', $password);
 
         $resultado = $this->getModel()->actualizarPassword($id, $password);
         echo json_encode(
@@ -271,12 +293,13 @@ class UsuarioController extends BaseController
 
     private function eliminar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
 
-        $id = Validator::id($_POST['id'] ?? null, 'ID del usuario');
+        $id = Validator::id($this->get('id'), 'ID del usuario');
+        $this->set('id', $id);
         if ($id === (int)($_SESSION['user_id'] ?? 0)) {
             echo json_encode(['success' => false, 'error' => 'No puedes eliminar tu propio usuario.']);
             return;

@@ -32,7 +32,9 @@ class RolController extends BaseController
     {
         header('Content-Type: application/json');
 
-        $action = $_GET['action'] ?? '';
+        $this->cargarRequest();
+
+        $action = $this->get('action', '');
 
         try {
             match ($action) {
@@ -69,7 +71,7 @@ class RolController extends BaseController
 
     private function detalle(): void
     {
-        $id = Validator::id($_GET['id'] ?? null, 'ID del rol');
+        $id = Validator::id($this->get('id'), 'ID del rol');
         $this->set('id', $id);
         $rol = $this->getModel()->obtenerRolPorId($id);
         if ($rol) {
@@ -81,7 +83,7 @@ class RolController extends BaseController
 
     private function crear(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
@@ -110,7 +112,7 @@ class RolController extends BaseController
 
     private function actualizar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             echo json_encode(['success' => false, 'error' => 'La sesión o el formulario expiró. Recarga la página e intenta de nuevo.']);
             return;
         }
@@ -144,12 +146,12 @@ class RolController extends BaseController
 
     private function eliminar(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
-        $id = Validator::id($_POST['id'] ?? null, 'ID del rol');
+        $id = Validator::id($this->get('id'), 'ID del rol');
         $this->set('id', $id);
         if ($id === 1) {
             $this->jsonError('No se puede eliminar el rol de Administrador.', null, 400);
@@ -171,7 +173,7 @@ class RolController extends BaseController
 
     private function permisosRol(): void
     {
-        $rol_id = Validator::id($_GET['rol_id'] ?? null, 'ID del rol');
+        $rol_id = Validator::id($this->get('rol_id'), 'ID del rol');
         $this->set('rol_id', $rol_id);
         $permisos = $this->getModel()->obtenerPermisosPorRol($rol_id);
         $this->jsonSuccess($permisos);
@@ -179,13 +181,13 @@ class RolController extends BaseController
 
     private function guardarPermisos(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
-        $rol_id = Validator::id($_POST['rol_id'] ?? null, 'ID del rol');
-        $permiso_ids = isset($_POST['permisos']) ? array_values((array)$_POST['permisos']) : [];
+        $rol_id = Validator::id($this->get('rol_id'), 'ID del rol');
+        $permiso_ids = $this->has('permisos') ? array_values((array)$this->get('permisos')) : [];
         foreach ($permiso_ids as $p) {
             Validator::entero($p, 'permiso', ['required' => true, 'min' => 1]);
         }
@@ -213,13 +215,13 @@ class RolController extends BaseController
 
     private function asignarRol(): void
     {
-        if (!Router::verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        if (!Router::verifyCsrfToken($this->get('csrf_token'))) {
             $this->jsonError('La sesión o el formulario expiró. Recarga la página e intenta de nuevo.', null, 400);
             return;
         }
 
-        $usuario_id = Validator::id($_POST['usuario_id'] ?? null, 'ID del usuario');
-        $rol_id = Validator::id($_POST['rol_id'] ?? null, 'ID del rol');
+        $usuario_id = Validator::id($this->get('usuario_id'), 'ID del usuario');
+        $rol_id = Validator::id($this->get('rol_id'), 'ID del rol');
         $this->set('usuario_id', $usuario_id)->set('rol_id', $rol_id);
         if ($rol_id === 1) {
             $this->jsonError('No se puede asignar el rol de Administrador directamente.', null, 400);
