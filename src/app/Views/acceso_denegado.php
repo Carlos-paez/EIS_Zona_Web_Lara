@@ -11,9 +11,9 @@
             Si necesitas acceso, solicita al administrador que te asigne los permisos correspondientes.
         </p>
         <p class="grey-text text-darken-1">
-            Usuario: <strong><?php echo htmlspecialchars($_SESSION['username'] ?? ''); ?></strong>
-            <?php if (!empty($_SESSION['rol'])): ?>
-            &nbsp;|&nbsp; Rol: <strong><?php echo htmlspecialchars($_SESSION['rol']); ?></strong>
+            Usuario: <strong><?php echo htmlspecialchars($username ?? ''); ?></strong>
+            <?php if (!empty($rol)): ?>
+            &nbsp;|&nbsp; Rol: <strong><?php echo htmlspecialchars($rol); ?></strong>
             <?php endif; ?>
         </p>
         <br>

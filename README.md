@@ -2,7 +2,15 @@
 
 ## Descripción
 
-**EIS System** es una aplicación web de gestión empresarial desarrollada en **PHP vanilla (8.x)** con **Materialize CSS** y **jQuery**. Utiliza una arquitectura **Front Controller** con enrutador OOP (clase `Router`), patrón **Singleton** para conexión PDO, y **MVC** modular con controladores y modelos con namespace (PSR-4 vía Composer).
+**EIS System** es una aplicación web de gestión empresarial desarrollada en **PHP vanilla (8.x)** con **Materialize CSS** y **jQuery**. Utiliza una arquitectura **Front Controller** con enrutador OOP (clase `Router`), patrón **Singleton** para conexión PDO, y **MVC estricto** con controladores y modelos con namespace (PSR-4 vía Composer).
+
+El flujo de datos es siempre el mismo, en ambas direcciones:
+
+```
+Vista → Controlador → Modelo → Base de datos → Modelo → Controlador → Vista
+```
+
+Las vistas son **presentación pura**: no instancian modelos, no abren conexiones PDO y no leen `$_GET`/`$_POST`/`$_SESSION` para lógica de negocio. Reciben variables ya preparadas por el controlador (render inicial) o piden datos por AJAX al controlador (actualizaciones dinámicas).
 
 El sistema administra múltiples aspectos de un negocio: ventas (POS), inventario, proveedores, activos fijos y control de cybercafé, asesoría legal, usuarios, roles y permisos, dashboard con KPIs reales y reportes exportables. Cada módulo persiste sus datos en base de datos vía AJAX (JSON) —con **CRUD completo en la mayoría de ellos**— y validación de seguridad (CSRF, XSS, prepared statements). El frontend funciona sin conexión a Internet gracias a assets locales y un Service Worker (PWA).
 
@@ -91,8 +99,8 @@ eis_zona_web_lara/
 │   │   │   └── crud_asesorias.php   # CRUD legacy procedural
 │   │   ├── template/
 │   │   │   └── layout.php           # Layout maestro (sidebar 12 rutas)
-│   │   └── Views/                    # 15 vistas
-│   │       ├── login.php, login_validate.php, menu.php
+│   │   └── Views/                    # 14 vistas (presentación pura, sin acceso a BD)
+│   │       ├── login.php, menu.php
 │   │       ├── dashboard.php, inventario.php, ventas.php
 │   │       ├── clientes.php, proveedores.php, proveedores-gestion.php
 │   │       ├── ciberControl.php, reportes.php, activos.php
@@ -221,24 +229,42 @@ Navegador → src/.htaccess → src/index.php → App\Core\Router->handle()
               ¿logged_in? ¿página pública?   (?pagina=X&action=Y)     publica (login) o
                           │                         │                 protegida (layout)
                           ▼                         ▼                         │
-                    redirect(login)      match(action) → método        require layout.php
-                     o continúa          del controlador handle()      (incluye $contentView)
+                    redirect(login)      match(action) → método               ▼
+                     o continúa          del controlador → modelo    Controller->index()
+                                         → BD → controlador → JSON  → modelo → BD → modelo
+                                                                             │
+                                                                             ▼
+                                                                   extract($datos)
+                                                                   require layout.php
+                                                                   (incluye $contentView)
 ```
+
+Ambas ramas respetan el mismo ciclo: la vista nunca habla con la base de datos. En el render inicial el `Router` invoca `index()` del controlador para obtener los datos y los inyecta como variables locales; en AJAX el controlador responde JSON y el JS de la vista actualiza el DOM.
 
 ### Enrutador (`src/app/core/router.php` — clase OOP)
 - Clase `Router` en namespace `App\Core`, método `handle()`
 - Inicia la sesión y genera/reutiliza un token **CSRF** por sesión
 - `resolvePagina()` valida el nombre de la página con regex `^[a-zA-Z0-9_-]+$` (anti path-traversal)
 - Tabla `CONTROLLERS` mapea `pagina => controlador`; las peticiones con `?action=` se despachan al `handle()` de cada controlador
-- `PUBLIC_PAGES = ['login', 'login_validate']`; el resto requiere `logged_in`
+- `PUBLIC_PAGES = ['login', 'login_validate']`: `login` es la vista pública y `login_validate` solo recibe el `POST` del formulario, que despacha a `AuthController::login()`; el resto de páginas requiere `logged_in`
+- Para el render inicial, `Router::datosControlador()` instancia el controlador de la página y llama a `index()`; `renderVista()`/`renderLayout()` exponen el array devuelto con `extract(..., EXTR_SKIP)`
+- `login_validate.php` fue eliminado: ya no existe una vista para esa ruta
 - `Router::verifyCsrfToken()` compara el token recibido con el de sesión usando `hash_equals`
 - Manejo 404 con `http_response_code(404)`
 
 ### Controladores (`App\Controllers`)
+- Todos heredan de `App\Controllers\BaseController`, que aporta `index(): array` (datos para el render inicial) y `seguro(callable, mixed)` (captura de errores con `Logger::error`)
 - Cada módulo expone un endpoint JSON vía `handle()` que despacha `match ($action)` a métodos privados
+- `index()` prepara los datos de la vista (KPIs, catálogos, filas iniciales) llamando al modelo; nunca imprime HTML
 - Las mutaciones (crear/actualizar/eliminar/estado/finalizar/iniciar/registrar) verifican **CSRF** y método `POST`
 - Capturan `\Throwable` (y excepciones específicas como `\PDOException`, `\InvalidArgumentException`) devolviendo JSON `{success, data?, error?, message?}`
 - Filtro de error de FK en `ActivoController` para mensajes amigables
+
+### Vistas (`App\Views`)
+- **Presentación pura:** no contienen `new Modelo(...)`, `new PDO`, `prepare()`, `query()` ni `exec()`
+- No usan `$_GET`/`$_POST`/`$_SESSION` para lógica de negocio; reciben `$datos` ya calculados por el controlador
+- Las actualizaciones dinámicas se hacen con **jQuery AJAX** (`EIS.ajax`, `?pagina=X&action=Y`), que vuelve a recorrer Vista → Controlador → Modelo → BD → Controlador → JSON → Vista
+- `layout.php` solo recibe contexto de presentación y autorización (`$csrfToken`, `$userId`, `$nombreUsuario`, `$permisosUsuario`, `$paginasPermitidas`, `$puede`)
 
 ### Modelos (`App\Models`)
 - Heredan de `App\Core\Model` (conexión PDO por Singleton en `$this->db`)
@@ -346,7 +372,7 @@ Diseño conceptual, lógico y físico de la base de datos, ER y diagrama de clas
 |---------|-------|
 | Controladores | 13 (12 AJAX + Auth) |
 | Modelos | 15 (12 POO + 3 legacy) |
-| Vistas | 15 |
+| Vistas | 14 |
 | Core OOP | 7 (Database, Model, Router, Validator, Logger, Exporter, PdfBuilder) |
 | Archivos JS | 21 (17 módulos `app*.js` + 4 librerías/integración) |
 | Archivos CSS | 5 |
@@ -369,6 +395,7 @@ Email: carlospaezguerra@gmail.com
 
 | Versión | Fecha | Descripción |
 |---------|-------|-------------|
+| 4.5 | Nov 2026 | **MVC estricto**: el `Router` es el único punto de entrada y llama a `index()` de cada controlador para preparar los datos de la vista; las vistas dejaron de instanciar modelos y de acceder a PDO/`$_GET`/`$_POST`/`$_SESSION`. Se añadieron `BaseController::index()` y `BaseController::seguro()`, `Router::datosControlador()`/`renderVista()`/`renderLayout()` con `extract(EXTR_SKIP)`, y `calcularKpis()` unificado en `ProveedorController` y `UsuarioController`. Se eliminó la vista `login_validate.php` (el POST se despacha a `AuthController::login()`), se corrigió `CiberController::iniciar()` y se bloquearon por HTTP las capas internas (`src/.htaccess` y vhost de Docker). Las actualizaciones dinámicas siguen usando **jQuery AJAX** (`EIS.ajax`, `?pagina=X&action=Y`) |
 | 4.4 | Nov 2026 | Integración de **jQuery Validation 1.21.0** y **jQuery Toast 1.3.2** (locales) en todos los formularios del sistema: reglas generadas desde HTML5 y `data-validate`, reutilizando `regex_validations.json` como fuente única mediante la regla puente `eisRegla`; mensajes en español, resaltado Materialize, panel de errores y notificaciones toast con soporte de tema claro/oscuro. Se añadieron los assets `jquery.validate.min.js`, `jquery.toast.min.js`, `jquery.toast.min.css` y `forms.eis.css`, y se actualizó el Service Worker a `eis-cache-v9` |
 | 4.3 | Sep 2026 | Corrección de dos bugs en la **barra de búsqueda de selects** de Materialize (`app.selects.js`): Materialize 1.0.0 cerraba el menú al hacer clic en la barra porque su handler de cierre está en `document.body` en **fase de captura** (fix: bloqueador en captura sobre `document` con `stopPropagation` para `click`/`touchend` dentro de `.eis-select-search`) y el typeahead (`_handleDropdownKeydown`) robaba el foco al escribir (fix: `keydown`/`keyup` con `stopPropagation` en el input, con `restablecerBusqueda()` al abrir el menú). **Versionado de caché del Service Worker**: `sw.js` pasó a `eis-cache-v5` (Stale-While-Revalidate); subir `CACHE_NAME` obliga a reemplazar el SW y deja de servirse el script obsoleto. Verificado el selector de clientes del POS (`EIS.activarBusquedaEnSelect('#posClienteSelect', ...)`) |
 | 4.2 | Sep 2026 | Módulo **Usuarios** con controlador propio (`UsuarioController` + `app.usuarios.js`), **manejo global de errores** en `index.php` con `App\Core\Logger` (registro en `src/logs/errores.md`, respuesta genérica al usuario), **`Validator`** de coerción estricta de tipos, barras de búsqueda en selects de Materialize (`EIS.habilitarBusquedaEnSelects`, `EIS.activarBusquedaEnSelect`), pulido visual general y corrección del render de reportes/clientes del POS |
@@ -384,4 +411,4 @@ Email: carlospaezguerra@gmail.com
 ---
 
 **Última actualización**: Noviembre 2026
-**Estado**: En desarrollo activo (rama `Carlos`). Todos los módulos funcionales con MVC + AJAX + BD + tablas con DataTables. Versión actual **4.4**: 13 controladores, 12 modelos POO, `Validator` + `Logger`, manejo global de errores, módulo de usuarios propio, barras de búsqueda en selects corregidas (bloqueo en captura + typeahead) y validación/notificaciones con jQuery Validation + jQuery Toast (caché del SW `eis-cache-v9`).
+**Estado**: En desarrollo activo (rama `Carlos`). Todos los módulos funcionales con **MVC estricto** + AJAX + BD + tablas con DataTables. Versión actual **4.5**: 13 controladores, 12 modelos POO, `Validator` + `Logger`, manejo global de errores, módulo de usuarios propio, barras de búsqueda en selects corregidas (bloqueo en captura + typeahead) y validación/notificaciones con jQuery Validation + jQuery Toast (caché del SW `eis-cache-v9`). Las vistas ya no acceden a modelos ni a la base de datos: el `Router` llama a `index()` del controlador y entrega los datos listos para presentar.

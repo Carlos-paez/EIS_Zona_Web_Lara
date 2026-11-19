@@ -121,7 +121,6 @@ El proyecto administra un negocio que incluye: cybercafe, ventas POS, inventario
 | src/app/Models/crud_users.php | 54 | CRUD usuarios legacy (8 funciones) |
 | src/app/Models/crud_asesorias.php | 49 | CRUD asesorias legacy (8 funciones) |
 | src/app/Views/login.php | — | Pagina login |
-| src/app/Views/login_validate.php | — | Validacion login (legacy) |
 | src/app/Views/dashboard.php | — | Panel principal |
 | src/app/Views/menu.php | — | Menu navegacion |
 | src/app/Views/inventario.php | — | Gestion inventario (conectado a BD) |
@@ -509,9 +508,9 @@ Pagina de login con diseno Material Design. NO usa el layout (pagina publica).
 
 ---
 
-### 7. `src/app/Views/login_validate.php` (19 lineas)
+### 7. `login_validate` (ruta sin vista)
 
-Es una vista publica que **nunca debe renderizarse directamente**: si alguien accede a `?pagina=login_validate` por GET, redirige a `?pagina=login`. La autenticacion real ocurre en `AuthController::login()` (POST), que verifica CSRF, username y contraseña contra la tabla `usuarios` (hash bcrypt con `password_hash`).
+La vista `src/app/Views/login_validate.php` **fue eliminada**. `?pagina=login_validate` se conserva únicamente como ruta **POST**: `Router::handle()` la detecta y delega en `AuthController::login()`, que verifica CSRF, username y contraseña contra la tabla `usuarios` (hash bcrypt con `password_hash`). Si se accede por GET, el `Router` redirige a `?pagina=login`.
 - Si exito: `session_regenerate_id(true)`, `$_SESSION['logged_in']`, `user_id`, `username`, `nombre`, redirige a dashboard
 - Si falla (usuario/contraseña/CSRF): redirige a `?pagina=login&error=1`
 

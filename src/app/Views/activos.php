@@ -1,10 +1,6 @@
 <?php
-
-use App\Models\Activo;
-
-$activoModel = new Activo();
-$totalActivos = $activoModel->totalActivos();
-$tiposActivo = $activoModel->listarTiposActivo();
+// Vista de Activos: $totalActivos y $tiposActivo son entregados por
+// ActivoController::index(). Esta vista no consulta modelos ni base de datos.
 ?>
 
 <!-- ===== TARJETAS KPI ===== -->

@@ -28,6 +28,16 @@ class ClienteController extends BaseController
         return $this;
     }
 
+    /**
+     * @return array<string,mixed>
+     */
+    public function index(): array
+    {
+        return [
+            'totalClientes' => $this->seguro(fn() => $this->getModel()->totalClientes(), 0),
+        ];
+    }
+
     public function handle(): void
     {
         header('Content-Type: application/json');

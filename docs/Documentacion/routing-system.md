@@ -53,7 +53,7 @@ src/
 │   │   └── layout.php           ← Layout maestro con CSRF token + JS condicional
 │   └── Views/
 │       ├── login.php            ← Formulario de inicio de sesion
-│       ├── login_validate.php   ← Validacion de credenciales (legacy)
+│       ├── login.php            ← Formulario de login (unica vista publica)
 │       ├── dashboard.php        ← Panel de control
 │       ├── inventario.php       ← Gestion de inventario (conectado a BD)
 │       ├── ventas.php           ← Punto de venta (POS)
@@ -330,7 +330,9 @@ class Router
 | `resolvePagina()` | Lee `$_GET["pagina"]`, valida con regex `/^[a-zA-Z0-9_-]+$/`, retorna el nombre (default: "login") |
 | `dispatchAction()` | Si la pagina esta en `CONTROLLERS` y hay `action`, instancia el controlador y ejecuta `handle()` |
 | `logout()` | Cierra sesion (`session_regenerate_id` + `session_destroy`) desde `?pagina=login&logout=1` |
-| `render()` | Renderiza vistas publicas directas y protegidas con layout (prepara `$pageTitle`, `$headerExtra`, `$contentView`) |
+| `render()` | Renderiza vistas publicas directas y protegidas con layout (prepara `$pageTitle`, `$headerExtra`, `$contentView` y los datos de `index()`) |
+| `datosControlador()` | Llama a `index()` del controlador para obtener los datos iniciales de la vista |
+| `renderVista()` / `renderLayout()` | Exponen el array del controlador con `extract(..., EXTR_SKIP)`; la vista no accede a modelos ni BD |
 | `verifyCsrfToken()` | Estatico: compara el token con `hash_equals()` contra `$_SESSION['csrf_token']` |
 | `redirect()` | Envia `header('Location: ?pagina=...')` |
 
@@ -341,7 +343,7 @@ class Router
 | **Tipo** | Script procedural (75 lineas) | Clase con namespace |
 | **Autoloader** | No usado | Composer PSR-4 |
 | **AJAX** | Solo inventario | 12 controladores via mapa `CONTROLLERS` + `dispatchAction()` |
-| **Auth** | login_validate.php (vista) | AuthController con login() + Router::logout() + session_regenerate_id |
+| **Auth** | login_validate.php (vista) | AuthController con login() + Router::logout() + session_regenerate_id (sin vista `login_validate`) |
 | **CSRF** | No implementado | `bin2hex(random_bytes(32))` en constructor + `<input name="csrf_token">` |
 | **Seguridad AJAX** | No verificaba auth | Control de acceso en `handle()` con redireccion a login |
 | **Logout** | No implementado | `Router::logout()` via `?pagina=login&logout=1` |
@@ -458,7 +460,6 @@ Todas las demas vistas son solo fragmentos HTML sin estructura completa de pagin
 ```
 Views/
 ├── login.php                   # Publica, standalone
-├── login_validate.php          # Publica, solo PHP (legacy)
 ├── dashboard.php               # Protegida, dentro del layout
 ├── inventario.php              # Conectado a BD
 ├── ventas.php

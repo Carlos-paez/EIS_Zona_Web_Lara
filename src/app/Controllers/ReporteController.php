@@ -15,7 +15,7 @@ use App\Models\Reporte;
  * Expone endpoints AJAX para consultar KPIs, catálogos de filtros y resultados
  * de un reporte estratégico, y genera la descarga de los resultados en CSV, Excel o PDF.
  */
-class ReporteController
+class ReporteController extends BaseController
 {
     private Reporte $model;
 
@@ -32,6 +32,25 @@ class ReporteController
     public function setModel(Reporte $model): void
     {
         $this->model = $model;
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    public function index(): array
+    {
+        $meses = [
+            'January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo',
+            'April' => 'Abril', 'May' => 'Mayo', 'June' => 'Junio',
+            'July' => 'Julio', 'August' => 'Agosto', 'September' => 'Septiembre',
+            'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre',
+        ];
+        $mes = date('F');
+
+        return [
+            'kpis'      => $this->seguro(fn() => $this->getModel()->kpis(), []),
+            'nombreMes' => $meses[$mes] ?? $mes,
+        ];
     }
 
     public function handle(): void

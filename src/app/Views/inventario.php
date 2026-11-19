@@ -2,7 +2,6 @@
 // =====================================================================
 // VISTA DE INVENTARIO (inventario.php)
 // =====================================================================
-// Esta es la pagina principal del modulo de inventario.
 // Muestra:
 //   1. Tarjetas con indicadores (KPIs): Total productos, Stock critico,
 //      Stock bajo, Valor total del inventario
@@ -10,29 +9,11 @@
 //   3. Tabla con la lista de productos
 //   4. Modal para: crear/editar producto
 //
-// Los datos se cargan desde PHP en el servidor y el JavaScript
-// (app.inventario.js) se encarga de las operaciones dinamicas.
+// Todos los datos ($productos, $totalP, $critico, $bajo, $valor y
+// $totalProductos) son preparados por InventarioController::index() a
+// traves del modelo. El JavaScript (app.inventario.js) gestiona las
+// actualizaciones dinamicas via jQuery AJAX.
 // =====================================================================
-
-// Importo la clase Inventario desde el namespace App\Models
-use App\Models\Inventario;
-
-// Instancio el modelo de Inventario para acceder a los datos
-$inventarioModel = new Inventario();
-
-// Obtengo la lista completa de productos desde la base de datos
-$productos      = $inventarioModel->obtenerProductos();
-// Obtengo el total de productos registrados (conteo)
-$totalP         = $inventarioModel->totalProductos();
-// Obtengo la cantidad de productos con stock critico (stock <= minimo)
-$critico        = $inventarioModel->stockCritico();
-// Obtengo la cantidad de productos con stock bajo (cerca del minimo)
-$bajo           = $inventarioModel->stockBajo();
-// Obtengo el valor total del inventario (suma de precio_venta * stock)
-$valor          = $inventarioModel->valorTotalInventario();
-// Calculo el total de productos contando el array de productos
-$totalProductos = count($productos);
-// Fin del bloque PHP, paso a la vista HTML
 ?>
 
 <!-- ================================================================ -->

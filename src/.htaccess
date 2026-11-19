@@ -7,6 +7,12 @@ RewriteEngine On
 # Definir la ruta base donde está este archivo .htaccess
 RewriteBase /EIS_Zona_Web_Lara/src/
 
+# Patrón MVC estricto: el único punto de entrada es index.php.
+# Se prohíbe acceder directamente a controladores, modelos, vistas,
+# configuración, scripts CLI, base de datos y dependencias.
+RewriteRule ^(?:app|Config|cli|Database|vendor|logs)(?:/|$) - [F,L]
+RewriteRule ^(?:composer\.(?:json|lock)|\.env.*|Dockerfile)$ - [F,L]
+
 # Redirigir la raíz del sitio hacia index.php
 RewriteRule ^$ index.php [L,QSA]
 

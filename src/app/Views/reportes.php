@@ -1,20 +1,7 @@
 <?php
-
-use App\Models\Reporte;
-
-// KPIs mensuales reales desde la base de datos
-$rep = new Reporte();
-$kpis = $rep->kpis();
-
+// $kpis y $nombreMes son entregados por ReporteController::index().
+// La vista solo aplica formato de presentación ($fmt) y muestra los datos.
 $fmt = fn($v) => '$' . number_format((float)$v, 2);
-$mesActual = strtoupper(date('F'));
-$mesesEsp = [
-    'JANUARY' => 'Enero', 'FEBRUARY' => 'Febrero', 'MARCH' => 'Marzo',
-    'APRIL' => 'Abril', 'MAY' => 'Mayo', 'JUNE' => 'Junio',
-    'JULY' => 'Julio', 'AUGUST' => 'Agosto', 'SEPTEMBER' => 'Septiembre',
-    'OCTOBER' => 'Octubre', 'NOVEMBER' => 'Noviembre', 'DECEMBER' => 'Diciembre',
-];
-$nombreMes = $mesesEsp[$mesActual] ?? strtolower($mesActual);
 ?>
 
 <!-- ============================================================

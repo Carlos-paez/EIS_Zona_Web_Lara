@@ -8,7 +8,7 @@ use App\Core\ValidationException;
 use App\Core\Validator;
 use App\Models\Usuario;
 
-class UsuarioController
+class UsuarioController extends BaseController
 {
     private Usuario $model;
 
@@ -84,27 +84,52 @@ class UsuarioController
         }
     }
 
-    private function kpis(): void
+    /**
+     * Calcula los KPIs de usuarios una sola vez: lo usan tanto el endpoint
+     * AJAX como los datos iniciales de la vista.
+     *
+     * @return array<string,int>
+     */
+    private function calcularKpis(): array
     {
-        $usuarios = $this->getModel()->obtenerTodos();
-        $total = count($usuarios);
-        $activos = count(array_filter($usuarios, fn($u) => ($u['activo'] ?? '0') === '1'));
+        $usuarios = $this->seguro(fn() => $this->getModel()->obtenerTodos(), []);
+        $total    = count($usuarios);
+        $activos  = count(array_filter($usuarios, fn($u) => ($u['activo'] ?? '0') === '1'));
         $adminCount = 0;
+
         foreach ($usuarios as $u) {
             $rolLower = strtolower($u['rol_nombre'] ?? $u['rol'] ?? '');
             if (str_contains($rolLower, 'admin')) {
                 $adminCount++;
             }
         }
-        echo json_encode([
-            'success' => true,
-            'data' => [
-                'total'     => $total,
-                'activos'   => $activos,
-                'inactivos' => $total - $activos,
-                'administradores' => $adminCount,
-            ]
-        ]);
+
+        return [
+            'total'     => $total,
+            'activos'   => $activos,
+            'inactivos' => $total - $activos,
+            'administradores' => $adminCount,
+        ];
+    }
+
+    private function kpis(): void
+    {
+        echo json_encode(['success' => true, 'data' => $this->calcularKpis()]);
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    public function index(): array
+    {
+        $kpis = $this->calcularKpis();
+
+        return [
+            'totalUsuarios' => $kpis['total'],
+            'activos'       => $kpis['activos'],
+            'inactivos'     => $kpis['inactivos'],
+            'adminCount'    => $kpis['administradores'],
+        ];
     }
 
     private function roles(): void

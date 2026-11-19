@@ -28,6 +28,24 @@ class InventarioController extends BaseController
         return $this;
     }
 
+    /**
+     * @return array<string,mixed>
+     */
+    public function index(): array
+    {
+        $model     = $this->getModel();
+        $productos = $this->seguro(fn() => $model->obtenerProductos(), []);
+
+        return [
+            'productos'      => $productos,
+            'totalP'         => $this->seguro(fn() => $model->totalProductos(), 0),
+            'critico'        => $this->seguro(fn() => $model->stockCritico(), 0),
+            'bajo'           => $this->seguro(fn() => $model->stockBajo(), 0),
+            'valor'          => $this->seguro(fn() => $model->valorTotalInventario(), 0),
+            'totalProductos' => count($productos),
+        ];
+    }
+
     public function handle(): void
     {
         header('Content-Type: application/json');

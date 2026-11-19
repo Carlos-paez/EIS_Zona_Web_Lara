@@ -7,6 +7,7 @@ use App\Core\Router;
 use App\Core\ValidationException;
 use App\Core\Validator;
 use App\Models\CiberControl;
+use App\Models\Cliente;
 
 /**
  * Controlador del módulo Control de Cybercafé.
@@ -14,7 +15,7 @@ use App\Models\CiberControl;
  * Proporciona tanto el renderizado de la página (index) como el API
  * AJAX (?pagina=ciberControl&action=...) consumido por app.cyber.js.
  */
-class CiberController
+class CiberController extends BaseController
 {
     private CiberControl $model;
 
@@ -46,6 +47,7 @@ class CiberController
             match ($action) {
                 'estaciones'    => $this->estaciones(),
                 'tarifas'       => $this->tarifas(),
+                'clientes'      => $this->clientes(),
                 'buscarCliente' => $this->buscarCliente(),
                 'iniciar'       => $this->iniciar(),
                 'finalizar'     => $this->finalizar(),
@@ -73,64 +75,18 @@ class CiberController
     }
 
     /**
-     * Página principal del módulo (renderizada en el layout).
+     * Datos iniciales de la vista. Antes este método renderizaba el layout
+     * por su cuenta; ahora solo prepara datos y el Router se encarga de
+     * inyectarlos en la vista (C → M → BD → C → V).
+     *
+     * @return array<string,mixed>
      */
-    public function index(): void
+    public function index(): array
     {
-        $estaciones = [];
-        try {
-            $estaciones = $this->getModel()->listarEstaciones();
-        } catch (\Throwable $e) {
-            Logger::error($e, 'Cyber - listar estaciones (vista)');
-            $estaciones = [];
-        }
-
-        $totalEstaciones = count($estaciones);
-        $countDisponibles = 0;
-        $countOcupadas = 0;
-        $countMantenimiento = 0;
-
-        foreach ($estaciones as $e) {
-            if (($e['estado'] ?? '') === 'ocupada') {
-                $countOcupadas++;
-            } elseif (($e['estado'] ?? '') === 'disponible') {
-                $countDisponibles++;
-            } else {
-                $countMantenimiento++;
-            }
-        }
-
-        $clientes = [];
-        try {
-            $clientes = $this->getModel()->listarEstaciones();
-        } catch (\Throwable $e) {
-            Logger::error($e, 'Cyber - listar clientes (vista)');
-            $clientes = [];
-        }
-
-        $tarifas = [];
-        try {
-            $tarifas = $this->getModel()->listarTarifas();
-        } catch (\Throwable $e) {
-            Logger::error($e, 'Cyber - listar tarifas (vista)');
-            $tarifas = [];
-        }
-
-        $tiposActivo = [];
-        try {
-            $tiposActivo = $this->getModel()->listarTiposActivo();
-        } catch (\Throwable $e) {
-            Logger::error($e, 'Cyber - listar tipos de activo (vista)');
-            $tiposActivo = [];
-        }
-
-        $pageTitle  = 'Control de Cybercafé';
-        $headerExtra = '<span class="chip green white-text">' . $countDisponibles . ' Disponibles</span>'
-                     . '<span class="chip orange white-text">' . $countOcupadas . ' Ocupadas</span>';
-        $contentView = __DIR__ . '/../Views/ciberControl.php';
-        $pagina      = 'ciberControl';
-
-        require __DIR__ . '/../template/layout.php';
+        return [
+            'totalEstaciones' => $this->seguro(fn() => count($this->getModel()->listarEstaciones()), 0),
+            'tiposActivo'     => $this->seguro(fn() => $this->getModel()->listarTiposActivo(), []),
+        ];
     }
 
     /**
@@ -148,6 +104,15 @@ class CiberController
     private function tarifas(): void
     {
         echo json_encode(['success' => true, 'data' => $this->getModel()->listarTarifas()]);
+    }
+
+    /**
+     * API: Lista de clientes registrados para el selector del formulario.
+     */
+    private function clientes(): void
+    {
+        $clientes = (new Cliente())->obtenerClientes();
+        echo json_encode(['success' => true, 'data' => $clientes]);
     }
 
     /**
@@ -195,6 +160,16 @@ class CiberController
         $activoId  = $datos['activo_id'];
         $tarifaId  = $datos['tarifa_id'];
         $tiempoUso = $datos['tiempo_uso'];
+
+        $sesionId = $this->getModel()->iniciarSesion(
+            $ciudadano,
+            $cedula,
+            $direccion,
+            $telefono,
+            $activoId,
+            $tarifaId,
+            $tiempoUso
+        );
 
         echo json_encode(
             $sesionId

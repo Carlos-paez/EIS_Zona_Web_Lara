@@ -7,8 +7,9 @@ use App\Core\Router;
 use App\Core\ValidationException;
 use App\Core\Validator;
 use App\Models\Asesoria;
+use App\Models\Cliente;
 
-class AsesoriaController
+class AsesoriaController extends BaseController
 {
     private Asesoria $model;
 
@@ -38,6 +39,7 @@ class AsesoriaController
                 'listar'     => $this->listar(),
                 'detalle'    => $this->detalle(),
                 'buscar'     => $this->buscar(),
+                'clientes'   => $this->clientes(),
                 'crear'      => $this->crear(),
                 'kpis'       => $this->kpis(),
                 default      => $this->json(false, null, 'La acción solicitada no es válida.'),
@@ -106,6 +108,15 @@ class AsesoriaController
         }
         $resultados = $this->getModel()->buscarPorCedula($cedula);
         echo json_encode(['success' => true, 'data' => $resultados]);
+    }
+
+    /**
+     * API: Lista de clientes registrados para el selector del formulario.
+     */
+    private function clientes(): void
+    {
+        $clientes = (new Cliente())->obtenerClientes();
+        $this->json(true, $clientes);
     }
 
     private function crear(): void

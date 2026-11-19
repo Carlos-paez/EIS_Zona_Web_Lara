@@ -1,17 +1,7 @@
 <?php
-
-use App\Models\Dashboard;
-
-// Datos reales desde la base de datos
-$dash = new Dashboard();
-$hoy = $dash->ventasHoy();
-$stockCritico = $dash->stockCritico();
-$sesionesCyber = $dash->sesionesCyberActivas();
-$solicitudesPend = $dash->solicitudesPendientes();
-$ventasPorDia = $dash->ventasPorDia();
-$productosStock = $dash->productosStockCritico();
-$actividad = $dash->actividadReciente();
-
+// Todas las métricas ($hoy, $stockCritico, $sesionesCyber, $solicitudesPend,
+// $ventasPorDia, $productosStock y $actividad) son preparadas por
+// DashboardController::index() a través del modelo. La vista solo las muestra.
 $fmt = fn($v) => '$' . number_format((float)$v, 2);
 ?>
 

@@ -32,6 +32,7 @@ $(function () {
 
     var estaciones = [];
     var tarifas = [];
+    var clientes = [];            // Clientes registrados para el selector del formulario
     var filtroActual = 'all';
 
     // ================================================================
@@ -45,6 +46,108 @@ $(function () {
         var inst = M.FormSelect.getInstance(el);
         if (inst) inst.destroy();
         $sel.formSelect();
+    }
+
+    // ================================================================
+    // FUNCIÓN: refrescarSelectCliente()
+    // PROPÓSITO: Recrea el selector de clientes y le re-inyecta la barra
+    //            de búsqueda por nombre o cédula (formSelect regenera el
+    //            <ul> y elimina la barra inyectada previamente).
+    // ================================================================
+    function refrescarSelectCliente() {
+        var $sel = $('#cyberClienteSelect');
+        refrescarSelect($sel);
+        if (window.EIS && EIS.activarBusquedaEnSelect) {
+            EIS.activarBusquedaEnSelect('#cyberClienteSelect', 'Buscar cliente por nombre o cédula...');
+        }
+    }
+
+    // ================================================================
+    // FUNCIÓN: poblarSelectClientes()
+    // PROPÓSITO: Llena el selector de clientes registrados. La opción
+    //            inicial es un marcador y "Crear nuevo cliente" permite
+    //            capturar los datos manualmente.
+    // ================================================================
+    function poblarSelectClientes() {
+        var html = '<option value="">Selecciona un cliente...</option>'
+                 + '<option value="__nuevo__">── Crear nuevo cliente ──</option>';
+        clientes.forEach(function (c) {
+            var nombreCompleto = (c.nombre || '') + ((c.apellido || '') ? ' ' + c.apellido : '');
+            html += '<option value="' + escHtml(c.cedula) + '">' + escHtml(nombreCompleto + ' (' + c.cedula + ')') + '</option>';
+        });
+        $('#cyberClienteSelect').html(html).val('');
+        refrescarSelectCliente();
+    }
+
+    // ================================================================
+    // FUNCIÓN: cargarClientes()
+    // PROPÓSITO: Solicita al backend la lista de clientes registrados.
+    // ================================================================
+    function cargarClientes() {
+        EIS.ajax.get(API + 'clientes', {
+            onSuccess: function (r) {
+                clientes = r.data || [];
+                poblarSelectClientes();
+            },
+            errorMessage: 'No se pudieron cargar los clientes. Intenta de nuevo.'
+        });
+    }
+
+    // ================================================================
+    // FUNCIÓN: aplicarCliente(c)
+    // PROPÓSITO: Precarga los datos de un cliente en el formulario,
+    //            bloquea la cédula y sincroniza el selector.
+    // ================================================================
+    function aplicarCliente(c) {
+        var nombreCompleto = (c.nombre || '') + ((c.apellido || '') ? ' ' + c.apellido : '');
+        if (nombreCompleto) {
+            $('#cyberCiudadano').val(nombreCompleto);
+        }
+        $('#cyberCiudadanoWrapper').hide();
+        $('#cyberCedula').val(c.cedula || '').prop('readonly', true);
+        $('#cyberDireccion').val(c.direccion || '');
+        $('#cyberTelefono').val(c.telefono || '');
+        if (c.cedula) {
+            $('#cyberClienteSelect').val(c.cedula);
+            refrescarSelectCliente();
+        }
+        M.updateTextFields();
+    }
+
+    // ================================================================
+    // FUNCIÓN: limpiarCamposCliente()
+    // PROPÓSITO: Limpia los datos del cliente y oculta el campo de nombre
+    //            (modo "seleccionar de la lista").
+    // ================================================================
+    function limpiarCamposCliente() {
+        $('#cyberCiudadano').val('');
+        $('#cyberCedula').val('').prop('readonly', false);
+        $('#cyberDireccion').val('');
+        $('#cyberTelefono').val('');
+        $('#cyberCiudadanoWrapper').hide();
+        M.updateTextFields();
+    }
+
+    // ================================================================
+    // FUNCIÓN: limpiarCamposNuevoCliente()
+    // PROPÓSITO: Deja el formulario listo para capturar un cliente nuevo
+    //            (muestra el campo de nombre y habilita la cédula).
+    // ================================================================
+    function limpiarCamposNuevoCliente() {
+        limpiarCamposCliente();
+        $('#cyberCiudadanoWrapper').show();
+        M.updateTextFields();
+    }
+
+    // ================================================================
+    // FUNCIÓN: limpiarClienteForm()
+    // PROPÓSITO: Reinicia por completo el formulario del cliente y el
+    //            selector a su estado inicial (sin cliente seleccionado).
+    // ================================================================
+    function limpiarClienteForm() {
+        limpiarCamposCliente();
+        $('#cyberClienteSelect').val('');
+        refrescarSelectCliente();
     }
 
     // ================================================================
@@ -168,8 +271,14 @@ $(function () {
             });
         }
         $activo.html(htmlActivo);
-        if (estacionPreseleccionada && disponibles.some(function (e) { return e.id == estacionPreseleccionada; })) {
-            $activo.val(String(estacionPreseleccionada));
+        // Si no se indicó una estación (botón "Nueva Sesión"), se preselecciona
+        // la primera disponible para que el formulario siempre envíe un valor.
+        var estacionSeleccionada = estacionPreseleccionada;
+        if (!estacionSeleccionada && disponibles.length > 0) {
+            estacionSeleccionada = disponibles[0].id;
+        }
+        if (estacionSeleccionada && disponibles.some(function (e) { return e.id == estacionSeleccionada; })) {
+            $activo.val(String(estacionSeleccionada));
         }
         refrescarSelect($activo);
 
@@ -180,6 +289,11 @@ $(function () {
                 return '<option value="' + t.id + '">$' + parseFloat(t.tarifa_hora).toFixed(2) + '/hora — $' + parseFloat(t.precio_tiempo).toFixed(2) + ' (tiempo)</option>';
             }).join('');
         $tarifa.html(htmlTarifa);
+        // Igual que la estación: sin selección explícita se usa la primera
+        // tarifa para que el POST lleve siempre tarifa_id.
+        if (tarifas.length > 0) {
+            $tarifa.val(String(tarifas[0].id));
+        }
         refrescarSelect($tarifa);
     }
 
@@ -215,6 +329,7 @@ $(function () {
     function abrirModalIniciar(estacionId) {
         EIS.limpiarErroresFormulario('#cyberForm');
         $('#cyberForm')[0].reset();
+        limpiarClienteForm();
         $('#cyberTiempo').val('01:00:00');
         poblarSelects(estacionId);
         M.updateTextFields();
@@ -232,14 +347,7 @@ $(function () {
             showServerError: false,
             onSuccess: function (r) {
                 if (!r.data) return;
-                var c = r.data;
-                var nombreCompleto = (c.nombre || '') + ((c.apellido || '') ? ' ' + c.apellido : '');
-                if (nombreCompleto) {
-                    $('#cyberCiudadano').val(nombreCompleto);
-                }
-                $('#cyberDireccion').val(c.direccion || '');
-                $('#cyberTelefono').val(c.telefono || '');
-                M.updateTextFields();
+                aplicarCliente(r.data);
                 EIS.toast('Cliente encontrado. Se precargaron sus datos.', 'indigo', 'person');
             },
             errorMessage: 'No se pudo buscar el cliente. Intenta de nuevo.'
@@ -289,7 +397,45 @@ $(function () {
     // EVENTO: Blur de la cédula → precarga datos del cliente
     // ================================================================
     $(document).on('blur', '#cyberCedula', function () {
+        if ($(this).prop('readonly')) return;
         buscarCliente($(this).val().trim());
+    });
+
+    // ================================================================
+    // EVENTO: Cambio en el selector de clientes registrados
+    //   - "Crear nuevo cliente" → limpia y habilita la captura manual
+    //   - Cliente registrado    → precarga y bloquea la cédula
+    // ================================================================
+    $(document).on('change', '#cyberClienteSelect', function () {
+        var valor = $(this).val();
+        if (!valor) {
+            limpiarCamposCliente();
+            return;
+        }
+        if (valor === '__nuevo__') {
+            limpiarCamposNuevoCliente();
+            return;
+        }
+        var c = clientes.find(function (x) { return x.cedula === valor; });
+        if (c) aplicarCliente(c);
+    });
+
+    // ================================================================
+    // EVENTO: Click en "Iniciar" (#btnIniciarSesion)
+    // El botón está en el footer del modal (fuera del <form>), por lo que
+    // se asocia con form="cyberForm". Este manejador garantiza el envío
+    // mediante requestSubmit(), disparando la validación del sistema
+    // (app.validate.js) y el submit AJAX de abajo.
+    // ================================================================
+    $(document).on('click', '#btnIniciarSesion', function (e) {
+        e.preventDefault();
+        var form = document.getElementById('cyberForm');
+        if (!form) return;
+        if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+        } else {
+            $(form).trigger('submit');
+        }
     });
 
     // ================================================================
@@ -297,6 +443,13 @@ $(function () {
     // ================================================================
     $(document).on('submit', '#cyberForm', function (e) {
         e.preventDefault();
+
+        // Si no se eligió un cliente de la lista ni se capturó el nombre
+        // de un cliente nuevo, se detiene el envío.
+        if (!$('#cyberCiudadano').val().trim()) {
+            EIS.toast('Selecciona un cliente registrado o elige "Crear nuevo cliente".', 'orange', 'person');
+            return;
+        }
 
         // El envío ya fue validado en el cliente por app.validate.js; el
         // servidor vuelve a validar (fieldErrors) por seguridad.
@@ -557,4 +710,5 @@ $(function () {
     $('#modalConfirmarEliminar').modal();
     $('#modalHistorial').modal();
     cargarEstado();
+    cargarClientes();
 });

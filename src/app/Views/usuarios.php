@@ -1,19 +1,7 @@
 <?php
-use App\Models\Usuario;
-
-$userModel = new Usuario();
-$usuarios = $userModel->obtenerTodos();
-$totalUsuarios = count($usuarios);
-$activos = count(array_filter($usuarios, fn($u) => $u['activo'] === '1'));
-$inactivos = $totalUsuarios - $activos;
-
-$adminCount = 0;
-foreach ($usuarios as $u) {
-    $rolLower = strtolower($u['rol_nombre'] ?? $u['rol'] ?? '');
-    if (str_contains($rolLower, 'admin') || str_contains($rolLower, 'administrador')) {
-        $adminCount++;
-    }
-}
+// Los KPIs ($totalUsuarios, $activos, $inactivos y $adminCount) son
+// calculados por UsuarioController::index() con la misma lógica que el
+// endpoint AJAX. La vista no instancia modelos ni consulta la base de datos.
 ?>
 
 <div class="row" style="margin-bottom:1.25rem;">

@@ -216,7 +216,12 @@ class Router
 
         $this->renderLayout(
             $this->viewsDir() . 'acceso_denegado.php',
-            'Acceso denegado'
+            'Acceso denegado',
+            '',
+            [
+                'username' => (string)($_SESSION['username'] ?? ''),
+                'rol'      => (string)($_SESSION['rol'] ?? ''),
+            ]
         );
         exit;
     }
@@ -276,14 +281,23 @@ class Router
 
     /**
      * Renderiza la vista de la página actual a través del layout.
+     *
+     * El controlador de la página prepara los datos (C → M → BD → C) y se los
+     * entrega a la vista. La vista jamás consulta modelos ni la base de datos.
      */
     private function render(): void
     {
-        // Vista de inicio de sesión (páginas públicas).
+        // login_validate no es una vista: solo existe para recibir el POST
+        // del formulario y ya fue despachado en handle().
+        if ($this->getPagina() === 'login_validate') {
+            $this->redirect('login');
+        }
+
+        // Vista de inicio de sesión (página pública, sin layout).
         if (in_array($this->getPagina(), self::PUBLIC_PAGES, true)) {
-            $rutaVista = $this->viewsDir() . $this->getPagina() . '.php';
+            $rutaVista = $this->viewsDir() . 'login.php';
             if (is_file($rutaVista)) {
-                require $rutaVista;
+                $this->renderVista($rutaVista, (new AuthController())->index());
             } else {
                 http_response_code(404);
                 echo '<h1>Error 404: Página no encontrada</h1>';
@@ -305,25 +319,69 @@ class Router
         $pageTitle  = self::PAGE_TITLES[$this->getPagina()] ?? 'EIS System';
         $headerExtra = self::PAGE_EXTRA_HEADERS[$this->getPagina()] ?? '';
 
-        $this->renderLayout($rutaVista, $pageTitle, $headerExtra);
+        $this->renderLayout($rutaVista, $pageTitle, $headerExtra, $this->datosControlador($this->getPagina()));
+    }
+
+    /**
+     * Obtiene los datos iniciales de una página llamando a su controlador.
+     *
+     * @return array<string,mixed>
+     */
+    private function datosControlador(string $pagina): array
+    {
+        if (!array_key_exists($pagina, self::CONTROLLERS)) {
+            return [];
+        }
+
+        try {
+            $controllerClass = self::CONTROLLERS[$pagina];
+            $controller      = new $controllerClass();
+
+            if (method_exists($controller, 'index')) {
+                return $controller->index();
+            }
+        } catch (\Throwable $e) {
+            Logger::error($e, 'Router - datos iniciales de ' . $pagina);
+        }
+
+        return [];
+    }
+
+    /**
+     * Renderiza una vista sin layout, exponiendo los datos del controlador
+     * como variables locales (Vista = presentación pura).
+     *
+     * @param array<string,mixed> $datos
+     */
+    private function renderVista(string $rutaVista, array $datos = []): void
+    {
+        extract($datos, EXTR_SKIP);
+        require $rutaVista;
     }
 
     /**
      * Renderiza una vista dentro del layout principal.
      *
      * El layout recibe el contexto de autorización para poder filtrar el
-     * menú lateral: $permisosUsuario, $puede y $paginasPermitidas.
+     * menú lateral ($permisosUsuario, $puede y $paginasPermitidas) y los
+     * datos que el controlador ya obtuvo del modelo ($datos).
      *
-     * @param string $contentView Ruta absoluta de la vista a inyectar.
-     * @param string $pageTitle   Título de la pestaña.
-     * @param string $headerExtra Contenido extra de la cabecera.
+     * @param string              $contentView Ruta absoluta de la vista a inyectar.
+     * @param string              $pageTitle   Título de la pestaña.
+     * @param string              $headerExtra Contenido extra de la cabecera.
+     * @param array<string,mixed> $datos       Datos preparados por el controlador.
      */
-    private function renderLayout(string $contentView, string $pageTitle, string $headerExtra = ''): void
+    private function renderLayout(string $contentView, string $pageTitle, string $headerExtra = '', array $datos = []): void
     {
         $pagina            = $this->getPagina();
         $permisosUsuario   = Permisos::permisosDeSesion();
         $paginasPermitidas = Permisos::paginasPermitidas();
         $puede             = static fn(string $permiso): bool => Permisos::puede($permiso);
+        $csrfToken         = (string)($_SESSION['csrf_token'] ?? '');
+        $userId            = (int)($_SESSION['user_id'] ?? 0);
+        $nombreUsuario     = (string)($_SESSION['nombre'] ?? 'Usuario');
+
+        extract($datos, EXTR_SKIP);
 
         require __DIR__ . '/../template/layout.php';
     }

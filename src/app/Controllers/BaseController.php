@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Logger;
 use App\Core\ValidationException;
 use App\Core\Validator;
 
@@ -140,6 +141,37 @@ abstract class BaseController
     public function getResult(): array
     {
         return $this->result;
+    }
+
+    /**
+     * Datos iniciales que el controlador entrega a la vista.
+     *
+     * Los módulos sin información propia heredan este comportamiento. Los
+     * módulos con KPIs o catálogos lo sobrescriben para consultar SOLAMENTE
+     * a través de su modelo; la vista nunca instancia modelos ni accede a BD.
+     *
+     * @return array<string,mixed>
+     */
+    public function index(): array
+    {
+        return [];
+    }
+
+    /**
+     * Ejecuta una consulta del modelo de forma segura durante el renderizado.
+     *
+     * Si la consulta falla se registra el error y se entrega el valor por
+     * defecto, de modo que la vista reciba siempre datos válidos sin tener
+     * que manejar excepciones de base de datos.
+     */
+    protected function seguro(callable $consulta, mixed $porDefecto): mixed
+    {
+        try {
+            return $consulta() ?? $porDefecto;
+        } catch (\Throwable $e) {
+            Logger::error($e, 'Datos iniciales de vista (' . static::class . ')');
+            return $porDefecto;
+        }
     }
 
     /**

@@ -63,21 +63,22 @@
             <!-- Se muestra solo si la URL contiene ?error=1 (credenciales incorrectas) -->
             <!-- ================================================================ -->
             <?php
-            // Verifico si el parámetro 'error' viene en la URL (GET)
-            if (isset($_GET['error'])): ?>
-                <?php if (($_GET['error'] ?? '') === 'vacio'): ?>
+            // $error es preparado por AuthController::index(); la vista no
+            // lee $_GET directamente.
+            if ($error !== ''): ?>
+                <?php if ($error === 'vacio'): ?>
                     <!-- Error de validación: el usuario presionó enviar sin llenar campos -->
                     <div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:0.75rem 1rem;">
                         <i class="material-icons left" style="font-size:1.2rem;">error</i>
                         Completa todos los campos para iniciar sesión.
                     </div>
-                <?php elseif (($_GET['error'] ?? '') === 'bloqueado'): ?>
+                <?php elseif ($error === 'bloqueado'): ?>
                     <!-- Error de seguridad: demasiados intentos fallidos seguidos -->
                     <div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:0.75rem 1rem;">
                         <i class="material-icons left" style="font-size:1.2rem;">lock</i>
                         Demasiados intentos fallidos. Espera unos minutos antes de volver a intentarlo.
                     </div>
-                <?php elseif (($_GET['error'] ?? '') === 'deshabilitado'): ?>
+                <?php elseif ($error === 'deshabilitado'): ?>
                     <!-- Error de estado: la cuenta fue desactivada o perdió acceso -->
                     <div class="card-panel red lighten-4 red-text text-darken-4" style="border-radius:8px;padding:0.75rem 1rem;">
                         <i class="material-icons left" style="font-size:1.2rem;">block</i>
@@ -101,7 +102,7 @@
             <!-- Envía los datos por método POST al controlador login_validate -->
             <!-- ================================================================ -->
             <form action="?pagina=login_validate" method="post" data-validate>
-                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
 
                 <!-- ---------------------------------------------------------------- -->
                 <!-- CAMPO DE TEXTO: USUARIO -->

@@ -259,6 +259,7 @@ final class Permisos
         'ciberControl' => [
             'estaciones'       => null,
             'tarifas'          => null,
+            'clientes'         => null,
             'buscarCliente'    => null,
             'estadisticas'     => null,
             'historial'        => null,
@@ -286,6 +287,7 @@ final class Permisos
             'detalle' => null,
             'buscar'  => null,
             'kpis'    => null,
+            'clientes' => null,
             'crear'   => 'crear',
         ],
         'usuarios' => [

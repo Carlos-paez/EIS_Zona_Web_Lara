@@ -69,22 +69,60 @@ class ProveedorController extends BaseController
         $this->jsonSuccess($ordenes);
     }
 
-    private function kpis(): void
+    /**
+     * Calcula los KPIs de solicitudes. Se usa tanto en la respuesta AJAX
+     * como en los datos iniciales de la vista, para que ambas rutas apliquen
+     * exactamente la misma lógica de negocio.
+     *
+     * @return array<string,int>
+     */
+    private function calcularKpis(): array
     {
-        $porEstado = $this->getModel()->contarPorEstado();
+        $model      = $this->getModel();
+        $porEstado  = $this->seguro(fn() => $model->contarPorEstado(), []);
         $pendientes = 0;
-        $recibidas = 0;
+        $recibidas  = 0;
+
         foreach ($porEstado as $row) {
             $est = strtolower($row['estado']);
-            if ($est === 'pendiente' || str_contains($est, 'pend')) $pendientes = (int)$row['total'];
-            elseif ($est === 'recibida' || str_contains($est, 'recib')) $recibidas = (int)$row['total'];
+            if (str_contains($est, 'pend')) {
+                $pendientes = (int)$row['total'];
+            } elseif (str_contains($est, 'recib')) {
+                $recibidas = (int)$row['total'];
+            }
         }
-        $this->setResult([
-            'total'      => $this->getModel()->totalSolicitudes(),
+
+        return [
+            'total'      => $this->seguro(fn() => $model->totalSolicitudes(), 0),
             'pendientes' => $pendientes,
             'recibidas'  => $recibidas,
-        ]);
+        ];
+    }
+
+    private function kpis(): void
+    {
+        $this->setResult($this->calcularKpis());
         $this->jsonSuccess($this->getResult());
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    public function index(): array
+    {
+        $model = $this->getModel();
+        $kpis  = $this->calcularKpis();
+
+        return [
+            'ordenes'     => $this->seguro(fn() => $model->obtenerOrdenes(), []),
+            'kpis'        => $this->seguro(fn() => $model->contarPorEstado(), []),
+            'total'       => $kpis['total'],
+            'proveedores' => $this->seguro(fn() => $model->obtenerProveedores(), []),
+            'statuses'    => $this->seguro(fn() => $model->obtenerStatuses(), []),
+            'productos'   => $this->seguro(fn() => $model->obtenerProductos(), []),
+            'pendientes'  => $kpis['pendientes'],
+            'recibidas'   => $kpis['recibidas'],
+        ];
     }
 
     private function detalle(): void

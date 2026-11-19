@@ -4,37 +4,12 @@
 // =============================================================================
 // Muestra tarjetas KPI, tabla de órdenes de compra, búsqueda y filtrado,
 // y modales para crear/editar órdenes y agregar líneas de productos.
+//
+// Todos los datos ($ordenes, $kpis, $total, $proveedores, $statuses,
+// $productos, $pendientes y $recibidas) son entregados por
+// ProveedorController::index(), que aplica la misma lógica de KPIs que
+// el endpoint AJAX. Esta vista no consulta modelos ni base de datos.
 // =============================================================================
-
-// Importa el modelo Proveedor desde la carpeta App\Models
-use App\Models\Proveedor;
-
-// Instancia una nueva conexión al modelo de Proveedor
-$provModel = new Proveedor();
-// Obtiene todas las órdenes de compra registradas
-$ordenes   = $provModel->obtenerOrdenes();
-// Obtiene el conteo de órdenes agrupadas por estado
-$kpis      = $provModel->contarPorEstado();
-// Obtiene el total de solicitudes (todas las órdenes)
-$total     = $provModel->totalSolicitudes();
-// Obtiene la lista de proveedores registrados
-$proveedores = $provModel->obtenerProveedores();
-// Obtiene todos los estados/status disponibles
-$statuses    = $provModel->obtenerStatuses();
-// Obtiene todos los productos registrados
-$productos   = $provModel->obtenerProductos();
-
-// Inicializa los contadores de órdenes pendientes y recibidas
-$pendientes = 0; $recibidas = 0;
-// Recorre el arreglo de KPIs para clasificar cada estado
-foreach ($kpis as $row) {
-    // Convierte el nombre del estado a minúsculas
-    $est = strtolower($row['estado']);
-    // Si el estado contiene "pend", suma al contador de pendientes
-    if (str_contains($est, 'pend')) $pendientes = (int)$row['total'];
-    // Si el estado contiene "recib", suma al contador de recibidas
-    elseif (str_contains($est, 'recib')) $recibidas = (int)$row['total'];
-}
 ?>
 <!-- ===== TARJETAS KPI (MÉTRICAS CLAVE) ===== -->
 <!-- Fila contenedora con margen inferior -->

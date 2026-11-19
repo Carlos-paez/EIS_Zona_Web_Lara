@@ -83,6 +83,8 @@ El diseño actual usa:
 - Clase Router OOP con namespace y métodos privados
 - Mapa `CONTROLLERS` que centraliza la resolución de controladores + `dispatchAction()`
 - AuthController para login y Router para logout
+- `login_validate` solo como ruta POST (sin vista): `AuthController::login()` procesa las credenciales
+- Render inicial vía `Controller->index()`: el Router entrega a la vista los datos ya calculados (Vista → Controlador → Modelo → BD → Modelo → Controlador → Vista)
 - 12 controladores AJAX resueltos dinámicamente desde el mapa `CONTROLLERS` (13 archivos en total con `AuthController`)
 - Páginas privadas (12): dashboard, inventario, ventas, clientes, proveedores, proveedores-gestion, ciberControl, reportes, activos, asesorias, usuarios, roles
 - Validación estricta de tipos (`App\Core\Validator`) y registro de errores (`App\Core\Logger` → `src/logs/errores.md`)

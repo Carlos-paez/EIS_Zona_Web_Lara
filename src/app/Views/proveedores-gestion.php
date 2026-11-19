@@ -3,13 +3,9 @@
 // VISTA: GESTIÓN DE PROVEEDORES
 // =============================================================================
 // Muestra tarjeta KPI, búsqueda, tabla de proveedores y modales para
-// crear/editar proveedores. Módulo dedicado a la gestión de proveedores.
+// crear/editar proveedores. $totalProv es preparado por
+// ProveedorGestionController::index() a través de su modelo.
 // =============================================================================
-
-use App\Models\ProveedorGestion;
-
-$gpModel = new ProveedorGestion();
-$totalProv = $gpModel->totalProveedores();
 ?>
 
 <!-- ===== TARJETAS KPI ===== -->

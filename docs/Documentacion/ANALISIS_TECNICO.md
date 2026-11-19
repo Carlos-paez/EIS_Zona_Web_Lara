@@ -127,7 +127,7 @@ Navegador → .htaccess → index.php → new Router() → Router::handle()
 | Archivo | Ruta | Función |
 |---------|------|---------|
 | `login.php` | `src/app/Views/login.php` | Formulario de inicio de sesión |
-| `login_validate.php` | `src/app/Views/login_validate.php` | Redirección de seguridad (legacy) |
+| `login_validate` | — (ruta POST, sin vista) | `AuthController::login()` | Redirección de seguridad / procesamiento del login |
 | `AuthController.php` | `src/app/Controllers/AuthController.php` | Login/logout con CSRF y session hardening |
 | `Usuario.php` | `src/app/Models/Usuario.php` | Autenticación, crear/actualizar usuarios |
 

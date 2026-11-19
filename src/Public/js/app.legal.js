@@ -17,6 +17,82 @@ $(function () {
     }
 
     // ================================================================
+    // FUNCIONES DEL SELECTOR DE CLIENTES REGISTRADOS
+    // ================================================================
+
+    // Arreglo con los clientes registrados (selector del formulario)
+    var clientes = [];
+
+    // Destruye y recrea el <select> de Materialize y re-inyecta la barra
+    // de búsqueda por nombre o cédula.
+    function refrescarSelectCliente() {
+        var el = document.getElementById('asesoriaClienteSelect');
+        if (!el) return;
+        var inst = M.FormSelect.getInstance(el);
+        if (inst) inst.destroy();
+        $('#asesoriaClienteSelect').formSelect();
+        if (window.EIS && EIS.activarBusquedaEnSelect) {
+            EIS.activarBusquedaEnSelect('#asesoriaClienteSelect', 'Buscar cliente por nombre o cédula...');
+        }
+    }
+
+    // Llena el selector con los clientes registrados.
+    function poblarSelectClientes() {
+        var html = '<option value="">── Crear nuevo cliente ──</option>';
+        clientes.forEach(function (c) {
+            var nombreCompleto = (c.nombre || '') + ((c.apellido || '') ? ' ' + c.apellido : '');
+            html += '<option value="' + escHtml(c.cedula) + '">' + escHtml(nombreCompleto + ' (' + c.cedula + ')') + '</option>';
+        });
+        $('#asesoriaClienteSelect').html(html).val('');
+        refrescarSelectCliente();
+    }
+
+    // Solicita al backend la lista de clientes registrados.
+    function cargarClientes() {
+        EIS.ajax.get(API + 'clientes', {
+            onSuccess: function (r) {
+                clientes = r.data || [];
+                poblarSelectClientes();
+            },
+            errorMessage: 'No se pudieron cargar los clientes. Intenta de nuevo.'
+        });
+    }
+
+    // Precarga los datos de un cliente, bloquea la cédula y sincroniza
+    // el selector.
+    function aplicarCliente(c) {
+        var nombreCompleto = (c.nombre || '') + ((c.apellido || '') ? ' ' + c.apellido : '');
+        if (nombreCompleto) {
+            $('#ciudadano').val(nombreCompleto);
+        }
+        $('#cedula').val(c.cedula || '').prop('readonly', true);
+        $('#telefono').val(c.telefono || '');
+        $('#direccion').val(c.direccion || '');
+        if (c.cedula) {
+            $('#asesoriaClienteSelect').val(c.cedula);
+            refrescarSelectCliente();
+        }
+        M.updateTextFields();
+    }
+
+    // Deja los campos listos para capturar un cliente nuevo, sin tocar
+    // el selector (se usa dentro del evento change).
+    function limpiarCamposNuevoCliente() {
+        $('#ciudadano').val('');
+        $('#cedula').val('').prop('readonly', false);
+        $('#telefono').val('');
+        $('#direccion').val('');
+        M.updateTextFields();
+    }
+
+    // Reinicia por completo los campos del cliente y el selector.
+    function limpiarClienteForm() {
+        limpiarCamposNuevoCliente();
+        $('#asesoriaClienteSelect').val('');
+        refrescarSelectCliente();
+    }
+
+    // ================================================================
     // CONFIGURACIÓN INICIAL
     // ================================================================
 
@@ -204,6 +280,7 @@ $(function () {
                 );
                 EIS.limpiarErroresFormulario($form);
                 $form[0].reset();
+                limpiarClienteForm();
                 $('#btnRegistrar').prop('disabled', true);
                 $('#btnRegistrar').removeClass('red').addClass('indigo').html('<i class="material-icons left">verified</i>Validar y Registrar');
                 $('label').removeClass('active');
@@ -244,6 +321,7 @@ $(function () {
     // aviso de que se actualizará su información de contacto.
     // ================================================================
     $(document).on('blur', '#cedula', function () {
+        if ($(this).prop('readonly')) return;
         var cedula = $(this).val().trim();
         if (!cedula) return;
 
@@ -254,6 +332,21 @@ $(function () {
         if (previo.length > 0) {
             EIS.toast('Cliente ya registrado. Se actualizará su información de contacto.', 'indigo', 'person');
         }
+    });
+
+    // ================================================================
+    // EVENTO: Cambio en el selector de clientes registrados
+    //   - "Crear nuevo cliente" → limpia y habilita la captura manual
+    //   - Cliente registrado    → precarga y bloquea la cédula
+    // ================================================================
+    $(document).on('change', '#asesoriaClienteSelect', function () {
+        var cedula = $(this).val();
+        if (!cedula) {
+            limpiarCamposNuevoCliente();
+            return;
+        }
+        var c = clientes.find(function (x) { return x.cedula === cedula; });
+        if (c) aplicarCliente(c);
     });
 
     // ================================================================
@@ -290,4 +383,5 @@ $(function () {
     }
     cargarAsesorias();
     refrescarKPI();
+    cargarClientes();
 });

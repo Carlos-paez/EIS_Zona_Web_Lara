@@ -1,28 +1,10 @@
 <?php
 // ============================================================
 // VISTA: Control de Cybercafé
-// La grilla y toda la interactividad se renderizan con
-// app.cyber.js (Public/js/app.cyber.js) vía el API AJAX
-// ?pagina=ciberControl&action=...
+// $totalEstaciones y $tiposActivo llegan desde CiberController::index().
+// La grilla y toda la interactividad se renderizan con app.cyber.js
+// (Public/js/app.cyber.js) vía el API AJAX ?pagina=ciberControl&action=...
 // ============================================================
-
-use App\Models\CiberControl;
-
-$ciberModel = new CiberControl();
-
-$totalEstaciones = 0;
-try {
-    $totalEstaciones = count($ciberModel->listarEstaciones());
-} catch (\Throwable $e) {
-    $totalEstaciones = 0;
-}
-
-$tiposActivo = [];
-try {
-    $tiposActivo = $ciberModel->listarTiposActivo();
-} catch (\Throwable $e) {
-    $tiposActivo = [];
-}
 ?>
 
 <!-- Tarjetas de métricas -->
@@ -107,6 +89,15 @@ try {
         </h4>
         <form id="cyberForm" data-validate>
             <div class="input-field">
+                <i class="material-icons prefix">group</i>
+                <select id="cyberClienteSelect">
+                    <option value="" selected>Selecciona un cliente...</option>
+                </select>
+                <label>Cliente registrado</label>
+            </div>
+            <!-- Nombre del cliente: se oculta al elegir un cliente de la lista
+                 y solo se muestra al optar por "Crear nuevo cliente". -->
+            <div class="input-field" id="cyberCiudadanoWrapper" style="display:none;">
                 <i class="material-icons prefix">person</i>
                 <input type="text" id="cyberCiudadano" name="ciudadano" class="form-control" placeholder="Nombre completo del cliente" maxlength="100" required minlength="2" data-validate="texto">
                 <label for="cyberCiudadano" class="active">Cliente</label>
@@ -151,7 +142,7 @@ try {
     </div>
     <div class="modal-footer" style="padding:1rem 1.5rem;display:flex;gap:0.75rem;justify-content:flex-end;border-top:1px solid var(--border-light);">
         <button class="btn waves-effect waves-light grey lighten-1 modal-close" style="border-radius:24px;">Cancelar</button>
-        <button type="button" class="btn waves-effect waves-light green" id="btnIniciarSesion" style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;">
+        <button type="submit" form="cyberForm" class="btn waves-effect waves-light green" id="btnIniciarSesion" style="border-radius:24px;display:inline-flex;align-items:center;gap:0.35rem;">
             <i class="material-icons left" style="margin:0;">play_arrow</i> Iniciar
         </button>
     </div>

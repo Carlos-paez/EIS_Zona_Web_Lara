@@ -1,9 +1,5 @@
 <?php
-
-use App\Models\Cliente;
-
-$clienteModel = new Cliente();
-$totalClientes = $clienteModel->totalClientes();
+// Vista de Clientes: $totalClientes es entregado por ClienteController::index().
 ?>
 
 <!-- ===== TARJETAS KPI ===== -->

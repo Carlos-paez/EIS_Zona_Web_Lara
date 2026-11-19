@@ -8,7 +8,7 @@ use App\Core\ValidationException;
 use App\Core\Validator;
 use App\Models\Activo;
 
-class ActivoController
+class ActivoController extends BaseController
 {
     private Activo $model;
 
@@ -25,6 +25,20 @@ class ActivoController
     public function setModel(Activo $model): void
     {
         $this->model = $model;
+    }
+
+    /**
+     * Datos iniciales de la vista: KPIs y catálogo de tipos de activo.
+     * La vista no instancia al modelo; todo llega desde aquí.
+     *
+     * @return array<string,mixed>
+     */
+    public function index(): array
+    {
+        return [
+            'totalActivos' => $this->seguro(fn() => $this->getModel()->totalActivos(), 0),
+            'tiposActivo'  => $this->seguro(fn() => $this->getModel()->listarTiposActivo(), []),
+        ];
     }
 
     public function handle(): void

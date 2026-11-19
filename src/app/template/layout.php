@@ -197,7 +197,7 @@
                     <!-- Badge con el nombre del usuario (solo avatar en móvil) -->
                     <li><span class="badge indigo lighten-2 white-text"
                             style="margin-right:0.5rem;font-size:0.8rem;padding:0.25rem 0.6rem;display:flex;align-items:center;min-height:44px;"><i
-                                class="material-icons left" style="font-size:1rem;">person</i><span class="hide-on-small-only"><?php echo htmlspecialchars($_SESSION['nombre'] ?? 'Usuario'); ?></span></span></li>
+                                class="material-icons left" style="font-size:1rem;">person</i><span class="hide-on-small-only"><?php echo htmlspecialchars($nombreUsuario); ?></span></span></li>
                 </ul>
             </div>
         </nav>
@@ -253,8 +253,8 @@
     <!-- CSRF Token global para peticiones AJAX -->
     <script>
     window.EIS = window.EIS || {};
-    window.EIS.csrfToken = '<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>';
-    window.EIS.userId = '<?php echo (int)($_SESSION['user_id'] ?? 0); ?>';
+    window.EIS.csrfToken = '<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>';
+    window.EIS.userId = '<?php echo $userId; ?>';
     $.ajaxSetup({
         beforeSend: function(xhr, settings) {
             if (settings.type === 'POST' || settings.type === 'post') {

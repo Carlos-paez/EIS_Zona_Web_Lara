@@ -11,15 +11,15 @@ use App\Models\Usuario;
 
 class AuthController extends BaseController
 {
-    private Usuario $model;
-
-    public function __construct()
-    {
-        $this->setModel(new Usuario());
-    }
+    /** Se crea solo cuando se va a autenticar (renderizar el login no exige BD). */
+    private ?Usuario $model = null;
 
     public function getModel(): Usuario
     {
+        if ($this->model === null) {
+            $this->setModel(new Usuario());
+        }
+
         return $this->model;
     }
 
@@ -27,6 +27,22 @@ class AuthController extends BaseController
     {
         $this->model = $model;
         return $this;
+    }
+
+    /**
+     * Prepara los datos de la vista de login. El controlador es el único que
+     * lee el estado de la petición; la vista solo presenta lo que recibe.
+     *
+     * @return array<string,mixed>
+     */
+    public function index(): array
+    {
+        $error = $_GET['error'] ?? null;
+
+        return [
+            'error'     => is_string($error) ? $error : '',
+            'csrfToken' => (string)($_SESSION['csrf_token'] ?? ''),
+        ];
     }
 
     public function login(): void

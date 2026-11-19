@@ -28,6 +28,16 @@ class ProveedorGestionController extends BaseController
         return $this;
     }
 
+    /**
+     * @return array<string,mixed>
+     */
+    public function index(): array
+    {
+        return [
+            'totalProv' => $this->seguro(fn() => $this->getModel()->totalProveedores(), 0),
+        ];
+    }
+
     public function handle(): void
     {
         header('Content-Type: application/json');

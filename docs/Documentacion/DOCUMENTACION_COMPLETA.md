@@ -31,7 +31,10 @@ modelo POO + controlador + vista + JS.
   `?pagina=X&action=Y` se derivan al metodo `handle()` del controlador correspondiente
 - 13 controladores: Auth, Usuario, Cliente, Inventario, Venta, Rol, Proveedor, ProveedorGestion,
   Asesoria, Ciber, Activo, Dashboard, Reporte
-- Las vistas publicas (`login`, `login_validate`) se cargan directas; las protegidas dentro del layout
+- Las vistas publicas (`login`) se cargan directas; las protegidas dentro del layout
+- En el render inicial, `Router::datosControlador()` llama a `index()` del controlador y expone
+  los datos a la vista con `extract(..., EXTR_SKIP)`; la vista no consulta modelos ni BD
+- `login_validate` no tiene vista: solo recibe el POST del login y delega en `AuthController::login()`
 - `handle()` ejecuta `match ($action)` y retorna JSON `{success, data?, error?, message?}`
 
 ### Flujo de Peticion
@@ -43,6 +46,7 @@ Navegador -> .htaccess -> index.php -> new Router() -> Router::handle()
     -> si hay ?action= en una pagina con controlador -> dispatchAction()
     -> si es login_validate POST -> AuthController::login()
     -> si no -> render(): publica directa | protegida con layout.php
+    -> render inicial: Controller->index() -> Modelo -> BD -> Modelo -> Controller -> Vista
 ```
 
 ### Enrutador (router.php - Clase Router)
@@ -52,6 +56,7 @@ Navegador -> .htaccess -> index.php -> new Router() -> Router::handle()
 - `PUBLIC_PAGES = ['login', 'login_validate']`
 - `verifyCsrfToken()`: compara con `hash_equals()` el token de sesion
 - `render()`: prepara `$pageTitle`, `$headerExtra`, `$contentView` e incluye `layout.php`
+- `datosControlador()`: llama a `index()` del controlador para el render inicial y devuelve el array de datos
 
 ## Estructura de Directorios
 
@@ -99,8 +104,8 @@ src/
 │   │   └── crud_asesorias.php   # legacy procedural
 │   ├── template/
 │   │   └── layout.php           # Layout maestro (sidebar 12 modulos)
-│   └── Views/                   # 15 vistas
-│       ├── login.php, login_validate.php, menu.php
+│   └── Views/                   # 14 vistas (presentacion pura, sin acceso a BD)
+│       ├── login.php, menu.php
 │       ├── dashboard.php, inventario.php, ventas.php
 │       ├── clientes.php, proveedores.php, proveedores-gestion.php
 │       ├── ciberControl.php, reportes.php, activos.php
@@ -212,7 +217,7 @@ y el motor de tables `jquery.dataTables.min.js` + `dataTables.materialize.js` (e
 | Pagina | Vista | JS principal | Controlador | Tipo |
 |--------|-------|--------------|-------------|------|
 | login | login.php | core | Auth | Publica |
-| login_validate | login_validate.php | - | Auth | Publica |
+| login_validate | — (sin vista) | - | Auth | Ruta POST publica |
 | dashboard | dashboard.php | init, ui | Dashboard | Protegida |
 | inventario | inventario.php | inventario, tables | Inventario | Protegida |
 | ventas | ventas.php | pos | Venta | Protegida |

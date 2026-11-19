@@ -542,14 +542,9 @@ Cada vista protegida (ej: `dashboard.php`, `inventario.php`, `ventas.php`, etc.)
 
 Además, las vistas que realizan peticiones AJAX utilizan `$_GET`, `$_POST` y `$_SESSION` indirectamente a través de los controladores.
 
-### 12.1 Vista `login_validate.php`
+### 12.1 Ruta `login_validate` (sin vista)
 
-Es una página **pública** que nunca debe renderizarse directamente: `Router::handle()` detecta `?pagina=login_validate` con método `POST` y delega en `AuthController::login()`. Si se accede sin POST, la vista solo contiene:
-
-| Variable | Propósito |
-|---|---|
-| `header('Location: ?pagina=login')` | Redirige al login si se accede directamente sin POST |
-| `exit` | Termina la ejecución |
+La vista `login_validate.php` **fue eliminada**. `Router::handle()` detecta `?pagina=login_validate` con método `POST` y delega en `AuthController::login()`. Si se accede por GET, el `Router` redirige a `?pagina=login`; no existe ningún archivo de vista que renderizar.
 
 La autenticación real ocurre en `AuthController::login()` (valida CSRF, usuario y contraseña contra la tabla `usuarios` con `password_hash`).
 

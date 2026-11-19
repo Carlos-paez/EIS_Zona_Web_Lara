@@ -267,11 +267,11 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[?pagina=login_validate] --> B[LoginController::validate]
+    A[?pagina=login_validate POST] --> B[AuthController::login]
     B --> C{¿Método POST?}
     C -->|No| D[redirect login]
-    C -->|Sí| E[Leer username + password]
-    E --> F{¿admin / 1234?}
+    C -->|Sí| E[Verificar CSRF + leer username + password]
+    E --> F{¿Credenciales válidas en BD?}
     F -->|Sí| G[$_SESSION logged_in = true]
     G --> H[redirect dashboard]
     F -->|No| I[redirect login?error=1]
@@ -304,7 +304,7 @@ flowchart TD
 | `app/Views/login.php` | `app/Views/auth/login.php` | Movido a subdirectorio |
 | `app/Views/dashboard.php` | `app/Views/dashboard/index.php` | Movido a subdirectorio |
 | `app/Views/ciberControl.php` | `app/Views/ciber-control/index.php` | Datos PHP movidos al controlador |
-| `app/Views/login_validate.php` | (eliminado) | Lógica movida a `LoginController::validate()` |
+| `app/Views/login_validate.php` | (eliminado) | Lógica movida a `AuthController::login()` |
 | `index.php` | `index.php` | Ahora carga autoloader + Router::dispatch() |
 | `composer.json` | `composer.json` | PSR-4 actualizado: `"App\\": "src/app/"` |
 

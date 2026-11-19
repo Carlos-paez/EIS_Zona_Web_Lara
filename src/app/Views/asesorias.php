@@ -46,6 +46,15 @@
                 <!-- Formulario de registro de asesoría -->
                 <form id="asesoriaForm" data-validate>
                     <div class="row" style="margin-bottom:0;">
+                        <!-- Selector de cliente: permite elegir un cliente registrado
+                             o dejar el valor por defecto para crear uno nuevo -->
+                        <div class="input-field col s12">
+                            <i class="material-icons prefix">group</i>
+                            <select id="asesoriaClienteSelect">
+                                <option value="" selected>── Crear nuevo cliente ──</option>
+                            </select>
+                            <label>Cliente registrado</label>
+                        </div>
                         <!-- Campo: Nombre del ciudadano -->
                         <div class="input-field col s12">
                             <i class="material-icons prefix">person</i>
