@@ -21,6 +21,8 @@
     <meta name="robots" content="noindex,nofollow">
     <!-- Enlace al manifiesto de la aplicación web progresiva (PWA) -->
     <link rel="manifest" href="manifest.json">
+    <!-- Favicon del sistema ubicado en Public/img -->
+    <link rel="icon" type="image/svg+xml" href="Public/img/favicon.svg">
     <!-- Título de la página que se muestra en la pestaña del navegador -->
     <title>Login - EIS System</title>
     <!-- Hoja de estilos de Material Icons (íconos locales) -->
@@ -50,8 +52,10 @@
             <!-- ENCABEZADO: LOGO Y TÍTULO DEL SISTEMA -->
             <!-- ================================================================ -->
             <div style="text-align:center;">
-                <!-- Ícono representativo del sistema (rayo) usando un emoji -->
-                <div class="login-logo">⚡</div>
+                <!-- Logo del sistema: mismo icono que el favicon (Public/img/favicon.svg) -->
+                <div class="login-logo">
+                    <img src="Public/img/favicon.svg" alt="Logo de EIS System" style="width:70%;height:70%;object-fit:contain;">
+                </div>
                 <!-- Nombre del sistema en negrita -->
                 <h4 class="card-title" style="font-weight:700;">EIS System</h4>
                 <!-- Texto de instrucción para el usuario -->

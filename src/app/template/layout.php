@@ -17,6 +17,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Permitir modo app en iOS -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> <!-- Barra de estado translúcida en iOS -->
     <link rel="manifest" href="manifest.json"> <!-- Archivo de manifiesto para PWA (Progressive Web App) -->
+    <link rel="icon" type="image/svg+xml" href="Public/img/favicon.svg"> <!-- Favicon del sistema -->
     <title><?php echo $pageTitle; ?> - EIS System</title> <!-- Título dinámico de la pestaña del navegador -->
     <!-- Material Icons (locales) -->
     <link rel="stylesheet" href="Public/css/material-icons.css">
@@ -74,7 +75,10 @@
             <!-- Encabezado del sidebar con el logo y nombre del sistema -->
             <div class="user-view">
                 <div class="background indigo darken-4"></div> <!-- Fondo de color oscuro para el encabezado -->
-                <span class="white-text name" style="font-size:1.5rem;font-weight:700;">⚡ EIS System</span>
+                <span class="white-text name" style="font-size:1.5rem;font-weight:700;display:flex;align-items:center;gap:0.5rem;">
+                    <img src="Public/img/favicon.svg" alt="Logo de EIS System" style="width:32px;height:32px;flex-shrink:0;">
+                    EIS System
+                </span>
                 <span class="white-text email">Sistema de Gestión Integral</span>
             </div>
         </li>

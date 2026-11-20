@@ -1,4 +1,4 @@
-var CACHE_NAME = 'eis-cache-v18';
+var CACHE_NAME = 'eis-cache-v20';
 
 var STATIC_ASSETS = [
   'Public/css/material-icons.css',
@@ -38,8 +38,7 @@ var STATIC_ASSETS = [
   'Public/js/jspdf.umd.min.js',
   'Public/fonts/MaterialIcons-Regular.ttf',
   'manifest.json',
-  'Public/icons/icon-192.svg',
-  'Public/icons/icon-512.svg',
+  'Public/img/favicon.svg',
   'offline.php'
 ];
 
@@ -113,7 +112,7 @@ self.addEventListener('fetch', function (event) {
 
 function isStaticAsset(pathname) {
   var staticPatterns = [
-    '/Public/css/', '/Public/js/', '/Public/fonts/', '/Public/icons/', '/manifest.json'
+    '/Public/css/', '/Public/js/', '/Public/fonts/', '/Public/img/', '/manifest.json'
   ];
   return staticPatterns.some(function (pattern) {
     return pathname.indexOf(pattern) !== -1;

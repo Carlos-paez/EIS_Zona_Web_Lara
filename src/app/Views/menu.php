@@ -10,6 +10,8 @@
     <!-- Configuración del viewport para diseño responsivo -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menú - EIS System</title>
+    <!-- Favicon del sistema ubicado en Public/img -->
+    <link rel="icon" type="image/svg+xml" href="Public/img/favicon.svg">
     <!-- Hoja de estilos de Material Icons (archivo local) -->
     <link rel="stylesheet" href="Public/css/material-icons.css">
     <!-- Hoja de estilos de Materialize CSS (archivo local) -->
@@ -113,8 +115,10 @@
         <div class="card-content" style="padding:2rem;">
             <!-- Encabezado con logo y título -->
             <div style="text-align:center;margin-bottom:2rem;">
-                <!-- Logo: diamante con degradado -->
-                <div style="width:60px;height:60px;background:linear-gradient(135deg,#3949ab,#7c4dff);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.75rem;color:white;">◆</div>
+                <!-- Logo del sistema: mismo icono que el favicon (Public/img/favicon.svg) -->
+                <div style="width:60px;height:60px;background:linear-gradient(135deg,#3949ab,#7c4dff);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+                    <img src="Public/img/favicon.svg" alt="Logo de EIS System" style="width:70%;height:70%;object-fit:contain;">
+                </div>
                 <h4 class="card-title" style="font-weight:700;">Menú Principal</h4>
                 <p style="color:#90a4ae;font-size:0.9rem;margin-top:0.25rem;">Selecciona una opción</p>
             </div>

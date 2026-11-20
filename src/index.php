@@ -71,6 +71,7 @@ function mostrar_error_generico(int $codigo = 500): void
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="Public/img/favicon.svg">
     <title>Error - EIS System</title>
     <style>
         body{font-family:Arial,Helvetica,sans-serif;background:#f5f7fa;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:1rem;}

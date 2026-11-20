@@ -11,6 +11,8 @@
   <meta name="theme-color" content="#1a237e">
   <!-- Título de la página mostrado en la pestaña del navegador -->
   <title>Sin Conexión - EIS System</title>
+  <!-- Favicon del sistema ubicado en Public/img -->
+  <link rel="icon" type="image/svg+xml" href="Public/img/favicon.svg">
   <!-- Carga la hoja de estilos de los iconos Material Design -->
   <link rel="stylesheet" href="Public/css/material-icons.css">
   <!-- Carga la hoja de estilos del framework Materialize CSS para los componentes visuales -->
